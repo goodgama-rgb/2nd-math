@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>이등변삼각형의 성질 탐구</title>
+<style>
+  :root{
+    --bg:#f3f6fc;
+    --card:#ffffff;
+    --ink:#2b2f42;
+    --muted:#6b7280;
+    --primary:#6c8bff;
+    --primary-dark:#4f6fe0;
+    --pink:#ff9db3;
+    --green:#57c6a0;
+    --yellow:#ffce6b;
+    --line:#e3e8f4;
+    --step1:#6c8bff;
+    --step2:#ff8fac;
+    --step3:#3fbf91;
+    --step4:#9b7cff;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-tap-highlight-color:transparent;
+  }
+  header{
+    padding:22px 24px 16px;
+    text-align:center;
+    background:linear-gradient(135deg,#eef2ff,#fff0f5);
+    border-bottom:1px solid var(--line);
+  }
+  header h1{ margin:0 0 6px; font-size:22px; letter-spacing:-0.3px; }
+  header p{ margin:0; color:var(--muted); font-size:14px; }
+
+  .layout{
+    max-width:1280px;
+    margin:20px auto;
+    padding:0 16px 60px;
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width:960px){
+    .layout{ grid-template-columns:1fr; }
+  }
+
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:18px 18px 20px;
+    box-shadow:0 6px 20px rgba(43,47,66,.06);
+  }
+  .sticky{ position:sticky; top:16px; }
+
+  .toolbar{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .btn{
+    border:none; border-radius:12px; padding:10px 14px;
+    font-size:13.5px; font-weight:700; cursor:pointer;
+    background:#eef1fa; color:var(--ink); transition:.15s;
+    font-family:inherit;
+  }
+  .btn:hover{ background:#e2e7f8; }
+  .btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn:disabled:hover{ background:#eef1fa; }
+  .btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .btn.active.split{ background:var(--pink); box-shadow:0 4px 10px rgba(255,157,179,.4); }
+  .btn-outline{ background:transparent; border:2px solid var(--line); color:var(--muted); }
+  .btn-outline:hover{ background:#f5f7fc; }
+  .btn-sm{ padding:7px 11px; font-size:12.5px; border-radius:9px; }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:hover{ background:var(--primary-dark); }
+  .btn-primary:disabled{ background:#cdd5f5; color:#8a93c2; cursor:not-allowed; box-shadow:none; }
+
+  .svg-wrap{ background:#fbfcff; border-radius:14px; border:1px solid var(--line); padding:6px; }
+  svg{ width:100%; height:auto; display:block; }
+
+  #vertexA{ cursor:grab; touch-action:none; }
+  #vertexA:active{ cursor:grabbing; }
+  .hit-area{ fill:var(--primary); opacity:.16; }
+  .handle-dot{ fill:var(--primary); stroke:#fff; stroke-width:2.5; }
+  .pulse{ animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:.14;} 50%{opacity:.32;} }
+
+  .main-tri{ fill:#dbe4ff; stroke:#4a5568; stroke-width:2.5; }
+  .split-poly{ stroke-width:2.5; display:none; }
+  .split-abd{ fill:rgba(108,139,255,.45); stroke:var(--primary-dark); }
+  .split-acd{ fill:rgba(255,157,179,.45); stroke:#e0698a; }
+  .line-ad{ stroke:#4a5568; stroke-width:2.2; stroke-dasharray:5 4; display:none; }
+  .vertex-dot{ fill:#4a5568; }
+  .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; }
+  .tick{ stroke:#4a5568; stroke-width:2; display:none; }
+  .angle-arc{ fill:none; stroke:#4a5568; stroke-width:1.8; display:none; }
+  .angle-arc.base{ stroke:var(--primary-dark); }
+  .angle-arc.sub{ stroke:#e0698a; }
+  .right-angle-mark{ fill:none; stroke:#c0392b; stroke-width:2; display:none; }
+  .mark-circ{ fill:var(--primary-dark); stroke:#fff; stroke-width:1; display:none; }
+  .mark-x{ font-size:16px; font-weight:800; fill:#e0698a; text-anchor:middle; display:none; }
+  .mark-formula{ font-size:10.5px; font-weight:700; fill:#2a9d76; text-anchor:middle; display:none; }
+  .side-label{ font-size:13px; fill:#374151; display:none; text-anchor:middle; }
+  .angle-label{ font-size:13px; font-weight:700; fill:var(--primary-dark); display:none; text-anchor:middle; }
+  .common-label{ font-size:12px; fill:#e0698a; font-weight:700; display:none; text-anchor:start; }
+  .drag-hint{ font-size:12px; fill:#9aa5c3; text-anchor:middle; }
+  /* 선분 기호(윗줄) : \overline{AB} 표기용 */
+  .seg{ text-decoration-line:overline; text-decoration-thickness:1.3px; text-decoration-skip-ink:none; }
+
+  .statbar{
+    margin-top:10px; padding:9px 12px; background:#f6f8fd; border-radius:10px;
+    font-size:12.5px; color:var(--muted); text-align:center; letter-spacing:.2px;
+    display:flex; flex-wrap:wrap; gap:6px 14px; justify-content:center;
+  }
+  .statbar b{ color:var(--ink); }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .dot{ width:10px;height:10px;border-radius:3px;display:inline-block; }
+
+  /* ---- stepper (activity nav) ---- */
+  .stepper{ display:flex; gap:8px; margin-bottom:16px; }
+  .step-tab{
+    flex:1; text-align:center; padding:10px 6px; border-radius:12px;
+    background:#eef1fa; font-size:12.5px; font-weight:700; border:none;
+    cursor:pointer; color:var(--muted); font-family:inherit; transition:.15s;
+  }
+  .step-tab .n{ display:block; font-size:15px; margin-bottom:1px; }
+  .step-tab.current{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .step-tab.done:not(.current){ background:#e9faf3; color:#1e7a53; }
+  .step-tab.locked{ opacity:.45; cursor:not-allowed; }
+
+  /* ---- activity pages ---- */
+  .step-card{
+    background:var(--card); border-radius:16px; padding:18px 20px 20px;
+    border-left:6px solid var(--step1);
+    box-shadow:0 4px 14px rgba(43,47,66,.05); position:relative;
+  }
+  .step-card[data-step="2"]{ border-left-color:var(--step2); }
+  .step-card[data-step="3"]{ border-left-color:var(--step3); }
+  .step-card[data-step="4"]{ border-left-color:var(--step4); }
+  .step-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .step-badge{
+    width:28px;height:28px;border-radius:50%; background:var(--step1); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex:none;
+  }
+  .step-card[data-step="2"] .step-badge{ background:var(--step2); }
+  .step-card[data-step="3"] .step-badge{ background:var(--step3); }
+  .step-card[data-step="4"] .step-badge{ background:var(--step4); }
+  .step-head h2{ margin:0; font-size:16.5px; }
+  .step-body p{ margin:6px 0 10px; font-size:14px; line-height:1.6; color:#3c4257; }
+  .hint{ font-size:12.5px; color:#8b93a8; margin-top:4px; }
+
+  .goal-banner{
+    background:linear-gradient(135deg,#eef2ff,#fff0f5);
+    border:2px solid #c9d4fb; border-radius:14px; padding:16px 18px;
+    text-align:center; font-size:14.5px; line-height:1.7; color:var(--primary-dark);
+    margin-bottom:16px;
+  }
+  .goal-banner .tag{ font-size:12px; font-weight:700; letter-spacing:.5px; color:#8b93c2; display:block; margin-bottom:4px; }
+  .goal-banner b{ font-size:16.5px; }
+
+  table.record{ width:100%; border-collapse:collapse; margin:10px 0; font-size:13px; }
+  table.record th, table.record td{ border:1px solid var(--line); padding:6px 4px; text-align:center; }
+  table.record th{ background:#f4f6fc; }
+
+  .choice-list{ display:flex; flex-direction:column; gap:7px; margin:8px 0 12px; }
+  .choice-list label{
+    display:flex; align-items:center; gap:8px; background:#f7f8fc; border:1.5px solid var(--line);
+    padding:9px 11px; border-radius:10px; font-size:13.5px; cursor:pointer; transition:.15s;
+  }
+  .choice-list label:hover{ background:#eef1fb; }
+  .choice-list label.right{ border-color:#3fbf91; background:#e9faf3; }
+  .choice-list label.wrong{ border-color:#e97a7a; background:#fdecec; }
+  .choice-list input{ accent-color:var(--primary); width:16px; height:16px; flex:none; }
+
+  .feedback{ margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13.5px; line-height:1.6; display:none; }
+  .feedback.success{ display:block; background:#e7f8f0; color:#1e7a53; border:1px solid #b7ead2; }
+  .feedback.error{ display:block; background:#fdeceb; color:#b3261e; border:1px solid #f6c6c2; }
+  .feedback.warn{ display:block; background:#fff6e0; color:#9a6b00; border:1px solid #ffe4a3; }
+
+  .fillsentence{
+    background:#f7f8fc; border:1.5px dashed #c9d4fb; border-radius:12px;
+    padding:14px 16px; font-size:15px; line-height:2; margin:10px 0 14px; color:#2b2f42;
+  }
+  .fillsentence select{
+    border:1.5px solid var(--primary); border-radius:8px; padding:4px 8px;
+    font-size:14.5px; font-weight:700; color:var(--primary-dark); background:#fff;
+    font-family:inherit; margin:0 3px;
+  }
+
+  .rel-row{ display:flex; align-items:center; gap:8px; font-size:14px; margin:6px 0; flex-wrap:wrap; }
+  .rel-row select{
+    border:1.5px solid var(--line); border-radius:8px; padding:5px 8px; font-size:13.5px;
+    font-family:inherit; background:#fff;
+  }
+
+  .summary-box{
+    margin-top:12px; padding:14px 16px; border-radius:12px;
+    background:linear-gradient(135deg,#eef2ff,#fff5f8);
+    border:1.5px dashed #b9c4f5; font-size:13.5px; line-height:1.7;
+    max-height:0; opacity:0; overflow:hidden; transition:.4s ease;
+  }
+  .summary-box.show{ max-height:400px; opacity:1; margin-top:12px; }
+  .summary-box b{ color:var(--primary-dark); }
+
+  .reveal{ max-height:0; opacity:0; overflow:hidden; transition:.45s ease; }
+  .reveal.show{ max-height:1200px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
+
+  .proof-block{
+    background:#fbfcff; border:1.5px solid var(--line); border-radius:14px;
+    padding:16px 18px; margin:14px 0; font-size:14.5px; line-height:2.35; color:#2b2f42;
+  }
+  .proof-block .given{ margin:0 0 6px; color:#4a5568; font-size:13.5px; }
+  .proof-block hr{ border:none; border-top:1px dashed var(--line); margin:10px 0; }
+  .proof-block p{ margin:4px 0; }
+  .blank{
+    display:inline-block; width:58px; border:none; border-bottom:2px solid var(--primary);
+    background:transparent; text-align:center; font-weight:700; font-size:14px;
+    font-family:inherit; padding:2px 4px; margin:0 3px; color:var(--primary-dark);
+  }
+  .blank:focus{ outline:none; border-bottom-color:var(--primary-dark); background:#eef2ff; }
+  .blank.correct{ border-bottom-color:#3fbf91; background:#e9faf3; color:#1e7a53; }
+  .blank.wrong{ border-bottom-color:#e97a7a; background:#fdecec; color:#b3261e; }
+
+  .wordbank{
+    margin-top:10px; padding:10px 12px; background:#fff6e0; border:1px dashed #ffce6b;
+    border-radius:10px; font-size:13px; display:none;
+  }
+  .wordbank.show{ display:block; }
+  .wordbank .word{
+    display:inline-block; background:#fff; border:1px solid #ffce6b; border-radius:6px;
+    padding:3px 9px; margin:3px 4px 0 0; font-weight:700; color:#9a6b00;
+  }
+
+  .page-nav{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:20px; padding-top:14px; border-top:1px solid var(--line);
+  }
+
+  .restart-wrap{ text-align:center; margin-top:14px; }
+
+  .btn-check{ background:var(--primary); color:#fff; }
+  .btn-check:hover{ background:var(--primary-dark); }
+
+  /* ===== 로그인 ===== */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,#6c8bff 0%,#4f6fe0 100%); padding:24px;
+  }
+  .login-box{ background:#fff; border-radius:20px; padding:36px 32px; width:100%; max-width:400px; box-shadow:0 12px 40px rgba(43,47,66,.25); }
+  .login-header{ text-align:center; margin-bottom:26px; }
+  .login-header .emoji{ font-size:36px; margin-bottom:8px; }
+  .login-header .title{ font-size:19px; font-weight:800; color:var(--ink); margin-bottom:4px; }
+  .login-header .sub{ font-size:12.5px; color:var(--muted); }
+  .role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .role-btn{ padding:22px 10px; border-radius:14px; border:2px solid var(--line); background:#f7f8fc; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer; font-family:inherit; transition:.15s; }
+  .role-btn:hover{ border-color:var(--primary); background:#eef2ff; }
+  .role-btn .emoji{ font-size:24px; display:block; margin-bottom:6px; }
+  .login-form{ display:none; }
+  .login-form.show{ display:block; }
+  .login-back{ background:none; border:none; color:var(--muted); font-size:12.5px; cursor:pointer; margin-bottom:14px; font-family:inherit; padding:0; }
+  .login-form-title{ font-size:14px; font-weight:800; color:var(--ink); margin-bottom:14px; }
+  .login-grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+  .login-field label{ font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:4px; }
+  .login-field select, .login-field input{ width:100%; border:1.5px solid var(--line); border-radius:9px; padding:9px 8px; font-size:13.5px; font-family:inherit; color:var(--ink); background:#fff; }
+  .login-error{ display:none; font-size:12px; color:#b3261e; margin-bottom:10px; padding:8px 12px; background:#fdeceb; border-radius:8px; }
+  .login-submit{ width:100%; padding:12px; border-radius:10px; background:var(--primary); color:#fff; border:none; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+  .login-submit:hover{ background:var(--primary-dark); }
+  .login-submit.admin{ background:#2b2f42; }
+  .login-submit.admin:hover{ background:#1c1f2e; }
+
+  .session-bar{ background:#2b2f42; color:#fff; padding:8px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .session-bar b{ color:#c7d2fe; }
+  .session-bar button{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; }
+
+  /* ===== 관리자 대시보드 ===== */
+  #adminScreen{ display:none; min-height:100vh; background:var(--bg); }
+  .admin-header{ background:#1e1b3a; color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .admin-header .title{ font-size:17px; font-weight:800; }
+  .admin-header .sub{ font-size:12px; color:#a5b4fc; margin-top:2px; }
+  .admin-logout{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:8px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .admin-body{ max-width:1000px; margin:24px auto; padding:0 20px 60px; }
+  .admin-table-wrap{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  table.admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.admin-table th{ background:#f4f6fc; padding:10px 12px; text-align:left; color:var(--muted); font-size:11.5px; font-weight:700; }
+  table.admin-table td{ padding:10px 12px; border-top:1px solid var(--line); }
+  table.admin-table tr.away td{ background:#fdeceb; }
+
+  /* ===== 이탈 경고 오버레이 ===== */
+  #awayWarning{ position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(179,38,30,.94); text-align:center; padding:24px; }
+  #awayWarning.show{ display:flex; }
+  #awayWarning .box{ color:#fff; max-width:440px; }
+  #awayWarning .emoji{ font-size:52px; margin-bottom:14px; }
+  #awayWarning .msg{ font-size:20px; font-weight:800; line-height:1.5; margin-bottom:22px; }
+  #awayWarning button{ background:#fff; color:#b3261e; border:none; border-radius:10px; padding:12px 28px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+</style>
+</head>
+<body>
+
+<!-- ══ 로그인 화면 ══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="emoji">📐</div>
+      <div class="title">이등변삼각형의 성질과 증명</div>
+      <div class="sub">중2 수학 · 인터랙티브 탐구 수업</div>
+    </div>
+
+    <div id="roleSelect">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:14px">역할을 선택하세요</div>
+      <div class="role-grid">
+        <button class="role-btn" onclick="showStudentForm()"><span class="emoji">🎒</span>학생</button>
+        <button class="role-btn" onclick="showTeacherForm()"><span class="emoji">📋</span>교사</button>
+      </div>
+    </div>
+
+    <div id="studentForm" class="login-form">
+      <button class="login-back" onclick="backToRole()">← 뒤로</button>
+      <div class="login-form-title">🎒 학생 정보 입력</div>
+      <div class="login-grid3">
+        <div class="login-field">
+          <label>학년</label>
+          <select id="loginGrade"><option value="">-</option><option>1학년</option><option selected>2학년</option><option>3학년</option></select>
+        </div>
+        <div class="login-field">
+          <label>반</label>
+          <select id="loginClass">
+            <option value="">-</option>
+            <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+          </select>
+        </div>
+        <div class="login-field">
+          <label>번호</label>
+          <input id="loginNum" type="number" min="1" max="40" placeholder="번호">
+        </div>
+      </div>
+      <div class="login-field" style="margin-bottom:16px">
+        <label>이름</label>
+        <input id="loginName" type="text" placeholder="이름을 입력하세요">
+      </div>
+      <div id="studentLoginError" class="login-error"></div>
+      <button class="login-submit" onclick="studentLogin()">학습 시작 →</button>
+    </div>
+
+    <div id="teacherForm" class="login-form">
+      <button class="login-back" onclick="backToRole()">← 뒤로</button>
+      <div class="login-form-title">📋 교사 로그인</div>
+      <div class="login-field" style="margin-bottom:16px">
+        <label>비밀번호</label>
+        <input id="teacherPw" type="password" placeholder="비밀번호를 입력하세요" onkeydown="if(event.key==='Enter')teacherLogin()">
+      </div>
+      <div id="teacherLoginError" class="login-error">비밀번호가 틀렸어요.</div>
+      <button class="login-submit admin" onclick="teacherLogin()">관리자 모드 입장 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 관리자 대시보드 ══ -->
+<div id="adminScreen">
+  <div class="admin-header">
+    <div>
+      <div class="title">⚙ 관리자 모드 — 이등변삼각형의 성질과 증명</div>
+      <div class="sub" id="adminSummary">불러오는 중...</div>
+    </div>
+    <button class="admin-logout" onclick="adminLogout()">로그아웃</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>학년/반/번호</th><th>이름</th><th>진행 단계</th><th>상태</th><th>이탈 횟수</th><th>마지막 활동</th></tr></thead>
+        <tbody id="adminTableBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 이탈 경고 오버레이 ══ -->
+<div id="awayWarning">
+  <div class="box">
+    <div class="emoji">🚨</div>
+    <div class="msg">경고입니다!<br>수업 외 행동을 하지 말고<br>지금 주어진 과제를 완료하세요.</div>
+    <button onclick="dismissWarning()">확인했습니다</button>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none">
+<div class="session-bar" id="sessionBar" style="display:none">
+  <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
+  <button onclick="location.reload()">로그아웃</button>
+</div>
+
+<header>
+  <h1>📐 이등변삼각형의 성질과 증명 — 직접 조작하며 탐구하기</h1>
+  <p>꼭짓점 A를 드래그해서 삼각형 모양을 바꾸고, 두 밑각이 같은 이유를 스스로 증명해봅시다.</p>
+</header>
+
+<div class="layout">
+
+  <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
+  <div class="card sticky">
+    <div class="toolbar">
+      <button class="btn" id="btnLabels" aria-pressed="false">📏 길이/각도 표시</button>
+      <button class="btn" id="btnAD" aria-pressed="false">✂️ 각 A의 이등분선 <span class="seg">AD</span> 그리기</button>
+      <button class="btn" id="btnSplit" aria-pressed="false">🎨 합동 강조 (색 분리)</button>
+      <button class="btn btn-outline" id="btnReset">↺ 삼각형 초기화</button>
+    </div>
+
+    <div class="svg-wrap">
+      <svg id="canvas" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+        <!-- 색 분리 삼각형 (합동 강조) -->
+        <polygon id="splitABD" class="split-poly split-abd" points=""></polygon>
+        <polygon id="splitACD" class="split-poly split-acd" points=""></polygon>
+        <!-- 기본 삼각형 -->
+        <polygon id="mainTriangle" class="main-tri" points=""></polygon>
+        <!-- 보조선 AD -->
+        <line id="lineAD" class="line-ad" x1="0" y1="0" x2="0" y2="0"></line>
+        <!-- 직각 표시 (결론 공개 후) -->
+        <path id="rightAngleMark" class="right-angle-mark" d=""></path>
+        <!-- 합동 표시: 눈금 -->
+        <path id="tickAB" class="tick" d=""></path>
+        <path id="tickAC" class="tick" d=""></path>
+        <path id="tickBD" class="tick" d=""></path>
+        <path id="tickCD" class="tick" d=""></path>
+        <text id="labelCommonAD" class="common-label"><tspan class="seg" style="text-decoration-color:#e0698a">AD</tspan> (공통)</text>
+        <!-- 각 표시 호 -->
+        <path id="arcB" class="angle-arc base" d=""></path>
+        <path id="arcC" class="angle-arc base" d=""></path>
+        <path id="arcA" class="angle-arc base" d=""></path>
+        <path id="arcBAD" class="angle-arc sub" d=""></path>
+        <path id="arcCAD" class="angle-arc sub" d=""></path>
+        <!-- 동그라미/엑스 기호: 주어진·유도된 각 표시 -->
+        <text id="markXBAD" class="mark-x">×</text>
+        <text id="markXCAD" class="mark-x">×</text>
+        <circle id="markCircB" class="mark-circ" r="4"></circle>
+        <circle id="markCircC" class="mark-circ" r="4"></circle>
+        <text id="markLabelADB" class="mark-formula">180°−(●+×)</text>
+        <text id="markLabelADC" class="mark-formula">180°−(●+×)</text>
+        <!-- 변의 길이 / 각도 라벨 -->
+        <text id="labelAB" class="side-label"><tspan class="seg">AB</tspan><tspan id="lenAB"></tspan></text>
+        <text id="labelAC" class="side-label"><tspan class="seg">AC</tspan><tspan id="lenAC"></tspan></text>
+        <text id="labelBC" class="side-label"><tspan class="seg">BC</tspan><tspan id="lenBC"></tspan></text>
+        <text id="labelAngA" class="angle-label"></text>
+        <text id="labelAngB" class="angle-label"></text>
+        <text id="labelAngC" class="angle-label"></text>
+        <!-- 고정 꼭짓점 B, C -->
+        <circle cx="170" cy="380" r="4" class="vertex-dot"></circle>
+        <circle cx="470" cy="380" r="4" class="vertex-dot"></circle>
+        <text x="150" y="405" class="vertex-name">B</text>
+        <text x="478" y="405" class="vertex-name">C</text>
+        <!-- D 점 -->
+        <circle id="dotD" cx="320" cy="380" r="4" class="vertex-dot" style="display:none"></circle>
+        <text id="labelD" class="vertex-name" style="display:none">D</text>
+        <!-- 드래그 힌트 -->
+        <text id="dragHint" class="drag-hint" x="320" y="115">↕ 위아래로 드래그해보세요</text>
+        <!-- 꼭짓점 A 핸들 -->
+        <text id="vertexNameA" class="vertex-name">A</text>
+        <g id="vertexA">
+          <circle class="hit-area pulse" r="22"></circle>
+          <circle class="handle-dot" r="8"></circle>
+        </g>
+      </svg>
+    </div>
+
+    <div class="statbar" id="statBar">측정값이 여기에 표시됩니다.</div>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#6c8bff"></i> △ABD</span>
+      <span><i class="dot" style="background:#ff9db3"></i> △ACD</span>
+      <span><i class="dot" style="background:#4a5568"></i> 하나의 눈금 = 같은 변 / 각</span>
+    </div>
+  </div>
+
+  <!-- ================= 영역 2: 단계별 탐구 활동지 (화면 전환형) ================= -->
+  <div class="activity">
+
+    <div class="stepper" id="stepper">
+      <button class="step-tab current" data-goto="1"><span class="n">1</span>관찰하기</button>
+      <button class="step-tab locked" data-goto="2"><span class="n">2</span>증명 설계</button>
+      <button class="step-tab locked" data-goto="3"><span class="n">3</span>결론 확인</button>
+      <button class="step-tab locked" data-goto="4"><span class="n">4</span>최종 증명</button>
+    </div>
+
+    <!-- ===== PAGE 1 : 관찰 ===== -->
+    <section class="step-card" data-step="1" id="page1">
+      <div class="step-head">
+        <div class="step-badge">1</div>
+        <h2>밑각을 관찰해보자</h2>
+      </div>
+      <div class="step-body">
+        <p>위쪽 <b>[📏 길이/각도 표시]</b> 버튼을 눌러 각도를 켜고, 꼭짓점 <b>A</b>를 위아래로 여러 번 드래그해 보세요. 그럴 때마다 아래 <b>[+ 기록하기]</b> 버튼을 눌러 현재 ∠B, ∠C 값을 표에 담아보세요.</p>
+
+        <table class="record">
+          <thead><tr><th>#</th><th>∠B</th><th>∠C</th></tr></thead>
+          <tbody id="recordBody"></tbody>
+        </table>
+        <div class="toolbar">
+          <button class="btn btn-sm" id="btnRecord">+ 기록하기</button>
+          <button class="btn btn-outline btn-sm" id="btnClearRecord">표 지우기</button>
+        </div>
+
+        <p style="margin-top:14px;">🤔 <b>기록한 값들을 비교해보면, ∠B와 ∠C는 삼각형의 모양이 바뀌어도 항상 어떤 관계인가요?</b></p>
+        <div class="choice-list">
+          <label><input type="radio" name="q1" value="same"> 항상 같다 (∠B = ∠C)</label>
+          <label><input type="radio" name="q1" value="diff"> 항상 다르다</label>
+          <label><input type="radio" name="q1" value="depends"> 삼각형 모양에 따라 같기도, 다르기도 하다</label>
+        </div>
+        <button class="btn btn-check" id="checkStep1">정답 확인</button>
+        <div class="feedback" id="feedback1"></div>
+
+        <!-- 결론을 학생이 직접 완성하는 부분 -->
+        <div class="reveal" id="concludeBlock1">
+          <p>📝 <b>우리가 관찰한 사실은 무엇일까요? 문장을 완성해보세요.</b></p>
+          <div class="fillsentence">
+            이등변삼각형에서 두
+            <select id="blank1">
+              <option value="?">〔 선택 〕</option>
+              <option value="vertex">꼭지각</option>
+              <option value="base">밑각</option>
+            </select>
+            의 크기는 같다.
+          </div>
+          <button class="btn btn-check" id="checkConclude1">결론 확인</button>
+          <div class="feedback" id="feedbackConclude1"></div>
+        </div>
+
+        <div class="page-nav">
+          <span></span>
+          <button class="btn btn-primary" id="next1" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 2 : 증명 설계 ===== -->
+    <section class="step-card" data-step="2" id="page2" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">2</div>
+        <h2>증명을 설계해보자</h2>
+      </div>
+      <div class="step-body">
+        <div class="goal-banner">
+          <span class="tag">🎯 증명 목표</span>
+          <b>이등변삼각형에서 두 밑각의 크기가 같다는 것을 증명하자.</b>
+        </div>
+
+        <div class="fillsentence" id="drawPrompt" style="text-align:center;">
+          👉 먼저 캔버스 위쪽의 <b>[✂️ 각 A의 이등분선 <span class="seg">AD</span> 그리기]</b> 버튼을 눌러보세요.<br>그러면 삼각형 <b>ABD</b>와 삼각형 <b>ACD</b>가 만들어져요!
+        </div>
+
+        <div class="reveal" id="motivateBlock">
+          <p><b>Q1.</b> 만약 삼각형 ABD와 삼각형 ACD가 합동이라면, 어떤 사실을 알 수 있을까요? <i>(해당하는 것을 모두 고르세요)</i></p>
+          <div class="choice-list">
+            <label><input type="checkbox" class="q2a" data-correct="true"> ∠B = ∠C</label>
+            <label><input type="checkbox" class="q2a" data-correct="true"> <span class="seg">BD</span> = <span class="seg">CD</span></label>
+            <label><input type="checkbox" class="q2a" data-correct="false"> ∠B = 90°</label>
+            <label><input type="checkbox" class="q2a" data-correct="false"> <span class="seg">AB</span> = <span class="seg">BC</span></label>
+          </div>
+          <button class="btn btn-check" id="checkQ2a">확인</button>
+          <div class="feedback" id="feedbackQ2a"></div>
+
+          <p style="margin-top:16px;"><b>Q2.</b> 그렇다면, 이등변삼각형에서 두 밑각(∠B와 ∠C)이 같음을 증명하려면 무엇을 해야 할까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="q2b" value="congruent"> 삼각형 ABD와 삼각형 ACD가 합동임을 보인다</label>
+            <label><input type="radio" name="q2b" value="protractor"> 각도기로 ∠B와 ∠C를 직접 재본다</label>
+            <label><input type="radio" name="q2b" value="ruler"> 자로 변 AB와 변 AC의 길이를 재본다</label>
+          </div>
+          <button class="btn btn-check" id="checkQ2b">확인</button>
+          <div class="feedback" id="feedbackQ2b"></div>
+        </div>
+
+        <!-- 실제 SAS 합동 조건 찾기 -->
+        <div class="reveal" id="sasBlock">
+          <p>좋아요! 그럼 지금부터 <b>△ABD ≡ △ACD</b>를 증명해봅시다. 캔버스 위 <b>[🎨 합동 강조]</b> 버튼을 눌러 두 삼각형을 색으로 구분해 보세요.</p>
+          <p>이제 <b>△ABD</b>와 <b>△ACD</b>가 합동임을 보이기 위해, <u>이미 알고 있는(주어진) 조건</u>만 골라 체크해 보세요.</p>
+
+          <div class="choice-list">
+            <label><input type="checkbox" class="cond-check" data-correct="true"> <span class="seg">AB</span> = <span class="seg">AC</span> (이등변삼각형의 정의)</label>
+            <label><input type="checkbox" class="cond-check" data-correct="false" data-reason="변 BD와 변 CD가 같은지는 아직 알 수 없습니다. 문제 조건에 나와 있지 않기 때문이에요!"> <span class="seg">BD</span> = <span class="seg">CD</span></label>
+            <label><input type="checkbox" class="cond-check" data-correct="true"> <span class="seg">AD</span> = <span class="seg">AD</span> (공통변)</label>
+            <label><input type="checkbox" class="cond-check" data-correct="false" data-reason="각 ABD와 각 ACD가 같은지는 아직 알 수 없습니다. 이것도 문제 조건에 나와 있지 않기 때문이에요!"> ∠ABD = ∠ACD</label>
+            <label><input type="checkbox" class="cond-check" data-correct="true"> ∠BAD = ∠CAD (AD는 ∠A의 이등분선)</label>
+          </div>
+          <div class="feedback warn" id="liveHint2"></div>
+          <button class="btn btn-check" id="checkStep2">정답 확인</button>
+          <div class="feedback" id="feedback2"></div>
+          <p class="hint">💡 힌트: 두 변의 길이와 그 <b>끼인각</b>의 크기가 각각 같으면 SAS 합동이에요.</p>
+
+          <div class="reveal" id="congruenceTypeBlock">
+            <p><b>Q3.</b> 방금 고른 세 조건(두 변과 그 끼인각)은 어떤 합동 조건에 해당할까요? △ABD와 △ACD는 무슨 합동일까요?</p>
+            <div class="choice-list">
+              <label><input type="radio" name="congType" value="SSS"> SSS 합동 (세 변의 길이가 각각 같다)</label>
+              <label><input type="radio" name="congType" value="SAS"> SAS 합동 (두 변의 길이와 그 끼인각의 크기가 각각 같다)</label>
+              <label><input type="radio" name="congType" value="ASA"> ASA 합동 (한 변의 길이와 그 양 끝 각의 크기가 각각 같다)</label>
+            </div>
+            <button class="btn btn-check" id="checkCongType">확인</button>
+            <div class="feedback" id="feedbackCongType"></div>
+          </div>
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev2">← 이전 활동</button>
+          <button class="btn btn-primary" id="next2" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 3 : 결론 확인 ===== -->
+    <section class="step-card" data-step="3" id="page3" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">3</div>
+        <h2>합동으로부터 결론을 이끌어내자</h2>
+      </div>
+      <div class="step-body">
+        <p>2단계에서 예상했던 대로, 이제 실제로 <b>△ABD ≡ △ACD (SAS 합동)</b> 임을 확인했습니다. 합동인 두 도형에서 <b>대응변과 대응각은 각각 같습니다.</b> 빈칸을 채워 결론을 완성해보세요.</p>
+
+        <div class="rel-row">∠B <select id="rel1"><option value="?">?</option><option value="=">=</option><option value="≠">≠</option></select> ∠C</div>
+        <div class="reveal" id="concludeRel1">
+          <div class="fillsentence">
+            ∠B = ∠C 이므로 이등변삼각형의 두
+            <select id="blank2">
+              <option value="?">〔 선택 〕</option>
+              <option value="vertex">꼭지각</option>
+              <option value="base">밑각</option>
+            </select>
+            의 크기가 같다.
+          </div>
+        </div>
+
+        <div class="rel-row"><span class="seg">BD</span> <select id="rel2"><option value="?">?</option><option value="=">=</option><option value="≠">≠</option></select> <span class="seg">CD</span></div>
+        <div class="rel-row">∠ADB <select id="rel3"><option value="?">?</option><option value="=">=</option><option value="≠">≠</option></select> ∠ADC</div>
+
+        <div class="reveal" id="concludeRel3">
+          <div class="fillsentence">
+            이때, 점 D는 직선 <span class="seg">BC</span> 위의 점이므로 두 각을 더하면 180°이다. 그런데 ∠ADB = ∠ADC 이므로
+            ∠ADB = ∠ADC = <input type="text" class="blank" id="blank3" maxlength="4" style="width:56px" autocomplete="off">°
+          </div>
+          <div class="reveal" id="finalConclude">
+            <div class="fillsentence" style="background:#eef8f2; border-color:#b7ead2;">
+              ➡️ 따라서 <span class="seg">AD</span> ⊥ <span class="seg">BC</span> 이고, <span class="seg">BD</span> = <span class="seg">CD</span> 이므로 <span class="seg">AD</span>는 <span class="seg">BC</span>를 <b>수직이등분</b>한다.
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-check" id="checkStep3">결론 확인</button>
+        <div class="feedback" id="feedback3"></div>
+
+        <div class="summary-box" id="summaryBox">
+          🎉 <b>정리</b><br>
+          ① 이등변삼각형의 두 밑각의 크기는 같다. (∠B = ∠C)<br>
+          ② 이등변삼각형의 꼭지각의 이등분선은 밑변을 수직이등분한다. (<span class="seg">AD</span> ⊥ <span class="seg">BC</span>, <span class="seg">BD</span> = <span class="seg">CD</span>)<br>
+          캔버스에 직각 표시와 <span class="seg">BD</span> = <span class="seg">CD</span> 눈금이 나타났는지 확인해보세요!
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev3">← 이전 활동</button>
+          <button class="btn btn-primary" id="next3" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 4 : 도움 없이 다시 증명하기 ===== -->
+    <section class="step-card" data-step="4" id="page4" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">4</div>
+        <h2>이번엔 도움 없이 스스로 증명해보자</h2>
+      </div>
+      <div class="step-body">
+        <p>지금까지의 활동을 바탕으로, 이번엔 선택지 없이 <b>빈칸을 직접 채워서</b> 증명을 완성해보세요. 힌트가 필요하면 아래 단어 은행을 참고할 수 있어요.</p>
+        <p class="hint">💡 왼쪽 그림은 정답을 미리 보여주지 않도록 △ABC와 보조선 <span class="seg">AD</span>만 깨끗하게 표시돼요. (그래서 [🎨 합동 강조] 버튼은 이 단계에서 잠시 비활성화됩니다.)</p>
+
+        <div class="proof-block">
+          <p class="given"><b>[가정]</b> △ABC에서 <span class="seg">AB</span> = <span class="seg">AC</span> 이고, <span class="seg">AD</span>는 ∠A의 이등분선이다. (즉, ∠BAD = ∠CAD, 점 D는 <span class="seg">BC</span> 위의 점)</p>
+          <p class="given"><b>[증명할 것]</b><br>
+            1. 이등변삼각형에서 두 밑각의 크기가 같다. (∠B = ∠C)<br>
+            2. 이등변삼각형에서 꼭지각의 이등분선은 밑변을 수직이등분한다. (<span class="seg">AD</span> ⊥ <span class="seg">BC</span>, <span class="seg">BD</span> = <span class="seg">CD</span>)
+          </p>
+          <hr>
+          <p><b>[증명]</b></p>
+          <p>△ABD와 △ACD에서</p>
+          <p>① <span class="seg">AB</span> = <input type="text" class="blank" data-id="b1" maxlength="6" autocomplete="off"> ······ (가정)</p>
+          <p>② <span class="seg">AD</span> = <input type="text" class="blank" data-id="b2" maxlength="6" autocomplete="off"> ······ (공통)</p>
+          <p>③ ∠BAD = ∠<input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"> ······ (가정)</p>
+          <p>①, ②, ③에 의해 △ABD ≡ △ACD ( <input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 합동)</p>
+          <p>합동인 두 도형의 대응변, 대응각은 각각 같으므로</p>
+          <p>∠B = ∠<input type="text" class="blank" data-id="b5" maxlength="6" autocomplete="off">, &nbsp; <span class="seg">BD</span> = <input type="text" class="blank" data-id="b6" maxlength="6" autocomplete="off"></p>
+          <p>∠ADB = ∠<input type="text" class="blank" data-id="b7" maxlength="6" autocomplete="off"></p>
+          <p>그런데 점 D는 직선 <span class="seg">BC</span> 위의 점이므로 ∠ADB + ∠ADC = <input type="text" class="blank" data-id="b8" maxlength="6" autocomplete="off" style="width:44px">°</p>
+          <p>∠ADB = ∠ADC 이고 그 합이 180°이므로 ∠ADB = ∠ADC = <input type="text" class="blank" data-id="b9" maxlength="6" autocomplete="off" style="width:44px">°</p>
+          <p>따라서 <span class="seg">AD</span> ⊥ <input type="text" class="blank" data-id="b10" maxlength="6" autocomplete="off" style="width:50px">, <span class="seg">BD</span> = <span class="seg">CD</span> 이므로</p>
+          <p><span class="seg">AD</span>는 <span class="seg">BC</span>를 <input type="text" class="blank" data-id="b11" maxlength="10" autocomplete="off" style="width:110px"> 한다. ∎</p>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn btn-outline btn-sm" id="toggleWordbank">🗂 단어 은행 보기</button>
+          <button class="btn btn-check" id="checkProof">채점하기</button>
+          <button class="btn btn-outline btn-sm" id="resetProof">↺ 다시 쓰기</button>
+        </div>
+        <div class="wordbank" id="wordbank">
+          <span class="word">90</span><span class="word">BC</span><span class="word">CAD</span><span class="word">SAS</span>
+          <span class="word">AC</span><span class="word">ADC</span><span class="word">수직이등분</span><span class="word">C</span>
+          <span class="word">180</span><span class="word">AD</span><span class="word">CD</span>
+        </div>
+        <div class="feedback" id="feedbackProof"></div>
+
+        <div class="summary-box" id="proofDone">
+          🎉 <b>증명 완성!</b><br>
+          "이등변삼각형의 두 밑각의 크기는 같다"와 "꼭지각의 이등분선은 밑변을 수직이등분한다"를 이제 도움 없이 스스로 증명할 수 있습니다. 훌륭해요!
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev4">← 이전 활동</button>
+          <span></span>
+        </div>
+      </div>
+    </section>
+
+    <div class="restart-wrap">
+      <button class="btn btn-outline" id="restartAll">🔄 활동 처음부터 다시하기</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /#appRoot -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const B = {x:170, y:380};
+  const C = {x:470, y:380};
+  const MIN_Y = 60, MAX_Y = 355;
+  const SCALE = 1/40; // px -> cm (교육용 임의 축척)
+
+  const state = {
+    A: {x:320, y:150},
+    showLabels:false,
+    showAD:false,
+    showSplit:false,
+    showRightAngle:false,
+    hasDragged:false,
+    showAngleMarkBC:false,
+    showAngleMarkD:false,
+    p4_b1ok:false, p4_b2ok:false, p4_b3ok:false,
+    p4_b5ok:false, p4_b6ok:false, p4_b7ok:false, p4_b9ok:false
+  };
+  let lastMeasure = {angleA:0, angleB:0, angleC:0, AB:0, AC:0, BC:0};
+
+  // ---------- DOM refs ----------
+  const svg = document.getElementById('canvas');
+  const vertexA = document.getElementById('vertexA');
+  const vertexNameA = document.getElementById('vertexNameA');
+  const mainTriangle = document.getElementById('mainTriangle');
+  const splitABD = document.getElementById('splitABD');
+  const splitACD = document.getElementById('splitACD');
+  const lineAD = document.getElementById('lineAD');
+  const dotD = document.getElementById('dotD');
+  const labelD = document.getElementById('labelD');
+  const rightAngleMark = document.getElementById('rightAngleMark');
+  const tickAB = document.getElementById('tickAB');
+  const tickAC = document.getElementById('tickAC');
+  const tickBD = document.getElementById('tickBD');
+  const tickCD = document.getElementById('tickCD');
+  const labelCommonAD = document.getElementById('labelCommonAD');
+  const markXBAD = document.getElementById('markXBAD');
+  const markXCAD = document.getElementById('markXCAD');
+  const markCircB = document.getElementById('markCircB');
+  const markCircC = document.getElementById('markCircC');
+  const markLabelADB = document.getElementById('markLabelADB');
+  const markLabelADC = document.getElementById('markLabelADC');
+  const arcB = document.getElementById('arcB');
+  const arcC = document.getElementById('arcC');
+  const arcA = document.getElementById('arcA');
+  const arcBAD = document.getElementById('arcBAD');
+  const arcCAD = document.getElementById('arcCAD');
+  const labelAB = document.getElementById('labelAB');
+  const labelAC = document.getElementById('labelAC');
+  const labelBC = document.getElementById('labelBC');
+  const lenAB = document.getElementById('lenAB');
+  const lenAC = document.getElementById('lenAC');
+  const lenBC = document.getElementById('lenBC');
+  const labelAngA = document.getElementById('labelAngA');
+  const labelAngB = document.getElementById('labelAngB');
+  const labelAngC = document.getElementById('labelAngC');
+  const statBar = document.getElementById('statBar');
+  const dragHint = document.getElementById('dragHint');
+
+  // ---------- helpers ----------
+  function tickPath(p1, p2, count){
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const len = Math.hypot(dx,dy) || 1;
+    const ux = dx/len, uy = dy/len;
+    const px = -uy, py = ux;
+    const mx = (p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const half = 5, gap = 5;
+    let d = '';
+    for(let i=0;i<count;i++){
+      const off = (i-(count-1)/2)*gap;
+      const cx = mx+ux*off, cy = my+uy*off;
+      d += `M ${cx-px*half} ${cy-py*half} L ${cx+px*half} ${cy+py*half} `;
+    }
+    return d.trim();
+  }
+
+  function outwardPerp(p1, p2, other){
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const len = Math.hypot(dx,dy) || 1;
+    let px = -dy/len, py = dx/len;
+    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const tx = other.x-mx, ty = other.y-my;
+    if(px*tx+py*ty > 0){ px=-px; py=-py; }
+    return {x:px, y:py};
+  }
+
+  function describeArc(cx, cy, r, a1, a2){
+    let diff = a2-a1;
+    while(diff > Math.PI) diff -= 2*Math.PI;
+    while(diff < -Math.PI) diff += 2*Math.PI;
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const x2 = cx + r*Math.cos(a1+diff), y2 = cy + r*Math.sin(a1+diff);
+    const largeArc = Math.abs(diff) > Math.PI ? 1 : 0;
+    const sweep = diff > 0 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} ${sweep} ${x2} ${y2}`;
+  }
+
+  function bisectorAngle(a1, a2){
+    const ux = (Math.cos(a1)+Math.cos(a2))/2;
+    const uy = (Math.sin(a1)+Math.sin(a2))/2;
+    return Math.atan2(uy, ux);
+  }
+
+  // ---------- main render ----------
+  function update(){
+    const A = state.A;
+    const D = {x:(B.x+C.x)/2, y:B.y};
+    const half = (C.x-B.x)/2;
+    const h = B.y - A.y;
+    const angleBrad = Math.atan2(h, half);
+    const angleBdeg = angleBrad*180/Math.PI;
+    const angleCdeg = angleBdeg;
+    const angleAdeg = 180 - 2*angleBdeg;
+    const AB = Math.hypot(A.x-B.x, A.y-B.y);
+    const AC = AB;
+    const BC = C.x-B.x;
+
+    lastMeasure = {
+      angleA: angleAdeg, angleB: angleBdeg, angleC: angleCdeg,
+      AB: AB*SCALE, AC: AC*SCALE, BC: BC*SCALE
+    };
+
+    // vertex A handle + name
+    vertexA.setAttribute('transform', `translate(${A.x},${A.y})`);
+    vertexNameA.setAttribute('x', A.x - 10);
+    vertexNameA.setAttribute('y', A.y - 16);
+    dragHint.setAttribute('x', A.x);
+    dragHint.setAttribute('y', Math.max(28, A.y - 34));
+    dragHint.style.display = state.hasDragged ? 'none' : 'block';
+
+    // triangles
+    mainTriangle.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`);
+    splitABD.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${D.x},${D.y}`);
+    splitACD.setAttribute('points', `${A.x},${A.y} ${D.x},${D.y} ${C.x},${C.y}`);
+    mainTriangle.style.fill = state.showSplit ? 'none' : '#dbe4ff';
+
+    // AD line & D point
+    const dOn = state.showAD || state.showSplit;
+    lineAD.setAttribute('x1', A.x); lineAD.setAttribute('y1', A.y);
+    lineAD.setAttribute('x2', D.x); lineAD.setAttribute('y2', D.y);
+    lineAD.style.display = dOn ? 'block' : 'none';
+    dotD.setAttribute('cx', D.x); dotD.setAttribute('cy', D.y);
+    dotD.style.display = dOn ? 'block' : 'none';
+    labelD.setAttribute('x', D.x + 8); labelD.setAttribute('y', D.y + 18);
+    labelD.style.display = dOn ? 'block' : 'none';
+
+    // 각 A의 이등분 표시: AD를 그리는 즉시(합동 강조와 무관하게) 바로 보여준다
+    arcBAD.style.display = dOn ? 'block' : 'none';
+    arcCAD.style.display = dOn ? 'block' : 'none';
+
+    const onProofPages = (currentPage === 2 || currentPage === 3);
+
+    // AB=AC(주어진 조건) 눈금: 2,3단계에서는 항상, 4단계에서는 해당 빈칸을 맞혔을 때만
+    const showTickABAC = onProofPages || (currentPage === 4 && state.p4_b1ok);
+    tickAB.style.display = showTickABAC ? 'block' : 'none';
+    tickAC.style.display = showTickABAC ? 'block' : 'none';
+    tickAB.setAttribute('d', tickPath(A, B, 1));
+    tickAC.setAttribute('d', tickPath(A, C, 1));
+
+    // AD 공통 라벨: AD가 그려져 있을 때 (2,3단계는 자동, 4단계는 정답 시)
+    const showCommonAD = (dOn && onProofPages) || (currentPage === 4 && state.p4_b2ok);
+    labelCommonAD.style.display = showCommonAD ? 'block' : 'none';
+    labelCommonAD.setAttribute('x', (A.x+D.x)/2 + 10);
+    labelCommonAD.setAttribute('y', (A.y+D.y)/2);
+
+    // 합동 강조(색 분리)는 버튼을 눌렀을 때만
+    splitABD.style.display = state.showSplit ? 'block' : 'none';
+    splitACD.style.display = state.showSplit ? 'block' : 'none';
+
+    const angAB_A = Math.atan2(B.y-A.y, B.x-A.x);
+    const angAC_A = Math.atan2(C.y-A.y, C.x-A.x);
+    const angAD_A = Math.atan2(D.y-A.y, D.x-A.x);
+    arcBAD.setAttribute('d', describeArc(A.x, A.y, 22, angAB_A, angAD_A));
+    arcCAD.setAttribute('d', describeArc(A.x, A.y, 22, angAD_A, angAC_A));
+
+    // ∠BAD=∠CAD (이등분) × 표시
+    const showXMarks = (dOn && onProofPages) || (currentPage === 4 && state.p4_b3ok);
+    markXBAD.style.display = showXMarks ? 'block' : 'none';
+    markXCAD.style.display = showXMarks ? 'block' : 'none';
+    const bisBAD = bisectorAngle(angAB_A, angAD_A);
+    const bisCAD = bisectorAngle(angAD_A, angAC_A);
+    markXBAD.setAttribute('x', A.x + Math.cos(bisBAD)*16);
+    markXBAD.setAttribute('y', A.y + Math.sin(bisBAD)*16 + 4);
+    markXCAD.setAttribute('x', A.x + Math.cos(bisCAD)*16);
+    markXCAD.setAttribute('y', A.y + Math.sin(bisCAD)*16 + 4);
+
+    // revealed conclusion marks
+    // BD=CD, 직각 표시는 "3단계(결론 확인)"에서만 보여준다. 4단계에서는 해당 빈칸을 맞혔을 때만
+    const revealed = state.showRightAngle && currentPage === 3;
+    const showBDCD = revealed || (currentPage === 4 && state.p4_b6ok);
+    const showRightAngle = revealed || (currentPage === 4 && state.p4_b9ok);
+    rightAngleMark.style.display = (showRightAngle && dOn) ? 'block' : 'none';
+    tickBD.style.display = (showBDCD && dOn) ? 'block' : 'none';
+    tickCD.style.display = (showBDCD && dOn) ? 'block' : 'none';
+    rightAngleMark.setAttribute('d', `M ${D.x-14} ${D.y} L ${D.x-14} ${D.y-14} L ${D.x} ${D.y-14}`);
+    tickBD.setAttribute('d', tickPath(B, D, 2));
+    tickCD.setAttribute('d', tickPath(D, C, 2));
+
+    // ∠B=∠C, ∠ADB=∠ADC (대응각) ● 표시: 3단계에서 확인했을 때, 4단계에서는 해당 빈칸을 맞혔을 때만
+    const showCircBC = (state.showAngleMarkBC && currentPage === 3) || (currentPage === 4 && state.p4_b5ok);
+    const showCircD = (state.showAngleMarkD && currentPage === 3) || (currentPage === 4 && state.p4_b7ok);
+    markCircB.style.display = showCircBC ? 'block' : 'none';
+    markCircC.style.display = showCircBC ? 'block' : 'none';
+    markLabelADB.style.display = showCircD ? 'block' : 'none';
+    markLabelADC.style.display = showCircD ? 'block' : 'none';
+    const angDA_D = Math.atan2(A.y-D.y, A.x-D.x);
+    const angDB_D = Math.atan2(B.y-D.y, B.x-D.x);
+    const angDC_D = Math.atan2(C.y-D.y, C.x-D.x);
+    const bisADB = bisectorAngle(angDA_D, angDB_D);
+    const bisADC = bisectorAngle(angDA_D, angDC_D);
+    markLabelADB.setAttribute('x', D.x + Math.cos(bisADB)*40);
+    markLabelADB.setAttribute('y', D.y + Math.sin(bisADB)*40);
+    markLabelADC.setAttribute('x', D.x + Math.cos(bisADC)*40);
+    markLabelADC.setAttribute('y', D.y + Math.sin(bisADC)*40);
+
+    // length / angle labels
+    [labelAB, labelAC, labelBC, labelAngA, labelAngB, labelAngC, arcA, arcB, arcC].forEach(el=>{
+      el.style.display = state.showLabels ? 'block' : 'none';
+    });
+
+    const pAB = outwardPerp(A, B, C);
+    const midAB = {x:(A.x+B.x)/2, y:(A.y+B.y)/2};
+    labelAB.setAttribute('x', midAB.x + pAB.x*16);
+    labelAB.setAttribute('y', midAB.y + pAB.y*16);
+    lenAB.textContent = ` = ${(AB*SCALE).toFixed(1)}cm`;
+
+    const pAC = outwardPerp(A, C, B);
+    const midAC = {x:(A.x+C.x)/2, y:(A.y+C.y)/2};
+    labelAC.setAttribute('x', midAC.x + pAC.x*16);
+    labelAC.setAttribute('y', midAC.y + pAC.y*16);
+    lenAC.textContent = ` = ${(AC*SCALE).toFixed(1)}cm`;
+
+    labelBC.setAttribute('x', (B.x+C.x)/2);
+    labelBC.setAttribute('y', B.y + 26);
+    lenBC.textContent = ` = ${(BC*SCALE).toFixed(1)}cm`;
+
+    const angBC_B = Math.atan2(C.y-B.y, C.x-B.x);
+    const angBA_B = Math.atan2(A.y-B.y, A.x-B.x);
+    arcB.setAttribute('d', describeArc(B.x, B.y, 26, angBC_B, angBA_B));
+    const bisB = bisectorAngle(angBC_B, angBA_B);
+    labelAngB.setAttribute('x', B.x + Math.cos(bisB)*44);
+    labelAngB.setAttribute('y', B.y + Math.sin(bisB)*44);
+    labelAngB.textContent = `∠B=${angleBdeg.toFixed(1)}°`;
+
+    const angCB_C = Math.atan2(B.y-C.y, B.x-C.x);
+    const angCA_C = Math.atan2(A.y-C.y, A.x-C.x);
+    arcC.setAttribute('d', describeArc(C.x, C.y, 26, angCB_C, angCA_C));
+    const bisC = bisectorAngle(angCB_C, angCA_C);
+    labelAngC.setAttribute('x', C.x + Math.cos(bisC)*44);
+    labelAngC.setAttribute('y', C.y + Math.sin(bisC)*44);
+    labelAngC.textContent = `∠C=${angleCdeg.toFixed(1)}°`;
+
+    markCircB.setAttribute('cx', B.x + Math.cos(bisB)*34);
+    markCircB.setAttribute('cy', B.y + Math.sin(bisB)*34);
+    markCircC.setAttribute('cx', C.x + Math.cos(bisC)*34);
+    markCircC.setAttribute('cy', C.y + Math.sin(bisC)*34);
+
+    arcA.setAttribute('d', describeArc(A.x, A.y, 30, angAB_A, angAC_A));
+    const bisA = bisectorAngle(angAB_A, angAC_A);
+    labelAngA.setAttribute('x', A.x + Math.cos(bisA)*50);
+    labelAngA.setAttribute('y', A.y + Math.sin(bisA)*50);
+    labelAngA.textContent = `∠A=${angleAdeg.toFixed(1)}°`;
+
+    statBar.innerHTML =
+      `<span>∠A <b>${angleAdeg.toFixed(1)}°</b></span>` +
+      `<span>∠B <b>${angleBdeg.toFixed(1)}°</b></span>` +
+      `<span>∠C <b>${angleCdeg.toFixed(1)}°</b></span>` +
+      `<span><span class="seg">AB</span> <b>${(AB*SCALE).toFixed(1)}cm</b></span>` +
+      `<span><span class="seg">AC</span> <b>${(AC*SCALE).toFixed(1)}cm</b></span>` +
+      `<span><span class="seg">BC</span> <b>${(BC*SCALE).toFixed(1)}cm</b></span>`;
+  }
+
+  // ---------- drag handling ----------
+  function svgPoint(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    return pt.matrixTransform(ctm);
+  }
+  let dragging = false;
+  vertexA.addEventListener('pointerdown', (e)=>{
+    dragging = true;
+    state.hasDragged = true;
+    vertexA.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  vertexA.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    const p = svgPoint(e);
+    let y = Math.max(MIN_Y, Math.min(MAX_Y, p.y));
+    state.A.y = y;
+    update();
+  });
+  vertexA.addEventListener('pointerup', ()=>{ dragging = false; });
+  vertexA.addEventListener('pointercancel', ()=>{ dragging = false; });
+
+  // ---------- toolbar buttons ----------
+  const btnLabels = document.getElementById('btnLabels');
+  const btnAD = document.getElementById('btnAD');
+  const btnSplit = document.getElementById('btnSplit');
+  const btnReset = document.getElementById('btnReset');
+
+  function syncButtons(){
+    btnLabels.classList.toggle('active', state.showLabels);
+    btnLabels.setAttribute('aria-pressed', state.showLabels);
+    btnAD.classList.toggle('active', state.showAD);
+    btnAD.setAttribute('aria-pressed', state.showAD);
+    btnSplit.classList.toggle('active', state.showSplit);
+    btnSplit.classList.toggle('split', state.showSplit);
+    btnSplit.setAttribute('aria-pressed', state.showSplit);
+  }
+
+  btnLabels.addEventListener('click', ()=>{
+    state.showLabels = !state.showLabels;
+    syncButtons(); update();
+  });
+  btnAD.addEventListener('click', ()=>{
+    state.showAD = !state.showAD;
+    if(!state.showAD) state.showSplit = false;
+    syncButtons(); update();
+    if(state.showAD){
+      document.getElementById('motivateBlock').classList.add('show');
+      document.getElementById('drawPrompt').innerHTML = '✅ 삼각형 <b>ABD</b>와 삼각형 <b>ACD</b>가 만들어졌어요! 이제 아래 질문에 답해보세요.';
+    }
+  });
+  btnSplit.addEventListener('click', ()=>{
+    state.showSplit = !state.showSplit;
+    if(state.showSplit) state.showAD = true;
+    syncButtons(); update();
+  });
+  btnReset.addEventListener('click', ()=>{
+    state.A = {x:320, y:150};
+    state.showLabels = false;
+    state.showAD = false;
+    state.showSplit = false;
+    syncButtons(); update();
+  });
+
+  // ================= 활동 페이지 전환 =================
+  const unlocked = {1:true, 2:false, 3:false, 4:false};
+  let currentPage = 1;
+
+  function showPage(n){
+    currentPage = n;
+    if(typeof syncProgress === 'function') syncProgress(true);
+    [1,2,3,4].forEach(i=>{
+      document.getElementById('page'+i).style.display = (i===n) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.step-tab').forEach(tab=>{
+      const i = Number(tab.dataset.goto);
+      tab.classList.toggle('current', i===n);
+    });
+    if(n === 4){
+      // 4단계: 정답을 미리 보여주는 표시(공통변 라벨, 합동 강조 색/눈금)를 지우고
+      // 증명에 필요한 깨끗한 기본 그림(△ABC + 보조선 AD)만 남긴다
+      state.showSplit = false;
+      state.showAD = true;
+      state.showLabels = false;
+      if(typeof P4_LIVE !== 'undefined'){
+        P4_LIVE.forEach(([bid, flag])=>{
+          const inp = document.querySelector(`#page4 .blank[data-id="${bid}"]`);
+          state[flag] = isBlankCorrect(bid, inp.value);
+        });
+      }
+      syncButtons();
+    }
+    btnSplit.disabled = (n === 4);
+    update();
+    document.getElementById('page'+n).scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function unlockStep(n){
+    unlocked[n] = true;
+    const tab = document.querySelector('.step-tab[data-goto="'+n+'"]');
+    tab.classList.remove('locked');
+    tab.classList.add('done');
+  }
+
+  document.querySelectorAll('.step-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      const i = Number(tab.dataset.goto);
+      if(unlocked[i]) showPage(i);
+    });
+  });
+  document.getElementById('next1').addEventListener('click', ()=> showPage(2));
+  document.getElementById('prev2').addEventListener('click', ()=> showPage(1));
+  document.getElementById('next2').addEventListener('click', ()=> showPage(3));
+  document.getElementById('prev3').addEventListener('click', ()=> showPage(2));
+  document.getElementById('next3').addEventListener('click', ()=> showPage(4));
+  document.getElementById('prev4').addEventListener('click', ()=> showPage(3));
+
+  // ---------- 활동 1 ----------
+  const recordBody = document.getElementById('recordBody');
+  document.getElementById('btnRecord').addEventListener('click', ()=>{
+    if(recordBody.children.length >= 5) return;
+    const n = recordBody.children.length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${n}</td><td>${lastMeasure.angleB.toFixed(1)}°</td><td>${lastMeasure.angleC.toFixed(1)}°</td>`;
+    recordBody.appendChild(tr);
+  });
+  document.getElementById('btnClearRecord').addEventListener('click', ()=>{
+    recordBody.innerHTML = '';
+  });
+
+  document.getElementById('checkStep1').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="q1"]:checked');
+    const fb = document.getElementById('feedback1');
+    if(!sel){
+      fb.className = 'feedback warn';
+      fb.textContent = '⚠️ 먼저 답을 하나 선택해주세요.';
+      return;
+    }
+    if(sel.value === 'same'){
+      fb.className = 'feedback success';
+      fb.textContent = '✅ 정답이에요! 꼭짓점 A를 어디로 옮기든 ∠B와 ∠C는 항상 같습니다. 이제 아래 문장을 완성해서 우리가 관찰한 사실을 정리해봅시다.';
+      document.getElementById('concludeBlock1').classList.add('show');
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 표에 기록한 값들을 다시 비교해보세요. ∠B와 ∠C 사이에 어떤 규칙이 있나요?';
+    }
+  });
+
+  document.getElementById('checkConclude1').addEventListener('click', ()=>{
+    const val = document.getElementById('blank1').value;
+    const fb = document.getElementById('feedbackConclude1');
+    if(val === '?'){
+      fb.className = 'feedback warn';
+      fb.textContent = '⚠️ 빈칸에 들어갈 말을 선택해주세요.';
+      return;
+    }
+    if(val === 'base'){
+      fb.className = 'feedback success';
+      fb.textContent = '✅ 정확해요! "이등변삼각형에서 두 밑각의 크기는 같다." 이 성질을 잘 정리했어요. 이제 2단계에서 왜 그런지 직접 증명해봅시다!';
+      unlockStep(2);
+      document.getElementById('next1').disabled = false;
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. ∠B와 ∠C는 밑변 BC와 맞닿은 각이에요. 꼭지각은 어느 위치의 각이었나요?';
+    }
+  });
+
+  // ---------- 활동 2 ----------
+  let q2aDone = false, q2bDone = false;
+  function maybeRevealSas(){
+    if(q2aDone && q2bDone){
+      document.getElementById('sasBlock').classList.add('show');
+    }
+  }
+
+  document.getElementById('checkQ2a').addEventListener('click', ()=>{
+    const boxes = document.querySelectorAll('#motivateBlock .q2a');
+    let allCorrect = true;
+    boxes.forEach(b=>{ if(b.checked !== (b.dataset.correct === 'true')) allCorrect = false; });
+    const fb = document.getElementById('feedbackQ2a');
+    if(allCorrect){
+      fb.className = 'feedback success';
+      fb.innerHTML = '✅ 맞아요! 두 삼각형이 합동이면 대응변과 대응각이 각각 같아지므로 ∠B=∠C, <span class="seg">BD</span>=<span class="seg">CD</span> 라는 사실을 알 수 있어요.';
+      q2aDone = true;
+      maybeRevealSas();
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 확인해보세요. 합동인 두 삼각형에서는 "대응하는" 변과 각만 각각 같아진다는 점에 주의하세요.';
+    }
+  });
+
+  document.getElementById('checkQ2b').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="q2b"]:checked');
+    const fb = document.getElementById('feedbackQ2b');
+    if(!sel){
+      fb.className = 'feedback warn';
+      fb.textContent = '⚠️ 답을 하나 선택해주세요.';
+      return;
+    }
+    if(sel.value === 'congruent'){
+      fb.className = 'feedback success';
+      fb.textContent = '✅ 맞아요! 그래서 지금부터 삼각형 ABD와 삼각형 ACD가 합동임을 직접 증명해볼 거예요.';
+      q2bDone = true;
+      maybeRevealSas();
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 각도기나 자로 재는 것은 "측정"일 뿐 "증명"이 아니에요. 논리적으로 같음을 보이려면 어떻게 해야 할까요?';
+    }
+  });
+
+  function updateLiveHint(){
+    const liveHint2 = document.getElementById('liveHint2');
+    const wrongChecked = Array.from(document.querySelectorAll('#sasBlock .cond-check'))
+      .filter(b => b.checked && b.dataset.correct === 'false');
+    if(wrongChecked.length){
+      liveHint2.textContent = '⚠️ ' + wrongChecked[wrongChecked.length-1].dataset.reason;
+      liveHint2.style.display = 'block';
+    }else{
+      liveHint2.style.display = 'none';
+    }
+  }
+  document.querySelectorAll('#sasBlock .cond-check').forEach(b=>{
+    b.addEventListener('change', updateLiveHint);
+  });
+
+  let attempts2 = 0;
+  document.getElementById('checkStep2').addEventListener('click', ()=>{
+    const fb = document.getElementById('feedback2');
+    if(!state.showAD){
+      fb.className = 'feedback warn';
+      fb.innerHTML = '⚠️ 먼저 캔버스 위쪽 [✂️ 각 A의 이등분선 <span class="seg">AD</span> 그리기] 버튼을 눌러주세요.';
+      return;
+    }
+    attempts2++;
+    const boxes = document.querySelectorAll('#sasBlock .cond-check');
+    let allCorrect = true;
+    boxes.forEach(b=>{
+      const correct = b.dataset.correct === 'true';
+      const chosen = b.checked;
+      const label = b.closest('label');
+      label.classList.remove('right','wrong');
+      if(chosen !== correct) allCorrect = false;
+      if(attempts2 >= 2){
+        label.classList.add(correct ? 'right' : 'wrong');
+      }
+    });
+    if(allCorrect){
+      fb.className = 'feedback success';
+      fb.innerHTML = '✅ 정확해요! <span class="seg">AB</span>=<span class="seg">AC</span>(변), <span class="seg">AD</span>=<span class="seg">AD</span>(공통변), ∠BAD=∠CAD(끼인각) 이 세 가지가 우리가 이미 알고 있는 조건이에요.';
+      document.getElementById('congruenceTypeBlock').classList.add('show');
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = attempts2 >= 2
+        ? '❌ 초록색으로 표시된 세 가지 조건만 SAS 합동의 근거가 돼요. 다시 선택해보세요.'
+        : '❌ 다시 확인해보세요. 힌트: SAS 합동은 "두 변과 그 끼인각"이 각각 같아야 성립해요.';
+    }
+  });
+
+  document.getElementById('checkCongType').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="congType"]:checked');
+    const fb = document.getElementById('feedbackCongType');
+    if(!sel){
+      fb.className = 'feedback warn';
+      fb.textContent = '⚠️ 답을 하나 선택해주세요.';
+      return;
+    }
+    if(sel.value === 'SAS'){
+      fb.className = 'feedback success';
+      fb.innerHTML = '✅ 맞아요! 두 변(<span class="seg">AB</span>=<span class="seg">AC</span>, <span class="seg">AD</span>=<span class="seg">AD</span>)과 그 끼인각(∠BAD=∠CAD)이 각각 같으므로 △ABD ≡ △ACD (SAS 합동)입니다.';
+      state.showSplit = true;
+      syncButtons();
+      update();
+      unlockStep(3);
+      document.getElementById('next2').disabled = false;
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 방금 고른 조건은 "두 변"과 "그 사이에 낀 각"이었어요. 이 조합에 맞는 합동 조건은 무엇일까요?';
+    }
+  });
+
+  // ---------- 활동 3 ----------
+  document.getElementById('rel1').addEventListener('change', function(){
+    document.getElementById('concludeRel1').classList.toggle('show', this.value === '=');
+    state.showAngleMarkBC = (this.value === '=');
+    update();
+  });
+  document.getElementById('rel3').addEventListener('change', function(){
+    document.getElementById('concludeRel3').classList.toggle('show', this.value === '=');
+    document.getElementById('finalConclude').classList.remove('show');
+    state.showAngleMarkD = (this.value === '=');
+    update();
+  });
+  document.getElementById('blank3').addEventListener('input', function(){
+    document.getElementById('finalConclude').classList.toggle('show', this.value.trim() === '90');
+  });
+
+  document.getElementById('checkStep3').addEventListener('click', ()=>{
+    const s1 = document.getElementById('rel1').value;
+    const s2 = document.getElementById('rel2').value;
+    const s3 = document.getElementById('rel3').value;
+    const blank2 = document.getElementById('blank2').value;
+    const blank3 = document.getElementById('blank3').value.trim();
+    const fb = document.getElementById('feedback3');
+    const ok = s1 === '=' && s2 === '=' && s3 === '=' && blank2 === 'base' && blank3 === '90';
+    if(ok){
+      fb.className = 'feedback success';
+      fb.innerHTML = '🎉 완벽해요! 합동인 도형의 대응변, 대응각은 각각 같으므로 ∠B=∠C, <span class="seg">BD</span>=<span class="seg">CD</span> 이고, ∠ADB=∠ADC 이면서 두 각의 합이 180°이므로 각각 90°입니다. 즉, <span class="seg">AD</span>는 <span class="seg">BC</span>를 수직이등분합니다!';
+      state.showRightAngle = true;
+      update();
+      document.getElementById('summaryBox').classList.add('show');
+      unlockStep(4);
+      document.getElementById('next3').disabled = false;
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 아직 정확하지 않아요. 합동인 두 삼각형의 대응변과 대응각의 관계를 다시 생각해보세요.';
+    }
+  });
+
+  // ---------- 활동 4 : 도움 없이 다시 증명하기 ----------
+  const PROOF_ANSWERS = {
+    b1:['AC'], b2:['AD'], b3:['CAD'], b4:['SAS'],
+    b5:['C'], b6:['CD','DC'], b7:['ADC'], b8:['180'],
+    b9:['90'], b10:['BC'], b11:['수직이등분']
+  };
+  function normalizeAns(s){
+    return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
+  }
+  function isBlankCorrect(id, raw){
+    const v = normalizeAns(raw);
+    if(!v) return false;
+    if(id === 'b4') return v.indexOf('SAS') >= 0;
+    if(id === 'b11') return v.indexOf('수직') >= 0 && v.indexOf('이등분') >= 0;
+    return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
+  }
+
+  // 정답을 입력하는 즉시 캔버스에 눈금/×/● 기호가 나타난다
+  const P4_LIVE = [['b1','p4_b1ok'], ['b2','p4_b2ok'], ['b3','p4_b3ok'], ['b5','p4_b5ok'], ['b6','p4_b6ok'], ['b7','p4_b7ok'], ['b9','p4_b9ok']];
+  P4_LIVE.forEach(([bid, flag])=>{
+    document.querySelector(`#page4 .blank[data-id="${bid}"]`).addEventListener('input', function(){
+      state[flag] = isBlankCorrect(bid, this.value);
+      update();
+    });
+  });
+
+  document.getElementById('checkProof').addEventListener('click', ()=>{
+    const inputs = document.querySelectorAll('#page4 .blank');
+    let correctCount = 0;
+    inputs.forEach(inp=>{
+      const ok = isBlankCorrect(inp.dataset.id, inp.value);
+      inp.classList.toggle('correct', ok);
+      inp.classList.toggle('wrong', !ok);
+      if(ok) correctCount++;
+    });
+    const total = inputs.length;
+    const fb = document.getElementById('feedbackProof');
+    if(correctCount === total){
+      fb.className = 'feedback success';
+      fb.textContent = `🎉 ${total}개 중 ${correctCount}개 정답! 증명을 완벽하게 완성했습니다.`;
+      document.getElementById('proofDone').classList.add('show');
+    }else{
+      fb.className = 'feedback warn';
+      fb.textContent = `${total}개 중 ${correctCount}개 정답이에요. 빨간색으로 표시된 빈칸을 다시 채워보세요.`;
+      document.getElementById('proofDone').classList.remove('show');
+    }
+  });
+  document.getElementById('resetProof').addEventListener('click', ()=>{
+    document.querySelectorAll('#page4 .blank').forEach(inp=>{
+      inp.value = '';
+      inp.classList.remove('correct','wrong');
+    });
+    const fb = document.getElementById('feedbackProof');
+    fb.className = 'feedback';
+    fb.textContent = '';
+    document.getElementById('proofDone').classList.remove('show');
+    P4_LIVE.forEach(([bid, flag])=>{ state[flag] = false; });
+    update();
+  });
+  document.getElementById('toggleWordbank').addEventListener('click', ()=>{
+    document.getElementById('wordbank').classList.toggle('show');
+  });
+
+  document.getElementById('restartAll').addEventListener('click', ()=>{
+    location.reload();
+  });
+
+  // ================= 로그인 / Firebase / 관리자 / 이탈 감지 =================
+  const LESSON_ID = 'isosceles1';
+  const STAGE_NAMES = {1:'1.관찰하기', 2:'2.증명 설계', 3:'3.결론 확인', 4:'4.최종 증명'};
+  const PW_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyAEFxLqfhcl6RJlS3ju9InTx9AbFHQ_Yfg",
+      authDomain:"climate-lesson.firebaseapp.com",
+      projectId:"climate-lesson",
+      storageBucket:"climate-lesson.firebasestorage.app",
+      messagingSenderId:"699342489530",
+      appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('Firebase init:', e); }
+
+  let isAdmin = false;
+  let _studentInfo = null;
+  let _docId = null;
+  let _syncTimer = null;
+  let _awayCount = 0;
+  let _adminUnsub = null;
+
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  async function hashPw(pw){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  window.showStudentForm = function(){
+    document.getElementById('roleSelect').style.display = 'none';
+    document.getElementById('studentForm').classList.add('show');
+    document.getElementById('loginName').focus();
+  };
+  window.showTeacherForm = function(){
+    document.getElementById('roleSelect').style.display = 'none';
+    document.getElementById('teacherForm').classList.add('show');
+    document.getElementById('teacherPw').focus();
+  };
+  window.backToRole = function(){
+    document.getElementById('studentForm').classList.remove('show');
+    document.getElementById('teacherForm').classList.remove('show');
+    document.getElementById('studentLoginError').style.display = 'none';
+    document.getElementById('teacherLoginError').style.display = 'none';
+    document.getElementById('roleSelect').style.display = 'block';
+  };
+
+  window.studentLogin = function(){
+    const grade = document.getElementById('loginGrade').value;
+    const cls = document.getElementById('loginClass').value;
+    const num = document.getElementById('loginNum').value;
+    const name = document.getElementById('loginName').value.trim();
+    const err = document.getElementById('studentLoginError');
+    if(!grade || !cls || !num || !name){
+      err.textContent = '학년, 반, 번호, 이름을 모두 입력해주세요!';
+      err.style.display = 'block';
+      return;
+    }
+    err.style.display = 'none';
+    _studentInfo = {grade, cls, num, name};
+    _docId = `${LESSON_ID}_${todayStr()}_${cls}_${String(num).padStart(2,'0')}`;
+    enterApp(false);
+  };
+
+  window.teacherLogin = async function(){
+    const pw = document.getElementById('teacherPw').value;
+    const err = document.getElementById('teacherLoginError');
+    const hash = await hashPw(pw);
+    if(hash === PW_HASH){
+      err.style.display = 'none';
+      enterApp(true);
+    }else{
+      err.style.display = 'block';
+      document.getElementById('teacherPw').value = '';
+      document.getElementById('teacherPw').focus();
+    }
+  };
+
+  function enterApp(admin){
+    isAdmin = admin;
+    document.getElementById('loginScreen').style.display = 'none';
+    if(admin){
+      document.getElementById('adminScreen').style.display = 'block';
+      startAdminWatch();
+    }else{
+      document.getElementById('appRoot').style.display = 'block';
+      document.getElementById('sessionBar').style.display = 'flex';
+      document.getElementById('sessionName').textContent = `${_studentInfo.grade} ${_studentInfo.cls} ${_studentInfo.num}번 ${_studentInfo.name}`;
+      setupAwayDetection();
+      syncProgress(true);
+    }
+  }
+
+  function syncProgress(immediate){
+    if(!_db || !_studentInfo || isAdmin) return;
+    clearTimeout(_syncTimer);
+    const write = ()=>{
+      _db.collection('progress').doc(_docId).set({
+        lesson: LESSON_ID,
+        date: todayStr(),
+        grade: _studentInfo.grade,
+        cls: _studentInfo.cls,
+        num: parseInt(_studentInfo.num),
+        name: _studentInfo.name,
+        stage: (typeof currentPage !== 'undefined') ? currentPage : 1,
+        awayCount: _awayCount,
+        isAway: document.hidden,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true}).catch(e=>console.warn('sync:', e));
+    };
+    if(immediate){ write(); } else { _syncTimer = setTimeout(write, 1200); }
+  }
+
+  function setupAwayDetection(){
+    function onAway(){
+      _awayCount++;
+      document.getElementById('awayWarning').classList.add('show');
+      syncProgress(true);
+    }
+    function onBack(){
+      syncProgress(true);
+    }
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.hidden) onAway(); else onBack();
+    });
+    window.addEventListener('blur', onAway);
+    window.addEventListener('focus', onBack);
+    setInterval(()=>syncProgress(true), 20000); // 20초마다 하트비트
+  }
+  window.dismissWarning = function(){
+    document.getElementById('awayWarning').classList.remove('show');
+    syncProgress(true);
+  };
+
+  function startAdminWatch(){
+    if(!_db){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171">Firebase 연결 실패</td></tr>';
+      return;
+    }
+    const today = todayStr();
+    _adminUnsub = _db.collection('progress')
+      .where('lesson','==', LESSON_ID)
+      .where('date','==', today)
+      .onSnapshot(snap=>{
+        const rows = [];
+        snap.forEach(d=>rows.push(d.data()));
+        rows.sort((a,b)=> String(a.cls||'').localeCompare(String(b.cls||'')) || ((a.num||0)-(b.num||0)));
+        renderAdminTable(rows);
+      }, err=>{
+        document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="6" style="color:#f87171">오류: ${err.message}</td></tr>`;
+      });
+  }
+  function renderAdminTable(rows){
+    const total = rows.length;
+    const awayNow = rows.filter(r=>r.isAway).length;
+    document.getElementById('adminSummary').textContent = `오늘 접속 ${total}명 · 현재 이탈 ${awayNow}명 (실시간)`;
+    if(!rows.length){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">아직 접속한 학생이 없어요.</td></tr>';
+      return;
+    }
+    document.getElementById('adminTableBody').innerHTML = rows.map(r=>{
+      const lastMs = (r.lastUpdated && r.lastUpdated.toDate) ? r.lastUpdated.toDate().getTime() : 0;
+      const staleMin = lastMs ? Math.max(0, Math.round((Date.now()-lastMs)/60000)) : null;
+      const status = r.isAway ? '⚠️ 다른 화면' : '✅ 정상';
+      return `<tr class="${r.isAway?'away':''}">
+        <td>${r.grade||''} ${r.cls||''} ${String(r.num).padStart(2,'0')}번</td>
+        <td>${r.name||''}</td>
+        <td>${STAGE_NAMES[r.stage]||('?'+r.stage)}</td>
+        <td>${status}</td>
+        <td>${r.awayCount||0}회</td>
+        <td>${staleMin!=null ? staleMin+'분 전' : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+  window.adminLogout = function(){
+    if(_adminUnsub) _adminUnsub();
+    location.reload();
+  };
+
+  // ---------- init ----------
+  syncButtons();
+  update();
+})();
+</script>
+</body>
+</html>
