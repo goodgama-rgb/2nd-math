@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이등변삼각형의 성질 — 두 각이 같으면 이등변삼각형</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --rose:#db2777;--rose-l:#fce7f3;--rose-ll:#fdf2f8;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --yellow-l:#fef9c3;--yellow:#854d0e;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--rose-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+
+.hdr{background:var(--rose);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-badge{background:rgba(255,255,255,.2);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:.06em}
+.hdr-title{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.timer{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.timer.warn{color:#f97316}
+.timer.danger{color:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.name-wrap{display:flex;gap:6px;align-items:center}
+.name-wrap label{font-size:12px;opacity:.7}
+.name-wrap input{border:none;border-radius:6px;padding:5px 9px;font-size:13px;width:90px;color:var(--ink);background:rgba(255,255,255,.9)}
+
+.prog-bar{background:#fff;border-bottom:1px solid #f5d6e8;padding:0 24px}
+.prog-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:0}
+.phase-tab{flex:1;padding:11px 8px 9px;font-size:12px;font-weight:600;color:var(--ink3);border-bottom:3px solid transparent;text-align:center;cursor:default;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.phase-tab.active{color:var(--rose);border-bottom-color:var(--rose)}
+.phase-tab.done{color:var(--green);border-bottom-color:var(--green)}
+.phase-num{width:18px;height:18px;border-radius:50%;background:#f4e0ec;color:var(--ink2);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.phase-tab.active .phase-num{background:var(--rose);color:#fff}
+.phase-tab.done .phase-num{background:var(--green);color:#fff}
+
+.streak-bar{background:var(--rose-ll);border-bottom:1px solid #f5d6e8;padding:8px 24px}
+.streak-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.streak-label{font-size:12px;color:var(--ink2);font-weight:600}
+.streak-dots{display:flex;gap:6px}
+.sdot{width:14px;height:14px;border-radius:50%;background:#f3d2e4;transition:all .3s}
+.sdot.hit{background:var(--green)}
+
+.main{max-width:720px;margin:0 auto;padding:24px 16px}
+
+.level-screen{text-align:center;padding:40px 20px}
+.level-screen h2{font-size:24px;font-weight:700;margin-bottom:8px}
+.level-screen p{font-size:14px;color:var(--ink2);line-height:1.7;margin-bottom:32px}
+.level-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:480px;margin:0 auto}
+.level-card{background:#fff;border:2px solid #f0d8e6;border-radius:var(--r);padding:24px 20px;cursor:pointer;transition:all .2s;text-align:left}
+.level-card:hover{border-color:var(--rose);box-shadow:var(--shadow)}
+.lc-icon{font-size:32px;margin-bottom:10px}
+.lc-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.lc-desc{font-size:13px;color:var(--ink2);line-height:1.6}
+.lc-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:8px;font-weight:600}
+.tag1{background:#dbeafe;color:#1d4ed8}
+.tag2{background:#fde8d8;color:#b45309}
+
+.concept{background:var(--rose-ll);border-left:3px solid var(--rose);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink);line-height:1.8}
+.concept strong{color:var(--rose)}
+
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #f0d8e6;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.qtop{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.qnum{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--rose-l);color:var(--rose)}
+.qtype{font-size:10px;padding:2px 7px;border-radius:20px;background:#f0f0f8;color:var(--ink3)}
+.qtext{font-size:15px;font-weight:600;line-height:1.7;margin-bottom:4px}
+.qtext .ol{text-decoration:overline}
+.qdesc{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:14px}
+.qdesc .ol{text-decoration:overline}
+.formula{background:#fff8f0;border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:9px 14px;margin-bottom:14px;font-size:13px;color:var(--ink);line-height:1.7}
+.formula strong{color:var(--orange)}
+
+.hint-box{margin-bottom:14px}
+.hint-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px dashed #e0b0c8;color:var(--rose);font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit}
+.hint-toggle-btn:hover{background:var(--rose-ll);border-color:var(--rose)}
+.hint-used-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink3);font-weight:600}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-card{background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px 22px;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+.modal-card p{font-size:14px;line-height:1.8;color:var(--ink);margin-bottom:20px}
+.modal-btns{display:flex;gap:10px}
+.modal-btn{flex:1;padding:11px 10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid transparent}
+.modal-btn-no{background:var(--ink);color:#fff}
+.modal-btn-no:hover{background:#111122}
+.modal-btn-yes{background:#fff;border-color:#e0e0ee;color:var(--ink2)}
+.modal-btn-yes:hover{background:#f4f4f8}
+
+.fig-wrap{display:flex;justify-content:center;margin-bottom:14px}
+canvas.fig{background:#fff;border-radius:8px}
+
+.input-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.eq-prefix{font-size:16px;font-weight:700;color:var(--rose)}
+.eq-input{border:1.5px solid #d0d0e0;border-radius:8px;padding:9px 12px;font-size:16px;font-weight:600;width:90px;text-align:center;color:var(--ink);font-family:inherit}
+.eq-input:focus{outline:none;border-color:var(--rose)}
+.eq-suffix{font-size:16px;font-weight:700;color:var(--ink)}
+.submit-btn{padding:10px 24px;border-radius:8px;background:var(--rose);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.submit-btn:hover{background:#be185d}
+
+.fb{border-radius:8px;padding:12px 16px;margin-top:12px;font-size:14px;line-height:1.7;display:none}
+.fb.show{display:block}
+.fb-correct{background:var(--green-ll);border-left:3px solid var(--green);color:#14532d}
+.fb-wrong{background:var(--orange-l);border-left:3px solid var(--orange);color:#7c2d12}
+.fb-hint{background:var(--yellow-l);border-left:3px solid #ca8a04;color:var(--yellow)}
+.fb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.em{font-weight:700;color:var(--rose)}
+
+.next-btn{padding:10px 24px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;display:none;font-family:inherit;margin-top:6px}
+.next-btn:hover{background:#15803d}
+.next-btn.show{display:inline-block}
+
+.complete-wrap{text-align:center;padding:48px 20px}
+.complete-icon{font-size:56px;margin-bottom:16px}
+.complete-wrap h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.complete-wrap p{font-size:14px;color:var(--ink2);line-height:1.8}
+.score-box{display:inline-block;background:var(--green-l);border:2px solid var(--green);border-radius:12px;padding:16px 32px;margin:18px 0}
+.sc-num{font-size:42px;font-weight:700;color:var(--green)}
+.sc-label{font-size:13px;color:var(--green)}
+.restart-btn{padding:11px 28px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+
+.screen{display:none}
+.screen.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="hdr-badge">수학</span>
+  <span class="hdr-title">이등변삼각형의 성질 — 두 각이 같으면 이등변삼각형</span>
+  <div class="hdr-right">
+    <div class="timer" id="timerEl">10:00</div>
+    <div class="name-wrap"><label>이름</label><input id="sname" type="text" placeholder="이름 입력"></div>
+  </div>
+</div>
+
+<div class="prog-bar" id="progBar" style="display:none">
+  <div class="prog-inner">
+    <div class="phase-tab active" id="ptab0"><span class="phase-num">A</span>각↔변 관계</div>
+    <div class="phase-tab" id="ptab1"><span class="phase-num">B</span>이등변삼각형 2개</div>
+  </div>
+</div>
+
+<div class="streak-bar" id="streakBar" style="display:none">
+  <div class="streak-inner">
+    <span class="streak-label">연속 정답 (오답 없이)</span>
+    <div class="streak-dots"><span class="sdot" id="sd0"></span><span class="sdot" id="sd1"></span></div>
+    <span style="font-size:12px;color:var(--ink2)" id="streakMsg">오답 없이 2문제 연속 → 다음 유형!</span>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="main screen active" id="scLevel">
+  <div class="level-screen">
+    <h2>나의 레벨을 선택하세요</h2>
+    <p>삼각형에서 두 각의 크기가 같으면 이등변삼각형이 된다는 성질(역)을 이용해<br>x의 값을 구하는 연습이에요. 2문제 연속 정답이면 다음 단계로!</p>
+    <div class="level-cards">
+      <div class="level-card" onclick="startLevel(1)">
+        <div class="lc-icon">🌱</div>
+        <div class="lc-title">레벨 1</div>
+        <div class="lc-desc">교과서 문제와 같은 유형.<br>숫자만 달라지는 문제를 풀어봐요.</div>
+        <span class="lc-tag tag1">기본</span>
+      </div>
+      <div class="level-card" onclick="startLevel(2)">
+        <div class="lc-icon">🔥</div>
+        <div class="lc-title">레벨 2</div>
+        <div class="lc-desc">숫자는 같지만, 각과 변 중 무엇이<br>주어지고 무엇을 구하는지 바뀌어요!</div>
+        <span class="lc-tag tag2">심화</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE A -->
+<div class="main screen" id="scA">
+  <div class="concept">
+    <strong>이등변삼각형의 성질(역):</strong> 삼각형에서 두 각의 크기가 같으면, 그 두 각과 마주보는 두 변의 길이도 같아요!
+    (예: ∠A=∠B이면 <span class="ol">BC</span>=<span class="ol">AC</span>)
+  </div>
+  <div class="qcard" id="qA">
+    <div class="qtop"><span class="qnum" id="qAnumBadge">Q1</span><span class="qtype" id="qAtype">각→변</span></div>
+    <div class="qtext">다음 그림에서 x의 값을 구하시오.</div>
+    <div class="qdesc" id="qAdesc"></div>
+    <div class="hint-box">
+      <button class="hint-toggle-btn" id="hintBtnA" onclick="requestHint('A')">💡 힌트 보기</button>
+      <span class="hint-used-tag" id="hintTagA" style="display:none">💡 힌트를 열람했어요</span>
+      <div class="formula" id="qAformula" style="display:none"></div>
+    </div>
+    <div class="fig-wrap"><canvas id="figA" class="fig" width="360" height="300"></canvas></div>
+    <div class="input-row">
+      <span class="eq-prefix" id="aPrefix">x =</span>
+      <input type="number" class="eq-input" id="aVal" placeholder="?" onkeydown="if(event.key==='Enter')checkA()">
+      <span class="eq-suffix" id="aSuffix">cm</span>
+      <button class="submit-btn" onclick="checkA()">확인</button>
+    </div>
+    <div class="fb fb-wrong" id="fwA"><div class="fb-label">틀렸어요</div><span id="fwAtxt"></span></div>
+    <div class="fb fb-hint" id="fhA"><div class="fb-label">힌트</div><span id="fhAtxt"></span></div>
+    <div class="fb fb-correct" id="fcA"><div class="fb-label">정답!</div><span id="fcAtxt"></span></div>
+    <div style="margin-top:8px"><button class="next-btn" id="nbA" onclick="nextA()">다음 문제 →</button></div>
+  </div>
+</div>
+
+<!-- PHASE B -->
+<div class="main screen" id="scB">
+  <div class="concept">
+    <strong>두 개의 이등변삼각형:</strong> 그림에서 밑각이 같은 삼각형을 찾으면 각각 이등변삼각형이 돼요.
+    두 삼각형의 관계(외각 등)를 이용해 각 또는 변의 값을 구해요.
+  </div>
+  <div class="qcard" id="qB">
+    <div class="qtop"><span class="qnum" id="qBnumBadge">Q1</span><span class="qtype" id="qBtype">이등변삼각형 2개</span></div>
+    <div class="qtext">다음 그림에서 x의 값을 구하시오.</div>
+    <div class="qdesc" id="qBdesc"></div>
+    <div class="hint-box">
+      <button class="hint-toggle-btn" id="hintBtnB" onclick="requestHint('B')">💡 힌트 보기</button>
+      <span class="hint-used-tag" id="hintTagB" style="display:none">💡 힌트를 열람했어요</span>
+      <div class="formula" id="qBformula" style="display:none"></div>
+    </div>
+    <div class="fig-wrap"><canvas id="figB" class="fig" width="360" height="300"></canvas></div>
+    <div class="input-row">
+      <span class="eq-prefix" id="bPrefix">x =</span>
+      <input type="number" class="eq-input" id="bVal" placeholder="?" onkeydown="if(event.key==='Enter')checkB()">
+      <span class="eq-suffix" id="bSuffix">cm</span>
+      <button class="submit-btn" onclick="checkB()">확인</button>
+    </div>
+    <div class="fb fb-wrong" id="fwB"><div class="fb-label">틀렸어요</div><span id="fwBtxt"></span></div>
+    <div class="fb fb-hint" id="fhB"><div class="fb-label">힌트</div><span id="fhBtxt"></span></div>
+    <div class="fb fb-correct" id="fcB"><div class="fb-label">정답!</div><span id="fcBtxt"></span></div>
+    <div style="margin-top:8px"><button class="next-btn" id="nbB" onclick="nextB()">다음 문제 →</button></div>
+  </div>
+</div>
+
+<!-- 힌트 열람 확인 모달 -->
+<div class="modal-overlay" id="hintModal">
+  <div class="modal-card">
+    <p>한 번 더 생각해보세요. 스스로 문제를 풀었을 때 더 학습 효과가 좋습니다.<br><br>
+    또한, 힌트를 열람하면 이 문제는 정답을 맞춰도 <strong>'연속 2문제 정답'</strong>에 해당하지 않습니다.<br><br>
+    그래도 힌트를 열람하시겠습니까?</p>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-no" onclick="closeHintModal(false)">아니오, 다시 풀어볼게요</button>
+      <button class="modal-btn modal-btn-yes" onclick="closeHintModal(true)">예, 힌트 볼게요</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div class="main screen" id="scComplete">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">🎉</div>
+      <h2>모든 유형 통과!</h2>
+      <div class="score-box">
+        <div class="sc-num" id="finalCorrect">0</div>
+        <div class="sc-label">/ <span id="finalTotal">0</span> 문제 정답</div>
+      </div>
+      <p id="completeMsg"></p><br>
+      <button class="restart-btn" onclick="restart()">처음부터 다시 하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMEOUT -->
+<div class="main screen" id="scTimeout">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">⏰</div>
+      <h2 style="color:var(--red)">시간이 끝났어요!</h2>
+      <div class="score-box"><div class="sc-num" id="toCorrect">0</div><div class="sc-label">문제 정답</div></div>
+      <button class="restart-btn" onclick="restart()">다시 도전하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════
+   문제 데이터
+   Phase A kind: giveAC(∠A,∠C,AC→BC=x) / giveEqualSides(AC=BC,∠A→∠C=x)
+   Phase B kind: giveAngles(∠DBC=∠DCB,∠A,BD→AC=x) / giveEqualLen(BD=DC=AC,∠DBC→∠A=x)
+════════════════════════════════ */
+const A_LIST=[35,40,45,50,55,58,65,70];
+const ACLEN_LIST=[5,6,7,8,4,9,5,7];
+const poolA1 = A_LIST.map((a,i)=>({kind:'giveAC', a, c:180-2*a, L:ACLEN_LIST[i], x:ACLEN_LIST[i]}));
+const poolA2 = A_LIST.map((a,i)=>({kind:'giveEqualSides', a, L:ACLEN_LIST[i], x:180-2*a}));
+
+const BETA_LIST=[20,22,25,28,30,32,35,38];
+const BDLEN_LIST=[3,4,5,6,7,3,4,5];
+const poolB1 = BETA_LIST.map((b,i)=>({kind:'giveAngles', b, a:2*b, L:BDLEN_LIST[i], x:BDLEN_LIST[i]}));
+const poolB2 = BETA_LIST.map((b,i)=>({kind:'giveEqualLen', b, L:BDLEN_LIST[i], x:2*b}));
+
+const kindDescA = {
+  giveAC: p => `∠A=<span class="em">${p.a}°</span>, ∠C=<span class="em">${p.c}°</span>, <span class="ol">AC</span>=${p.L}cm일 때, <span class="ol">BC</span>=x cm의 값을 구하시오.`,
+  giveEqualSides: p => `<span class="ol">AC</span>=<span class="ol">BC</span>=${p.L}cm, ∠A=<span class="em">${p.a}°</span>일 때, ∠x(=∠C)의 크기를 구하시오.`
+};
+const formulaA = {
+  giveAC: '<strong>풀이:</strong> ∠B=180°−∠A−∠C를 구한 뒤, ∠A=∠B이면 마주보는 변 BC=AC예요! (두 각이 같으면 마주보는 두 변도 같아요)',
+  giveEqualSides: '<strong>풀이:</strong> AC=BC이면 마주보는 두 각이 같아요! (∠A=∠B) 그 다음 ∠C=180°−∠A−∠B를 계산해요.'
+};
+const kindDescB = {
+  giveAngles: p => `∠DBC=∠DCB=<span class="em">${p.b}°</span>, ∠A=<span class="em">${p.a}°</span>, <span class="ol">BD</span>=${p.L}cm일 때, <span class="ol">AC</span>=x cm의 값을 구하시오.`,
+  giveEqualLen: p => `<span class="ol">BD</span>=<span class="ol">DC</span>=<span class="ol">AC</span>=${p.L}cm, ∠DBC=<span class="em">${p.b}°</span>일 때, ∠x(=∠A)의 크기를 구하시오.`
+};
+const formulaB = {
+  giveAngles: '<strong>풀이:</strong> △BDC에서 ∠DBC=∠DCB이므로 DC=BD! 또 ∠ADC=180°−∠BDC=∠A이므로 △ADC에서 DC=AC. 따라서 AC=DC=BD',
+  giveEqualLen: '<strong>풀이:</strong> BD=DC이므로 ∠DCB=∠DBC. △BDC에서 ∠BDC를 구하고, ∠ADC=180°−∠BDC. DC=AC이므로 △ADC에서 ∠A=∠ADC'
+};
+
+/* ════════════════════════════════
+   상태
+════════════════════════════════ */
+const st={
+  level:1, phase:0, streak:0, hadWrong:false, hintUsed:false,
+  totalCorrect:0, totalQ:0,
+  usedIdx:{A:[],B:[]}, curP:null, phaseAttempts:0,
+  timerSec:600, timerInt:null
+};
+let hintModalPhase=null;
+function isBlocked(){ return st.hadWrong || st.hintUsed; }
+function blockNote(){
+  if(!isBlocked()) return '';
+  if(st.hadWrong && st.hintUsed) return '<br><span style="font-size:12px;color:#888">※ 오답 및 힌트 열람 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  if(st.hadWrong) return '<br><span style="font-size:12px;color:#888">※ 오답 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  return '<br><span style="font-size:12px;color:#888">※ 힌트를 열람해 연속 정답에 포함되지 않아요</span>';
+}
+function requestHint(phase){
+  hintModalPhase=phase;
+  document.getElementById('hintModal').classList.add('show');
+}
+function closeHintModal(confirmed){
+  document.getElementById('hintModal').classList.remove('show');
+  const phase=hintModalPhase;
+  hintModalPhase=null;
+  if(confirmed && phase){
+    st.hintUsed=true;
+    document.getElementById('q'+phase+'formula').style.display='block';
+    document.getElementById('hintBtn'+phase).style.display='none';
+    document.getElementById('hintTag'+phase).style.display='inline-flex';
+    updateStreak();
+  }
+}
+function isNear(a,b,t=0.4){return Math.abs(a-b)<t;}
+function pick(pool, used){
+  if(used.length>=pool.length) used.length=0;
+  let idx;
+  do{idx=Math.floor(Math.random()*pool.length);}while(used.includes(idx));
+  used.push(idx); return pool[idx];
+}
+
+/* ════════════════════════════════
+   타이머 / 화면 전환
+════════════════════════════════ */
+function startTimer(){
+  st.timerInt=setInterval(()=>{
+    st.timerSec--;
+    const m=Math.floor(st.timerSec/60), s=st.timerSec%60;
+    const el=document.getElementById('timerEl');
+    el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    el.className='timer'+(st.timerSec<=60?' danger':st.timerSec<=180?' warn':'');
+    if(st.timerSec<=0){
+      clearInterval(st.timerInt);
+      document.getElementById('toCorrect').textContent=st.totalCorrect;
+      showScreen('scTimeout');
+    }
+  },1000);
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function restart(){clearInterval(st.timerInt);location.reload();}
+
+function updatePhaseTabs(){
+  ['ptab0','ptab1'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.classList.remove('active','done');
+    if(i<st.phase)el.classList.add('done');
+    else if(i===st.phase)el.classList.add('active');
+  });
+}
+function updateStreak(){
+  ['sd0','sd1'].forEach((id,i)=>document.getElementById(id).className='sdot'+(i<st.streak?' hit':''));
+  const msg=document.getElementById('streakMsg');
+  if(st.streak>=2) msg.textContent='통과!';
+  else if(st.hadWrong && st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답+힌트 열람 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hadWrong) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 힌트 열람 — 연속 정답에 미포함</span>';
+  else if(st.streak===1) msg.textContent='1개 완료! 하나 더!';
+  else msg.textContent='오답 없이 2문제 연속 → 다음 유형!';
+}
+function markCorrect(){
+  st.totalCorrect++;
+  if(!isBlocked()) st.streak++; else st.streak=0;
+  updateStreak();
+}
+function markWrong(){ st.hadWrong=true; st.streak=0; updateStreak(); }
+
+function startLevel(lv){
+  st.level=lv;
+  document.getElementById('progBar').style.display='';
+  document.getElementById('streakBar').style.display='';
+  startTimer();
+  loadPhaseA();
+}
+
+/* ════════════════════════════════
+   도형 그리기 헬퍼
+════════════════════════════════ */
+function tickMark(ctx,p1,p2,color){
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy);
+  const px=-dy/len, py=dx/len, half=6;
+  ctx.strokeStyle=color; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(mx-px*half,my-py*half);
+  ctx.lineTo(mx+px*half,my+py*half);
+  ctx.stroke();
+}
+function angleArc(ctx,v,p1,p2,r,color){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
+  const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1;
+  while(diff<=-Math.PI)diff+=2*Math.PI;
+  while(diff>Math.PI)diff-=2*Math.PI;
+  ctx.strokeStyle=color; ctx.lineWidth=1.8;
+  ctx.beginPath();
+  ctx.arc(v.x,v.y,r,a1,a1+diff,diff<0);
+  ctx.stroke();
+}
+function drawLabel(ctx,x,y,text,color,size,weight){
+  ctx.fillStyle=color;
+  ctx.font=`${weight||700} ${size||15}px 'Noto Sans KR',sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,x,y);
+}
+// 두 변 사이 각의 이등분 방향으로 라벨 위치를 계산 (변과 겹치지 않게)
+function wedgeMid(v,p1,p2,r){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
+  const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1;
+  while(diff<=-Math.PI)diff+=2*Math.PI;
+  while(diff>Math.PI)diff-=2*Math.PI;
+  const mid=a1+diff/2;
+  return {x:v.x+r*Math.cos(mid), y:v.y+r*Math.sin(mid)};
+}
+// 선분 중점에서 수직 방향으로 떨어진 라벨 위치 (side로 방향 반전)
+function midLabelPos(p1,p2,dist,side){
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy);
+  const px=-dy/len*side, py=dx/len*side;
+  return {x:mx+px*dist, y:my+py*dist};
+}
+
+/* ════════════════════════════════
+   PHASE A 도형: 일반 삼각형 ABC
+════════════════════════════════ */
+const A_A={x:180,y:55}, A_B={x:75,y:225}, A_C={x:285,y:225};
+
+function renderFigureA(canvas, p){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const A=A_A,B=A_B,C=A_C;
+
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+
+  drawLabel(ctx,A.x,A.y-16,'A','#333',14);
+  drawLabel(ctx,B.x-16,B.y+12,'B','#333',14);
+  drawLabel(ctx,C.x+16,C.y+12,'C','#333',14);
+
+  // ∠A는 항상 given
+  angleArc(ctx,A,B,C,26,'#666');
+  drawLabel(ctx,A.x,A.y+38,`${p.a}°`,'#333',14);
+
+  // AC 길이 라벨 (항상 존재)
+  const acPos=midLabelPos(A,C,20,-1);
+  drawLabel(ctx,acPos.x,acPos.y,`${p.L} cm`,'#333',13);
+
+  if(p.kind==='giveAC'){
+    angleArc(ctx,C,A,B,22,'#666');
+    drawLabel(ctx,C.x-34,C.y-18,`${p.c}°`,'#333',14);
+    const bcPos=midLabelPos(B,C,24,1);
+    drawLabel(ctx,bcPos.x,bcPos.y,'x cm','#db2777',14);
+  } else if(p.kind==='giveEqualSides'){
+    tickMark(ctx,A,C,'#db2777');
+    tickMark(ctx,B,C,'#db2777');
+    angleArc(ctx,C,A,B,22,'#db2777');
+    drawLabel(ctx,C.x-34,C.y-18,'x','#db2777',17);
+  }
+}
+
+/* ════════════════════════════════
+   PHASE B 도형: D가 AB 위에 있는 삼각형
+════════════════════════════════ */
+const B_B={x:50,y:225}, B_C={x:290,y:225}, B_A={x:310,y:55};
+const B_D={x:B_B.x+0.42*(B_A.x-B_B.x), y:B_B.y+0.42*(B_A.y-B_B.y)};
+
+function renderFigureB(canvas, p){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const A=B_A,B=B_B,C=B_C,D=B_D;
+
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(A.x,A.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(D.x,D.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+
+  drawLabel(ctx,A.x+8,A.y-14,'A','#333',14);
+  drawLabel(ctx,B.x-14,B.y+12,'B','#333',14);
+  drawLabel(ctx,C.x+16,C.y+12,'C','#333',14);
+  drawLabel(ctx,D.x-4,D.y-16,'D','#333',13);
+
+  // ∠B는 항상 given
+  angleArc(ctx,B,D,C,20,'#666');
+  const bLabel=wedgeMid(B,D,C,40);
+  drawLabel(ctx,bLabel.x,bLabel.y,`${p.b}°`,'#333',13);
+
+  // ∠A
+  const aLabel=wedgeMid(A,D,C,38);
+  // BD 길이 라벨 (항상 존재)
+  const bdPos=midLabelPos(B,D,16,-1);
+  drawLabel(ctx,bdPos.x,bdPos.y,`${p.L} cm`,'#333',12);
+
+  if(p.kind==='giveAngles'){
+    angleArc(ctx,C,D,B,20,'#666');
+    const cLabel=wedgeMid(C,D,B,38);
+    drawLabel(ctx,cLabel.x,cLabel.y,`${p.b}°`,'#333',13);
+    angleArc(ctx,A,D,C,22,'#666');
+    drawLabel(ctx,aLabel.x,aLabel.y,`${p.a}°`,'#333',13);
+    const acPos=midLabelPos(A,C,18,-1);
+    drawLabel(ctx,acPos.x,acPos.y,'x cm','#db2777',13);
+  } else if(p.kind==='giveEqualLen'){
+    tickMark(ctx,B,D,'#db2777');
+    tickMark(ctx,D,C,'#db2777');
+    tickMark(ctx,A,C,'#db2777');
+    angleArc(ctx,A,D,C,22,'#db2777');
+    drawLabel(ctx,aLabel.x,aLabel.y,'x','#db2777',17);
+  }
+}
+
+/* ════════════════════════════════
+   피드백 헬퍼
+════════════════════════════════ */
+function setFb(phase,type,msg){
+  hideFb(phase);
+  const map={wrong:`fw${phase}`,hint:`fh${phase}`,correct:`fc${phase}`};
+  const el=document.getElementById(map[type]);
+  if(el){const sp=el.querySelector('span'); if(sp)sp.innerHTML=msg; el.classList.add('show');}
+}
+function hideFb(phase){[`fw${phase}`,`fh${phase}`,`fc${phase}`].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('show');});}
+
+function wrongMsg(p, entered){
+  if(p.kind==='giveAC'){
+    if(isNear(entered,p.a)||isNear(entered,p.c)) return '각의 크기가 아니라 변의 길이를 구해야 해요! 각과 길이를 착각한 것 같아요.';
+    return '∠B를 먼저 구한 뒤, 어떤 두 각이 서로 같은지 확인해봐요. 두 각이 같으면 마주보는 두 변도 같아요!';
+  }
+  if(p.kind==='giveEqualSides'){
+    if(isNear(entered,p.a)) return '∠A와 ∠C는 다른 각이에요. (∠A는 이미 주어졌어요)';
+    return 'AC=BC이면 ∠A=∠B예요. 먼저 ∠B(=∠A)를 이용해 ∠C=180°−∠A−∠B를 계산해봐요.';
+  }
+  if(p.kind==='giveAngles'){
+    if(isNear(entered,p.a)||isNear(entered,p.b)) return '각의 크기가 아니라 변의 길이를 구해야 해요!';
+    return '△BDC와 △ADC가 각각 이등변삼각형이 되는 이유를 다시 생각해봐요. BD=DC, DC=AC가 성립해요.';
+  }
+  if(p.kind==='giveEqualLen'){
+    if(isNear(entered,p.b)) return '∠DBC와 ∠A는 다른 각이에요.';
+    if(isNear(entered,180-2*p.b)) return '그건 ∠BDC의 크기예요! ∠A(=∠ADC)를 구하려면 180°에서 한 번 더 빼야 해요.';
+    return 'BD=DC이므로 ∠DCB=∠DBC예요. 이제 ∠BDC와 ∠ADC를 차례로 구해봐요.';
+  }
+  return '다시 한 번 생각해봐요!';
+}
+function hintMsg(p){
+  if(p.kind==='giveAC') return `힌트: ∠B = 180° − ${p.a}° − ${p.c}° = ${180-p.a-p.c}°. ∠A와 ∠B가 같으므로, 마주보는 변 BC와 AC도 같아요. 즉 BC = AC = ${p.L}cm`;
+  if(p.kind==='giveEqualSides') return `힌트: AC=BC이므로 ∠A=∠B=${p.a}°. ∠C = 180° − ${p.a}° − ${p.a}° = ${180-2*p.a}°`;
+  if(p.kind==='giveAngles') return `힌트: △BDC에서 ∠DBC=∠DCB=${p.b}°이므로 DC=BD=${p.L}cm. ∠BDC=${180-2*p.b}°, ∠ADC=180°−${180-2*p.b}°=${2*p.b}°=∠A이므로 △ADC에서 DC=AC. 따라서 AC=${p.L}cm`;
+  if(p.kind==='giveEqualLen') return `힌트: BD=DC이므로 ∠DCB=∠DBC=${p.b}°. ∠BDC=180°−${2*p.b}°=${180-2*p.b}°. ∠ADC=180°−${180-2*p.b}°=${2*p.b}°. DC=AC이므로 ∠A=∠ADC=${2*p.b}°`;
+  return '';
+}
+function correctMsg(p){
+  if(p.kind==='giveAC') return `정답! ∠B=${180-p.a-p.c}°=∠A이므로 BC=AC=<span class="em">${p.L}cm</span>`;
+  if(p.kind==='giveEqualSides') return `맞아요! ∠A=∠B=${p.a}°이므로 ∠C = 180°−${2*p.a}° = <span class="em">${180-2*p.a}°</span>`;
+  if(p.kind==='giveAngles') return `정답! BD=DC=AC=<span class="em">${p.L}cm</span> (두 이등변삼각형을 이용했어요!)`;
+  if(p.kind==='giveEqualLen') return `맞아요! ∠BDC=${180-2*p.b}°, ∠ADC=${2*p.b}°이고 DC=AC이므로 ∠A=<span class="em">${2*p.b}°</span>`;
+  return '정답!';
+}
+
+/* ════════════════════════════════
+   PHASE A
+════════════════════════════════ */
+function loadPhaseA(){
+  st.phase=0; st.streak=0; st.hadWrong=false; st.hintUsed=false;
+  updatePhaseTabs(); updateStreak();
+  showScreen('scA'); nextA_prob();
+}
+function nextA_prob(){
+  const pool=st.level===1?poolA1:poolA2;
+  st.curP=pick(pool, st.usedIdx.A);
+  st.totalQ++; st.phaseAttempts=0; st.hadWrong=false; st.hintUsed=false;
+  const p=st.curP;
+  document.getElementById('qAnumBadge').textContent='Q'+st.totalQ;
+  document.getElementById('qAtype').textContent=p.kind==='giveAC'?'각→변':'변→각';
+  document.getElementById('qAdesc').innerHTML=kindDescA[p.kind](p);
+  document.getElementById('qAformula').innerHTML=formulaA[p.kind];
+  document.getElementById('qAformula').style.display='none';
+  document.getElementById('hintBtnA').style.display='';
+  document.getElementById('hintTagA').style.display='none';
+  document.getElementById('aPrefix').textContent = p.kind==='giveAC' ? 'BC =' : '∠x =';
+  document.getElementById('aSuffix').textContent = p.kind==='giveAC' ? 'cm' : '°';
+  document.getElementById('aVal').value='';
+  renderFigureA(document.getElementById('figA'), p);
+  hideFb('A'); document.getElementById('nbA').classList.remove('show');
+}
+function checkA(){
+  const p=st.curP;
+  const val=parseFloat(document.getElementById('aVal').value);
+  if(isNaN(val)){alert('숫자를 입력해주세요!');return;}
+  st.phaseAttempts++;
+  if(isNear(val,p.x)){
+    markCorrect();
+    setFb('A','correct',correctMsg(p)+blockNote());
+    document.getElementById('nbA').classList.add('show');
+  } else {
+    markWrong();
+    setFb('A', st.phaseAttempts===1?'wrong':'hint', st.phaseAttempts===1?wrongMsg(p,val):hintMsg(p));
+    document.getElementById('aVal').value='';
+    document.getElementById('aVal').focus();
+  }
+}
+function nextA(){ if(st.streak>=2){ loadPhaseB(); return; } nextA_prob(); }
+
+/* ════════════════════════════════
+   PHASE B
+════════════════════════════════ */
+function loadPhaseB(){
+  st.phase=1; st.streak=0; st.hadWrong=false; st.hintUsed=false;
+  updatePhaseTabs(); updateStreak();
+  showScreen('scB'); nextB_prob();
+}
+function nextB_prob(){
+  const pool=st.level===1?poolB1:poolB2;
+  st.curP=pick(pool, st.usedIdx.B);
+  st.totalQ++; st.phaseAttempts=0; st.hadWrong=false; st.hintUsed=false;
+  const p=st.curP;
+  document.getElementById('qBnumBadge').textContent='Q'+st.totalQ;
+  document.getElementById('qBtype').textContent=p.kind==='giveAngles'?'각→변':'변→각';
+  document.getElementById('qBdesc').innerHTML=kindDescB[p.kind](p);
+  document.getElementById('qBformula').innerHTML=formulaB[p.kind];
+  document.getElementById('qBformula').style.display='none';
+  document.getElementById('hintBtnB').style.display='';
+  document.getElementById('hintTagB').style.display='none';
+  document.getElementById('bPrefix').textContent = p.kind==='giveAngles' ? 'AC =' : '∠x =';
+  document.getElementById('bSuffix').textContent = p.kind==='giveAngles' ? 'cm' : '°';
+  document.getElementById('bVal').value='';
+  renderFigureB(document.getElementById('figB'), p);
+  hideFb('B'); document.getElementById('nbB').classList.remove('show');
+}
+function checkB(){
+  const p=st.curP;
+  const val=parseFloat(document.getElementById('bVal').value);
+  if(isNaN(val)){alert('숫자를 입력해주세요!');return;}
+  st.phaseAttempts++;
+  if(isNear(val,p.x)){
+    markCorrect();
+    setFb('B','correct',correctMsg(p)+blockNote());
+    document.getElementById('nbB').classList.add('show');
+  } else {
+    markWrong();
+    setFb('B', st.phaseAttempts===1?'wrong':'hint', st.phaseAttempts===1?wrongMsg(p,val):hintMsg(p));
+    document.getElementById('bVal').value='';
+    document.getElementById('bVal').focus();
+  }
+}
+function nextB(){ if(st.streak>=2){ complete(); return; } nextB_prob(); }
+
+/* ════════════════════════════════
+   완료
+════════════════════════════════ */
+function complete(){
+  clearInterval(st.timerInt);
+  document.getElementById('finalCorrect').textContent=st.totalCorrect;
+  document.getElementById('finalTotal').textContent=st.totalQ;
+  const pct=Math.round(st.totalCorrect/st.totalQ*100);
+  document.getElementById('completeMsg').innerHTML=`정답률 <strong>${pct}%</strong>!<br>`+
+    (pct>=80?'훌륭해요! 이등변삼각형의 성질을 완벽하게 이해했어요 🌟':
+     pct>=60?'잘 했어요! 조금만 더 연습하면 완벽해질 거예요 💪':
+     '다시 한 번 도전해봐요. 반복하면 꼭 잘 할 수 있어요! 🔥');
+  showScreen('scComplete');
+}
+</script>
+</body>
+</html>
