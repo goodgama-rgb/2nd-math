@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>중2 수학 학습 허브</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF7EF; --ink:#2E2A22; --ink-dim:#8a8270; --line:#eae3d3;
+    --mint:#BFE3D0; --mint-ink:#2f6b52; --mint-dark:#8fcdae;
+    --lav:#E1D9F5; --lav-ink:#5b4a8f; --lav-dark:#c3b3ec;
+    --coral:#F6B8B0; --coral-ink:#a13c31;
+    --disp:"Gaegu",sans-serif; --sans:"Noto Sans KR",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);min-height:100vh;}
+  .wrap{max-width:600px;margin:0 auto;padding:36px 22px 60px;}
+  .view{display:none;}
+  .view.active{display:block;}
+  h1.big{font-family:var(--disp);font-size:38px;margin:0 0 6px;}
+  h2.mid{font-family:var(--disp);font-size:26px;margin:0 0 4px;}
+  p.sub{color:var(--ink-dim);font-size:14px;margin:0 0 26px;}
+  .btn{
+    display:block;width:100%;border:none;border-radius:16px;padding:16px 18px;
+    font-family:var(--disp);font-size:19px;cursor:pointer;text-align:left;
+    box-shadow:0 3px 0 rgba(46,42,34,.15);margin-bottom:12px;color:var(--ink);
+  }
+  .btn.mint{background:var(--mint);}
+  .btn.lav{background:var(--lav);}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(46,42,34,.15);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;color:var(--ink-dim);margin-bottom:5px;font-weight:500;}
+  .field input, .field select{
+    width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);
+    font-family:var(--sans);font-size:15px;background:#fff;color:var(--ink);
+  }
+  .field input:focus, .field select:focus{outline:2px solid var(--mint-dark);border-color:transparent;}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+  .backlink{display:inline-flex;align-items:center;gap:4px;color:var(--ink-dim);font-size:13px;text-decoration:none;margin-bottom:16px;cursor:pointer;background:none;border:none;font-family:var(--sans);padding:0;}
+  .today-box{background:#fff;border:2px dashed var(--coral);border-radius:16px;padding:16px 18px;margin-bottom:26px;}
+  .today-box .today-label{font-family:var(--disp);font-size:15px;color:var(--coral-ink);margin-bottom:8px;display:block;}
+  .today-item{display:flex;align-items:center;gap:8px;padding:6px 0;text-decoration:none;color:var(--ink);font-size:14.5px;font-weight:500;}
+  .today-empty{color:var(--ink-dim);font-size:13.5px;}
+  .unit-card{
+    display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:16px 18px;margin-bottom:12px;
+    text-decoration:none;color:var(--ink);box-shadow:0 3px 0 rgba(46,42,34,.08);
+  }
+  .unit-card.disabled{opacity:.5;}
+  .unit-num{font-family:var(--disp);font-size:20px;color:var(--lav-ink);background:var(--lav);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .unit-title{flex:1;font-weight:700;font-size:15.5px;}
+  .unit-tag{font-size:11px;color:var(--ink-dim);}
+  .subunit{margin-bottom:26px;}
+  .subunit-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .badge{font-family:var(--disp);font-size:14px;padding:3px 12px;border-radius:14px;background:var(--mint);color:var(--mint-ink);transform:rotate(-2deg);display:inline-block;}
+  .subunit-name{font-weight:700;font-size:16.5px;}
+  .items{display:flex;flex-direction:column;gap:12px;}
+  .card{display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:14px 16px;text-decoration:none;color:var(--ink);box-shadow:0 3px 0 rgba(46,42,34,.12);}
+  .card:nth-child(odd){transform:rotate(-0.6deg);}
+  .card:nth-child(even){transform:rotate(0.6deg);}
+  .icon{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .icon.explore{background:var(--mint);}
+  .icon.quiz{background:var(--coral);}
+  .card-title{font-weight:700;font-size:15px;display:block;}
+  .card-meta{font-size:12px;color:var(--ink-dim);}
+  .msg{font-size:13.5px;padding:10px 0;color:var(--ink-dim);}
+  .msg.error{color:var(--coral-ink);}
+  .msg.ok{color:var(--mint-ink);}
+  .admin-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);}
+  .admin-item input{width:18px;height:18px;}
+  .admin-group-title{font-family:var(--disp);font-size:16px;margin:18px 0 6px;color:var(--lav-ink);}
+  footer.foot{margin-top:36px;font-family:var(--disp);font-size:14px;color:var(--ink-dim);text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. 역할 선택 -->
+  <section class="view active" id="view-role">
+    <h1 class="big">중2 수학 학습 허브</h1>
+    <p class="sub">누구로 들어갈지 골라주세요</p>
+    <button class="btn mint" onclick="go('student-info')">🙋 학생이에요</button>
+    <button class="btn lav" onclick="go('teacher-login')">🍎 선생님이에요</button>
+  </section>
+
+  <!-- 2. 학생 정보 입력 -->
+  <section class="view" id="view-student-info">
+    <button class="backlink" onclick="go('role')">← 뒤로</button>
+    <h2 class="mid">누구인지 알려주세요</h2>
+    <p class="sub">저장되지 않아요, 화면에만 표시돼요</p>
+    <div class="row2">
+      <div class="field"><label>학년</label><input id="in-grade" type="number" value="2" min="1" max="3"></div>
+      <div class="field"><label>반</label><input id="in-class" type="number" placeholder="예: 3"></div>
+      <div class="field"><label>번호</label><input id="in-number" type="number" placeholder="예: 12"></div>
+    </div>
+    <div class="field"><label>이름</label><input id="in-name" type="text" placeholder="이름을 적어주세요"></div>
+    <button class="btn mint" onclick="submitStudentInfo()">시작하기</button>
+  </section>
+
+  <!-- 3. 단원 선택 -->
+  <section class="view" id="view-units">
+    <button class="backlink" onclick="go('student-info')">← 뒤로</button>
+    <h2 class="mid" id="units-greeting">학습 단원을 골라주세요</h2>
+    <div class="today-box">
+      <span class="today-label">📌 오늘의 학습</span>
+      <div id="today-list"><span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span></div>
+    </div>
+    <div id="unit-list"></div>
+  </section>
+
+  <!-- 4. 콘텐츠 허브 (대단원 안) -->
+  <section class="view" id="view-hub">
+    <button class="backlink" onclick="go('units')">← 단원 목록으로</button>
+    <h2 class="mid" id="hub-title"></h2>
+    <p class="sub">탐구랑 문제, 하나씩 풀어보자!</p>
+    <div id="hub-content"></div>
+  </section>
+
+  <!-- 5. 선생님 로그인 -->
+  <section class="view" id="view-teacher-login">
+    <button class="backlink" onclick="go('role')">← 뒤로</button>
+    <h2 class="mid">선생님 로그인</h2>
+    <p class="sub">오늘의 학습을 관리할 수 있어요</p>
+    <div class="field"><label>이메일</label><input id="in-email" type="email" placeholder="teacher@myclass.app"></div>
+    <div class="field"><label>비밀번호</label><input id="in-pw" type="password" placeholder="비밀번호"></div>
+    <button class="btn lav" onclick="teacherLogin()">로그인</button>
+    <p class="msg error" id="login-msg"></p>
+  </section>
+
+  <!-- 6. 관리자 페이지 -->
+  <section class="view" id="view-admin">
+    <button class="backlink" onclick="teacherLogout()">← 로그아웃</button>
+    <h2 class="mid">오늘의 학습 설정</h2>
+    <p class="sub">체크한 항목이 학생 화면 맨 위에 뜹니다</p>
+    <div id="admin-list"></div>
+    <button class="btn mint" onclick="saveToday()" style="margin-top:16px;">오늘의 학습으로 저장</button>
+    <p class="msg" id="admin-msg"></p>
+  </section>
+
+  <footer class="foot">화이팅! 모르는 건 손 들고 물어보기 🙋</footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+// ---- Firebase 설정 ----
+const firebaseConfig = {
+  apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+  authDomain: "nd-deogi-math-hub.firebaseapp.com",
+  projectId: "nd-deogi-math-hub",
+  storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+  messagingSenderId: "414096731864",
+  appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ---- 콘텐츠 데이터: 새 단원/문제 추가할 땐 이 배열만 수정하면 됩니다 ----
+const CONTENT = [
+  {
+    id: "isosceles", name: "삼각형의 성질", ready: true,
+    subunits: [
+      { name: "이등변삼각형의 성질", items: [
+        { id:"iso-proof", title:"성질 증명 탐구", type:"탐구", meta:"증명 활동", file:"이등변삼각형_성질_증명_탐구.html" },
+        { id:"iso-144-1", title:"문제 1", type:"문제", meta:"교과서 144p", file:"isosceles_triangle_quiz(144-1).html" },
+        { id:"iso-144-2", title:"문제 2", type:"문제", meta:"교과서 144p", file:"isosceles_triangle_bisector_quiz(144-2).html" }
+      ]},
+      { name: "이등변삼각형이 되는 조건", items: [
+        { id:"cond-proof", title:"조건 증명 탐구", type:"탐구", meta:"증명 활동", file:"이등변삼각형이_되는_조건_증명_탐구.html" },
+        { id:"cond-146-3", title:"문제 3", type:"문제", meta:"교과서 146p", file:"isosceles_triangle_converse_quiz(146-3).html" },
+        { id:"cond-146-4", title:"문제 4", type:"문제", meta:"교과서 146p", file:"isosceles_triangle_golden_quiz(146-4).html" }
+      ]}
+    ]
+  },
+  { id:"quad",        name:"사각형의 성질",     ready:false, subunits:[] },
+  { id:"similarity",  name:"도형의 닮음",       ready:false, subunits:[] },
+  { id:"pythagoras",  name:"피타고라스 정리",   ready:false, subunits:[] },
+  { id:"probability", name:"경우의 수와 확률",  ready:false, subunits:[] }
+];
+
+let studentInfo = null;
+let todayItems = [];
+
+// ---- 화면 전환 ----
+window.go = function(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+};
+
+// ---- 학생 정보 ----
+window.submitStudentInfo = function(){
+  const grade = document.getElementById('in-grade').value || '2';
+  const cls = document.getElementById('in-class').value;
+  const num = document.getElementById('in-number').value;
+  const name = document.getElementById('in-name').value.trim();
+  if(!name){ alert('이름을 적어주세요'); return; }
+  studentInfo = { grade, cls, num, name };
+  document.getElementById('units-greeting').textContent = `${grade}학년 ${cls||'?'}반 ${name} 학생, 안녕하세요!`;
+  renderUnitList();
+  go('units');
+};
+
+// ---- 단원 목록 렌더 ----
+function renderUnitList(){
+  const wrap = document.getElementById('unit-list');
+  wrap.innerHTML = '';
+  CONTENT.forEach((u,i)=>{
+    const el = document.createElement(u.ready ? 'a' : 'div');
+    el.className = 'unit-card' + (u.ready ? '' : ' disabled');
+    if(u.ready){ el.href = '#'; el.onclick = (e)=>{ e.preventDefault(); openUnit(u.id); }; }
+    el.innerHTML = `<span class="unit-num">${i+1}</span>
+      <span class="unit-title">${u.name}</span>
+      <span class="unit-tag">${u.ready ? '' : '준비중'}</span>`;
+    wrap.appendChild(el);
+  });
+}
+
+function openUnit(unitId){
+  const unit = CONTENT.find(u=>u.id===unitId);
+  document.getElementById('hub-title').textContent = unit.name;
+  const wrap = document.getElementById('hub-content');
+  wrap.innerHTML = '';
+  unit.subunits.forEach(su=>{
+    const sec = document.createElement('div');
+    sec.className = 'subunit';
+    sec.innerHTML = `<div class="subunit-head"><span class="badge">단원</span><span class="subunit-name">${su.name}</span></div><div class="items"></div>`;
+    const items = sec.querySelector('.items');
+    su.items.forEach(it=>{
+      const a = document.createElement('a');
+      a.className = 'card'; a.href = it.file;
+      const iconClass = it.type==='문제' ? 'quiz' : 'explore';
+      const emoji = it.type==='문제' ? '✏️' : '🔍';
+      a.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
+        <span><span class="card-title">${it.title}</span><span class="card-meta">${it.meta}</span></span>`;
+      items.appendChild(a);
+    });
+    wrap.appendChild(sec);
+  });
+  go('hub');
+}
+
+// ---- 오늘의 학습 (실시간 반영) ----
+function renderToday(){
+  const wrap = document.getElementById('today-list');
+  if(!todayItems.length){
+    wrap.innerHTML = '<span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span>';
+    return;
+  }
+  wrap.innerHTML = '';
+  todayItems.forEach(it=>{
+    const a = document.createElement('a');
+    a.className = 'today-item'; a.href = it.file;
+    a.innerHTML = `<span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span>`;
+    wrap.appendChild(a);
+  });
+}
+
+onSnapshot(doc(db,'config','today'), (snap)=>{
+  todayItems = snap.exists() ? (snap.data().items || []) : [];
+  renderToday();
+  renderAdminCurrentState();
+});
+
+// ---- 선생님 로그인 ----
+window.teacherLogin = function(){
+  const email = document.getElementById('in-email').value.trim();
+  const pw = document.getElementById('in-pw').value;
+  const msg = document.getElementById('login-msg');
+  msg.textContent = '';
+  signInWithEmailAndPassword(auth, email, pw)
+    .catch(err => { msg.textContent = '로그인 실패: 이메일 또는 비밀번호를 확인해주세요.'; });
+};
+
+window.teacherLogout = function(){
+  signOut(auth).then(()=> go('role'));
+};
+
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    renderAdminList();
+    go('admin');
+  }
+});
+
+// ---- 관리자: 항목 체크리스트 ----
+function allRealItems(){
+  const list = [];
+  CONTENT.forEach(u=>{
+    if(!u.ready) return;
+    u.subunits.forEach(su=>{
+      su.items.forEach(it=> list.push({...it, unitName:u.name, subunitName:su.name}));
+    });
+  });
+  return list;
+}
+
+function renderAdminList(){
+  const wrap = document.getElementById('admin-list');
+  wrap.innerHTML = '';
+  let lastGroup = '';
+  allRealItems().forEach(it=>{
+    const groupKey = it.unitName + ' · ' + it.subunitName;
+    if(groupKey !== lastGroup){
+      const h = document.createElement('div');
+      h.className = 'admin-group-title';
+      h.textContent = groupKey;
+      wrap.appendChild(h);
+      lastGroup = groupKey;
+    }
+    const row = document.createElement('label');
+    row.className = 'admin-item';
+    const checked = todayItems.some(t=>t.id===it.id);
+    row.innerHTML = `<input type="checkbox" value="${it.id}" ${checked?'checked':''}> <span>${it.title} <span class="card-meta">(${it.meta})</span></span>`;
+    wrap.appendChild(row);
+  });
+}
+
+function renderAdminCurrentState(){
+  if(!document.getElementById('view-admin').classList.contains('active')) return;
+  document.querySelectorAll('#admin-list input[type=checkbox]').forEach(cb=>{
+    cb.checked = todayItems.some(t=>t.id===cb.value);
+  });
+}
+
+window.saveToday = function(){
+  const checked = Array.from(document.querySelectorAll('#admin-list input[type=checkbox]:checked')).map(cb=>cb.value);
+  const items = allRealItems().filter(it=> checked.includes(it.id))
+    .map(it=>({ id:it.id, title:it.title, type:it.type, file:it.file }));
+  setDoc(doc(db,'config','today'), { items, updatedAt: serverTimestamp() })
+    .then(()=>{ document.getElementById('admin-msg').textContent = '저장했어요! 학생 화면에 바로 반영돼요.'; document.getElementById('admin-msg').className='msg ok'; })
+    .catch(err=>{ document.getElementById('admin-msg').textContent = '저장 실패: ' + err.message; document.getElementById('admin-msg').className='msg error'; });
+};
+</script>
+</body>
+</html>
