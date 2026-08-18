@@ -48,8 +48,22 @@
     gap:22px;
     align-items:start;
   }
+  .mobile-tabs{ display:none; }
   @media (max-width:960px){
     .layout{ grid-template-columns:1fr; }
+    .mobile-tabs{
+      display:flex; gap:8px; position:sticky; top:0; z-index:80;
+      background:var(--bg); padding:12px 16px 8px; margin:0 -16px 4px;
+      box-shadow:0 4px 10px rgba(43,47,66,.05);
+    }
+    .mobile-tab-btn{
+      flex:1; padding:11px; border-radius:12px; border:none; background:#eef1fa; color:var(--muted);
+      font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s;
+    }
+    .mobile-tab-btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+    .layout.mobile-show-canvas .activity{ display:none; }
+    .layout.mobile-show-activity .card.sticky{ display:none; }
+    .card.sticky{ position:static; }
   }
 
   .card{
@@ -291,6 +305,21 @@
   .admin-header .sub{ font-size:12px; color:#a5b4fc; margin-top:2px; }
   .admin-logout{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:8px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:inherit; }
   .admin-body{ max-width:1000px; margin:24px auto; padding:0 20px 60px; }
+  .admin-filter-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;
+    background:#fff; border-radius:14px; padding:12px 16px; box-shadow:0 4px 14px rgba(43,47,66,.05);
+  }
+  .admin-filter-row label{ font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .admin-filter-row select{
+    border:1.5px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px;
+    font-family:inherit; color:var(--ink); background:#fff;
+  }
+  .btn-admin-delete{
+    margin-left:auto; background:#fdeceb; border:1.5px solid #f6c6c2; color:#b3261e;
+    border-radius:8px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .btn-admin-delete:hover{ background:#fbdcda; }
+  .btn-admin-delete:disabled{ opacity:.4; cursor:not-allowed; }
   .admin-table-wrap{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(43,47,66,.06); }
   table.admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
   table.admin-table th{ background:#f4f6fc; padding:10px 12px; text-align:left; color:var(--muted); font-size:11.5px; font-weight:700; }
@@ -376,6 +405,21 @@
     <button class="admin-logout" onclick="adminLogout()">로그아웃</button>
   </div>
   <div class="admin-body">
+    <div class="admin-filter-row">
+      <label>학년
+        <select id="filterGrade">
+          <option value="">전체</option>
+          <option>1학년</option><option>2학년</option><option>3학년</option>
+        </select>
+      </label>
+      <label>반
+        <select id="filterCls">
+          <option value="">전체</option>
+          <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+        </select>
+      </label>
+      <button class="btn-admin-delete" id="btnAdminDelete" disabled>🗑 이 반 기록 삭제</button>
+    </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead><tr><th>학년/반/번호</th><th>이름</th><th>진행 단계</th><th>상태</th><th>이탈 횟수</th><th>마지막 활동</th></tr></thead>
@@ -405,7 +449,11 @@
   <p>꼭짓점 A를 자유롭게 드래그하며, "두 내각의 크기가 같으면 이등변삼각형이다"를 직접 증명해봅시다.</p>
 </header>
 
-<div class="layout">
+<div class="layout mobile-show-canvas" id="layoutRoot">
+  <div class="mobile-tabs">
+    <button class="mobile-tab-btn active" id="mtabCanvas" onclick="showMobileTab('canvas')">📐 그림</button>
+    <button class="mobile-tab-btn" id="mtabActivity" onclick="showMobileTab('activity')">📝 활동</button>
+  </div>
 
   <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
   <div class="card sticky">
@@ -1046,6 +1094,16 @@
   const btnSplit = document.getElementById('btnSplit');
   const btnReset = document.getElementById('btnReset');
 
+  // ---------- 모바일 탭 전환 (그림 / 활동) ----------
+  window.showMobileTab = function(tab){
+    const layoutRoot = document.getElementById('layoutRoot');
+    layoutRoot.classList.toggle('mobile-show-canvas', tab === 'canvas');
+    layoutRoot.classList.toggle('mobile-show-activity', tab === 'activity');
+    document.getElementById('mtabCanvas').classList.toggle('active', tab === 'canvas');
+    document.getElementById('mtabActivity').classList.toggle('active', tab === 'activity');
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
   function syncButtons(){
     btnLabels.classList.toggle('active', state.showLabels);
     btnLabels.setAttribute('aria-pressed', state.showLabels);
@@ -1553,6 +1611,8 @@
     syncProgress(true);
   };
 
+  let _latestRows = [];
+
   function startAdminWatch(){
     if(!_db){
       document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171">Firebase 연결 실패</td></tr>';
@@ -1564,17 +1624,30 @@
       .where('date','==', today)
       .onSnapshot(snap=>{
         const rows = [];
-        snap.forEach(d=>rows.push(d.data()));
+        snap.forEach(d=>rows.push(Object.assign({_id:d.id}, d.data())));
         rows.sort((a,b)=> String(a.cls||'').localeCompare(String(b.cls||'')) || ((a.num||0)-(b.num||0)));
-        renderAdminTable(rows);
+        _latestRows = rows;
+        applyAdminFilter();
       }, err=>{
         document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="6" style="color:#f87171">오류: ${err.message}</td></tr>`;
       });
   }
-  function renderAdminTable(rows){
+
+  function applyAdminFilter(){
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    const filtered = _latestRows.filter(r => (!g || r.grade===g) && (!c || r.cls===c));
+    document.getElementById('btnAdminDelete').disabled = !(g && c);
+    renderAdminTable(filtered, g, c);
+  }
+  document.getElementById('filterGrade').addEventListener('change', applyAdminFilter);
+  document.getElementById('filterCls').addEventListener('change', applyAdminFilter);
+
+  function renderAdminTable(rows, g, c){
     const total = rows.length;
     const awayNow = rows.filter(r=>r.isAway).length;
-    document.getElementById('adminSummary').textContent = `오늘 접속 ${total}명 · 현재 이탈 ${awayNow}명 (실시간)`;
+    const scopeLabel = (g || c) ? `${g||'전체 학년'} ${c||'전체 반'} · ` : '';
+    document.getElementById('adminSummary').textContent = `${scopeLabel}접속 ${total}명 · 현재 이탈 ${awayNow}명 (실시간)`;
     if(!rows.length){
       document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">아직 접속한 학생이 없어요.</td></tr>';
       return;
@@ -1593,6 +1666,21 @@
       </tr>`;
     }).join('');
   }
+
+  document.getElementById('btnAdminDelete').addEventListener('click', async ()=>{
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    if(!g || !c) return;
+    const targets = _latestRows.filter(r => r.grade===g && r.cls===c);
+    if(!targets.length){ alert('삭제할 접속 기록이 없어요.'); return; }
+    if(!confirm(`${g} ${c} 학생 ${targets.length}명의 오늘 접속 기록을 삭제할까요?\n(이 작업은 되돌릴 수 없습니다)`)) return;
+    try{
+      await Promise.all(targets.map(r => _db.collection('progress').doc(r._id).delete()));
+    }catch(e){
+      alert('삭제 중 오류가 발생했어요: ' + e.message);
+    }
+  });
+
   window.adminLogout = function(){
     if(_adminUnsub) _adminUnsub();
     location.reload();
