@@ -177,7 +177,10 @@ const CONTENT = [
         { id:"cond-proof", title:"조건 증명 탐구", type:"탐구", meta:"증명 활동", file:"이등변삼각형이_되는_조건_증명_탐구.html" },
         { id:"cond-146-3", title:"문제 3", type:"문제", meta:"교과서 146p", file:"isosceles_triangle_converse_quiz(146-3).html" },
         { id:"cond-146-4", title:"문제 4", type:"문제", meta:"교과서 146p", file:"isosceles_triangle_golden_quiz(146-4).html" }
-      ]}
+      ]},
+      { name: "직각삼각형의 합동 조건", items: [] },
+      { name: "삼각형의 외심", items: [] },
+      { name: "삼각형의 내심", items: [] }
     ]
   },
   { id:"quad",        name:"사각형의 성질",     ready:false, subunits:[] },
@@ -233,6 +236,9 @@ function openUnit(unitId){
     sec.className = 'subunit';
     sec.innerHTML = `<div class="subunit-head"><span class="badge">단원</span><span class="subunit-name">${su.name}</span></div><div class="items"></div>`;
     const items = sec.querySelector('.items');
+    if(!su.items.length){
+      items.innerHTML = '<p class="msg">콘텐츠 준비중이에요</p>';
+    }
     su.items.forEach(it=>{
       const a = document.createElement('a');
       a.className = 'card'; a.href = it.file;
