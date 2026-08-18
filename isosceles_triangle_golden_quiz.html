@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>이등변삼각형의 성질 — 두 각이 같으면 이등변삼각형</title>
+<title>이등변삼각형의 성질 — 각의 이등분선과 세 이등변삼각형</title>
 <style>
 :root{
   --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
@@ -145,7 +145,7 @@ canvas.fig{background:#fff;border-radius:8px}
 
 <div class="hdr">
   <span class="hdr-badge">수학</span>
-  <span class="hdr-title">이등변삼각형의 성질 — 두 각이 같으면 이등변삼각형</span>
+  <span class="hdr-title">이등변삼각형의 성질 — 각의 이등분선과 세 이등변삼각형</span>
   <div class="hdr-right">
     <div class="timer" id="timerEl">10:00</div>
     <div class="name-wrap"><label>이름</label><input id="sname" type="text" placeholder="이름 입력"></div>
@@ -154,8 +154,8 @@ canvas.fig{background:#fff;border-radius:8px}
 
 <div class="prog-bar" id="progBar" style="display:none">
   <div class="prog-inner">
-    <div class="phase-tab active" id="ptab0"><span class="phase-num">A</span>각↔변 관계</div>
-    <div class="phase-tab" id="ptab1"><span class="phase-num">B</span>이등변삼각형 2개</div>
+    <div class="phase-tab active" id="ptab0"><span class="phase-num">A</span>∠BDC의 크기</div>
+    <div class="phase-tab" id="ptab1"><span class="phase-num">B</span>AD의 길이</div>
   </div>
 </div>
 
@@ -171,7 +171,7 @@ canvas.fig{background:#fff;border-radius:8px}
 <div class="main screen active" id="scLevel">
   <div class="level-screen">
     <h2>나의 레벨을 선택하세요</h2>
-    <p>삼각형에서 두 각의 크기가 같으면 이등변삼각형이 된다는 성질(역)을 이용해<br>x의 값을 구하는 연습이에요. 2문제 연속 정답이면 다음 단계로!</p>
+    <p><span class="ol">AB</span>=<span class="ol">AC</span>인 이등변삼각형 ABC에서 ∠B의 이등분선이 <span class="ol">AC</span>와 만나는 점을 D라고 할 때,<br>x의 값을 구하는 연습이에요. 2문제 연속 정답이면 다음 단계로!</p>
     <div class="level-cards">
       <div class="level-card" onclick="startLevel(1)">
         <div class="lc-icon">🌱</div>
@@ -182,7 +182,7 @@ canvas.fig{background:#fff;border-radius:8px}
       <div class="level-card" onclick="startLevel(2)">
         <div class="lc-icon">🔥</div>
         <div class="lc-title">레벨 2</div>
-        <div class="lc-desc">숫자는 같지만, 각과 변 중 무엇이<br>주어지고 무엇을 구하는지 바뀌어요!</div>
+        <div class="lc-desc">주어진 것과 구하는 것의 위치가<br>서로 바뀌어요!</div>
         <span class="lc-tag tag2">심화</span>
       </div>
     </div>
@@ -192,12 +192,12 @@ canvas.fig{background:#fff;border-radius:8px}
 <!-- PHASE A -->
 <div class="main screen" id="scA">
   <div class="concept">
-    <strong>이등변삼각형의 성질(역):</strong> 삼각형에서 두 각의 크기가 같으면, 그 두 각과 마주보는 두 변의 길이도 같아요!
-    (예: ∠A=∠B이면 <span class="ol">BC</span>=<span class="ol">AC</span>)
+    <strong>각의 관계:</strong> AB=AC이므로 ∠B=∠C, BD가 ∠B를 이등분하므로 ∠DBC=∠B÷2예요.
+    △BDC의 세 각의 합이 180°라는 것을 이용해 ∠BDC(또는 ∠A)를 구해봐요.
   </div>
   <div class="qcard" id="qA">
-    <div class="qtop"><span class="qnum" id="qAnumBadge">Q1</span><span class="qtype" id="qAtype">각→변</span></div>
-    <div class="qtext">다음 그림에서 x의 값을 구하시오.</div>
+    <div class="qtop"><span class="qnum" id="qAnumBadge">Q1</span><span class="qtype" id="qAtype">각 구하기</span></div>
+    <div class="qtext"><span class="ol">AB</span>=<span class="ol">AC</span>인 이등변삼각형 ABC에서 ∠B의 이등분선이 <span class="ol">AC</span>와 만나는 점을 D라고 할 때, 다음 그림에서 x의 값을 구하시오.</div>
     <div class="qdesc" id="qAdesc"></div>
     <div class="hint-box">
       <button class="hint-toggle-btn" id="hintBtnA" onclick="requestHint('A')">💡 힌트 보기</button>
@@ -228,9 +228,9 @@ canvas.fig{background:#fff;border-radius:8px}
       <canvas id="scratchA" class="scratch-canvas"></canvas>
     </div>
     <div class="input-row">
-      <span class="eq-prefix" id="aPrefix">x =</span>
+      <span class="eq-prefix">∠x =</span>
       <input type="number" class="eq-input" id="aVal" placeholder="?" onkeydown="if(event.key==='Enter')checkA()">
-      <span class="eq-suffix" id="aSuffix">cm</span>
+      <span class="eq-suffix">°</span>
       <button class="submit-btn" onclick="checkA()">확인</button>
     </div>
     <div class="fb fb-wrong" id="fwA"><div class="fb-label">틀렸어요</div><span id="fwAtxt"></span></div>
@@ -243,12 +243,12 @@ canvas.fig{background:#fff;border-radius:8px}
 <!-- PHASE B -->
 <div class="main screen" id="scB">
   <div class="concept">
-    <strong>두 개의 이등변삼각형:</strong> 그림에서 밑각이 같은 삼각형을 찾으면 각각 이등변삼각형이 돼요.
-    두 삼각형의 관계(외각 등)를 이용해 각 또는 변의 값을 구해요.
+    <strong>길이 관계:</strong> △ABD에서 ∠A=∠ABD=36°이므로 AD=BD, △BDC에서 ∠BDC=∠BCD=72°이므로 BD=BC예요.
+    따라서 <span class="ol">AD</span>=<span class="ol">BD</span>=<span class="ol">BC</span>가 항상 성립해요!
   </div>
   <div class="qcard" id="qB">
-    <div class="qtop"><span class="qnum" id="qBnumBadge">Q1</span><span class="qtype" id="qBtype">이등변삼각형 2개</span></div>
-    <div class="qtext">다음 그림에서 x의 값을 구하시오.</div>
+    <div class="qtop"><span class="qnum" id="qBnumBadge">Q1</span><span class="qtype" id="qBtype">길이 구하기</span></div>
+    <div class="qtext"><span class="ol">AB</span>=<span class="ol">AC</span>인 이등변삼각형 ABC에서 ∠B의 이등분선이 <span class="ol">AC</span>와 만나는 점을 D라고 할 때, 다음 그림에서 x의 값을 구하시오.</div>
     <div class="qdesc" id="qBdesc"></div>
     <div class="hint-box">
       <button class="hint-toggle-btn" id="hintBtnB" onclick="requestHint('B')">💡 힌트 보기</button>
@@ -281,7 +281,7 @@ canvas.fig{background:#fff;border-radius:8px}
     <div class="input-row">
       <span class="eq-prefix" id="bPrefix">x =</span>
       <input type="number" class="eq-input" id="bVal" placeholder="?" onkeydown="if(event.key==='Enter')checkB()">
-      <span class="eq-suffix" id="bSuffix">cm</span>
+      <span class="eq-suffix">cm</span>
       <button class="submit-btn" onclick="checkB()">확인</button>
     </div>
     <div class="fb fb-wrong" id="fwB"><div class="fb-label">틀렸어요</div><span id="fwBtxt"></span></div>
@@ -335,34 +335,36 @@ canvas.fig{background:#fff;border-radius:8px}
 <script>
 /* ════════════════════════════════
    문제 데이터
-   Phase A kind: giveAC(∠A,∠C,AC→BC=x) / giveEqualSides(AC=BC,∠A→∠C=x)
-   Phase B kind: giveAngles(∠DBC=∠DCB,∠A,BD→AC=x) / giveEqualLen(BD=DC=AC,∠DBC→∠A=x)
+   Phase A: ∠BDC = 180° − ∠DBC − ∠C 는 꼭지각 ∠A가 어떤 값이어도 성립하는 일반 공식이라,
+            각도를 자유롭게 바꿀 수 있음 (△ABD가 이등변삼각형일 필요는 없음).
+   Phase B: AD=BD=BC 로 삼각비 없이 길이를 구하려면 ∠A=36°, ∠BDC=72°인
+            특수한 경우(황금 이등변삼각형)여야 하므로 각도는 계속 고정, 길이만 바꿈.
+   Phase A kind: giveA(∠A→∠BDC=x) / giveBDC(∠BDC→∠A=x)
+   Phase B kind: giveBC(BC→AD=x) / giveAD(AD→BC=x)
 ════════════════════════════════ */
-const A_LIST=[35,40,45,50,55,58,65,70];
-const ACLEN_LIST=[5,6,7,8,4,9,5,7];
-const poolA1 = A_LIST.map((a,i)=>({kind:'giveAC', a, c:180-2*a, L:ACLEN_LIST[i], x:ACLEN_LIST[i]}));
-const poolA2 = A_LIST.map((a,i)=>({kind:'giveEqualSides', a, L:ACLEN_LIST[i], x:180-2*a}));
+const A_LIST=[24,28,32,36,40,48,56,64,72,80];
+const poolA1 = A_LIST.map(a=>({kind:'giveA', a, bdc:(180+3*a)/4, x:(180+3*a)/4}));
+const poolA2 = A_LIST.map(a=>({kind:'giveBDC', a, bdc:(180+3*a)/4, x:a}));
 
-const BETA_LIST=[20,22,25,28,30,32,35,38];
-const BDLEN_LIST=[3,4,5,6,7,3,4,5];
-const poolB1 = BETA_LIST.map((b,i)=>({kind:'giveAngles', b, a:2*b, L:BDLEN_LIST[i], x:BDLEN_LIST[i]}));
-const poolB2 = BETA_LIST.map((b,i)=>({kind:'giveEqualLen', b, L:BDLEN_LIST[i], x:2*b}));
+const LEN_LIST=[3,4,5,6,7,8,9,10];
+const poolB1 = LEN_LIST.map(L=>({kind:'giveBC', L, x:L}));
+const poolB2 = LEN_LIST.map(L=>({kind:'giveAD', L, x:L}));
 
 const kindDescA = {
-  giveAC: p => `∠A=<span class="em">${p.a}°</span>, ∠C=<span class="em">${p.c}°</span>, <span class="ol">AC</span>=${p.L}cm일 때, <span class="ol">BC</span>=x cm의 값을 구하시오.`,
-  giveEqualSides: p => `<span class="ol">AC</span>=<span class="ol">BC</span>=${p.L}cm, ∠A=<span class="em">${p.a}°</span>일 때, ∠x(=∠C)의 크기를 구하시오.`
+  giveA: p => `∠A=<span class="em">${p.a}°</span>일 때, ∠x(=∠BDC)의 크기를 구하시오.`,
+  giveBDC: p => `∠BDC=<span class="em">${p.bdc}°</span>일 때, ∠x(=∠A)의 크기를 구하시오.`
 };
 const formulaA = {
-  giveAC: '<strong>풀이:</strong> ∠B=180°−∠A−∠C를 구한 뒤, ∠A=∠B이면 마주보는 변 BC=AC예요! (두 각이 같으면 마주보는 두 변도 같아요)',
-  giveEqualSides: '<strong>풀이:</strong> AC=BC이면 마주보는 두 각이 같아요! (∠A=∠B) 그 다음 ∠C=180°−∠A−∠B를 계산해요.'
+  giveA: '<strong>풀이:</strong> ∠B=∠C=(180°−∠A)÷2, BD가 ∠B를 이등분하므로 ∠DBC=∠B÷2. △BDC에서 ∠BDC=180°−∠DBC−∠C',
+  giveBDC: '<strong>풀이:</strong> ∠BDC=180°−1.5×∠B 이므로 ∠B=(180°−∠BDC)×2÷3. ∠A=180°−2×∠B'
 };
 const kindDescB = {
-  giveAngles: p => `∠DBC=∠DCB=<span class="em">${p.b}°</span>, ∠A=<span class="em">${p.a}°</span>, <span class="ol">BD</span>=${p.L}cm일 때, <span class="ol">AC</span>=x cm의 값을 구하시오.`,
-  giveEqualLen: p => `<span class="ol">BD</span>=<span class="ol">DC</span>=<span class="ol">AC</span>=${p.L}cm, ∠DBC=<span class="em">${p.b}°</span>일 때, ∠x(=∠A)의 크기를 구하시오.`
+  giveBC: p => `∠A=36°이고 <span class="ol">BC</span>=<span class="em">${p.L}cm</span>일 때, <span class="ol">AD</span>=x cm의 값을 구하시오.`,
+  giveAD: p => `∠A=36°이고 <span class="ol">AD</span>=<span class="em">${p.L}cm</span>일 때, <span class="ol">BC</span>=x cm의 값을 구하시오.`
 };
 const formulaB = {
-  giveAngles: '<strong>풀이:</strong> △BDC에서 ∠DBC=∠DCB이므로 DC=BD! 또 ∠ADC=180°−∠BDC=∠A이므로 △ADC에서 DC=AC. 따라서 AC=DC=BD',
-  giveEqualLen: '<strong>풀이:</strong> BD=DC이므로 ∠DCB=∠DBC. △BDC에서 ∠BDC를 구하고, ∠ADC=180°−∠BDC. DC=AC이므로 △ADC에서 ∠A=∠ADC'
+  giveBC: '<strong>풀이:</strong> △ABD에서 ∠A=∠ABD=36°이므로 AD=BD. △BDC에서 ∠BDC=∠BCD=72°이므로 BD=BC. 따라서 AD=BD=BC',
+  giveAD: '<strong>풀이:</strong> 같은 이유로 AD=BD=BC가 성립해요. 그러므로 BC=AD'
 };
 
 /* ════════════════════════════════
@@ -462,16 +464,6 @@ function startLevel(lv){
 /* ════════════════════════════════
    도형 그리기 헬퍼
 ════════════════════════════════ */
-function tickMark(ctx,p1,p2,color){
-  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy);
-  const px=-dy/len, py=dx/len, half=6;
-  ctx.strokeStyle=color; ctx.lineWidth=2;
-  ctx.beginPath();
-  ctx.moveTo(mx-px*half,my-py*half);
-  ctx.lineTo(mx+px*half,my+py*half);
-  ctx.stroke();
-}
 function angleArc(ctx,v,p1,p2,r,color){
   const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
   const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
@@ -489,7 +481,6 @@ function drawLabel(ctx,x,y,text,color,size,weight){
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(text,x,y);
 }
-// 두 변 사이 각의 이등분 방향으로 라벨 위치를 계산 (변과 겹치지 않게)
 function wedgeMid(v,p1,p2,r){
   const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
   const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
@@ -499,7 +490,6 @@ function wedgeMid(v,p1,p2,r){
   const mid=a1+diff/2;
   return {x:v.x+r*Math.cos(mid), y:v.y+r*Math.sin(mid)};
 }
-// 선분 중점에서 수직 방향으로 떨어진 라벨 위치 (side로 방향 반전)
 function midLabelPos(p1,p2,dist,side){
   const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
   const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy);
@@ -508,93 +498,87 @@ function midLabelPos(p1,p2,dist,side){
 }
 
 /* ════════════════════════════════
-   PHASE A 도형: 일반 삼각형 ABC
+   도형: A(꼭지각), B(왼쪽아래), C(오른쪽아래), D(AC 위, ∠B이등분선의 발)
+   실제 꼭지각 a(도)를 삼각함수로 반영해 매번 정확한 비율로 그림 (변의 길이 고정, 각도에 따라 밑변 폭/높이가 변함)
 ════════════════════════════════ */
-const A_A={x:180,y:55}, A_B={x:75,y:225}, A_C={x:285,y:225};
+const LEG_LEN=170, TOP_X=180, TOP_Y=48;
+function trianglePoints(aDeg){
+  const half=aDeg/2*Math.PI/180;
+  const A={x:TOP_X,y:TOP_Y};
+  const B={x:A.x-LEG_LEN*Math.sin(half), y:A.y+LEG_LEN*Math.cos(half)};
+  const C={x:A.x+LEG_LEN*Math.sin(half), y:A.y+LEG_LEN*Math.cos(half)};
+  const AB=LEG_LEN, BC=Math.hypot(C.x-B.x,C.y-B.y);
+  const t=AB/(AB+BC); // 각의 이등분선 정리: AD:DC = AB:BC
+  const D={x:A.x+t*(C.x-A.x), y:A.y+t*(C.y-A.y)};
+  return {A,B,C,D};
+}
+// D는 AC 위의 점이므로, AC에서 B와 반대쪽으로 살짝 떨어뜨려 라벨을 붙임
+function outsideLabelPos(pt,p1,p2,other,dist){
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy);
+  const px=-dy/len, py=dx/len;
+  const toOther={x:other.x-pt.x,y:other.y-pt.y};
+  const sign=(px*toOther.x+py*toOther.y)>0 ? -1 : 1;
+  return {x:pt.x+px*sign*dist, y:pt.y+py*sign*dist};
+}
 
-function renderFigureA(canvas, p){
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const A=A_A,B=A_B,C=A_C;
-
+function drawBase(ctx, pts, showBisectorMark){
+  const {A,B,C,D}=pts;
   ctx.strokeStyle='#333'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(D.x,D.y); ctx.stroke();
+
+  if(showBisectorMark){
+    // ∠B가 이등분됨을 표시: ∠ABD와 ∠DBC에 같은 모양의 작은 호를 그림
+    angleArc(ctx,B,A,D,16,'#666');
+    angleArc(ctx,B,D,C,16,'#666');
+  }
 
   drawLabel(ctx,A.x,A.y-16,'A','#333',14);
   drawLabel(ctx,B.x-16,B.y+12,'B','#333',14);
   drawLabel(ctx,C.x+16,C.y+12,'C','#333',14);
-
-  // ∠A는 항상 given
-  angleArc(ctx,A,B,C,26,'#666');
-  drawLabel(ctx,A.x,A.y+38,`${p.a}°`,'#333',14);
-
-  // AC 길이 라벨 (항상 존재)
-  const acPos=midLabelPos(A,C,20,-1);
-  drawLabel(ctx,acPos.x,acPos.y,`${p.L} cm`,'#333',13);
-
-  if(p.kind==='giveAC'){
-    angleArc(ctx,C,A,B,22,'#666');
-    drawLabel(ctx,C.x-34,C.y-18,`${p.c}°`,'#333',14);
-    const bcPos=midLabelPos(B,C,24,1);
-    drawLabel(ctx,bcPos.x,bcPos.y,'x cm','#db2777',14);
-  } else if(p.kind==='giveEqualSides'){
-    tickMark(ctx,A,C,'#db2777');
-    tickMark(ctx,B,C,'#db2777');
-    angleArc(ctx,C,A,B,22,'#db2777');
-    drawLabel(ctx,C.x-34,C.y-18,'x','#db2777',17);
-  }
+  const dLabel=outsideLabelPos(D,A,C,B,15);
+  drawLabel(ctx,dLabel.x,dLabel.y,'D','#333',13);
 }
 
-/* ════════════════════════════════
-   PHASE B 도형: D가 AB 위에 있는 삼각형
-════════════════════════════════ */
-const B_B={x:50,y:225}, B_C={x:290,y:225}, B_A={x:310,y:55};
-const B_D={x:B_B.x+0.42*(B_A.x-B_B.x), y:B_B.y+0.42*(B_A.y-B_B.y)};
+function renderFigureA(canvas, p){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const pts=trianglePoints(p.a);
+  drawBase(ctx,pts,false);
+  const {A,B,C,D}=pts;
+
+  const aColor = p.kind==='giveA' ? '#666' : '#db2777';
+  const dColor = p.kind==='giveA' ? '#db2777' : '#666';
+  const aText = p.kind==='giveA' ? `${p.a}°` : 'x';
+  const dText = p.kind==='giveA' ? 'x' : `${p.bdc}°`;
+
+  angleArc(ctx,A,B,C,26,aColor);
+  drawLabel(ctx,A.x,A.y+42,aText,aColor,aText==='x'?17:14);
+
+  angleArc(ctx,D,B,C,20,dColor);
+  const dLabel=wedgeMid(D,B,C,34);
+  drawLabel(ctx,dLabel.x,dLabel.y,dText,dColor,dText==='x'?17:14);
+}
 
 function renderFigureB(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const A=B_A,B=B_B,C=B_C,D=B_D;
+  const pts=trianglePoints(36);
+  drawBase(ctx,pts,true);
+  const {A,B,C,D}=pts;
 
-  ctx.strokeStyle='#333'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(A.x,A.y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(D.x,D.y); ctx.lineTo(C.x,C.y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+  const bcColor = p.kind==='giveBC' ? '#666' : '#db2777';
+  const adColor = p.kind==='giveBC' ? '#db2777' : '#666';
+  const bcText = p.kind==='giveBC' ? `${p.L} cm` : 'x cm';
+  const adText = p.kind==='giveBC' ? 'x cm' : `${p.L} cm`;
 
-  drawLabel(ctx,A.x+8,A.y-14,'A','#333',14);
-  drawLabel(ctx,B.x-14,B.y+12,'B','#333',14);
-  drawLabel(ctx,C.x+16,C.y+12,'C','#333',14);
-  drawLabel(ctx,D.x-4,D.y-16,'D','#333',13);
+  const bcPos=midLabelPos(B,C,22,1);
+  drawLabel(ctx,bcPos.x,bcPos.y,bcText,bcColor,13);
 
-  // ∠B는 항상 given
-  angleArc(ctx,B,D,C,20,'#666');
-  const bLabel=wedgeMid(B,D,C,40);
-  drawLabel(ctx,bLabel.x,bLabel.y,`${p.b}°`,'#333',13);
-
-  // ∠A
-  const aLabel=wedgeMid(A,D,C,38);
-  // BD 길이 라벨 (항상 존재)
-  const bdPos=midLabelPos(B,D,16,-1);
-  drawLabel(ctx,bdPos.x,bdPos.y,`${p.L} cm`,'#333',12);
-
-  if(p.kind==='giveAngles'){
-    angleArc(ctx,C,D,B,20,'#666');
-    const cLabel=wedgeMid(C,D,B,38);
-    drawLabel(ctx,cLabel.x,cLabel.y,`${p.b}°`,'#333',13);
-    angleArc(ctx,A,D,C,22,'#666');
-    drawLabel(ctx,aLabel.x,aLabel.y,`${p.a}°`,'#333',13);
-    const acPos=midLabelPos(A,C,18,-1);
-    drawLabel(ctx,acPos.x,acPos.y,'x cm','#db2777',13);
-  } else if(p.kind==='giveEqualLen'){
-    tickMark(ctx,B,D,'#db2777');
-    tickMark(ctx,D,C,'#db2777');
-    tickMark(ctx,A,C,'#db2777');
-    angleArc(ctx,A,D,C,22,'#db2777');
-    drawLabel(ctx,aLabel.x,aLabel.y,'x','#db2777',17);
-  }
+  const adPos=outsideLabelPos({x:(A.x+D.x)/2,y:(A.y+D.y)/2},A,C,B,18);
+  drawLabel(ctx,adPos.x,adPos.y,adText,adColor,13);
 }
 
 /* ════════════════════════════════
@@ -718,37 +702,46 @@ function setFb(phase,type,msg){
 function hideFb(phase){[`fw${phase}`,`fh${phase}`,`fc${phase}`].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('show');});}
 
 function wrongMsg(p, entered){
-  if(p.kind==='giveAC'){
-    if(isNear(entered,p.a)||isNear(entered,p.c)) return '각의 크기가 아니라 변의 길이를 구해야 해요! 각과 길이를 착각한 것 같아요.';
-    return '∠B를 먼저 구한 뒤, 어떤 두 각이 서로 같은지 확인해봐요. 두 각이 같으면 마주보는 두 변도 같아요!';
+  if(p.kind==='giveA'){
+    const B=(180-p.a)/2, DBC=B/2;
+    if(isNear(entered,p.a)) return '∠A와 ∠BDC는 다른 각이에요.';
+    return `∠B=∠C=${B}°, ∠DBC=(이등분선이므로)${DBC}°를 이용해 △BDC의 세 각의 합(180°)으로 ∠BDC를 구해봐요.`;
   }
-  if(p.kind==='giveEqualSides'){
-    if(isNear(entered,p.a)) return '∠A와 ∠C는 다른 각이에요. (∠A는 이미 주어졌어요)';
-    return 'AC=BC이면 ∠A=∠B예요. 먼저 ∠B(=∠A)를 이용해 ∠C=180°−∠A−∠B를 계산해봐요.';
+  if(p.kind==='giveBDC'){
+    if(isNear(entered,p.bdc)) return '∠BDC와 ∠A는 다른 각이에요.';
+    return '△BDC에서 ∠DBC를 먼저 구하고, ∠B=∠DBC×2(이등분선), 마지막으로 ∠A=180°−2∠B를 계산해봐요.';
   }
-  if(p.kind==='giveAngles'){
-    if(isNear(entered,p.a)||isNear(entered,p.b)) return '각의 크기가 아니라 변의 길이를 구해야 해요!';
-    return '△BDC와 △ADC가 각각 이등변삼각형이 되는 이유를 다시 생각해봐요. BD=DC, DC=AC가 성립해요.';
-  }
-  if(p.kind==='giveEqualLen'){
-    if(isNear(entered,p.b)) return '∠DBC와 ∠A는 다른 각이에요.';
-    if(isNear(entered,180-2*p.b)) return '그건 ∠BDC의 크기예요! ∠A(=∠ADC)를 구하려면 180°에서 한 번 더 빼야 해요.';
-    return 'BD=DC이므로 ∠DCB=∠DBC예요. 이제 ∠BDC와 ∠ADC를 차례로 구해봐요.';
+  if(p.kind==='giveBC'||p.kind==='giveAD'){
+    if(isNear(entered,p.L/2)) return '혹시 반으로 나눴나요? 두 길이는 그대로 같아요 (AD=BC).';
+    if(isNear(entered,p.L*2)) return '혹시 두 배를 했나요? 두 길이는 그대로 같아요 (AD=BC).';
+    return '△ABD와 △BDC가 각각 이등변삼각형이 되는 것을 이용하면 AD=BD=BC라는 걸 알 수 있어요.';
   }
   return '다시 한 번 생각해봐요!';
 }
 function hintMsg(p){
-  if(p.kind==='giveAC') return `힌트: ∠B = 180° − ${p.a}° − ${p.c}° = ${180-p.a-p.c}°. ∠A와 ∠B가 같으므로, 마주보는 변 BC와 AC도 같아요. 즉 BC = AC = ${p.L}cm`;
-  if(p.kind==='giveEqualSides') return `힌트: AC=BC이므로 ∠A=∠B=${p.a}°. ∠C = 180° − ${p.a}° − ${p.a}° = ${180-2*p.a}°`;
-  if(p.kind==='giveAngles') return `힌트: △BDC에서 ∠DBC=∠DCB=${p.b}°이므로 DC=BD=${p.L}cm. ∠BDC=${180-2*p.b}°, ∠ADC=180°−${180-2*p.b}°=${2*p.b}°=∠A이므로 △ADC에서 DC=AC. 따라서 AC=${p.L}cm`;
-  if(p.kind==='giveEqualLen') return `힌트: BD=DC이므로 ∠DCB=∠DBC=${p.b}°. ∠BDC=180°−${2*p.b}°=${180-2*p.b}°. ∠ADC=180°−${180-2*p.b}°=${2*p.b}°. DC=AC이므로 ∠A=∠ADC=${2*p.b}°`;
+  if(p.kind==='giveA'){
+    const B=(180-p.a)/2, DBC=B/2;
+    return `힌트: ∠B=∠C=${B}°, ∠DBC=(∠B의 절반)=${DBC}°. △BDC에서 ∠BDC=180°−${DBC}°−${B}°=${p.bdc}°`;
+  }
+  if(p.kind==='giveBDC'){
+    const B=(180-p.bdc)*2/3;
+    return `힌트: ∠BDC=180°−1.5×∠B 이므로 ∠B=(180°−${p.bdc}°)×2÷3=${B}°. ∠A=180°−2×${B}°=${p.a}°`;
+  }
+  if(p.kind==='giveBC') return `힌트: △ABD에서 ∠A=∠ABD=36°이므로 AD=BD. △BDC에서 ∠BDC=∠BCD=72°이므로 BD=BC. 즉 AD=BD=BC=${p.L}cm`;
+  if(p.kind==='giveAD') return `힌트: 같은 원리로 BC=BD=AD=${p.L}cm예요.`;
   return '';
 }
 function correctMsg(p){
-  if(p.kind==='giveAC') return `정답! ∠B=${180-p.a-p.c}°=∠A이므로 BC=AC=<span class="em">${p.L}cm</span>`;
-  if(p.kind==='giveEqualSides') return `맞아요! ∠A=∠B=${p.a}°이므로 ∠C = 180°−${2*p.a}° = <span class="em">${180-2*p.a}°</span>`;
-  if(p.kind==='giveAngles') return `정답! BD=DC=AC=<span class="em">${p.L}cm</span> (두 이등변삼각형을 이용했어요!)`;
-  if(p.kind==='giveEqualLen') return `맞아요! ∠BDC=${180-2*p.b}°, ∠ADC=${2*p.b}°이고 DC=AC이므로 ∠A=<span class="em">${2*p.b}°</span>`;
+  if(p.kind==='giveA'){
+    const B=(180-p.a)/2, DBC=B/2;
+    return `정답! ∠B=${B}°, ∠DBC=${DBC}°이므로 △BDC에서 ∠BDC=180°−${DBC}°−${B}°=<span class="em">${p.bdc}°</span>`;
+  }
+  if(p.kind==='giveBDC'){
+    const B=(180-p.bdc)*2/3;
+    return `맞아요! ∠B=(180°−${p.bdc}°)×2÷3=${B}°이므로 ∠A=180°−${B}°×2=<span class="em">${p.a}°</span>`;
+  }
+  if(p.kind==='giveBC') return `정답! AD=BD=BC이므로 AD=<span class="em">${p.L}cm</span>`;
+  if(p.kind==='giveAD') return `맞아요! BC=BD=AD이므로 BC=<span class="em">${p.L}cm</span>`;
   return '정답!';
 }
 
@@ -768,14 +761,12 @@ function nextA_prob(){
   st.totalQ++; st.phaseAttempts=0; st.hadWrong=false; st.hintUsed=false;
   const p=st.curP;
   document.getElementById('qAnumBadge').textContent='Q'+st.totalQ;
-  document.getElementById('qAtype').textContent=p.kind==='giveAC'?'각→변':'변→각';
+  document.getElementById('qAtype').textContent=p.kind==='giveA'?'꼭지각→∠BDC':'∠BDC→꼭지각';
   document.getElementById('qAdesc').innerHTML=kindDescA[p.kind](p);
   document.getElementById('qAformula').innerHTML=formulaA[p.kind];
   document.getElementById('qAformula').style.display='none';
   document.getElementById('hintBtnA').style.display='';
   document.getElementById('hintTagA').style.display='none';
-  document.getElementById('aPrefix').textContent = p.kind==='giveAC' ? 'BC =' : '∠x =';
-  document.getElementById('aSuffix').textContent = p.kind==='giveAC' ? 'cm' : '°';
   document.getElementById('aVal').value='';
   renderFigureA(document.getElementById('figA'), p);
   clearDrawCanvas(figADraw); clearDrawCanvas(scratchA);
@@ -815,14 +806,13 @@ function nextB_prob(){
   st.totalQ++; st.phaseAttempts=0; st.hadWrong=false; st.hintUsed=false;
   const p=st.curP;
   document.getElementById('qBnumBadge').textContent='Q'+st.totalQ;
-  document.getElementById('qBtype').textContent=p.kind==='giveAngles'?'각→변':'변→각';
+  document.getElementById('qBtype').textContent=p.kind==='giveBC'?'BC→AD':'AD→BC';
   document.getElementById('qBdesc').innerHTML=kindDescB[p.kind](p);
   document.getElementById('qBformula').innerHTML=formulaB[p.kind];
   document.getElementById('qBformula').style.display='none';
   document.getElementById('hintBtnB').style.display='';
   document.getElementById('hintTagB').style.display='none';
-  document.getElementById('bPrefix').textContent = p.kind==='giveAngles' ? 'AC =' : '∠x =';
-  document.getElementById('bSuffix').textContent = p.kind==='giveAngles' ? 'cm' : '°';
+  document.getElementById('bPrefix').textContent = p.kind==='giveBC' ? 'AD =' : 'BC =';
   document.getElementById('bVal').value='';
   renderFigureB(document.getElementById('figB'), p);
   clearDrawCanvas(figBDraw); clearDrawCanvas(scratchB);

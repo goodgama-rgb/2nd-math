@@ -91,6 +91,21 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 
 .fig-wrap{display:flex;justify-content:center;margin-bottom:14px}
 canvas.fig{background:#fff;border-radius:8px}
+.fig-stack{position:relative;width:360px;height:300px}
+.fig-stack canvas{position:absolute;top:0;left:0}
+.fig-draw{touch-action:none}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.tool-btn{padding:8px 14px;border-radius:8px;border:1.5px solid #e0d0dc;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink2);font-family:inherit}
+.tool-btn:hover{background:var(--rose-ll)}
+.tool-btn.active{background:var(--rose-ll);border-color:var(--rose);color:var(--rose)}
+.tool-btn.clear-btn{margin-left:auto;color:var(--ink3)}
+.color-swatches{display:flex;gap:6px;align-items:center;padding:0 8px;border-left:1.5px solid #eddce6;border-right:1.5px solid #eddce6}
+.color-btn{width:24px;height:24px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;box-shadow:0 0 0 1.5px #e0d0dc}
+.color-btn.active{box-shadow:0 0 0 2px var(--ink)}
+.scratch-wrap{margin-bottom:14px}
+.scratch-label{font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:6px}
+.scratch-canvas{width:100%;max-width:600px;height:150px;border:1.5px dashed #e0d0dc;border-radius:8px;background:#fffef9;display:block;touch-action:none}
 
 .input-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 .eq-prefix{font-size:16px;font-weight:700;color:var(--rose)}
@@ -188,7 +203,29 @@ canvas.fig{background:#fff;border-radius:8px}
       <span class="hint-used-tag" id="hintTagA" style="display:none">💡 힌트를 열람했어요</span>
       <div class="formula" id="qAformula" style="display:none"></div>
     </div>
-    <div class="fig-wrap"><canvas id="figA" class="fig" width="360" height="300"></canvas></div>
+    <div class="fig-wrap">
+      <div class="fig-stack">
+        <canvas id="figA" class="fig" width="360" height="300"></canvas>
+        <canvas id="figA_draw" class="fig-draw" width="360" height="300"></canvas>
+      </div>
+    </div>
+    <div class="draw-toolbar" id="toolbarA">
+      <button class="tool-btn active" data-tool="pen">✏️ 펜</button>
+      <button class="tool-btn" data-tool="eraser">🧹 지우개</button>
+      <span class="color-swatches">
+        <button class="color-btn active" data-color="#1a1a2e" style="background:#1a1a2e" title="검정"></button>
+        <button class="color-btn" data-color="#dc2626" style="background:#dc2626" title="빨강"></button>
+        <button class="color-btn" data-color="#2563eb" style="background:#2563eb" title="파랑"></button>
+        <button class="color-btn" data-color="#ca8a04" style="background:#ca8a04" title="노랑"></button>
+        <button class="color-btn" data-color="#16a34a" style="background:#16a34a" title="초록"></button>
+      </span>
+      <button class="tool-btn undo-btn">↩️ 되돌리기</button>
+      <button class="tool-btn clear-btn">🗑️ 전체 지우기</button>
+    </div>
+    <div class="scratch-wrap">
+      <div class="scratch-label">📝 계산 메모장 (자유롭게 풀이를 써보세요)</div>
+      <canvas id="scratchA" class="scratch-canvas"></canvas>
+    </div>
     <div class="input-row">
       <span class="eq-prefix">∠x =</span>
       <input type="number" class="eq-input" id="aVal" placeholder="?" onkeydown="if(event.key==='Enter')checkA()">
@@ -217,7 +254,29 @@ canvas.fig{background:#fff;border-radius:8px}
       <span class="hint-used-tag" id="hintTagB" style="display:none">💡 힌트를 열람했어요</span>
       <div class="formula" id="qBformula" style="display:none"></div>
     </div>
-    <div class="fig-wrap"><canvas id="figB" class="fig" width="360" height="300"></canvas></div>
+    <div class="fig-wrap">
+      <div class="fig-stack">
+        <canvas id="figB" class="fig" width="360" height="300"></canvas>
+        <canvas id="figB_draw" class="fig-draw" width="360" height="300"></canvas>
+      </div>
+    </div>
+    <div class="draw-toolbar" id="toolbarB">
+      <button class="tool-btn active" data-tool="pen">✏️ 펜</button>
+      <button class="tool-btn" data-tool="eraser">🧹 지우개</button>
+      <span class="color-swatches">
+        <button class="color-btn active" data-color="#1a1a2e" style="background:#1a1a2e" title="검정"></button>
+        <button class="color-btn" data-color="#dc2626" style="background:#dc2626" title="빨강"></button>
+        <button class="color-btn" data-color="#2563eb" style="background:#2563eb" title="파랑"></button>
+        <button class="color-btn" data-color="#ca8a04" style="background:#ca8a04" title="노랑"></button>
+        <button class="color-btn" data-color="#16a34a" style="background:#16a34a" title="초록"></button>
+      </span>
+      <button class="tool-btn undo-btn">↩️ 되돌리기</button>
+      <button class="tool-btn clear-btn">🗑️ 전체 지우기</button>
+    </div>
+    <div class="scratch-wrap">
+      <div class="scratch-label">📝 계산 메모장 (자유롭게 풀이를 써보세요)</div>
+      <canvas id="scratchB" class="scratch-canvas"></canvas>
+    </div>
     <div class="input-row">
       <span class="eq-prefix">∠x =</span>
       <input type="number" class="eq-input" id="bVal" placeholder="?" onkeydown="if(event.key==='Enter')checkB()">
@@ -483,6 +542,116 @@ function renderFigure(canvas, p){
 }
 
 /* ════════════════════════════════
+   필기(펜/지우개) — 도형 위 겹쳐그리기 + 계산 메모장
+   Pointer Events로 마우스/터치/펜을 동일하게 처리
+════════════════════════════════ */
+// 마우스/펜 호버용 커스텀 커서 (SVG). 손가락 터치에는 표시되지 않음(터치는 커서 개념이 없음).
+function svgCursor(svgStr, hx, hy){
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svgStr)}") ${hx} ${hy}, auto`;
+}
+function penCursorSVG(color){
+  return `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><rect x='10' y='2' width='6' height='14' rx='1' fill='#ffffff' stroke='#333' stroke-width='1.5'/><polygon points='10,16 16,16 13,23' fill='${color}' stroke='#333' stroke-width='1'/><rect x='10' y='2' width='6' height='3' fill='${color}'/></svg>`;
+}
+const ERASER_CURSOR_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><circle cx='13' cy='13' r='10' fill='rgba(255,255,255,0.4)' stroke='#333' stroke-width='1.5'/></svg>`;
+function updateCursor(canvas){
+  canvas.style.cursor = canvas._tool==='eraser'
+    ? svgCursor(ERASER_CURSOR_SVG, 13, 13)
+    : svgCursor(penCursorSVG(canvas._color||'#1a1a2e'), 13, 23);
+}
+function setupDrawCanvas(canvas){
+  const rect=canvas.getBoundingClientRect();
+  const cssW=rect.width||canvas.width, cssH=rect.height||canvas.height;
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(cssW*dpr);
+  canvas.height=Math.round(cssH*dpr);
+  canvas.style.width=cssW+'px';
+  canvas.style.height=cssH+'px';
+  canvas._cssW=cssW; canvas._cssH=cssH;
+  canvas._tool='pen';
+  canvas._color='#1a1a2e';
+  canvas._undoStack=[];
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  updateCursor(canvas);
+  let drawing=false,lastX=0,lastY=0;
+  function pos(e){
+    const r=canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left, y:e.clientY-r.top};
+  }
+  function down(e){
+    drawing=true;
+    const p=pos(e); lastX=p.x; lastY=p.y;
+    if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
+    canvas._undoStack.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+    if(canvas._undoStack.length>15) canvas._undoStack.shift();
+    e.preventDefault();
+  }
+  function movef(e){
+    if(!drawing)return;
+    const p=pos(e);
+    if(canvas._tool==='eraser'){
+      ctx.globalCompositeOperation='destination-out';
+      ctx.lineWidth=22;
+    } else {
+      ctx.globalCompositeOperation='source-over';
+      ctx.strokeStyle=canvas._color;
+      ctx.lineWidth=2.6;
+    }
+    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
+    lastX=p.x; lastY=p.y;
+    e.preventDefault();
+  }
+  function up(){ drawing=false; }
+  canvas.addEventListener('pointerdown',down);
+  canvas.addEventListener('pointermove',movef);
+  canvas.addEventListener('pointerup',up);
+  canvas.addEventListener('pointerleave',up);
+  canvas.addEventListener('pointercancel',up);
+}
+function clearDrawCanvas(canvas){
+  canvas.getContext('2d').clearRect(0,0,canvas._cssW,canvas._cssH);
+  canvas._undoStack=[];
+}
+function undoDraw(canvas){
+  if(!canvas._undoStack || !canvas._undoStack.length) return;
+  canvas.getContext('2d').putImageData(canvas._undoStack.pop(),0,0);
+}
+// screen이 display:none인 동안은 크기를 잴 수 없으므로, 해당 화면이 처음 보일 때 한 번만 초기화
+function ensureDrawCanvas(canvas){
+  if(canvas.dataset.ready)return;
+  canvas.dataset.ready='1';
+  setupDrawCanvas(canvas);
+}
+function initDrawToolbar(toolbar, canvases){
+  toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(btn=>{
+    btn.onclick=()=>{
+      toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      canvases.forEach(c=>{c._tool=btn.dataset.tool; updateCursor(c);});
+    };
+  });
+  toolbar.querySelectorAll('.color-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      toolbar.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+      toolbar.querySelector('.tool-btn[data-tool="pen"]').classList.add('active');
+      canvases.forEach(c=>{c._color=btn.dataset.color; c._tool='pen'; updateCursor(c);});
+    };
+  });
+  const undoBtn=toolbar.querySelector('.undo-btn');
+  if(undoBtn) undoBtn.onclick=()=>canvases.forEach(undoDraw);
+  const clearBtn=toolbar.querySelector('.clear-btn');
+  if(clearBtn) clearBtn.onclick=()=>canvases.forEach(clearDrawCanvas);
+}
+
+const figADraw=document.getElementById('figA_draw'), scratchA=document.getElementById('scratchA');
+const figBDraw=document.getElementById('figB_draw'), scratchB=document.getElementById('scratchB');
+initDrawToolbar(document.getElementById('toolbarA'), [figADraw,scratchA]);
+initDrawToolbar(document.getElementById('toolbarB'), [figBDraw,scratchB]);
+
+/* ════════════════════════════════
    피드백 헬퍼
 ════════════════════════════════ */
 function setFb(phase,type,msg){
@@ -540,7 +709,9 @@ function correctMsg(p){
 function loadPhaseA(){
   st.phase=0; st.streak=0; st.hadWrong=false; st.hintUsed=false;
   updatePhaseTabs(); updateStreak();
-  showScreen('scA'); nextA_prob();
+  showScreen('scA');
+  ensureDrawCanvas(figADraw); ensureDrawCanvas(scratchA);
+  nextA_prob();
 }
 function nextA_prob(){
   const pool=st.level===1?poolA1:poolA2;
@@ -556,6 +727,7 @@ function nextA_prob(){
   document.getElementById('hintTagA').style.display='none';
   document.getElementById('aVal').value='';
   renderFigure(document.getElementById('figA'), p);
+  clearDrawCanvas(figADraw); clearDrawCanvas(scratchA);
   hideFb('A'); document.getElementById('nbA').classList.remove('show');
 }
 function checkA(){
@@ -582,7 +754,9 @@ function nextA(){ if(st.streak>=2){ loadPhaseB(); return; } nextA_prob(); }
 function loadPhaseB(){
   st.phase=1; st.streak=0; st.hadWrong=false; st.hintUsed=false;
   updatePhaseTabs(); updateStreak();
-  showScreen('scB'); nextB_prob();
+  showScreen('scB');
+  ensureDrawCanvas(figBDraw); ensureDrawCanvas(scratchB);
+  nextB_prob();
 }
 function nextB_prob(){
   const pool=st.level===1?poolB1:poolB2;
@@ -598,6 +772,7 @@ function nextB_prob(){
   document.getElementById('hintTagB').style.display='none';
   document.getElementById('bVal').value='';
   renderFigure(document.getElementById('figB'), p);
+  clearDrawCanvas(figBDraw); clearDrawCanvas(scratchB);
   hideFb('B'); document.getElementById('nbB').classList.remove('show');
 }
 function checkB(){
