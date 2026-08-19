@@ -587,7 +587,8 @@
               <option value="similar">닮음일 뿐</option>
               <option value="congruent">합동</option>
             </select>
-            이다.
+            이다.<br>
+            이 합동 조건의 이름은 <input type="text" class="blank" id="blankRHA3" maxlength="6" autocomplete="off"> 합동입니다.
           </div>
         </div>
 
@@ -628,6 +629,7 @@
           <p>③ ∠B = ∠<input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"> ······ (가정)</p>
           <p>①, ②, ③에 의해 △ABC ≡ △DEF ( <input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 합동)</p>
           <p>그러므로 빗변의 길이와 한 예각의 크기가 각각 같은 두 직각삼각형은 서로 <input type="text" class="blank" data-id="b5" maxlength="6" autocomplete="off"> 이다. ∎</p>
+          <p>즉, 이 증명은 <input type="text" class="blank" data-id="b6" maxlength="6" autocomplete="off"> 합동 조건을 보여준다.</p>
         </div>
 
         <div class="toolbar">
@@ -636,7 +638,7 @@
           <button class="btn btn-outline btn-sm" id="resetProof">↺ 다시 쓰기</button>
         </div>
         <div class="wordbank" id="wordbank">
-          <span class="word">D</span><span class="word">합동</span><span class="word">DE</span><span class="word">ASA</span><span class="word">E</span>
+          <span class="word">D</span><span class="word">합동</span><span class="word">DE</span><span class="word">ASA</span><span class="word">E</span><span class="word">RHA</span>
         </div>
         <div class="feedback" id="feedbackProof"></div>
 
@@ -1208,8 +1210,12 @@
   document.getElementById('checkStep3').addEventListener('click', ()=>{
     const s1 = document.getElementById('rel1').value;
     const blank2 = document.getElementById('blank2').value;
+    const blankRHA3 = document.getElementById('blankRHA3');
+    const rhaOk = normalizeAns(blankRHA3.value) === 'RHA';
     const fb = document.getElementById('feedback3');
-    const ok = s1 === '=' && blank2 === 'congruent';
+    const ok = s1 === '=' && blank2 === 'congruent' && rhaOk;
+    blankRHA3.classList.toggle('correct', rhaOk);
+    blankRHA3.classList.toggle('wrong', !rhaOk && blankRHA3.value.trim() !== '');
     if(ok){
       fb.className = 'feedback success';
       fb.innerHTML = '🎉 완벽해요! 합동인 도형의 대응변은 각각 같으므로 <span class="seg">AC</span>=<span class="seg">DF</span> 입니다. 즉, △ABC≡△DEF(RHA 합동)입니다!';
@@ -1225,7 +1231,7 @@
   });
 
   // ---------- 활동 4 ----------
-  const PROOF_ANSWERS = { b1:['D'], b2:['DE'], b3:['E'], b4:['ASA'], b5:['합동'] };
+  const PROOF_ANSWERS = { b1:['D'], b2:['DE'], b3:['E'], b4:['ASA'], b5:['합동'], b6:['RHA'] };
   function normalizeAns(s){
     return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
   }
@@ -1234,6 +1240,7 @@
     if(!v) return false;
     if(id === 'b4') return v.indexOf('ASA') >= 0;
     if(id === 'b5') return v.indexOf('합동') >= 0;
+    if(id === 'b6') return v.indexOf('RHA') >= 0;
     return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
   }
   const P4_LIVE = [['b1','p4_b1ok'], ['b2','p4_b2ok'], ['b3','p4_b3ok'], ['b4','p4_b4ok']];

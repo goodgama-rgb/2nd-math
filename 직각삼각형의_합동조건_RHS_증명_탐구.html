@@ -542,14 +542,13 @@
 
         <div class="reveal" id="isoBlock">
           <div class="fillsentence">
-            이때 <span class="seg">AB</span> = <span class="seg">DE</span> 이고, 도형을 뒤집어도 길이는 변하지 않으므로 <span class="seg">AE</span> = <input type="text" class="blank" id="isoBlank1" maxlength="4" style="width:44px" autocomplete="off"><br>
-            따라서 <span class="seg">AB</span> = <span class="seg">AE</span> 이므로 △ABE는
+            이때 <span class="seg">AB</span> = <span class="seg">DE</span> 이고 세 점 B, C, E는 한 직선 위에 있으므로 △ABE는
             <select id="isoSel">
               <option value="?">〔 선택 〕</option>
               <option value="scalene">부등변삼각형</option>
               <option value="isosceles">이등변삼각형</option>
             </select>
-            이다. 이등변삼각형의 두 밑각의 크기는 같으므로 ∠B = ∠<input type="text" class="blank" id="isoBlank2" maxlength="4" style="width:44px" autocomplete="off">
+            이다. 이때 이등변삼각형의 두 밑각의 크기는 같으므로 ∠B = ∠<input type="text" class="blank" id="isoBlank2" maxlength="4" style="width:44px" autocomplete="off">이다.
           </div>
           <button class="btn btn-check" id="checkIso">확인</button>
           <div class="feedback" id="feedbackIso"></div>
@@ -592,7 +591,8 @@
               <option value="similar">닮음일 뿐</option>
               <option value="congruent">합동</option>
             </select>
-            이다.
+            이다.<br>
+            이 합동 조건의 이름은 <input type="text" class="blank" id="blankRHS3" maxlength="6" autocomplete="off"> 합동입니다.
           </div>
         </div>
 
@@ -634,6 +634,7 @@
           <p>④ 이등변삼각형의 두 밑각의 크기는 같으므로 ∠B = ∠<input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"></p>
           <p>⑤ ②, ④에 의해 <span class="seg">AB</span>=<span class="seg">DE</span>, ∠B=∠E 이므로 △ABC ≡ △DEF ( <input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 합동)</p>
           <p>⑥ 그러므로 빗변의 길이와 다른 한 변의 길이가 각각 같은 두 직각삼각형은 서로 <input type="text" class="blank" data-id="b5" maxlength="6" autocomplete="off"> 이다. ∎</p>
+          <p>⑦ 즉, 이 증명은 <input type="text" class="blank" data-id="b6" maxlength="6" autocomplete="off"> 합동 조건을 보여준다.</p>
         </div>
 
         <div class="toolbar">
@@ -643,7 +644,7 @@
           <button class="btn btn-outline btn-sm" id="resetProof">↺ 다시 쓰기</button>
         </div>
         <div class="wordbank" id="wordbank">
-          <span class="word">AB</span><span class="word">DE</span><span class="word">이등변삼각형</span><span class="word">E</span><span class="word">RHA</span><span class="word">합동</span>
+          <span class="word">AB</span><span class="word">DE</span><span class="word">이등변삼각형</span><span class="word">E</span><span class="word">RHA</span><span class="word">합동</span><span class="word">RHS</span>
         </div>
         <div class="feedback" id="feedbackProof"></div>
 
@@ -816,6 +817,9 @@
     document.getElementById('dotF').setAttribute('cx', F.x); document.getElementById('dotF').setAttribute('cy', F.y);
     document.getElementById('dotE').setAttribute('cx', E.x); document.getElementById('dotE').setAttribute('cy', E.y);
     document.getElementById('dotD').setAttribute('cx', D.x); document.getElementById('dotD').setAttribute('cy', D.y);
+    nameD.setAttribute('x', D.x-14); nameD.setAttribute('y', D.y+4);
+    nameE.setAttribute('x', E.x-4); nameE.setAttribute('y', E.y+22);
+    nameF.setAttribute('x', F.x-16); nameF.setAttribute('y', F.y+4);
 
     // 삼각형
     triABC.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`);
@@ -1011,7 +1015,7 @@
 
   // ---------- 뒤집어서 겹치기 (2단계 증명 구성: 좌우 반전 + 이동) ----------
   // C→F 쪽으로 여백이 훨씬 넉넉해서(F가 캔버스 좌우 양쪽에 다 공간이 있음), △DEF가 아니라 △ABC를 뒤집어 옮긴다
-  const FLIP_ABC_IDS = ['triABC','dotA','dotB','dotC','rightC'];
+  const FLIP_ABC_IDS = ['triABC','dotA','dotB','dotC','rightC','tickAB','tickAC','tickBC','markCircB'];
   const FLIP_MATRIX = `matrix(-1,0,0,1,${C.x+F.x},0)`;
   function setFlip(on){
     state.flipOn = on;
@@ -1188,20 +1192,19 @@
     }
   });
   document.getElementById('checkIso').addEventListener('click', ()=>{
-    const b1 = document.getElementById('isoBlank1').value.trim().toUpperCase();
     const sel = document.getElementById('isoSel').value;
     const b2 = document.getElementById('isoBlank2').value.trim().toUpperCase();
     const fb = document.getElementById('feedbackIso');
-    const ok = (b1 === 'AB' || b1 === 'DE') && sel === 'isosceles' && b2 === 'E';
+    const ok = sel === 'isosceles' && b2 === 'E';
     if(ok){
       fb.className = 'feedback success';
-      fb.innerHTML = '✅ 정확해요! <span class="seg">AB</span>=<span class="seg">AE</span> 인 이등변삼각형이므로 두 밑각 ∠B, ∠E가 같아요.';
+      fb.innerHTML = '✅ 정확해요! <span class="seg">AB</span>=<span class="seg">DE</span> 이고 B, C, E가 한 직선 위에 있는 이등변삼각형이므로 두 밑각 ∠B, ∠E가 같아요.';
       state.showAngleMarkBE = true;
       update();
       document.getElementById('congruenceTypeBlock').classList.add('show');
     }else{
       fb.className = 'feedback error';
-      fb.textContent = '❌ 다시 확인해보세요. 뒤집어도 길이가 변하지 않는다는 점, 그리고 이등변삼각형의 성질(두 밑각이 같다)을 떠올려보세요.';
+      fb.textContent = '❌ 다시 확인해보세요. 세 점 B, C, E가 한 직선 위에 있다는 점, 그리고 이등변삼각형의 성질(두 밑각이 같다)을 떠올려보세요.';
     }
   });
   document.getElementById('checkCongType').addEventListener('click', ()=>{
@@ -1229,8 +1232,12 @@
   document.getElementById('checkStep3').addEventListener('click', ()=>{
     const s1 = document.getElementById('rel1').value;
     const blank2 = document.getElementById('blank2').value;
+    const blankRHS3 = document.getElementById('blankRHS3');
+    const rhsOk = normalizeAns(blankRHS3.value) === 'RHS';
     const fb = document.getElementById('feedback3');
-    const ok = s1 === '=' && blank2 === 'congruent';
+    const ok = s1 === '=' && blank2 === 'congruent' && rhsOk;
+    blankRHS3.classList.toggle('correct', rhsOk);
+    blankRHS3.classList.toggle('wrong', !rhsOk && blankRHS3.value.trim() !== '');
     if(ok){
       fb.className = 'feedback success';
       fb.innerHTML = '🎉 완벽해요! 합동인 도형의 대응변은 각각 같으므로 <span class="seg">BC</span>=<span class="seg">EF</span> 입니다. 즉, △ABC≡△DEF(RHS 합동)입니다!';
@@ -1246,7 +1253,7 @@
   });
 
   // ---------- 활동 4 ----------
-  const PROOF_ANSWERS = { b1:['AB','DE'], b2:['이등변삼각형'], b3:['E'], b4:['RHA'], b5:['합동'] };
+  const PROOF_ANSWERS = { b1:['AB','DE'], b2:['이등변삼각형'], b3:['E'], b4:['RHA'], b5:['합동'], b6:['RHS'] };
   function normalizeAns(s){
     return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
   }
@@ -1256,6 +1263,7 @@
     if(id === 'b2') return v.indexOf('이등변삼각형') >= 0;
     if(id === 'b4') return v.indexOf('RHA') >= 0;
     if(id === 'b5') return v.indexOf('합동') >= 0;
+    if(id === 'b6') return v.indexOf('RHS') >= 0;
     return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
   }
   const P4_LIVE = [['b3','p4_b3ok'], ['b4','p4_b4ok'], ['b5','p4_b5ok']];
