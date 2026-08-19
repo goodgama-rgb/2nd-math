@@ -63,6 +63,10 @@
 
   .tri-abc{ fill:#dbe4ff; stroke:#4a5568; stroke-width:2.5; }
   .tri-def{ fill:#f3f4f6; stroke:#4a5568; stroke-width:2.5; }
+  .overlay-el{ transition:transform .6s ease; }
+  .hyp-curve{ fill:none; stroke-width:1.8; stroke-dasharray:5 4; display:none; }
+  .hyp-curve-abc{ stroke:#4f6fe0; }
+  .hyp-curve-def{ stroke:#e0698a; }
   .vertex-dot{ fill:#4a5568; }
   .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; }
   .tick{ stroke:#4a5568; stroke-width:2; display:none; }
@@ -351,43 +355,47 @@
     <div class="svg-wrap">
       <svg id="canvas" viewBox="0 0 640 440" xmlns="http://www.w3.org/2000/svg">
         <!-- 삼각형 ABC (왼쪽, 조작 가능) -->
-        <polygon id="triABC" class="tri-abc" points=""></polygon>
+        <polygon id="triABC" class="tri-abc overlay-el" points=""></polygon>
         <!-- 삼각형 DEF (오른쪽, 고정된 기준) -->
         <polygon id="triDEF" class="tri-def" points=""></polygon>
 
         <!-- 직각 표시 (항상 참) -->
-        <path id="rightC" class="right-angle-mark" d=""></path>
+        <path id="rightC" class="right-angle-mark overlay-el" d=""></path>
         <path id="rightF" class="right-angle-mark" d=""></path>
 
+        <!-- 빗변 길이 표시용 바깥쪽 곡선 점선 (1단계) -->
+        <path id="hypCurveAB" class="hyp-curve hyp-curve-abc overlay-el" d=""></path>
+        <path id="hypCurveDE" class="hyp-curve hyp-curve-def" d=""></path>
+
         <!-- 빗변(AB, DE) 눈금 : 주어진 조건 -->
-        <path id="tickAB" class="tick" d=""></path>
+        <path id="tickAB" class="tick overlay-el" d=""></path>
         <path id="tickDE" class="tick" d=""></path>
         <!-- 남은 변(AC, DF) 눈금 : 증명된 결론 -->
-        <path id="tickAC" class="tick" d=""></path>
+        <path id="tickAC" class="tick overlay-el" d=""></path>
         <path id="tickDF" class="tick" d=""></path>
 
         <!-- ∠B=∠E (주어진 예각) 동그라미 -->
-        <circle id="markCircB" class="mark-circ" r="4"></circle>
+        <circle id="markCircB" class="mark-circ overlay-el" r="4"></circle>
         <circle id="markCircE" class="mark-circ" r="4"></circle>
         <!-- ∠A, ∠D (유도된 각) 수식 라벨 -->
-        <text id="markFormulaA" class="mark-formula">90°−●</text>
+        <text id="markFormulaA" class="mark-formula overlay-el">90°−●</text>
         <text id="markFormulaD" class="mark-formula">90°−●</text>
 
         <!-- 각 표시 호 (길이/각도 표시 버튼) -->
-        <path id="arcB" class="angle-arc base" d=""></path>
+        <path id="arcB" class="angle-arc base overlay-el" d=""></path>
         <path id="arcE" class="angle-arc base" d=""></path>
-        <text id="labelAngB" class="angle-label"></text>
+        <text id="labelAngB" class="angle-label overlay-el"></text>
         <text id="labelAngE" class="angle-label"></text>
 
         <!-- 변의 길이 라벨 -->
-        <text id="labelAB" class="side-label"><tspan class="seg">AB</tspan><tspan id="lenAB"></tspan></text>
-        <text id="labelDE" class="side-label"><tspan class="seg">DE</tspan><tspan id="lenDE"></tspan></text>
-        <text id="labelAC" class="side-label"><tspan class="seg">AC</tspan><tspan id="lenAC"></tspan></text>
+        <text id="labelAB" class="side-label overlay-el"><tspan id="lenAB"></tspan></text>
+        <text id="labelDE" class="side-label"><tspan id="lenDE"></tspan></text>
+        <text id="labelAC" class="side-label overlay-el"><tspan class="seg">AC</tspan><tspan id="lenAC"></tspan></text>
         <text id="labelDF" class="side-label"><tspan class="seg">DF</tspan><tspan id="lenDF"></tspan></text>
 
         <!-- 꼭짓점 이름 -->
-        <circle id="dotC" r="4" class="vertex-dot"></circle>
-        <text id="nameC" class="vertex-name">C</text>
+        <circle id="dotC" r="4" class="vertex-dot overlay-el"></circle>
+        <text id="nameC" class="vertex-name overlay-el">C</text>
         <circle id="dotF" r="4" class="vertex-dot"></circle>
         <text id="nameF" class="vertex-name">F</text>
         <circle id="dotE" r="4" class="vertex-dot"></circle>
@@ -395,10 +403,10 @@
         <circle id="dotD" r="4" class="vertex-dot"></circle>
         <text id="nameD" class="vertex-name">D</text>
 
-        <circle id="dotA" r="4" class="vertex-dot"></circle>
-        <text id="nameA" class="vertex-name">A</text>
-        <circle id="dotB" r="4" class="vertex-dot"></circle>
-        <text id="nameB" class="vertex-name">B</text>
+        <circle id="dotA" r="4" class="vertex-dot overlay-el"></circle>
+        <text id="nameA" class="vertex-name overlay-el">A</text>
+        <circle id="dotB" r="4" class="vertex-dot overlay-el"></circle>
+        <text id="nameB" class="vertex-name overlay-el">B</text>
       </svg>
     </div>
 
@@ -431,6 +439,12 @@
       <div class="step-body">
         <p>△ABC와 △DEF는 처음에 서로 다른 모양이에요 (∠C=∠F=90°는 항상 고정). 캔버스 위쪽의 입력창에 <b>빗변의 길이</b>와 <b>한 예각의 크기</b>를 직접 숫자로 입력해서 삼각형 모양을 바꿔보세요. △ABC의 값(<span class="seg">AB</span>, ∠B)을 △DEF의 값(<span class="seg">DE</span>, ∠E)과 <b>똑같이</b> 만들어보세요.</p>
         <p class="hint">💡 두 삼각형의 빗변과 각을 각각 같은 숫자로 맞춰보세요.</p>
+
+        <div class="fillsentence" style="text-align:center;">
+          🔍 값을 다 맞췄다고 생각되면, 실제로 겹쳐서 확인해보세요!<br>
+          <button class="btn btn-check" id="btnOverlay" style="margin-top:8px;">🔍 겹쳐서 확인하기</button>
+          <p class="hint" style="margin-top:6px;">겹쳤을 때 색이 삐져나오지 않고 딱 맞으면 합동이에요.</p>
+        </div>
 
         <table class="record">
           <thead><tr><th>#</th><th><span class="seg">AB</span></th><th>∠B</th><th><span class="seg">DE</span></th><th>∠E</th><th>합동?</th></tr></thead>
@@ -668,6 +682,7 @@
     showSplit:false,
     provenEqual:false,
     showAngleMarkD:false,
+    overlayOn:false,
     p4_b1ok:false, p4_b2ok:false, p4_b3ok:false, p4_b4ok:false
   };
 
@@ -681,6 +696,8 @@
   const triDEF = document.getElementById('triDEF');
   const rightC = document.getElementById('rightC');
   const rightF = document.getElementById('rightF');
+  const hypCurveAB = document.getElementById('hypCurveAB');
+  const hypCurveDE = document.getElementById('hypCurveDE');
   const tickAB = document.getElementById('tickAB');
   const tickDE = document.getElementById('tickDE');
   const tickAC = document.getElementById('tickAC');
@@ -729,6 +746,14 @@
     if(px*tx+py*ty > 0){ px=-px; py=-py; }
     return {x:px, y:py};
   }
+  // p1~p2를 잇되 other 반대쪽(바깥)으로 살짝 부푼 점선 곡선의 path d, 그리고 그 곡선 꼭짓점(라벨 위치)을 함께 반환
+  function dimensionCurve(p1, p2, other, bulge, labelDist){
+    const perp = outwardPerp(p1, p2, other);
+    const mid = {x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2};
+    const ctrl = {x: mid.x + perp.x*bulge, y: mid.y + perp.y*bulge};
+    const label = {x: mid.x + perp.x*labelDist, y: mid.y + perp.y*labelDist};
+    return { d:`M ${p1.x} ${p1.y} Q ${ctrl.x} ${ctrl.y} ${p2.x} ${p2.y}`, label };
+  }
   function describeArc(cx, cy, r, a1, a2){
     let diff = a2-a1;
     while(diff > Math.PI) diff -= 2*Math.PI;
@@ -772,10 +797,17 @@
     // 삼각형
     triABC.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`);
     triDEF.setAttribute('points', `${D.x},${D.y} ${E.x},${E.y} ${F.x},${F.y}`);
-    triABC.style.fill = state.showSplit ? 'rgba(108,139,255,.45)' : '#dbe4ff';
-    triABC.style.stroke = state.showSplit ? '#4f6fe0' : '#4a5568';
-    triDEF.style.fill = state.showSplit ? 'rgba(255,157,179,.45)' : '#f3f4f6';
-    triDEF.style.stroke = state.showSplit ? '#e0698a' : '#4a5568';
+    if(state.overlayOn){
+      triABC.style.fill = 'rgba(79,111,224,.55)';
+      triABC.style.stroke = '#4f6fe0';
+      triDEF.style.fill = 'rgba(224,105,138,.55)';
+      triDEF.style.stroke = '#e0698a';
+    }else{
+      triABC.style.fill = state.showSplit ? 'rgba(108,139,255,.45)' : '#dbe4ff';
+      triABC.style.stroke = state.showSplit ? '#4f6fe0' : '#4a5568';
+      triDEF.style.fill = state.showSplit ? 'rgba(255,157,179,.45)' : '#f3f4f6';
+      triDEF.style.stroke = state.showSplit ? '#e0698a' : '#4a5568';
+    }
 
     // 고정 꼭짓점 라벨
     document.getElementById('dotC').setAttribute('cx', C.x); document.getElementById('dotC').setAttribute('cy', C.y);
@@ -840,19 +872,27 @@
     tickAC.setAttribute('d', tickPath(A, C, 2));
     tickDF.setAttribute('d', tickPath(D, F, 2));
 
-    // ---- 길이/각도 표시 토글 ----
-    [labelAB, labelDE, labelAC, labelDF, arcB, arcE, labelAngB, labelAngE].forEach(el=>{
+    // ---- 길이/각도 표시: 1단계에서는 입력값을 바로 확인할 수 있도록 항상 켜둔다 ----
+    const showHypAng = state.showLabels || currentPage === 1;
+    [labelAB, labelDE, arcB, arcE, labelAngB, labelAngE].forEach(el=>{
+      el.style.display = showHypAng ? 'block' : 'none';
+    });
+    [labelAC, labelDF].forEach(el=>{
       el.style.display = state.showLabels ? 'block' : 'none';
     });
-    const pAB = outwardPerp(A, B, C);
-    const midAB = {x:(A.x+B.x)/2, y:(A.y+B.y)/2};
-    labelAB.setAttribute('x', midAB.x + pAB.x*16); labelAB.setAttribute('y', midAB.y + pAB.y*16);
-    lenAB.textContent = ` = ${state.AB.toFixed(1)}cm`;
 
-    const pDE = outwardPerp(D, E, F);
-    const midDE = {x:(D.x+E.x)/2, y:(D.y+E.y)/2};
-    labelDE.setAttribute('x', midDE.x + pDE.x*16); labelDE.setAttribute('y', midDE.y + pDE.y*16);
-    lenDE.textContent = ` = ${state.DE.toFixed(1)}cm`;
+    // 빗변 길이 표시용 바깥쪽 곡선 점선 (1단계에서만) + 그 꼭짓점에 길이 라벨
+    hypCurveAB.style.display = (currentPage === 1) ? 'block' : 'none';
+    hypCurveDE.style.display = (currentPage === 1) ? 'block' : 'none';
+    const curveAB = dimensionCurve(A, B, C, 20, 34);
+    hypCurveAB.setAttribute('d', curveAB.d);
+    labelAB.setAttribute('x', curveAB.label.x); labelAB.setAttribute('y', curveAB.label.y);
+    lenAB.textContent = `${state.AB.toFixed(1)}cm`;
+
+    const curveDE = dimensionCurve(D, E, F, 20, 34);
+    hypCurveDE.setAttribute('d', curveDE.d);
+    labelDE.setAttribute('x', curveDE.label.x); labelDE.setAttribute('y', curveDE.label.y);
+    lenDE.textContent = `${state.DE.toFixed(1)}cm`;
 
     labelAC.setAttribute('x', A.x-26); labelAC.setAttribute('y', (A.y+C.y)/2);
     lenAC.textContent = ` = ${(CA/PXPERCM).toFixed(1)}cm`;
@@ -860,14 +900,14 @@
     lenDF.textContent = ` = ${(DF/PXPERCM).toFixed(1)}cm`;
 
     arcB.setAttribute('d', describeArc(B.x, B.y, 24, angBC_B, angBA_B));
-    labelAngB.setAttribute('x', B.x + Math.cos(bisB)*46);
-    labelAngB.setAttribute('y', B.y + Math.sin(bisB)*46);
-    labelAngB.textContent = `∠B=${state.angleB.toFixed(0)}°`;
+    labelAngB.setAttribute('x', B.x + Math.cos(bisB)*36);
+    labelAngB.setAttribute('y', B.y + Math.sin(bisB)*36 + 4);
+    labelAngB.textContent = `${state.angleB.toFixed(0)}°`;
 
     arcE.setAttribute('d', describeArc(E.x, E.y, 24, angEF_E, angED_E));
-    labelAngE.setAttribute('x', E.x + Math.cos(bisE)*46);
-    labelAngE.setAttribute('y', E.y + Math.sin(bisE)*46);
-    labelAngE.textContent = `∠E=${state.angleE.toFixed(0)}°`;
+    labelAngE.setAttribute('x', E.x + Math.cos(bisE)*36);
+    labelAngE.setAttribute('y', E.y + Math.sin(bisE)*36 + 4);
+    labelAngE.textContent = `${state.angleE.toFixed(0)}°`;
 
     statBar.innerHTML =
       `<span>△ABC: <span class="seg">AB</span> <b>${state.AB.toFixed(1)}cm</b></span>` +
@@ -925,8 +965,24 @@
     state.showLabels = false;
     state.showSplit = false;
     syncInputFields();
+    setOverlay(false);
     syncButtons(); update();
   });
+
+  // ---------- 겹쳐보기 (C, F가 같은 높이라 좌우 이동만으로 겹쳐진다) ----------
+  const OVERLAY_DX = F.x - C.x;
+  const OVERLAY_ABC_IDS = ['triABC','hypCurveAB','dotA','nameA','dotB','nameB','dotC','nameC','rightC','tickAB','tickAC','markCircB','markFormulaA','arcB','labelAngB','labelAB','labelAC'];
+  const btnOverlay = document.getElementById('btnOverlay');
+  function setOverlay(on){
+    state.overlayOn = on;
+    OVERLAY_ABC_IDS.forEach(id=>{
+      document.getElementById(id).style.transform = on ? `translate(${OVERLAY_DX}px,0px)` : '';
+    });
+    btnOverlay.textContent = on ? '↩ 원래대로 보기' : '🔍 겹쳐서 확인하기';
+    btnOverlay.classList.toggle('active', on);
+    update();
+  }
+  btnOverlay.addEventListener('click', ()=> setOverlay(!state.overlayOn));
 
   // ---------- 모바일 탭 전환 (그림 / 활동) ----------
   window.showMobileTab = function(tab){
@@ -952,6 +1008,7 @@
       const i = Number(tab.dataset.goto);
       tab.classList.toggle('current', i===n);
     });
+    if(n !== 1 && state.overlayOn) setOverlay(false);
     if(n === 2){
       // 2단계: 1단계에서 어떤 값을 넣었든, 항상 이미 합동인 기준값에서 시작한다
       state.AB = MATCH_HYP; state.angleB = MATCH_ANGLE;
