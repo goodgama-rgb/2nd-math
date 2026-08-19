@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>직각삼각형의 합동 조건 (RHS) 탐구</title>
+<style>
+  :root{
+    --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+    --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --yellow:#ffce6b;
+    --line:#e3e8f4; --step1:#6c8bff; --step2:#ff8fac; --step3:#3fbf91; --step4:#9b7cff; --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--ink); -webkit-tap-highlight-color:transparent; }
+  header{ padding:22px 24px 16px; text-align:center; background:linear-gradient(135deg,#eef2ff,#fff0f5); border-bottom:1px solid var(--line); }
+  header h1{ margin:0 0 6px; font-size:22px; letter-spacing:-0.3px; }
+  header p{ margin:0; color:var(--muted); font-size:14px; }
+
+  .layout{ max-width:1280px; margin:20px auto; padding:0 16px 60px; display:grid; grid-template-columns:1.15fr 1fr; gap:22px; align-items:start; }
+  .mobile-tabs{ display:none; }
+  @media (max-width:960px){
+    .layout{ grid-template-columns:1fr; }
+    .mobile-tabs{ display:flex; gap:8px; position:sticky; top:0; z-index:80; background:var(--bg); padding:12px 16px 8px; margin:0 -16px 4px; box-shadow:0 4px 10px rgba(43,47,66,.05); }
+    .mobile-tab-btn{ flex:1; padding:11px; border-radius:12px; border:none; background:#eef1fa; color:var(--muted); font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s; }
+    .mobile-tab-btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+    .layout.mobile-show-canvas .activity{ display:none; }
+    .layout.mobile-show-activity .card.sticky{ display:none; }
+    .card.sticky{ position:static; }
+  }
+
+  .card{ background:var(--card); border-radius:var(--radius); padding:18px 18px 20px; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  .sticky{ position:sticky; top:16px; }
+
+  .toolbar{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .btn{ border:none; border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:700; cursor:pointer; background:#eef1fa; color:var(--ink); transition:.15s; font-family:inherit; }
+  .btn:hover{ background:#e2e7f8; }
+  .btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn:disabled:hover{ background:#eef1fa; }
+  .btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .btn.active.split{ background:var(--pink); box-shadow:0 4px 10px rgba(255,157,179,.4); }
+  .btn-outline{ background:transparent; border:2px solid var(--line); color:var(--muted); }
+  .btn-outline:hover{ background:#f5f7fc; }
+  .btn-sm{ padding:7px 11px; font-size:12.5px; border-radius:9px; }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:hover{ background:var(--primary-dark); }
+  .btn-primary:disabled{ background:#cdd5f5; color:#8a93c2; cursor:not-allowed; box-shadow:none; }
+
+  .input-row{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+  .input-group{ flex:1; min-width:210px; background:#f7f8fc; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .input-group-label{ font-weight:800; font-size:13px; flex:none; }
+  .input-group label{ font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:5px; }
+  .input-group input{ width:52px; border:1.5px solid var(--line); border-radius:7px; padding:5px 6px; font-size:13px; font-family:inherit; text-align:center; }
+  .input-group input:disabled{ background:#eef0f5; color:#9aa5c3; }
+  .svg-wrap{ background:#fbfcff; border-radius:14px; border:1px solid var(--line); padding:6px; }
+  svg{ width:100%; height:auto; display:block; }
+
+  .tri-abc{ fill:#dbe4ff; stroke:#4a5568; stroke-width:2.5; }
+  .tri-def{ fill:#f3f4f6; stroke:#4a5568; stroke-width:2.5; }
+  .overlay-el{ transition:transform .6s ease; }
+  .flip-el{ transition:transform .8s ease; }
+  .dim-curve{ fill:none; stroke-width:1.8; stroke-dasharray:5 4; display:none; }
+  .dim-curve-abc{ stroke:#4f6fe0; }
+  .dim-curve-def{ stroke:#e0698a; }
+  .vertex-dot{ fill:#4a5568; }
+  .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; }
+  .combo-label{ font-size:15px; font-weight:800; fill:#c0392b; text-anchor:middle; display:none; }
+  .tick{ stroke:#4a5568; stroke-width:2; display:none; }
+  .right-angle-mark{ fill:none; stroke:#c0392b; stroke-width:2; }
+  .angle-arc{ fill:none; stroke:#4a5568; stroke-width:1.8; display:none; }
+  .angle-arc.base{ stroke:var(--primary-dark); }
+  .side-label{ font-size:13px; fill:#374151; display:none; text-anchor:middle; }
+  .angle-label{ font-size:13px; font-weight:700; fill:var(--primary-dark); display:none; text-anchor:middle; }
+  .seg{ text-decoration-line:overline; text-decoration-thickness:1.3px; text-decoration-skip-ink:none; }
+  .mark-circ{ fill:var(--primary-dark); stroke:#fff; stroke-width:1; display:none; }
+
+  .statbar{ margin-top:10px; padding:9px 12px; background:#f6f8fd; border-radius:10px; font-size:12.5px; color:var(--muted); text-align:center; letter-spacing:.2px; display:flex; flex-wrap:wrap; gap:6px 14px; justify-content:center; }
+  .statbar b{ color:var(--ink); }
+  .match-badge{ margin-top:8px; padding:8px 12px; border-radius:10px; text-align:center; font-size:12.5px; background:#e7f8f0; color:#1e7a53; border:1px solid #b7ead2; display:none; }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .dot{ width:10px;height:10px;border-radius:3px;display:inline-block; }
+
+  .stepper{ display:flex; gap:8px; margin-bottom:16px; }
+  .step-tab{ flex:1; text-align:center; padding:10px 6px; border-radius:12px; background:#eef1fa; font-size:12.5px; font-weight:700; border:none; cursor:pointer; color:var(--muted); font-family:inherit; transition:.15s; }
+  .step-tab .n{ display:block; font-size:15px; margin-bottom:1px; }
+  .step-tab.current{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .step-tab.done:not(.current){ background:#e9faf3; color:#1e7a53; }
+  .step-tab.locked{ opacity:.45; cursor:not-allowed; }
+
+  .step-card{ background:var(--card); border-radius:16px; padding:18px 20px 20px; border-left:6px solid var(--step1); box-shadow:0 4px 14px rgba(43,47,66,.05); position:relative; }
+  .step-card[data-step="2"]{ border-left-color:var(--step2); }
+  .step-card[data-step="3"]{ border-left-color:var(--step3); }
+  .step-card[data-step="4"]{ border-left-color:var(--step4); }
+  .step-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .step-badge{ width:28px;height:28px;border-radius:50%; background:var(--step1); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex:none; }
+  .step-card[data-step="2"] .step-badge{ background:var(--step2); }
+  .step-card[data-step="3"] .step-badge{ background:var(--step3); }
+  .step-card[data-step="4"] .step-badge{ background:var(--step4); }
+  .step-head h2{ margin:0; font-size:16.5px; }
+  .step-body p{ margin:6px 0 10px; font-size:14px; line-height:1.6; color:#3c4257; }
+  .hint{ font-size:12.5px; color:#8b93a8; margin-top:4px; }
+
+  .goal-banner{ background:linear-gradient(135deg,#eef2ff,#fff0f5); border:2px solid #c9d4fb; border-radius:14px; padding:16px 18px; text-align:center; font-size:14.5px; line-height:1.7; color:var(--primary-dark); margin-bottom:16px; }
+  .goal-banner .tag{ font-size:12px; font-weight:700; letter-spacing:.5px; color:#8b93c2; display:block; margin-bottom:4px; }
+  .goal-banner b{ font-size:16.5px; }
+
+  table.record{ width:100%; border-collapse:collapse; margin:10px 0; font-size:13px; }
+  table.record th, table.record td{ border:1px solid var(--line); padding:6px 4px; text-align:center; }
+  table.record th{ background:#f4f6fc; }
+
+  .choice-list{ display:flex; flex-direction:column; gap:7px; margin:8px 0 12px; }
+  .choice-list label{ display:flex; align-items:center; gap:8px; background:#f7f8fc; border:1.5px solid var(--line); padding:9px 11px; border-radius:10px; font-size:13.5px; cursor:pointer; transition:.15s; }
+  .choice-list label:hover{ background:#eef1fb; }
+  .choice-list label.right{ border-color:#3fbf91; background:#e9faf3; }
+  .choice-list label.wrong{ border-color:#e97a7a; background:#fdecec; }
+  .choice-list input{ accent-color:var(--primary); width:16px; height:16px; flex:none; }
+
+  .feedback{ margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13.5px; line-height:1.6; display:none; }
+  .feedback.success{ display:block; background:#e7f8f0; color:#1e7a53; border:1px solid #b7ead2; }
+  .feedback.error{ display:block; background:#fdeceb; color:#b3261e; border:1px solid #f6c6c2; }
+  .feedback.warn{ display:block; background:#fff6e0; color:#9a6b00; border:1px solid #ffe4a3; }
+
+  .fillsentence{ background:#f7f8fc; border:1.5px dashed #c9d4fb; border-radius:12px; padding:14px 16px; font-size:15px; line-height:2; margin:10px 0 14px; color:#2b2f42; }
+  .fillsentence select{ border:1.5px solid var(--primary); border-radius:8px; padding:4px 8px; font-size:14.5px; font-weight:700; color:var(--primary-dark); background:#fff; font-family:inherit; margin:0 3px; }
+
+  .rel-row{ display:flex; align-items:center; gap:8px; font-size:14px; margin:6px 0; flex-wrap:wrap; }
+  .rel-row select{ border:1.5px solid var(--line); border-radius:8px; padding:5px 8px; font-size:13.5px; font-family:inherit; background:#fff; }
+
+  .summary-box{ margin-top:12px; padding:14px 16px; border-radius:12px; background:linear-gradient(135deg,#eef2ff,#fff5f8); border:1.5px dashed #b9c4f5; font-size:13.5px; line-height:1.7; max-height:0; opacity:0; overflow:hidden; transition:.4s ease; }
+  .summary-box.show{ max-height:400px; opacity:1; margin-top:12px; }
+  .summary-box b{ color:var(--primary-dark); }
+
+  .reveal{ max-height:0; opacity:0; overflow:hidden; transition:.45s ease; }
+  .reveal.show{ max-height:1200px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
+
+  .proof-block{ background:#fbfcff; border:1.5px solid var(--line); border-radius:14px; padding:16px 18px; margin:14px 0; font-size:14.5px; line-height:2.35; color:#2b2f42; }
+  .proof-block .given{ margin:0 0 6px; color:#4a5568; font-size:13.5px; }
+  .proof-block hr{ border:none; border-top:1px dashed var(--line); margin:10px 0; }
+  .proof-block p{ margin:4px 0; }
+  .blank{ display:inline-block; width:58px; border:none; border-bottom:2px solid var(--primary); background:transparent; text-align:center; font-weight:700; font-size:14px; font-family:inherit; padding:2px 4px; margin:0 3px; color:var(--primary-dark); }
+  .blank:focus{ outline:none; border-bottom-color:var(--primary-dark); background:#eef2ff; }
+  .blank.correct{ border-bottom-color:#3fbf91; background:#e9faf3; color:#1e7a53; }
+  .blank.wrong{ border-bottom-color:#e97a7a; background:#fdecec; color:#b3261e; }
+
+  .wordbank{ margin-top:10px; padding:10px 12px; background:#fff6e0; border:1px dashed #ffce6b; border-radius:10px; font-size:13px; display:none; }
+  .wordbank.show{ display:block; }
+  .wordbank .word{ display:inline-block; background:#fff; border:1px solid #ffce6b; border-radius:6px; padding:3px 9px; margin:3px 4px 0 0; font-weight:700; color:#9a6b00; }
+
+  .page-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:14px; border-top:1px solid var(--line); }
+  .restart-wrap{ text-align:center; margin-top:14px; }
+  .btn-check{ background:var(--primary); color:#fff; }
+  .btn-check:hover{ background:var(--primary-dark); }
+
+  /* ===== 로그인 ===== */
+  #loginScreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#6c8bff 0%,#4f6fe0 100%); padding:24px; }
+  .login-box{ background:#fff; border-radius:20px; padding:36px 32px; width:100%; max-width:400px; box-shadow:0 12px 40px rgba(43,47,66,.25); }
+  .login-header{ text-align:center; margin-bottom:26px; }
+  .login-header .emoji{ font-size:36px; margin-bottom:8px; }
+  .login-header .title{ font-size:19px; font-weight:800; color:var(--ink); margin-bottom:4px; }
+  .login-header .sub{ font-size:12.5px; color:var(--muted); }
+  .role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .role-btn{ padding:22px 10px; border-radius:14px; border:2px solid var(--line); background:#f7f8fc; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer; font-family:inherit; transition:.15s; }
+  .role-btn:hover{ border-color:var(--primary); background:#eef2ff; }
+  .role-btn .emoji{ font-size:24px; display:block; margin-bottom:6px; }
+  .login-form{ display:none; }
+  .login-form.show{ display:block; }
+  .login-back{ background:none; border:none; color:var(--muted); font-size:12.5px; cursor:pointer; margin-bottom:14px; font-family:inherit; padding:0; }
+  .login-form-title{ font-size:14px; font-weight:800; color:var(--ink); margin-bottom:14px; }
+  .login-grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+  .login-field label{ font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:4px; }
+  .login-field select, .login-field input{ width:100%; border:1.5px solid var(--line); border-radius:9px; padding:9px 8px; font-size:13.5px; font-family:inherit; color:var(--ink); background:#fff; }
+  .login-error{ display:none; font-size:12px; color:#b3261e; margin-bottom:10px; padding:8px 12px; background:#fdeceb; border-radius:8px; }
+  .login-submit{ width:100%; padding:12px; border-radius:10px; background:var(--primary); color:#fff; border:none; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+  .login-submit:hover{ background:var(--primary-dark); }
+  .login-submit.admin{ background:#2b2f42; }
+  .login-submit.admin:hover{ background:#1c1f2e; }
+  .session-bar{ background:#2b2f42; color:#fff; padding:8px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .session-bar b{ color:#c7d2fe; }
+  .session-bar button{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; }
+
+  /* ===== 관리자 대시보드 ===== */
+  #adminScreen{ display:none; min-height:100vh; background:var(--bg); }
+  .admin-header{ background:#1e1b3a; color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .admin-header .title{ font-size:17px; font-weight:800; }
+  .admin-header .sub{ font-size:12px; color:#a5b4fc; margin-top:2px; }
+  .admin-logout{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:8px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .admin-body{ max-width:1000px; margin:24px auto; padding:0 20px 60px; }
+  .admin-filter-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; background:#fff; border-radius:14px; padding:12px 16px; box-shadow:0 4px 14px rgba(43,47,66,.05); }
+  .admin-filter-row label{ font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .admin-filter-row select{ border:1.5px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; font-family:inherit; color:var(--ink); background:#fff; }
+  .btn-admin-delete{ margin-left:auto; background:#fdeceb; border:1.5px solid #f6c6c2; color:#b3261e; border-radius:8px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn-admin-delete:hover{ background:#fbdcda; }
+  .btn-admin-delete:disabled{ opacity:.4; cursor:not-allowed; }
+  .admin-table-wrap{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  table.admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.admin-table th{ background:#f4f6fc; padding:10px 12px; text-align:left; color:var(--muted); font-size:11.5px; font-weight:700; }
+  table.admin-table td{ padding:10px 12px; border-top:1px solid var(--line); }
+  table.admin-table tr.away td{ background:#fdeceb; }
+
+  /* ===== 이탈 경고 오버레이 ===== */
+  #awayWarning{ position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(179,38,30,.94); text-align:center; padding:24px; }
+  #awayWarning.show{ display:flex; }
+  #awayWarning .box{ color:#fff; max-width:440px; }
+  #awayWarning .emoji{ font-size:52px; margin-bottom:14px; }
+  #awayWarning .msg{ font-size:20px; font-weight:800; line-height:1.5; margin-bottom:22px; }
+  #awayWarning button{ background:#fff; color:#b3261e; border:none; border-radius:10px; padding:12px 28px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+</style>
+</head>
+<body>
+
+<!-- ══ 로그인 화면 ══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="emoji">📐</div>
+      <div class="title">직각삼각형의 합동 조건 (RHS)</div>
+      <div class="sub">중2 수학 · 인터랙티브 탐구 수업</div>
+    </div>
+    <div id="roleSelect">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:14px">역할을 선택하세요</div>
+      <div class="role-grid">
+        <button class="role-btn" onclick="showStudentForm()"><span class="emoji">🎒</span>학생</button>
+        <button class="role-btn" onclick="showTeacherForm()"><span class="emoji">📋</span>교사</button>
+      </div>
+    </div>
+    <div id="studentForm" class="login-form">
+      <button class="login-back" onclick="backToRole()">← 뒤로</button>
+      <div class="login-form-title">🎒 학생 정보 입력</div>
+      <div class="login-grid3">
+        <div class="login-field">
+          <label>학년</label>
+          <select id="loginGrade"><option value="">-</option><option>1학년</option><option selected>2학년</option><option>3학년</option></select>
+        </div>
+        <div class="login-field">
+          <label>반</label>
+          <select id="loginClass">
+            <option value="">-</option>
+            <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+          </select>
+        </div>
+        <div class="login-field">
+          <label>번호</label>
+          <input id="loginNum" type="number" min="1" max="40" placeholder="번호">
+        </div>
+      </div>
+      <div class="login-field" style="margin-bottom:16px">
+        <label>이름</label>
+        <input id="loginName" type="text" placeholder="이름을 입력하세요">
+      </div>
+      <div id="studentLoginError" class="login-error"></div>
+      <button class="login-submit" onclick="studentLogin()">학습 시작 →</button>
+    </div>
+    <div id="teacherForm" class="login-form">
+      <button class="login-back" onclick="backToRole()">← 뒤로</button>
+      <div class="login-form-title">📋 교사 로그인</div>
+      <div class="login-field" style="margin-bottom:16px">
+        <label>비밀번호</label>
+        <input id="teacherPw" type="password" placeholder="비밀번호를 입력하세요" onkeydown="if(event.key==='Enter')teacherLogin()">
+      </div>
+      <div id="teacherLoginError" class="login-error">비밀번호가 틀렸어요.</div>
+      <button class="login-submit admin" onclick="teacherLogin()">관리자 모드 입장 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 관리자 대시보드 ══ -->
+<div id="adminScreen">
+  <div class="admin-header">
+    <div>
+      <div class="title">⚙ 관리자 모드 — 직각삼각형의 합동 조건 (RHS)</div>
+      <div class="sub" id="adminSummary">불러오는 중...</div>
+    </div>
+    <button class="admin-logout" onclick="adminLogout()">로그아웃</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-filter-row">
+      <label>학년
+        <select id="filterGrade">
+          <option value="">전체</option>
+          <option>1학년</option><option>2학년</option><option>3학년</option>
+        </select>
+      </label>
+      <label>반
+        <select id="filterCls">
+          <option value="">전체</option>
+          <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+        </select>
+      </label>
+      <button class="btn-admin-delete" id="btnAdminDelete" disabled>🗑 이 반 기록 삭제</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>학년/반/번호</th><th>이름</th><th>진행 단계</th><th>상태</th><th>이탈 횟수</th><th>마지막 활동</th></tr></thead>
+        <tbody id="adminTableBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 이탈 경고 오버레이 ══ -->
+<div id="awayWarning">
+  <div class="box">
+    <div class="emoji">🚨</div>
+    <div class="msg">경고입니다!<br>수업 외 행동을 하지 말고<br>지금 주어진 과제를 완료하세요.</div>
+    <button onclick="dismissWarning()">확인했습니다</button>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none">
+<div class="session-bar" id="sessionBar" style="display:none">
+  <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
+  <button onclick="location.reload()">로그아웃</button>
+</div>
+
+<header>
+  <h1>📐 직각삼각형의 합동 조건 — 빗변과 다른 한 변(RHS)</h1>
+  <p>두 직각삼각형을 직접 움직여보며, "빗변의 길이와 다른 한 변의 길이가 각각 같으면 합동이다"를 증명해봅시다.</p>
+</header>
+
+<div class="layout mobile-show-canvas" id="layoutRoot">
+  <div class="mobile-tabs">
+    <button class="mobile-tab-btn active" id="mtabCanvas" onclick="showMobileTab('canvas')">📐 그림</button>
+    <button class="mobile-tab-btn" id="mtabActivity" onclick="showMobileTab('activity')">📝 활동</button>
+  </div>
+
+  <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
+  <div class="card sticky">
+    <div class="toolbar">
+      <button class="btn" id="btnLabels" aria-pressed="false">📏 길이/각도 표시</button>
+      <button class="btn" id="btnSplit" aria-pressed="false">🎨 합동 강조 (색 구분)</button>
+      <button class="btn btn-outline" id="btnReset">↺ 삼각형 초기화</button>
+    </div>
+
+    <div class="input-row" id="triangleInputs">
+      <div class="input-group">
+        <span class="input-group-label" style="color:#4f6fe0">△ABC</span>
+        <label>빗변 <span class="seg">AB</span> <input type="number" id="inputAB" step="0.1" min="2.5" max="6.5" value="4.2"> cm</label>
+        <label>변 <span class="seg">AC</span> <input type="number" id="inputAC" step="0.1" min="1.5" max="5.5" value="2.4"> cm</label>
+      </div>
+      <div class="input-group">
+        <span class="input-group-label" style="color:#e0698a">△DEF</span>
+        <label>빗변 <span class="seg">DE</span> <input type="number" id="inputDE" step="0.1" min="2.5" max="6.5" value="5.5"> cm</label>
+        <label>변 <span class="seg">DF</span> <input type="number" id="inputDF" step="0.1" min="1.5" max="5.5" value="4.0"> cm</label>
+      </div>
+    </div>
+
+    <div class="svg-wrap">
+      <svg id="canvas" viewBox="0 0 640 440" xmlns="http://www.w3.org/2000/svg">
+        <!-- 삼각형 ABC (왼쪽, 조작 가능) -->
+        <polygon id="triABC" class="tri-abc overlay-el" points=""></polygon>
+        <!-- 삼각형 DEF (오른쪽, 조작 가능 + 2단계에서 뒤집기) -->
+        <polygon id="triDEF" class="tri-def" points=""></polygon>
+
+        <!-- 직각 표시 (항상 참) -->
+        <path id="rightC" class="right-angle-mark overlay-el" d=""></path>
+        <path id="rightF" class="right-angle-mark" d=""></path>
+
+        <!-- 길이 표시용 바깥쪽 곡선 점선 (1단계) -->
+        <path id="curveAB" class="dim-curve dim-curve-abc overlay-el" d=""></path>
+        <path id="curveAC" class="dim-curve dim-curve-abc overlay-el" d=""></path>
+        <path id="curveDE" class="dim-curve dim-curve-def" d=""></path>
+        <path id="curveDF" class="dim-curve dim-curve-def" d=""></path>
+
+        <!-- 빗변(AB, DE) 눈금 : 주어진 조건 -->
+        <path id="tickAB" class="tick overlay-el" d=""></path>
+        <path id="tickDE" class="tick" d=""></path>
+        <!-- 다른 한 변(AC, DF) 눈금 : 주어진 조건 -->
+        <path id="tickAC" class="tick overlay-el" d=""></path>
+        <path id="tickDF" class="tick" d=""></path>
+        <!-- 나머지 변(BC, EF) 눈금 : 증명된 결론 -->
+        <path id="tickBC" class="tick overlay-el" d=""></path>
+        <path id="tickEF" class="tick" d=""></path>
+
+        <!-- ∠B=∠E (증명 중 유도된 각) 동그라미 -->
+        <circle id="markCircB" class="mark-circ overlay-el" r="4"></circle>
+        <circle id="markCircE" class="mark-circ" r="4"></circle>
+
+        <!-- 각 표시 호 (길이/각도 표시 버튼) -->
+        <path id="arcB" class="angle-arc base overlay-el" d=""></path>
+        <path id="arcE" class="angle-arc base" d=""></path>
+        <text id="labelAngB" class="angle-label overlay-el"></text>
+        <text id="labelAngE" class="angle-label"></text>
+
+        <!-- 변의 길이 라벨 -->
+        <text id="labelAB" class="side-label overlay-el"><tspan id="lenAB"></tspan></text>
+        <text id="labelAC" class="side-label overlay-el"><tspan id="lenAC"></tspan></text>
+        <text id="labelDE" class="side-label"><tspan id="lenDE"></tspan></text>
+        <text id="labelDF" class="side-label"><tspan id="lenDF"></tspan></text>
+        <text id="labelBC" class="side-label overlay-el"><tspan class="seg">BC</tspan><tspan id="lenBC"></tspan></text>
+        <text id="labelEF" class="side-label"><tspan class="seg">EF</tspan><tspan id="lenEF"></tspan></text>
+
+        <!-- 꼭짓점 이름 -->
+        <circle id="dotC" r="4" class="vertex-dot overlay-el"></circle>
+        <text id="nameC" class="vertex-name overlay-el">C</text>
+        <circle id="dotF" r="4" class="vertex-dot"></circle>
+        <text id="nameF" class="vertex-name">F</text>
+        <circle id="dotE" r="4" class="vertex-dot"></circle>
+        <text id="nameE" class="vertex-name">E</text>
+        <circle id="dotD" r="4" class="vertex-dot"></circle>
+        <text id="nameD" class="vertex-name">D</text>
+
+        <circle id="dotA" r="4" class="vertex-dot overlay-el"></circle>
+        <text id="nameA" class="vertex-name overlay-el">A</text>
+        <circle id="dotB" r="4" class="vertex-dot overlay-el"></circle>
+        <text id="nameB" class="vertex-name overlay-el">B</text>
+
+        <!-- 뒤집기 후 겹친 이름표 -->
+        <text id="labelAD" class="combo-label">A(D)</text>
+        <text id="labelCF" class="combo-label">C(F)</text>
+      </svg>
+    </div>
+
+    <div class="statbar" id="statBar">측정값이 여기에 표시됩니다.</div>
+    <div class="match-badge" id="matchBadge">🎯 지금 <span class="seg">AB</span> = <span class="seg">DE</span> 이고 <span class="seg">AC</span> = <span class="seg">DF</span> 예요! 두 삼각형을 비교해보세요.</div>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#6c8bff"></i> △ABC</span>
+      <span><i class="dot" style="background:#c8ccd6"></i> △DEF</span>
+      <span><i class="dot" style="background:#4a5568"></i> 하나의 눈금 = 같은 변</span>
+    </div>
+  </div>
+
+  <!-- ================= 영역 2: 단계별 탐구 활동지 (화면 전환형) ================= -->
+  <div class="activity">
+
+    <div class="stepper" id="stepper">
+      <button class="step-tab current" data-goto="1"><span class="n">1</span>관찰하기</button>
+      <button class="step-tab locked" data-goto="2"><span class="n">2</span>증명 설계</button>
+      <button class="step-tab locked" data-goto="3"><span class="n">3</span>결론 확인</button>
+      <button class="step-tab locked" data-goto="4"><span class="n">4</span>최종 증명</button>
+    </div>
+
+    <!-- ===== PAGE 1 : 관찰 ===== -->
+    <section class="step-card" data-step="1" id="page1">
+      <div class="step-head">
+        <div class="step-badge">1</div>
+        <h2>두 직각삼각형을 합동으로 만들어보자</h2>
+      </div>
+      <div class="step-body">
+        <p>△ABC와 △DEF는 처음에 서로 다른 모양이에요 (∠C=∠F=90°는 항상 고정). 캔버스 위쪽의 입력창에 <b>빗변의 길이</b>와 <b>다른 한 변의 길이</b>를 직접 숫자로 입력해서 삼각형 모양을 바꿔보세요. △ABC의 값(<span class="seg">AB</span>, <span class="seg">AC</span>)을 △DEF의 값(<span class="seg">DE</span>, <span class="seg">DF</span>)과 <b>똑같이</b> 만들어보세요.</p>
+        <p class="hint">💡 두 삼각형의 빗변과 다른 한 변을 각각 같은 숫자로 맞춰보세요.</p>
+
+        <div class="fillsentence" style="text-align:center;">
+          🔍 값을 다 맞췄다고 생각되면, 실제로 겹쳐서 확인해보세요!<br>
+          <button class="btn btn-check" id="btnOverlay" style="margin-top:8px;">🔍 겹쳐서 확인하기</button>
+          <p class="hint" style="margin-top:6px;">겹쳤을 때 색이 삐져나오지 않고 딱 맞으면 합동이에요.</p>
+        </div>
+
+        <table class="record">
+          <thead><tr><th>#</th><th><span class="seg">AB</span></th><th><span class="seg">AC</span></th><th><span class="seg">DE</span></th><th><span class="seg">DF</span></th><th>합동?</th></tr></thead>
+          <tbody id="recordBody"></tbody>
+        </table>
+        <div class="toolbar">
+          <button class="btn btn-sm" id="btnRecord">+ 기록하기</button>
+          <button class="btn btn-outline btn-sm" id="btnClearRecord">표 지우기</button>
+        </div>
+
+        <p style="margin-top:14px;">🤔 <b><span class="seg">AB</span>=<span class="seg">DE</span> 이고 <span class="seg">AC</span>=<span class="seg">DF</span>가 되도록 맞췄을 때, 두 삼각형은 어떻게 되나요?</b></p>
+        <div class="choice-list">
+          <label><input type="radio" name="q1" value="same"> 완전히 합동이 된다 (모양과 크기가 똑같아진다)</label>
+          <label><input type="radio" name="q1" value="diff"> 비슷하지만 합동은 아니다</label>
+          <label><input type="radio" name="q1" value="none"> 아무 관계없다</label>
+        </div>
+        <button class="btn btn-check" id="checkStep1">정답 확인</button>
+        <div class="feedback" id="feedback1"></div>
+
+        <div class="reveal" id="concludeBlock1">
+          <p>📝 <b>우리가 관찰한 사실은 무엇일까요? 문장을 완성해보세요.</b></p>
+          <div class="fillsentence">
+            직각삼각형에서 빗변의 길이와 다른 한 변의 길이가 각각 같아지면, 두 삼각형은
+            <select id="blank1">
+              <option value="?">〔 선택 〕</option>
+              <option value="diff">달라진다</option>
+              <option value="same">합동이 된다</option>
+            </select>
+          </div>
+          <button class="btn btn-check" id="checkConclude1">결론 확인</button>
+          <div class="feedback" id="feedbackConclude1"></div>
+        </div>
+
+        <div class="page-nav">
+          <span></span>
+          <button class="btn btn-primary" id="next1" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 2 : 증명 설계 ===== -->
+    <section class="step-card" data-step="2" id="page2" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">2</div>
+        <h2>증명을 설계해보자</h2>
+      </div>
+      <div class="step-body">
+        <div class="goal-banner">
+          <span class="tag">🎯 증명 목표</span>
+          <b>빗변의 길이와 다른 한 변의 길이가 각각 같은 두 직각삼각형은 서로 합동이다.</b><br>
+          (∠C=∠F=90°, <span class="seg">AB</span>=<span class="seg">DE</span>, <span class="seg">AC</span>=<span class="seg">DF</span> 이면 △ABC≡△DEF)
+        </div>
+
+        <div class="reveal show" id="motivateBlock">
+          <p><b>Q1.</b> 만약 △ABC와 △DEF가 합동이라면, 어떤 사실을 알 수 있을까요? <i>(해당하는 것을 모두 고르세요)</i></p>
+          <div class="choice-list">
+            <label><input type="checkbox" class="q2a" data-correct="false"> ∠A = 90°</label>
+            <label><input type="checkbox" class="q2a" data-correct="true"> <span class="seg">BC</span> = <span class="seg">EF</span></label>
+            <label><input type="checkbox" class="q2a" data-correct="false"> <span class="seg">AB</span> = <span class="seg">BC</span></label>
+            <label><input type="checkbox" class="q2a" data-correct="true"> ∠B = ∠E</label>
+          </div>
+          <button class="btn btn-check" id="checkQ2a">확인</button>
+          <div class="feedback" id="feedbackQ2a"></div>
+
+          <p style="margin-top:16px;"><b>Q2.</b> 그렇다면, 두 삼각형이 합동임을 증명하려면 무엇을 해야 할까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="q2b" value="ruler"> 자로 <span class="seg">BC</span>와 <span class="seg">EF</span>의 길이를 직접 재본다</label>
+            <label><input type="radio" name="q2b" value="protractor"> 각도기로 아무 각이나 재본다</label>
+            <label><input type="radio" name="q2b" value="flip"> △ABC를 뒤집어서 <span class="seg">AC</span>와 <span class="seg">DF</span>가 겹치도록 놓고 살펴본다</label>
+          </div>
+          <button class="btn btn-check" id="checkQ2b">확인</button>
+          <div class="feedback" id="feedbackQ2b"></div>
+        </div>
+
+        <div class="reveal" id="flipPromptBlock">
+          <p>좋아요! 그럼 실제로 △ABC를 뒤집어서 <span class="seg">AC</span>와 <span class="seg">DF</span>가 겹치도록 놓아봅시다.</p>
+          <div class="fillsentence" style="text-align:center;">
+            <button class="btn btn-check" id="btnFlip">🔄 뒤집어서 겹치기</button>
+          </div>
+        </div>
+
+        <div class="reveal" id="colinearBlock">
+          <div class="fillsentence">
+            뒤집어 겹친 그림을 보면 ∠ACB + ∠ACE = 90° + 90° = 180° 이므로, 세 점 B, C, E는
+            <select id="colinearSel">
+              <option value="?">〔 선택 〕</option>
+              <option value="no">아무 관계가 없다</option>
+              <option value="yes">한 직선 위에 있다</option>
+            </select>
+          </div>
+          <button class="btn btn-check" id="checkColinear">확인</button>
+          <div class="feedback" id="feedbackColinear"></div>
+        </div>
+
+        <div class="reveal" id="isoBlock">
+          <div class="fillsentence">
+            이때 <span class="seg">AB</span> = <span class="seg">DE</span> 이고, 도형을 뒤집어도 길이는 변하지 않으므로 <span class="seg">AE</span> = <input type="text" class="blank" id="isoBlank1" maxlength="4" style="width:44px" autocomplete="off"><br>
+            따라서 <span class="seg">AB</span> = <span class="seg">AE</span> 이므로 △ABE는
+            <select id="isoSel">
+              <option value="?">〔 선택 〕</option>
+              <option value="scalene">부등변삼각형</option>
+              <option value="isosceles">이등변삼각형</option>
+            </select>
+            이다. 이등변삼각형의 두 밑각의 크기는 같으므로 ∠B = ∠<input type="text" class="blank" id="isoBlank2" maxlength="4" style="width:44px" autocomplete="off">
+          </div>
+          <button class="btn btn-check" id="checkIso">확인</button>
+          <div class="feedback" id="feedbackIso"></div>
+        </div>
+
+        <div class="reveal" id="congruenceTypeBlock">
+          <p><b>Q3.</b> 정리하면 <span class="seg">AB</span>=<span class="seg">DE</span>(빗변), ∠B=∠E(예각)이 성립합니다. 이건 우리가 이미 증명한 어떤 합동 조건과 같을까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="congType" value="SAS"> SAS 합동</label>
+            <label><input type="radio" name="congType" value="RHA"> RHA 합동 (빗변의 길이와 한 예각의 크기가 각각 같다)</label>
+            <label><input type="radio" name="congType" value="ASA"> ASA 합동</label>
+          </div>
+          <button class="btn btn-check" id="checkCongType">확인</button>
+          <div class="feedback" id="feedbackCongType"></div>
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev2">← 이전 활동</button>
+          <button class="btn btn-primary" id="next2" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 3 : 결론 확인 ===== -->
+    <section class="step-card" data-step="3" id="page3" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">3</div>
+        <h2>합동으로부터 결론을 이끌어내자</h2>
+      </div>
+      <div class="step-body">
+        <p>2단계에서 확인한 대로, <b>△ABC ≡ △DEF (RHA 합동)</b> 입니다. 합동인 두 도형에서 <b>대응변은 각각 같습니다.</b> 빈칸을 채워 결론을 완성해보세요.</p>
+
+        <div class="rel-row"><span class="seg">BC</span> <select id="rel1"><option value="?">?</option><option value="=">=</option><option value="≠">≠</option></select> <span class="seg">EF</span></div>
+        <div class="reveal" id="concludeRel1">
+          <div class="fillsentence">
+            <span class="seg">BC</span> = <span class="seg">EF</span> 이므로, 대응하는 모든 변과 각이 같음을 확인했습니다. 이것으로 다음 사실을 확인했습니다 —<br>
+            빗변의 길이와 다른 한 변의 길이가 각각 같은 두 직각삼각형은 서로
+            <select id="blank2">
+              <option value="?">〔 선택 〕</option>
+              <option value="similar">닮음일 뿐</option>
+              <option value="congruent">합동</option>
+            </select>
+            이다.
+          </div>
+        </div>
+
+        <button class="btn btn-check" id="checkStep3">결론 확인</button>
+        <div class="feedback" id="feedback3"></div>
+
+        <div class="summary-box" id="summaryBox">
+          🎉 <b>정리</b><br>
+          빗변의 길이와 다른 한 변의 길이가 각각 같은 두 직각삼각형은 서로 합동이다. (RHS 합동)<br>
+          👉 R(Right angle, 직각), H(Hypotenuse, 빗변), S(Side, 변) — 세 글자를 따서 <b>RHS 합동</b>이라고 불러요.<br>
+          캔버스에 <span class="seg">BC</span> = <span class="seg">EF</span> 눈금이 나타났는지 확인해보세요!
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev3">← 이전 활동</button>
+          <button class="btn btn-primary" id="next3" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 4 : 도움 없이 다시 증명하기 ===== -->
+    <section class="step-card" data-step="4" id="page4" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">4</div>
+        <h2>이번엔 도움 없이 스스로 증명해보자</h2>
+      </div>
+      <div class="step-body">
+        <p>지금까지의 활동을 바탕으로, 이번엔 선택지 없이 <b>빈칸을 직접 채워서</b> 증명을 완성해보세요. 힌트가 필요하면 아래 단어 은행을 참고할 수 있어요.</p>
+        <p class="hint">💡 왼쪽 그림은 정답을 미리 보여주지 않도록 깨끗하게 표시돼요. (그래서 [🎨 합동 강조] 버튼은 이 단계에서 잠시 비활성화됩니다.) 아래 <b>[🔄 뒤집어서 겹치기]</b> 버튼은 참고용으로 자유롭게 눌러볼 수 있어요.</p>
+
+        <div class="proof-block">
+          <p class="given"><b>[가정]</b> △ABC와 △DEF에서 ∠C=∠F=90°, <span class="seg">AB</span>=<span class="seg">DE</span>, <span class="seg">AC</span>=<span class="seg">DF</span></p>
+          <p class="given"><b>[증명할 것]</b> △ABC ≡ △DEF</p>
+          <hr>
+          <p><b>[증명]</b></p>
+          <p>① △ABC를 뒤집어 <span class="seg">AC</span>와 <span class="seg">DF</span>가 겹치도록 놓으면 ∠ACB+∠ACE=90°+90°=180°이므로 B, C, E는 한 직선 위에 있다.</p>
+          <p>② <span class="seg">AB</span> = <span class="seg">DE</span> 이고, 뒤집어도 길이는 변하지 않으므로 <span class="seg">AE</span> = <input type="text" class="blank" data-id="b1" maxlength="6" autocomplete="off"></p>
+          <p>③ <span class="seg">AB</span> = <span class="seg">AE</span> 이므로 △ABE는 <input type="text" class="blank" data-id="b2" maxlength="10" autocomplete="off" style="width:100px">이다.</p>
+          <p>④ 이등변삼각형의 두 밑각의 크기는 같으므로 ∠B = ∠<input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"></p>
+          <p>⑤ ②, ④에 의해 <span class="seg">AB</span>=<span class="seg">DE</span>, ∠B=∠E 이므로 △ABC ≡ △DEF ( <input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 합동)</p>
+          <p>⑥ 그러므로 빗변의 길이와 다른 한 변의 길이가 각각 같은 두 직각삼각형은 서로 <input type="text" class="blank" data-id="b5" maxlength="6" autocomplete="off"> 이다. ∎</p>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn btn-outline btn-sm" id="btnFlip4">🔄 뒤집어서 겹치기</button>
+          <button class="btn btn-outline btn-sm" id="toggleWordbank">🗂 단어 은행 보기</button>
+          <button class="btn btn-check" id="checkProof">채점하기</button>
+          <button class="btn btn-outline btn-sm" id="resetProof">↺ 다시 쓰기</button>
+        </div>
+        <div class="wordbank" id="wordbank">
+          <span class="word">AB</span><span class="word">DE</span><span class="word">이등변삼각형</span><span class="word">E</span><span class="word">RHA</span><span class="word">합동</span>
+        </div>
+        <div class="feedback" id="feedbackProof"></div>
+
+        <div class="summary-box" id="proofDone">
+          🎉 <b>증명 완성!</b><br>
+          "빗변의 길이와 다른 한 변의 길이가 각각 같은 두 직각삼각형은 서로 합동이다(RHS 합동)"를 이제 도움 없이 스스로 증명할 수 있습니다. 훌륭해요!
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev4">← 이전 활동</button>
+          <span></span>
+        </div>
+      </div>
+    </section>
+
+    <div class="restart-wrap">
+      <button class="btn btn-outline" id="restartAll">🔄 활동 처음부터 다시하기</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /#appRoot -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  "use strict";
+  const SCALE = 1/40; // px -> cm
+
+  // 직각 꼭짓점(C, F)은 항상 고정. 나머지 점들은 입력값(빗변, 다른 변)으로 매번 계산한다.
+  const PXPERCM = 40;
+  const C = {x:100, y:380};
+  const F = {x:360, y:380};
+  const HYP_MIN = 2.5, HYP_MAX = 6.5;   // 빗변 입력 범위 (cm)
+  const LEG_MIN = 1.5, LEG_MAX = 5.5;   // 다른 변 입력 범위 (cm)
+  const MATCH_HYP = 4.8, MATCH_LEG = 3.0; // 2,4단계에서 사용할 "이미 합동인" 기준값
+
+  const state = {
+    AB: 4.2, AC: 2.4,
+    DE: 5.5, DF: 4.0,
+    showLabels:false,
+    showSplit:false,
+    provenEqual:false,
+    showAngleMarkBE:false,
+    overlayOn:false,
+    flipOn:false,
+    p4_b3ok:false, p4_b4ok:false, p4_b5ok:false
+  };
+
+  // ---------- DOM refs ----------
+  const svg = document.getElementById('canvas');
+  const nameA = document.getElementById('nameA');
+  const nameB = document.getElementById('nameB');
+  const nameD = document.getElementById('nameD');
+  const nameE = document.getElementById('nameE');
+  const nameF = document.getElementById('nameF');
+  const labelAD = document.getElementById('labelAD');
+  const labelCF = document.getElementById('labelCF');
+  const dotA = document.getElementById('dotA');
+  const dotB = document.getElementById('dotB');
+  const triABC = document.getElementById('triABC');
+  const triDEF = document.getElementById('triDEF');
+  const rightC = document.getElementById('rightC');
+  const rightF = document.getElementById('rightF');
+  const curveAB = document.getElementById('curveAB');
+  const curveAC = document.getElementById('curveAC');
+  const curveDE = document.getElementById('curveDE');
+  const curveDF = document.getElementById('curveDF');
+  const tickAB = document.getElementById('tickAB');
+  const tickDE = document.getElementById('tickDE');
+  const tickAC = document.getElementById('tickAC');
+  const tickDF = document.getElementById('tickDF');
+  const tickBC = document.getElementById('tickBC');
+  const tickEF = document.getElementById('tickEF');
+  const markCircB = document.getElementById('markCircB');
+  const markCircE = document.getElementById('markCircE');
+  const arcB = document.getElementById('arcB');
+  const arcE = document.getElementById('arcE');
+  const labelAngB = document.getElementById('labelAngB');
+  const labelAngE = document.getElementById('labelAngE');
+  const labelAB = document.getElementById('labelAB');
+  const labelAC = document.getElementById('labelAC');
+  const labelDE = document.getElementById('labelDE');
+  const labelDF = document.getElementById('labelDF');
+  const labelBC = document.getElementById('labelBC');
+  const labelEF = document.getElementById('labelEF');
+  const lenAB = document.getElementById('lenAB');
+  const lenAC = document.getElementById('lenAC');
+  const lenDE = document.getElementById('lenDE');
+  const lenDF = document.getElementById('lenDF');
+  const lenBC = document.getElementById('lenBC');
+  const lenEF = document.getElementById('lenEF');
+  const statBar = document.getElementById('statBar');
+  const matchBadge = document.getElementById('matchBadge');
+
+  // ---------- helpers ----------
+  function tickPath(p1, p2, count){
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const len = Math.hypot(dx,dy) || 1;
+    const ux = dx/len, uy = dy/len;
+    const px = -uy, py = ux;
+    const mx = (p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const half = 5, gap = 5;
+    let d = '';
+    for(let i=0;i<count;i++){
+      const off = (i-(count-1)/2)*gap;
+      const cx = mx+ux*off, cy = my+uy*off;
+      d += `M ${cx-px*half} ${cy-py*half} L ${cx+px*half} ${cy+py*half} `;
+    }
+    return d.trim();
+  }
+  function outwardPerp(p1, p2, other){
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const len = Math.hypot(dx,dy) || 1;
+    let px = -dy/len, py = dx/len;
+    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const tx = other.x-mx, ty = other.y-my;
+    if(px*tx+py*ty > 0){ px=-px; py=-py; }
+    return {x:px, y:py};
+  }
+  function dimensionCurve(p1, p2, other, bulge, labelDist){
+    const perp = outwardPerp(p1, p2, other);
+    const mid = {x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2};
+    const ctrl = {x: mid.x + perp.x*bulge, y: mid.y + perp.y*bulge};
+    const label = {x: mid.x + perp.x*labelDist, y: mid.y + perp.y*labelDist};
+    return { d:`M ${p1.x} ${p1.y} Q ${ctrl.x} ${ctrl.y} ${p2.x} ${p2.y}`, label };
+  }
+  function describeArc(cx, cy, r, a1, a2){
+    let diff = a2-a1;
+    while(diff > Math.PI) diff -= 2*Math.PI;
+    while(diff < -Math.PI) diff += 2*Math.PI;
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const x2 = cx + r*Math.cos(a1+diff), y2 = cy + r*Math.sin(a1+diff);
+    const largeArc = Math.abs(diff) > Math.PI ? 1 : 0;
+    const sweep = diff > 0 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} ${sweep} ${x2} ${y2}`;
+  }
+  function bisectorAngle(a1, a2){
+    const ux = (Math.cos(a1)+Math.cos(a2))/2;
+    const uy = (Math.sin(a1)+Math.sin(a2))/2;
+    return Math.atan2(uy, ux);
+  }
+  function rightAngleCorner(vertex, dirH, dirV){
+    const s = 14;
+    return `M ${vertex.x+dirH*s} ${vertex.y} L ${vertex.x+dirH*s} ${vertex.y+dirV*s} L ${vertex.x} ${vertex.y+dirV*s}`;
+  }
+
+  // ---------- main render ----------
+  function update(){
+    const AC_px = Math.min(state.AC, state.AB - 0.3) * PXPERCM;
+    const AB_px = state.AB * PXPERCM;
+    const CB_px = Math.sqrt(Math.max(1, AB_px*AB_px - AC_px*AC_px));
+    const DF_px = Math.min(state.DF, state.DE - 0.3) * PXPERCM;
+    const DE_px = state.DE * PXPERCM;
+    const EF_px = Math.sqrt(Math.max(1, DE_px*DE_px - DF_px*DF_px));
+
+    const A = {x:C.x, y:C.y - AC_px};
+    const B = {x:C.x + CB_px, y:C.y};
+    const D = {x:F.x, y:F.y - DF_px};
+    const E = {x:F.x + EF_px, y:F.y};
+
+    // 꼭짓점 라벨/점
+    nameA.setAttribute('x', A.x-14); nameA.setAttribute('y', A.y+4);
+    dotA.setAttribute('cx', A.x); dotA.setAttribute('cy', A.y);
+    nameB.setAttribute('x', B.x-4); nameB.setAttribute('y', B.y+22);
+    dotB.setAttribute('cx', B.x); dotB.setAttribute('cy', B.y);
+    document.getElementById('dotC').setAttribute('cx', C.x); document.getElementById('dotC').setAttribute('cy', C.y);
+    document.getElementById('nameC').setAttribute('x', C.x-16); document.getElementById('nameC').setAttribute('y', C.y+4);
+    document.getElementById('dotF').setAttribute('cx', F.x); document.getElementById('dotF').setAttribute('cy', F.y);
+    document.getElementById('dotE').setAttribute('cx', E.x); document.getElementById('dotE').setAttribute('cy', E.y);
+    document.getElementById('dotD').setAttribute('cx', D.x); document.getElementById('dotD').setAttribute('cy', D.y);
+
+    // 삼각형
+    triABC.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`);
+    triDEF.setAttribute('points', `${D.x},${D.y} ${E.x},${E.y} ${F.x},${F.y}`);
+    if(state.overlayOn){
+      triABC.style.fill = 'rgba(79,111,224,.55)'; triABC.style.stroke = '#4f6fe0';
+      triDEF.style.fill = 'rgba(224,105,138,.55)'; triDEF.style.stroke = '#e0698a';
+    }else{
+      triABC.style.fill = state.showSplit ? 'rgba(108,139,255,.45)' : '#dbe4ff';
+      triABC.style.stroke = state.showSplit ? '#4f6fe0' : '#4a5568';
+      triDEF.style.fill = state.showSplit ? 'rgba(255,157,179,.45)' : '#f3f4f6';
+      triDEF.style.stroke = state.showSplit ? '#e0698a' : '#4a5568';
+    }
+
+    // 직각 표시 (항상 참인 사실)
+    rightC.setAttribute('d', rightAngleCorner(C, 1, -1));
+    rightF.setAttribute('d', rightAngleCorner(F, 1, -1));
+
+    // ---- 뒤집기 상태에 따른 이름표 처리 (△ABC를 뒤집어 C→F, A→D 위치로 옮긴다) ----
+    nameA.style.display = state.flipOn ? 'none' : 'block';
+    document.getElementById('nameC').style.display = state.flipOn ? 'none' : 'block';
+    labelCF.style.display = state.flipOn ? 'block' : 'none';
+    labelAD.style.display = state.flipOn ? 'block' : 'none';
+    labelCF.setAttribute('x', F.x-22); labelCF.setAttribute('y', F.y+24);
+    labelAD.setAttribute('x', D.x-24); labelAD.setAttribute('y', D.y-14);
+    if(state.flipOn){
+      nameB.setAttribute('x', (C.x+F.x-B.x) - 4); nameB.setAttribute('y', B.y+22);
+    }else{
+      nameB.setAttribute('x', B.x-4); nameB.setAttribute('y', B.y+22);
+    }
+
+    // ---- 주어진 조건: 빗변(AB,DE), 다른 변(AC,DF) 눈금 ----
+    const onProofPages = (currentPage === 2 || currentPage === 3);
+    const showGiven = onProofPages || (currentPage === 4);
+    tickAB.style.display = showGiven ? 'block' : 'none';
+    tickDE.style.display = showGiven ? 'block' : 'none';
+    tickAC.style.display = showGiven ? 'block' : 'none';
+    tickDF.style.display = showGiven ? 'block' : 'none';
+    tickAB.setAttribute('d', tickPath(A, B, 1));
+    tickDE.setAttribute('d', tickPath(D, E, 1));
+    tickAC.setAttribute('d', tickPath(A, C, 2));
+    tickDF.setAttribute('d', tickPath(D, F, 2));
+
+    // ---- 증명 중 유도된 결과: ∠B=∠E ● 표시 ----
+    const showCircBE = (state.showAngleMarkBE && (currentPage === 2 || currentPage === 3)) || (currentPage === 4 && state.p4_b3ok);
+    markCircB.style.display = showCircBE ? 'block' : 'none';
+    markCircE.style.display = showCircBE ? 'block' : 'none';
+    const angBA_B = Math.atan2(A.y-B.y, A.x-B.x);
+    const angBC_B = Math.atan2(C.y-B.y, C.x-B.x);
+    const bisB = bisectorAngle(angBA_B, angBC_B);
+    markCircB.setAttribute('cx', B.x + Math.cos(bisB)*30);
+    markCircB.setAttribute('cy', B.y + Math.sin(bisB)*30);
+    const angED_E = Math.atan2(D.y-E.y, D.x-E.x);
+    const angEF_E = Math.atan2(F.y-E.y, F.x-E.x);
+    const bisE = bisectorAngle(angED_E, angEF_E);
+    markCircE.setAttribute('cx', E.x + Math.cos(bisE)*30);
+    markCircE.setAttribute('cy', E.y + Math.sin(bisE)*30);
+
+    // ---- 증명된 결론: BC=EF 눈금 (3단계에서만, 4단계는 정답 시) ----
+    const revealed = state.provenEqual && currentPage === 3;
+    const showTickBCEF = revealed || (currentPage === 4 && (state.p4_b4ok || state.p4_b5ok));
+    tickBC.style.display = showTickBCEF ? 'block' : 'none';
+    tickEF.style.display = showTickBCEF ? 'block' : 'none';
+    tickBC.setAttribute('d', tickPath(B, C, 1));
+    tickEF.setAttribute('d', tickPath(E, F, 1));
+
+    // ---- 길이/각도 표시: 1단계에서는 입력값을 바로 확인할 수 있도록 항상 켜둔다 ----
+    const showGivenLabels = state.showLabels || currentPage === 1;
+    [labelAB, labelAC, labelDE, labelDF, arcB, arcE, labelAngB, labelAngE].forEach(el=>{
+      el.style.display = showGivenLabels ? 'block' : 'none';
+    });
+    [labelBC, labelEF].forEach(el=>{
+      el.style.display = state.showLabels ? 'block' : 'none';
+    });
+
+    // 길이 표시용 바깥쪽 곡선 점선 (1단계에서만) + 그 꼭짓점에 길이 라벨
+    [curveAB, curveAC, curveDE, curveDF].forEach(el=>{
+      el.style.display = (currentPage === 1) ? 'block' : 'none';
+    });
+    const cAB = dimensionCurve(A, B, C, 20, 34);
+    curveAB.setAttribute('d', cAB.d);
+    labelAB.setAttribute('x', cAB.label.x); labelAB.setAttribute('y', cAB.label.y);
+    lenAB.textContent = `${state.AB.toFixed(1)}cm`;
+
+    const cAC = dimensionCurve(A, C, B, 16, 28);
+    curveAC.setAttribute('d', cAC.d);
+    labelAC.setAttribute('x', cAC.label.x); labelAC.setAttribute('y', cAC.label.y);
+    lenAC.textContent = `${state.AC.toFixed(1)}cm`;
+
+    const cDE = dimensionCurve(D, E, F, 20, 34);
+    curveDE.setAttribute('d', cDE.d);
+    labelDE.setAttribute('x', cDE.label.x); labelDE.setAttribute('y', cDE.label.y);
+    lenDE.textContent = `${state.DE.toFixed(1)}cm`;
+
+    const cDF = dimensionCurve(D, F, E, 16, 28);
+    curveDF.setAttribute('d', cDF.d);
+    labelDF.setAttribute('x', cDF.label.x); labelDF.setAttribute('y', cDF.label.y);
+    lenDF.textContent = `${state.DF.toFixed(1)}cm`;
+
+    labelBC.setAttribute('x', (B.x+C.x)/2); labelBC.setAttribute('y', B.y+22);
+    lenBC.textContent = ` = ${(CB_px*SCALE).toFixed(1)}cm`;
+    labelEF.setAttribute('x', (E.x+F.x)/2); labelEF.setAttribute('y', E.y+22);
+    lenEF.textContent = ` = ${(EF_px*SCALE).toFixed(1)}cm`;
+
+    arcB.setAttribute('d', describeArc(B.x, B.y, 24, angBC_B, angBA_B));
+    labelAngB.setAttribute('x', B.x + Math.cos(bisB)*46);
+    labelAngB.setAttribute('y', B.y + Math.sin(bisB)*46 + 4);
+
+    arcE.setAttribute('d', describeArc(E.x, E.y, 24, angEF_E, angED_E));
+    labelAngE.setAttribute('x', E.x + Math.cos(bisE)*46);
+    labelAngE.setAttribute('y', E.y + Math.sin(bisE)*46 + 4);
+
+    const angleB = Math.atan2(AC_px, CB_px) * 180/Math.PI;
+    const angleE = Math.atan2(DF_px, EF_px) * 180/Math.PI;
+    labelAngB.textContent = `${angleB.toFixed(0)}°`;
+    labelAngE.textContent = `${angleE.toFixed(0)}°`;
+
+    statBar.innerHTML =
+      `<span>△ABC: <span class="seg">AB</span> <b>${state.AB.toFixed(1)}cm</b></span>` +
+      `<span><span class="seg">AC</span> <b>${state.AC.toFixed(1)}cm</b></span>` +
+      `<span style="color:#c8ccd6">|</span>` +
+      `<span>△DEF: <span class="seg">DE</span> <b>${state.DE.toFixed(1)}cm</b></span>` +
+      `<span><span class="seg">DF</span> <b>${state.DF.toFixed(1)}cm</b></span>`;
+
+    matchBadge.style.display = (Math.abs(state.AB-state.DE) < 0.05 && Math.abs(state.AC-state.DF) < 0.05) ? 'block' : 'none';
+  }
+
+  // ---------- 숫자 입력 바인딩 ----------
+  function syncInputFields(){
+    document.getElementById('inputAB').value = state.AB;
+    document.getElementById('inputAC').value = state.AC;
+    document.getElementById('inputDE').value = state.DE;
+    document.getElementById('inputDF').value = state.DF;
+  }
+  function bindNumInput(id, min, max, onSet){
+    const el = document.getElementById(id);
+    el.addEventListener('input', function(){
+      const v = parseFloat(this.value);
+      if(!isNaN(v)){ onSet(Math.max(min, Math.min(max, v))); update(); }
+    });
+    el.addEventListener('blur', function(){
+      let v = parseFloat(this.value);
+      if(isNaN(v)) v = min;
+      v = Math.max(min, Math.min(max, v));
+      this.value = v;
+      onSet(v); update();
+    });
+  }
+  bindNumInput('inputAB', HYP_MIN, HYP_MAX, v=>state.AB=v);
+  bindNumInput('inputAC', LEG_MIN, LEG_MAX, v=>state.AC=v);
+  bindNumInput('inputDE', HYP_MIN, HYP_MAX, v=>state.DE=v);
+  bindNumInput('inputDF', LEG_MIN, LEG_MAX, v=>state.DF=v);
+
+  // ---------- 툴바 버튼 ----------
+  const btnLabels = document.getElementById('btnLabels');
+  const btnSplit = document.getElementById('btnSplit');
+  const btnReset = document.getElementById('btnReset');
+
+  function syncButtons(){
+    btnLabels.classList.toggle('active', state.showLabels);
+    btnLabels.setAttribute('aria-pressed', state.showLabels);
+    btnSplit.classList.toggle('active', state.showSplit);
+    btnSplit.classList.toggle('split', state.showSplit);
+    btnSplit.setAttribute('aria-pressed', state.showSplit);
+  }
+  btnLabels.addEventListener('click', ()=>{ state.showLabels = !state.showLabels; syncButtons(); update(); });
+  btnSplit.addEventListener('click', ()=>{ state.showSplit = !state.showSplit; syncButtons(); update(); });
+  btnReset.addEventListener('click', ()=>{
+    state.AB = 4.2; state.AC = 2.4;
+    state.DE = 5.5; state.DF = 4.0;
+    state.showLabels = false;
+    state.showSplit = false;
+    syncInputFields();
+    setOverlay(false);
+    setFlip(false);
+    syncButtons(); update();
+  });
+
+  // ---------- 겹쳐보기 (1단계: 값 맞추기 확인용, 좌우 이동만) ----------
+  const OVERLAY_DX = F.x - C.x;
+  const OVERLAY_ABC_IDS = ['triABC','curveAB','curveAC','dotA','nameA','dotB','nameB','dotC','nameC','rightC','tickAB','tickAC','tickBC','markCircB','arcB','labelAngB','labelAB','labelAC','labelBC'];
+  const btnOverlay = document.getElementById('btnOverlay');
+  function setOverlay(on){
+    state.overlayOn = on;
+    OVERLAY_ABC_IDS.forEach(id=>{
+      document.getElementById(id).style.transform = on ? `translate(${OVERLAY_DX}px,0px)` : '';
+    });
+    btnOverlay.textContent = on ? '↩ 원래대로 보기' : '🔍 겹쳐서 확인하기';
+    btnOverlay.classList.toggle('active', on);
+    update();
+  }
+  btnOverlay.addEventListener('click', ()=> setOverlay(!state.overlayOn));
+
+  // ---------- 뒤집어서 겹치기 (2단계 증명 구성: 좌우 반전 + 이동) ----------
+  // C→F 쪽으로 여백이 훨씬 넉넉해서(F가 캔버스 좌우 양쪽에 다 공간이 있음), △DEF가 아니라 △ABC를 뒤집어 옮긴다
+  const FLIP_ABC_IDS = ['triABC','dotA','dotB','dotC','rightC'];
+  const FLIP_MATRIX = `matrix(-1,0,0,1,${C.x+F.x},0)`;
+  function setFlip(on){
+    state.flipOn = on;
+    FLIP_ABC_IDS.forEach(id=>{
+      document.getElementById(id).style.transform = on ? FLIP_MATRIX : '';
+    });
+    [document.getElementById('btnFlip'), document.getElementById('btnFlip4')].forEach(b=>{
+      if(!b) return;
+      b.textContent = on ? '↩ 원래대로 보기' : '🔄 뒤집어서 겹치기';
+      b.classList.toggle('active', on);
+    });
+    update();
+  }
+  document.getElementById('btnFlip4').addEventListener('click', ()=> setFlip(!state.flipOn));
+
+  // ---------- 모바일 탭 전환 (그림 / 활동) ----------
+  window.showMobileTab = function(tab){
+    const layoutRoot = document.getElementById('layoutRoot');
+    layoutRoot.classList.toggle('mobile-show-canvas', tab === 'canvas');
+    layoutRoot.classList.toggle('mobile-show-activity', tab === 'activity');
+    document.getElementById('mtabCanvas').classList.toggle('active', tab === 'canvas');
+    document.getElementById('mtabActivity').classList.toggle('active', tab === 'activity');
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  // ================= 활동 페이지 전환 =================
+  const unlocked = {1:true, 2:false, 3:false, 4:false};
+  let currentPage = 1;
+
+  function showPage(n){
+    currentPage = n;
+    if(typeof syncProgress === 'function') syncProgress(true);
+    [1,2,3,4].forEach(i=>{
+      document.getElementById('page'+i).style.display = (i===n) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.step-tab').forEach(tab=>{
+      const i = Number(tab.dataset.goto);
+      tab.classList.toggle('current', i===n);
+    });
+    if(n !== 1 && state.overlayOn) setOverlay(false);
+    if(n !== 2 && n !== 4 && state.flipOn) setFlip(false);
+    if(n === 2){
+      state.AB = MATCH_HYP; state.AC = MATCH_LEG;
+      state.DE = MATCH_HYP; state.DF = MATCH_LEG;
+      state.showLabels = false;
+      syncInputFields();
+      syncButtons();
+    }
+    if(n === 4){
+      state.AB = MATCH_HYP; state.AC = MATCH_LEG;
+      state.DE = MATCH_HYP; state.DF = MATCH_LEG;
+      state.showSplit = false;
+      state.showLabels = false;
+      syncInputFields();
+      if(typeof P4_LIVE !== 'undefined'){
+        P4_LIVE.forEach(([bid, flag])=>{
+          const inp = document.querySelector(`#page4 .blank[data-id="${bid}"]`);
+          state[flag] = isBlankCorrect(bid, inp.value);
+        });
+      }
+      syncButtons();
+    }
+    document.querySelectorAll('#triangleInputs input').forEach(inp=>{ inp.disabled = (n !== 1); });
+    btnSplit.disabled = (n === 4);
+    update();
+    document.getElementById('page'+n).scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function unlockStep(n){
+    unlocked[n] = true;
+    const tab = document.querySelector('.step-tab[data-goto="'+n+'"]');
+    tab.classList.remove('locked');
+    tab.classList.add('done');
+  }
+  document.querySelectorAll('.step-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      const i = Number(tab.dataset.goto);
+      if(unlocked[i]) showPage(i);
+    });
+  });
+  document.getElementById('next1').addEventListener('click', ()=> showPage(2));
+  document.getElementById('prev2').addEventListener('click', ()=> showPage(1));
+  document.getElementById('next2').addEventListener('click', ()=> showPage(3));
+  document.getElementById('prev3').addEventListener('click', ()=> showPage(2));
+  document.getElementById('next3').addEventListener('click', ()=> showPage(4));
+  document.getElementById('prev4').addEventListener('click', ()=> showPage(3));
+
+  // ---------- 활동 1 ----------
+  const recordBody = document.getElementById('recordBody');
+  document.getElementById('btnRecord').addEventListener('click', ()=>{
+    if(recordBody.children.length >= 6) return;
+    const n = recordBody.children.length + 1;
+    const match = (Math.abs(state.AB-state.DE) < 0.05 && Math.abs(state.AC-state.DF) < 0.05) ? '✅' : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${n}</td><td>${state.AB.toFixed(1)}</td><td>${state.AC.toFixed(1)}</td><td>${state.DE.toFixed(1)}</td><td>${state.DF.toFixed(1)}</td><td>${match}</td>`;
+    recordBody.appendChild(tr);
+  });
+  document.getElementById('btnClearRecord').addEventListener('click', ()=>{ recordBody.innerHTML = ''; });
+
+  document.getElementById('checkStep1').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="q1"]:checked');
+    const fb = document.getElementById('feedback1');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 먼저 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'same'){
+      fb.className = 'feedback success';
+      fb.innerHTML = '✅ 정답이에요! 빗변과 다른 한 변이 같아지면 두 직각삼각형은 완전히 합동이 됩니다. 이제 아래 문장을 완성해서 관찰한 사실을 정리해봅시다.';
+      document.getElementById('concludeBlock1').classList.add('show');
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. AB와 DE, AC와 DF를 맞췄을 때 두 삼각형의 모양과 크기를 비교해보세요.';
+    }
+  });
+  document.getElementById('checkConclude1').addEventListener('click', ()=>{
+    const val = document.getElementById('blank1').value;
+    const fb = document.getElementById('feedbackConclude1');
+    if(val === '?'){ fb.className='feedback warn'; fb.textContent='⚠️ 빈칸에 들어갈 말을 선택해주세요.'; return; }
+    if(val === 'same'){
+      fb.className = 'feedback success';
+      fb.textContent = '✅ 정확해요! 이제 2단계에서 왜 그런지 직접 증명해봅시다!';
+      unlockStep(2);
+      document.getElementById('next1').disabled = false;
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 방금 관찰한 결과를 떠올려보세요.';
+    }
+  });
+
+  // ---------- 활동 2 ----------
+  let q2aDone = false, q2bDone = false;
+  function maybeRevealFlipPrompt(){
+    if(q2aDone && q2bDone) document.getElementById('flipPromptBlock').classList.add('show');
+  }
+  document.getElementById('checkQ2a').addEventListener('click', ()=>{
+    const boxes = document.querySelectorAll('#motivateBlock .q2a');
+    let allCorrect = true;
+    boxes.forEach(b=>{ if(b.checked !== (b.dataset.correct === 'true')) allCorrect = false; });
+    const fb = document.getElementById('feedbackQ2a');
+    if(allCorrect){
+      fb.className = 'feedback success';
+      fb.innerHTML = '✅ 맞아요! 합동이면 대응변, 대응각이 각각 같아지므로 <span class="seg">BC</span>=<span class="seg">EF</span>, ∠B=∠E 라는 사실을 알 수 있어요.';
+      q2aDone = true; maybeRevealFlipPrompt();
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 확인해보세요. 합동인 두 삼각형에서는 "대응하는" 변과 각만 각각 같아진다는 점에 주의하세요.';
+    }
+  });
+  document.getElementById('checkQ2b').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="q2b"]:checked');
+    const fb = document.getElementById('feedbackQ2b');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'flip'){
+      fb.className = 'feedback success';
+      fb.textContent = '✅ 맞아요! 뒤집어서 같은 변끼리 겹쳐보면 두 삼각형 사이의 관계를 눈으로 확인할 수 있어요.';
+      q2bDone = true; maybeRevealFlipPrompt();
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 자나 각도기로 재는 것은 "측정"일 뿐 "증명"이 아니에요. 논리적으로 같음을 보이려면 어떻게 해야 할까요?';
+    }
+  });
+  document.getElementById('btnFlip').addEventListener('click', ()=>{
+    setFlip(!state.flipOn);
+    if(state.flipOn) document.getElementById('colinearBlock').classList.add('show');
+  });
+  document.getElementById('checkColinear').addEventListener('click', ()=>{
+    const sel = document.getElementById('colinearSel').value;
+    const fb = document.getElementById('feedbackColinear');
+    if(sel === '?'){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 선택해주세요.'; return; }
+    if(sel === 'yes'){
+      fb.className = 'feedback success';
+      fb.textContent = '✅ 맞아요! 두 직각이 맞닿아 180°를 이루니까, B, C, E는 일직선 위에 놓여요.';
+      document.getElementById('isoBlock').classList.add('show');
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. ∠ACB와 ∠ACE를 더하면 몇 도인가요?';
+    }
+  });
+  document.getElementById('checkIso').addEventListener('click', ()=>{
+    const b1 = document.getElementById('isoBlank1').value.trim().toUpperCase();
+    const sel = document.getElementById('isoSel').value;
+    const b2 = document.getElementById('isoBlank2').value.trim().toUpperCase();
+    const fb = document.getElementById('feedbackIso');
+    const ok = (b1 === 'AB' || b1 === 'DE') && sel === 'isosceles' && b2 === 'E';
+    if(ok){
+      fb.className = 'feedback success';
+      fb.innerHTML = '✅ 정확해요! <span class="seg">AB</span>=<span class="seg">AE</span> 인 이등변삼각형이므로 두 밑각 ∠B, ∠E가 같아요.';
+      state.showAngleMarkBE = true;
+      update();
+      document.getElementById('congruenceTypeBlock').classList.add('show');
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 확인해보세요. 뒤집어도 길이가 변하지 않는다는 점, 그리고 이등변삼각형의 성질(두 밑각이 같다)을 떠올려보세요.';
+    }
+  });
+  document.getElementById('checkCongType').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="congType"]:checked');
+    const fb = document.getElementById('feedbackCongType');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'RHA'){
+      fb.className = 'feedback success';
+      fb.innerHTML = '✅ 맞아요! <span class="seg">AB</span>=<span class="seg">DE</span>(빗변)과 ∠B=∠E(예각)이 각각 같으므로, 지난 시간에 배운 RHA 합동에 의해 △ABC ≡ △DEF 입니다.';
+      state.showSplit = true;
+      syncButtons();
+      update();
+      unlockStep(3);
+      document.getElementById('next2').disabled = false;
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 우리가 확인한 건 "빗변"과 "한 예각"이었어요. 이 조합에 맞는 합동 조건은 무엇일까요?';
+    }
+  });
+
+  // ---------- 활동 3 ----------
+  document.getElementById('rel1').addEventListener('change', function(){
+    document.getElementById('concludeRel1').classList.toggle('show', this.value === '=');
+  });
+  document.getElementById('checkStep3').addEventListener('click', ()=>{
+    const s1 = document.getElementById('rel1').value;
+    const blank2 = document.getElementById('blank2').value;
+    const fb = document.getElementById('feedback3');
+    const ok = s1 === '=' && blank2 === 'congruent';
+    if(ok){
+      fb.className = 'feedback success';
+      fb.innerHTML = '🎉 완벽해요! 합동인 도형의 대응변은 각각 같으므로 <span class="seg">BC</span>=<span class="seg">EF</span> 입니다. 즉, △ABC≡△DEF(RHS 합동)입니다!';
+      state.provenEqual = true;
+      update();
+      document.getElementById('summaryBox').classList.add('show');
+      unlockStep(4);
+      document.getElementById('next3').disabled = false;
+    }else{
+      fb.className = 'feedback error';
+      fb.textContent = '❌ 아직 정확하지 않아요. 위 빈칸들을 다시 확인해보세요.';
+    }
+  });
+
+  // ---------- 활동 4 ----------
+  const PROOF_ANSWERS = { b1:['AB','DE'], b2:['이등변삼각형'], b3:['E'], b4:['RHA'], b5:['합동'] };
+  function normalizeAns(s){
+    return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
+  }
+  function isBlankCorrect(id, raw){
+    const v = normalizeAns(raw);
+    if(!v) return false;
+    if(id === 'b2') return v.indexOf('이등변삼각형') >= 0;
+    if(id === 'b4') return v.indexOf('RHA') >= 0;
+    if(id === 'b5') return v.indexOf('합동') >= 0;
+    return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
+  }
+  const P4_LIVE = [['b3','p4_b3ok'], ['b4','p4_b4ok'], ['b5','p4_b5ok']];
+  P4_LIVE.forEach(([bid, flag])=>{
+    document.querySelector(`#page4 .blank[data-id="${bid}"]`).addEventListener('input', function(){
+      state[flag] = isBlankCorrect(bid, this.value);
+      update();
+    });
+  });
+  document.getElementById('checkProof').addEventListener('click', ()=>{
+    const inputs = document.querySelectorAll('#page4 .blank');
+    let correctCount = 0;
+    inputs.forEach(inp=>{
+      const ok = isBlankCorrect(inp.dataset.id, inp.value);
+      inp.classList.toggle('correct', ok);
+      inp.classList.toggle('wrong', !ok);
+      if(ok) correctCount++;
+    });
+    const total = inputs.length;
+    const fb = document.getElementById('feedbackProof');
+    if(correctCount === total){
+      fb.className = 'feedback success';
+      fb.textContent = `🎉 ${total}개 중 ${correctCount}개 정답! 증명을 완벽하게 완성했습니다.`;
+      document.getElementById('proofDone').classList.add('show');
+    }else{
+      fb.className = 'feedback warn';
+      fb.textContent = `${total}개 중 ${correctCount}개 정답이에요. 빨간색으로 표시된 빈칸을 다시 채워보세요.`;
+      document.getElementById('proofDone').classList.remove('show');
+    }
+  });
+  document.getElementById('resetProof').addEventListener('click', ()=>{
+    document.querySelectorAll('#page4 .blank').forEach(inp=>{ inp.value=''; inp.classList.remove('correct','wrong'); });
+    const fb = document.getElementById('feedbackProof');
+    fb.className = 'feedback'; fb.textContent = '';
+    document.getElementById('proofDone').classList.remove('show');
+    P4_LIVE.forEach(([bid, flag])=>{ state[flag] = false; });
+    update();
+  });
+  document.getElementById('toggleWordbank').addEventListener('click', ()=>{
+    document.getElementById('wordbank').classList.toggle('show');
+  });
+  document.getElementById('restartAll').addEventListener('click', ()=>{ location.reload(); });
+
+  // ================= 로그인 / Firebase / 관리자 / 이탈 감지 =================
+  const LESSON_ID = 'rhs1';
+  const STAGE_NAMES = {1:'1.관찰하기', 2:'2.증명 설계', 3:'3.결론 확인', 4:'4.최종 증명'};
+  const PW_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyAEFxLqfhcl6RJlS3ju9InTx9AbFHQ_Yfg",
+      authDomain:"climate-lesson.firebaseapp.com",
+      projectId:"climate-lesson",
+      storageBucket:"climate-lesson.firebasestorage.app",
+      messagingSenderId:"699342489530",
+      appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('Firebase init:', e); }
+
+  let isAdmin = false;
+  let _studentInfo = null;
+  let _docId = null;
+  let _syncTimer = null;
+  let _awayCount = 0;
+  let _adminUnsub = null;
+  let _latestRows = [];
+
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  async function hashPw(pw){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  window.showStudentForm = function(){
+    document.getElementById('roleSelect').style.display = 'none';
+    document.getElementById('studentForm').classList.add('show');
+    document.getElementById('loginName').focus();
+  };
+  window.showTeacherForm = function(){
+    document.getElementById('roleSelect').style.display = 'none';
+    document.getElementById('teacherForm').classList.add('show');
+    document.getElementById('teacherPw').focus();
+  };
+  window.backToRole = function(){
+    document.getElementById('studentForm').classList.remove('show');
+    document.getElementById('teacherForm').classList.remove('show');
+    document.getElementById('studentLoginError').style.display = 'none';
+    document.getElementById('teacherLoginError').style.display = 'none';
+    document.getElementById('roleSelect').style.display = 'block';
+  };
+  window.studentLogin = function(){
+    const grade = document.getElementById('loginGrade').value;
+    const cls = document.getElementById('loginClass').value;
+    const num = document.getElementById('loginNum').value;
+    const name = document.getElementById('loginName').value.trim();
+    const err = document.getElementById('studentLoginError');
+    if(!grade || !cls || !num || !name){
+      err.textContent = '학년, 반, 번호, 이름을 모두 입력해주세요!';
+      err.style.display = 'block';
+      return;
+    }
+    err.style.display = 'none';
+    _studentInfo = {grade, cls, num, name};
+    _docId = `${LESSON_ID}_${todayStr()}_${cls}_${String(num).padStart(2,'0')}`;
+    enterApp(false);
+  };
+  window.teacherLogin = async function(){
+    const pw = document.getElementById('teacherPw').value;
+    const err = document.getElementById('teacherLoginError');
+    const hash = await hashPw(pw);
+    if(hash === PW_HASH){
+      err.style.display = 'none';
+      enterApp(true);
+    }else{
+      err.style.display = 'block';
+      document.getElementById('teacherPw').value = '';
+      document.getElementById('teacherPw').focus();
+    }
+  };
+  function enterApp(admin){
+    isAdmin = admin;
+    document.getElementById('loginScreen').style.display = 'none';
+    if(admin){
+      document.getElementById('adminScreen').style.display = 'block';
+      startAdminWatch();
+    }else{
+      document.getElementById('appRoot').style.display = 'block';
+      document.getElementById('sessionBar').style.display = 'flex';
+      document.getElementById('sessionName').textContent = `${_studentInfo.grade} ${_studentInfo.cls} ${_studentInfo.num}번 ${_studentInfo.name}`;
+      setupAwayDetection();
+      syncProgress(true);
+    }
+  }
+  function syncProgress(immediate){
+    if(!_db || !_studentInfo || isAdmin) return;
+    clearTimeout(_syncTimer);
+    const write = ()=>{
+      _db.collection('progress').doc(_docId).set({
+        lesson: LESSON_ID,
+        date: todayStr(),
+        grade: _studentInfo.grade,
+        cls: _studentInfo.cls,
+        num: parseInt(_studentInfo.num),
+        name: _studentInfo.name,
+        stage: (typeof currentPage !== 'undefined') ? currentPage : 1,
+        awayCount: _awayCount,
+        isAway: document.hidden,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true}).catch(e=>console.warn('sync:', e));
+    };
+    if(immediate){ write(); } else { _syncTimer = setTimeout(write, 1200); }
+  }
+  function setupAwayDetection(){
+    function onAway(){
+      _awayCount++;
+      document.getElementById('awayWarning').classList.add('show');
+      syncProgress(true);
+    }
+    function onBack(){ syncProgress(true); }
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) onAway(); else onBack(); });
+    window.addEventListener('blur', onAway);
+    window.addEventListener('focus', onBack);
+    setInterval(()=>syncProgress(true), 20000);
+  }
+  window.dismissWarning = function(){
+    document.getElementById('awayWarning').classList.remove('show');
+    syncProgress(true);
+  };
+  function startAdminWatch(){
+    if(!_db){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171">Firebase 연결 실패</td></tr>';
+      return;
+    }
+    const today = todayStr();
+    _adminUnsub = _db.collection('progress')
+      .where('lesson','==', LESSON_ID)
+      .where('date','==', today)
+      .onSnapshot(snap=>{
+        const rows = [];
+        snap.forEach(d=>rows.push(Object.assign({_id:d.id}, d.data())));
+        rows.sort((a,b)=> String(a.cls||'').localeCompare(String(b.cls||'')) || ((a.num||0)-(b.num||0)));
+        _latestRows = rows;
+        applyAdminFilter();
+      }, err=>{
+        document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="6" style="color:#f87171">오류: ${err.message}</td></tr>`;
+      });
+  }
+  function applyAdminFilter(){
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    const filtered = _latestRows.filter(r => (!g || r.grade===g) && (!c || r.cls===c));
+    document.getElementById('btnAdminDelete').disabled = !(g && c);
+    renderAdminTable(filtered, g, c);
+  }
+  document.getElementById('filterGrade').addEventListener('change', applyAdminFilter);
+  document.getElementById('filterCls').addEventListener('change', applyAdminFilter);
+  function renderAdminTable(rows, g, c){
+    const total = rows.length;
+    const awayNow = rows.filter(r=>r.isAway).length;
+    const scopeLabel = (g || c) ? `${g||'전체 학년'} ${c||'전체 반'} · ` : '';
+    document.getElementById('adminSummary').textContent = `${scopeLabel}접속 ${total}명 · 현재 이탈 ${awayNow}명 (실시간)`;
+    if(!rows.length){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">아직 접속한 학생이 없어요.</td></tr>';
+      return;
+    }
+    document.getElementById('adminTableBody').innerHTML = rows.map(r=>{
+      const lastMs = (r.lastUpdated && r.lastUpdated.toDate) ? r.lastUpdated.toDate().getTime() : 0;
+      const staleMin = lastMs ? Math.max(0, Math.round((Date.now()-lastMs)/60000)) : null;
+      const status = r.isAway ? '⚠️ 다른 화면' : '✅ 정상';
+      return `<tr class="${r.isAway?'away':''}">
+        <td>${r.grade||''} ${r.cls||''} ${String(r.num).padStart(2,'0')}번</td>
+        <td>${r.name||''}</td>
+        <td>${STAGE_NAMES[r.stage]||('?'+r.stage)}</td>
+        <td>${status}</td>
+        <td>${r.awayCount||0}회</td>
+        <td>${staleMin!=null ? staleMin+'분 전' : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('btnAdminDelete').addEventListener('click', async ()=>{
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    if(!g || !c) return;
+    const targets = _latestRows.filter(r => r.grade===g && r.cls===c);
+    if(!targets.length){ alert('삭제할 접속 기록이 없어요.'); return; }
+    if(!confirm(`${g} ${c} 학생 ${targets.length}명의 오늘 접속 기록을 삭제할까요?\n(이 작업은 되돌릴 수 없습니다)`)) return;
+    try{
+      await Promise.all(targets.map(r => _db.collection('progress').doc(r._id).delete()));
+    }catch(e){
+      alert('삭제 중 오류가 발생했어요: ' + e.message);
+    }
+  });
+  window.adminLogout = function(){
+    if(_adminUnsub) _adminUnsub();
+    location.reload();
+  };
+
+  // ---------- init ----------
+  syncButtons();
+  update();
+})();
+</script>
+</body>
+</html>
