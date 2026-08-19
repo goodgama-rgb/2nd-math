@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>직각삼각형의 합동 조건 — RHA와 RHS</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --blue:#2563eb;--blue-l:#dbeafe;--blue-ll:#eff6ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --yellow-l:#fef9c3;--yellow:#854d0e;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-badge{background:rgba(255,255,255,.2);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:.06em}
+.hdr-title{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.timer{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.timer.warn{color:#f97316}
+.timer.danger{color:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.name-wrap{display:flex;gap:6px;align-items:center}
+.name-wrap label{font-size:12px;opacity:.7}
+.name-wrap input{border:none;border-radius:6px;padding:5px 9px;font-size:13px;width:90px;color:var(--ink);background:rgba(255,255,255,.9)}
+
+.streak-bar{background:var(--indigo-ll);border-bottom:1px solid #dfe0fa;padding:8px 24px}
+.streak-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.streak-label{font-size:12px;color:var(--ink2);font-weight:600}
+.streak-dots{display:flex;gap:6px}
+.sdot{width:14px;height:14px;border-radius:50%;background:#dcdcf7;transition:all .3s}
+.sdot.hit{background:var(--green)}
+
+.main{max-width:720px;margin:0 auto;padding:24px 16px}
+
+.level-screen{text-align:center;padding:40px 20px}
+.level-screen h2{font-size:24px;font-weight:700;margin-bottom:8px}
+.level-screen p{font-size:14px;color:var(--ink2);line-height:1.7;margin-bottom:32px}
+.level-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:480px;margin:0 auto}
+.level-card{background:#fff;border:2px solid #dcdcf7;border-radius:var(--r);padding:24px 20px;cursor:pointer;transition:all .2s;text-align:left}
+.level-card:hover{border-color:var(--indigo);box-shadow:var(--shadow)}
+.lc-icon{font-size:32px;margin-bottom:10px}
+.lc-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.lc-desc{font-size:13px;color:var(--ink2);line-height:1.6}
+.lc-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:8px;font-weight:600}
+.tag1{background:#dbeafe;color:#1d4ed8}
+.tag2{background:#fde8d8;color:#b45309}
+
+.concept{background:var(--indigo-ll);border-left:3px solid var(--indigo);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink);line-height:1.8}
+.concept strong{color:var(--indigo)}
+
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #dcdcf7;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.qtop{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.qnum{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--indigo-l);color:var(--indigo)}
+.qtype{font-size:10px;padding:2px 7px;border-radius:20px;background:#f0f0f8;color:var(--ink3)}
+.qtext{font-size:15px;font-weight:600;line-height:1.7;margin-bottom:14px}
+
+.tri-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.tri-cell{min-width:0;border:2px solid #e2e2f0;border-radius:10px;background:#fff;cursor:pointer;padding:4px;transition:border-color .15s,background .15s;display:flex;align-items:center;justify-content:center}
+.tri-cell:hover{border-color:var(--indigo)}
+.tri-cell.selected{border-color:var(--indigo);background:var(--indigo-ll)}
+.tri-cell.matched-1{border-color:var(--green);background:var(--green-ll);cursor:default}
+.tri-cell.matched-2{border-color:var(--blue);background:var(--blue-ll);cursor:default}
+.tri-cell.wrong{border-color:var(--red);animation:shakeCell .35s}
+@keyframes shakeCell{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.tri-canvas{display:block;width:100%;height:auto}
+
+.found-list{font-size:13px;color:var(--ink2);line-height:2;margin-bottom:4px}
+.found-list .fitem{font-weight:700}
+.found-list .fitem.f1{color:var(--green)}
+.found-list .fitem.f2{color:var(--blue)}
+
+.cond-prompt{background:var(--indigo-ll);border-left:3px solid var(--indigo);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px}
+.cond-text{font-size:14px;font-weight:600;margin-bottom:10px}
+.cond-btns{display:flex;gap:10px}
+.cond-btn{flex:1;padding:11px;border-radius:8px;border:1.5px solid #d8d0ee;background:#fff;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink2);font-family:inherit}
+.cond-btn:hover{background:var(--indigo-ll);border-color:var(--indigo);color:var(--indigo)}
+
+.hint-box{margin-bottom:14px}
+.hint-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px dashed #c7c2ec;color:var(--indigo);font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit}
+.hint-toggle-btn:hover{background:var(--indigo-ll);border-color:var(--indigo)}
+.hint-used-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink3);font-weight:600}
+.formula{background:#fff8f0;border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:9px 14px;margin-bottom:14px;font-size:13px;color:var(--ink);line-height:1.7}
+.formula strong{color:var(--orange)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-card{background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px 22px;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+.modal-card p{font-size:14px;line-height:1.8;color:var(--ink);margin-bottom:20px}
+.modal-btns{display:flex;gap:10px}
+.modal-btn{flex:1;padding:11px 10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid transparent}
+.modal-btn-no{background:var(--ink);color:#fff}
+.modal-btn-no:hover{background:#111122}
+.modal-btn-yes{background:#fff;border-color:#e0e0ee;color:var(--ink2)}
+.modal-btn-yes:hover{background:#f4f4f8}
+
+.fb{border-radius:8px;padding:12px 16px;margin-top:12px;font-size:14px;line-height:1.7;display:none}
+.fb.show{display:block}
+.fb-correct{background:var(--green-ll);border-left:3px solid var(--green);color:#14532d}
+.fb-wrong{background:var(--orange-l);border-left:3px solid var(--orange);color:#7c2d12}
+.fb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.em{font-weight:700;color:var(--indigo)}
+
+.next-btn{padding:10px 24px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;display:none;font-family:inherit;margin-top:6px}
+.next-btn:hover{background:#15803d}
+.next-btn.show{display:inline-block}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.tool-btn{padding:8px 14px;border-radius:8px;border:1.5px solid #dcdcf0;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink2);font-family:inherit}
+.tool-btn:hover{background:var(--indigo-ll)}
+.tool-btn.active{background:var(--indigo-ll);border-color:var(--indigo);color:var(--indigo)}
+.tool-btn.clear-btn{margin-left:auto;color:var(--ink3)}
+.color-swatches{display:flex;gap:6px;align-items:center;padding:0 8px;border-left:1.5px solid #e2e2f5;border-right:1.5px solid #e2e2f5}
+.color-btn{width:24px;height:24px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;box-shadow:0 0 0 1.5px #dcdcf0}
+.color-btn.active{box-shadow:0 0 0 2px var(--ink)}
+.scratch-wrap{margin-bottom:14px}
+.scratch-label{font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:6px}
+.scratch-canvas{width:100%;max-width:600px;height:150px;border:1.5px dashed #dcdcf0;border-radius:8px;background:#fffef9;display:block;touch-action:none}
+
+.complete-wrap{text-align:center;padding:48px 20px}
+.complete-icon{font-size:56px;margin-bottom:16px}
+.complete-wrap h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.complete-wrap p{font-size:14px;color:var(--ink2);line-height:1.8}
+.score-box{display:inline-block;background:var(--green-l);border:2px solid var(--green);border-radius:12px;padding:16px 32px;margin:18px 0}
+.sc-num{font-size:42px;font-weight:700;color:var(--green)}
+.sc-label{font-size:13px;color:var(--green)}
+.restart-btn{padding:11px 28px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+
+.screen{display:none}
+.screen.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="hdr-badge">수학</span>
+  <span class="hdr-title">직각삼각형의 합동 조건 — RHA와 RHS</span>
+  <div class="hdr-right">
+    <div class="timer" id="timerEl">10:00</div>
+    <div class="name-wrap"><label>이름</label><input id="sname" type="text" placeholder="이름 입력"></div>
+  </div>
+</div>
+
+<div class="streak-bar" id="streakBar" style="display:none">
+  <div class="streak-inner">
+    <span class="streak-label">연속 정답 (오답 없이)</span>
+    <div class="streak-dots"><span class="sdot" id="sd0"></span><span class="sdot" id="sd1"></span></div>
+    <span style="font-size:12px;color:var(--ink2)" id="streakMsg">오답 없이 2문제 연속 → 통과!</span>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="main screen active" id="scLevel">
+  <div class="level-screen">
+    <h2>나의 레벨을 선택하세요</h2>
+    <p>6개의 직각삼각형 중 서로 합동인 것을 클릭으로 찾는 연습이에요.<br>오답 없이 2문제 연속 정답이면 통과!</p>
+    <div class="level-cards">
+      <div class="level-card" onclick="startLevel(1)">
+        <div class="lc-icon">🌱</div>
+        <div class="lc-title">레벨 1</div>
+        <div class="lc-desc">합동인 삼각형 쌍을 클릭으로<br>찾기만 하면 돼요.</div>
+        <span class="lc-tag tag1">기본</span>
+      </div>
+      <div class="level-card" onclick="startLevel(2)">
+        <div class="lc-icon">🔥</div>
+        <div class="lc-title">레벨 2</div>
+        <div class="lc-desc">합동 쌍을 찾은 뒤, RHA/RHS<br>합동 조건까지 골라야 해요!</div>
+        <span class="lc-tag tag2">심화</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="main screen" id="scGame">
+  <div class="concept">
+    <strong>직각삼각형의 합동 조건:</strong> ① <strong>RHA 합동</strong> — 빗변의 길이와 한 예각의 크기가 각각 같다.
+    ② <strong>RHS 합동</strong> — 빗변의 길이와 다른 한 변의 길이가 각각 같다. 빗변이 같은 삼각형끼리 먼저 비교해봐요!
+  </div>
+  <div class="qcard">
+    <div class="qtop"><span class="qnum" id="setNumBadge">Q1</span><span class="qtype" id="qType">합동 쌍 찾기</span></div>
+    <div class="qtext" id="qtext"></div>
+    <div class="tri-grid" id="triGrid"></div>
+    <div class="found-list" id="foundList"></div>
+    <div class="cond-prompt" id="condPrompt" style="display:none">
+      <div class="cond-text" id="condText"></div>
+      <div class="cond-btns">
+        <button class="cond-btn" onclick="chooseCondition('RHA')">RHA 합동</button>
+        <button class="cond-btn" onclick="chooseCondition('RHS')">RHS 합동</button>
+      </div>
+    </div>
+    <div class="hint-box">
+      <button class="hint-toggle-btn" id="hintBtn" onclick="requestHint()">💡 힌트 보기</button>
+      <span class="hint-used-tag" id="hintTag" style="display:none">💡 힌트를 열람했어요</span>
+      <div class="formula" id="hintBox" style="display:none"></div>
+    </div>
+    <div class="fb fb-wrong" id="fw"><div class="fb-label">다시 확인해봐요</div><span id="fwtxt"></span></div>
+    <div class="fb fb-correct" id="fc"><div class="fb-label">정답!</div><span id="fctxt"></span></div>
+    <div style="margin-top:8px"><button class="next-btn" id="nbSet" onclick="nextSet()">다음 문제 →</button></div>
+  </div>
+  <div class="draw-toolbar" id="toolbarMain">
+    <button class="tool-btn active" data-tool="pen">✏️ 펜</button>
+    <button class="tool-btn" data-tool="eraser">🧹 지우개</button>
+    <span class="color-swatches">
+      <button class="color-btn active" data-color="#1a1a2e" style="background:#1a1a2e" title="검정"></button>
+      <button class="color-btn" data-color="#dc2626" style="background:#dc2626" title="빨강"></button>
+      <button class="color-btn" data-color="#2563eb" style="background:#2563eb" title="파랑"></button>
+      <button class="color-btn" data-color="#ca8a04" style="background:#ca8a04" title="노랑"></button>
+      <button class="color-btn" data-color="#16a34a" style="background:#16a34a" title="초록"></button>
+    </span>
+    <button class="tool-btn undo-btn">↩️ 되돌리기</button>
+    <button class="tool-btn clear-btn">🗑️ 전체 지우기</button>
+  </div>
+  <div class="scratch-wrap">
+    <div class="scratch-label">📝 계산 메모장 (자유롭게 풀이를 써보세요)</div>
+    <canvas id="scratchMain" class="scratch-canvas"></canvas>
+  </div>
+</div>
+
+<!-- 힌트 열람 확인 모달 -->
+<div class="modal-overlay" id="hintModal">
+  <div class="modal-card">
+    <p>한 번 더 생각해보세요. 스스로 문제를 풀었을 때 더 학습 효과가 좋습니다.<br><br>
+    또한, 힌트를 열람하면 이 문제는 정답을 맞춰도 <strong>'연속 2문제 정답'</strong>에 해당하지 않습니다.<br><br>
+    그래도 힌트를 열람하시겠습니까?</p>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-no" onclick="closeHintModal(false)">아니오, 다시 풀어볼게요</button>
+      <button class="modal-btn modal-btn-yes" onclick="closeHintModal(true)">예, 힌트 볼게요</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div class="main screen" id="scComplete">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">🎉</div>
+      <h2>통과!</h2>
+      <div class="score-box">
+        <div class="sc-num" id="finalCorrect">0</div>
+        <div class="sc-label">/ <span id="finalTotal">0</span> 문제 정답</div>
+      </div>
+      <p id="completeMsg"></p><br>
+      <button class="restart-btn" onclick="restart()">처음부터 다시 하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMEOUT -->
+<div class="main screen" id="scTimeout">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">⏰</div>
+      <h2 style="color:var(--red)">시간이 끝났어요!</h2>
+      <div class="score-box"><div class="sc-num" id="toCorrect">0</div><div class="sc-label">문제 정답</div></div>
+      <button class="restart-btn" onclick="restart()">다시 도전하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════
+   삼각형 생성
+   각 세트: RHS쌍(같은 빗변+같은 한 변) 1쌍 + RHA쌍(같은 빗변+같은 한 예각) 1쌍 + распознав 2개
+   생성 후 15가지 조합을 전부 검증해서, 의도한 두 쌍 외에는 절대 합동이 되지 않도록 재시도함
+════════════════════════════════ */
+const HYP_POOL=[8,9,10,11,12,13,14,15];
+const LEGRATIO_POOL=[0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7];
+const ANGLE_POOL=[25,30,35,40,50,55,60,65];
+const SLOT_LETTERS=[['A','B','C'],['D','E','F'],['G','H','I'],['J','K','L'],['M','N','O'],['P','Q','R']];
+
+function randPick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function makeRHS(hyp, legX){
+  const legY=Math.sqrt(hyp*hyp-legX*legX);
+  return {hyp, legX, legY, type:'RHS', shownAngle:null};
+}
+function makeRHA(hyp, angleAtP){
+  const rad=angleAtP*Math.PI/180;
+  const legX=hyp*Math.cos(rad), legY=hyp*Math.sin(rad);
+  return {hyp, legX, legY, type:'RHA', shownAngle:Math.round(angleAtP)};
+}
+function shapeSig(t){
+  const legs=[Math.round(t.legX*10)/10, Math.round(t.legY*10)/10].sort((a,b)=>a-b);
+  return `${Math.round(t.hyp*10)/10}|${legs[0]}|${legs[1]}`;
+}
+function randomDistractor(){
+  if(Math.random()<0.5){
+    const hyp=randPick(HYP_POOL);
+    const legX=Math.round(hyp*randPick(LEGRATIO_POOL));
+    return makeRHS(hyp, legX);
+  }
+  return makeRHA(randPick(HYP_POOL), randPick(ANGLE_POOL));
+}
+function generateSix(){
+  let t1,t2,t3,t4,t5,t6;
+  for(let attempt=0; attempt<3000; attempt++){
+    const hypA=randPick(HYP_POOL);
+    const legXA=Math.round(hypA*randPick(LEGRATIO_POOL));
+    t1=makeRHS(hypA,legXA); t6=makeRHS(hypA,legXA);
+
+    const hypB=randPick(HYP_POOL);
+    const angB=randPick(ANGLE_POOL);
+    t2=makeRHA(hypB,angB); t4=makeRHA(hypB,90-angB);
+
+    t3=randomDistractor(); t5=randomDistractor();
+
+    const all=[t1,t2,t3,t4,t5,t6];
+    const sigs=all.map(shapeSig);
+    let ok=true;
+    for(let i=0;i<6 && ok;i++){
+      for(let j=i+1;j<6;j++){
+        const same=sigs[i]===sigs[j];
+        const shouldBe=(i===0&&j===5)||(i===1&&j===3);
+        if(same!==shouldBe){ ok=false; break; }
+      }
+    }
+    if(ok) break;
+  }
+  const items=[
+    {...t1, pairKey:'pairA', condition:'RHS'},
+    {...t2, pairKey:'pairB', condition:'RHA'},
+    {...t3, pairKey:'d1', condition:null},
+    {...t4, pairKey:'pairB', condition:'RHA'},
+    {...t5, pairKey:'d2', condition:null},
+    {...t6, pairKey:'pairA', condition:'RHS'}
+  ];
+  for(let i=items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [items[i],items[j]]=[items[j],items[i]]; }
+  return items.map((it,slot)=>({
+    ...it, slot, letters:SLOT_LETTERS[slot],
+    rot:[0,90,180,270][Math.floor(Math.random()*4)],
+    mirror: Math.random()<0.5,
+    matched:false
+  }));
+}
+function nameOf(t){ return '△'+t.letters.join(''); }
+
+/* ════════════════════════════════
+   상태
+════════════════════════════════ */
+const st={
+  level:1, streak:0, hadWrong:false, hintUsed:false,
+  totalCorrect:0, totalQ:0,
+  triangles:[], selected:null, pendingCondition:null, foundListArr:[], matchedPairCount:0,
+  timerSec:600, timerInt:null
+};
+function isBlocked(){ return st.hadWrong || st.hintUsed; }
+function blockNote(){
+  if(!isBlocked()) return '';
+  if(st.hadWrong && st.hintUsed) return '<br><span style="font-size:12px;color:#888">※ 오답 및 힌트 열람 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  if(st.hadWrong) return '<br><span style="font-size:12px;color:#888">※ 오답 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  return '<br><span style="font-size:12px;color:#888">※ 힌트를 열람해 연속 정답에 포함되지 않아요</span>';
+}
+function requestHint(){ document.getElementById('hintModal').classList.add('show'); }
+function closeHintModal(confirmed){
+  document.getElementById('hintModal').classList.remove('show');
+  if(confirmed){
+    st.hintUsed=true;
+    const pairA=st.triangles.filter(t=>t.pairKey==='pairA');
+    const pairB=st.triangles.filter(t=>t.pairKey==='pairB');
+    document.getElementById('hintBox').innerHTML=
+      `<strong>정답:</strong><br>`+
+      `${nameOf(pairA[0])} ≡ ${nameOf(pairA[1])} — 빗변 ${pairA[0].hyp}cm, 다른 한 변 ${pairA[0].legX}cm가 같아요 (RHS 합동)<br>`+
+      `${nameOf(pairB[0])} ≡ ${nameOf(pairB[1])} — 빗변 ${pairB[0].hyp}cm, 한 예각(${pairB[0].shownAngle}° 또는 ${90-pairB[0].shownAngle}°)이 같아요 (RHA 합동)`;
+    document.getElementById('hintBox').style.display='block';
+    document.getElementById('hintBtn').style.display='none';
+    document.getElementById('hintTag').style.display='inline-flex';
+    updateStreak();
+  }
+}
+/* ════════════════════════════════
+   타이머 / 화면 전환
+════════════════════════════════ */
+function startTimer(){
+  st.timerInt=setInterval(()=>{
+    st.timerSec--;
+    const m=Math.floor(st.timerSec/60), s=st.timerSec%60;
+    const el=document.getElementById('timerEl');
+    el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    el.className='timer'+(st.timerSec<=60?' danger':st.timerSec<=180?' warn':'');
+    if(st.timerSec<=0){
+      clearInterval(st.timerInt);
+      document.getElementById('toCorrect').textContent=st.totalCorrect;
+      showScreen('scTimeout');
+    }
+  },1000);
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function restart(){clearInterval(st.timerInt);location.reload();}
+
+function updateStreak(){
+  ['sd0','sd1'].forEach((id,i)=>document.getElementById(id).className='sdot'+(i<st.streak?' hit':''));
+  const msg=document.getElementById('streakMsg');
+  if(st.streak>=2) msg.textContent='통과!';
+  else if(st.hadWrong && st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답+힌트 열람 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hadWrong) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 힌트 열람 — 연속 정답에 미포함</span>';
+  else if(st.streak===1) msg.textContent='1개 완료! 하나 더!';
+  else msg.textContent='오답 없이 2문제 연속 → 통과!';
+}
+function markCorrect(){
+  st.totalCorrect++;
+  if(!isBlocked()) st.streak++; else st.streak=0;
+  updateStreak();
+}
+function markWrong(){ st.hadWrong=true; st.streak=0; updateStreak(); }
+
+function startLevel(lv){
+  st.level=lv;
+  document.getElementById('streakBar').style.display='';
+  showScreen('scGame');
+  ensureDrawCanvas(scratchMain);
+  startTimer();
+  loadSet();
+}
+
+/* ════════════════════════════════
+   도형 그리기: 직각삼각형 1개를 작은 캔버스에 실제 비율로 그림
+   R(직각 꼭짓점, letters[0]) - P(legX, letters[1], RHA면 각도 표시 지점) - Q(legY, letters[2])
+════════════════════════════════ */
+const TRI_W=300, TRI_H=258, PX_PER_CM=8.9, TRI_PAD=46;
+
+// 두 점을 잇는 바깥쪽으로 살짝 휜 점선(실제 교과서의 변 길이 표시 방식)
+function dashedMeasureCurve(ctx, p1, p2, awayFrom, bow, color){
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy)||1;
+  let px=-dy/len, py=dx/len;
+  const toOut={x:mx-awayFrom.x, y:my-awayFrom.y};
+  if(px*toOut.x+py*toOut.y<0){ px=-px; py=-py; }
+  const cx=mx+px*bow, cy=my+py*bow;
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=1.3; ctx.setLineDash([3,3]);
+  ctx.beginPath();
+  ctx.moveTo(p1.x,p1.y);
+  ctx.quadraticCurveTo(cx,cy,p2.x,p2.y);
+  ctx.stroke();
+  ctx.restore();
+  return {x:cx,y:cy};
+}
+// 꼭짓점 v에서 두 변(v→p1, v→p2) 사이의 각을 나타내는 작은 호
+function angleArcAt(ctx, v, p1, p2, r, color){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
+  const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1;
+  while(diff<=-Math.PI)diff+=2*Math.PI;
+  while(diff>Math.PI)diff-=2*Math.PI;
+  ctx.strokeStyle=color; ctx.lineWidth=1.6;
+  ctx.beginPath();
+  ctx.arc(v.x,v.y,r,a1,a1+diff,diff<0);
+  ctx.stroke();
+}
+
+function drawRightTriangle(canvas, tri){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,TRI_W,TRI_H);
+  const s=PX_PER_CM;
+  const localR={x:0,y:0}, localP={x:tri.legX*s,y:0}, localQ={x:0,y:tri.legY*s};
+  function xf(pt){
+    let x=pt.x, y=pt.y;
+    if(tri.mirror) x=-x;
+    const r=tri.rot*Math.PI/180;
+    return {x:x*Math.cos(r)-y*Math.sin(r), y:x*Math.sin(r)+y*Math.cos(r)};
+  }
+  const wR=xf(localR), wP=xf(localP), wQ=xf(localQ);
+  const xs=[wR.x,wP.x,wQ.x], ys=[wR.y,wP.y,wQ.y];
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const availW=TRI_W-2*TRI_PAD, availH=TRI_H-2*TRI_PAD;
+  const offX=TRI_PAD-minX+(availW-(maxX-minX))/2;
+  const offY=TRI_PAD-minY+(availH-(maxY-minY))/2;
+  function toCanvas(pt){ const w=xf(pt); return {x:w.x+offX, y:w.y+offY}; }
+  const R=toCanvas(localR), P=toCanvas(localP), Q=toCanvas(localQ);
+
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(R.x,R.y); ctx.lineTo(P.x,P.y); ctx.lineTo(Q.x,Q.y); ctx.closePath(); ctx.stroke();
+
+  // 직각 표시
+  const ux0=P.x-R.x, uy0=P.y-R.y, ulen=Math.hypot(ux0,uy0)||1;
+  const ux=ux0/ulen, uy=uy0/ulen;
+  const vx0=Q.x-R.x, vy0=Q.y-R.y, vlen=Math.hypot(vx0,vy0)||1;
+  const vx=vx0/vlen, vy=vy0/vlen;
+  const ms=13;
+  ctx.beginPath();
+  ctx.moveTo(R.x+ux*ms, R.y+uy*ms);
+  ctx.lineTo(R.x+ux*ms+vx*ms, R.y+uy*ms+vy*ms);
+  ctx.lineTo(R.x+vx*ms, R.y+vy*ms);
+  ctx.stroke();
+
+  const centroid={x:(R.x+P.x+Q.x)/3, y:(R.y+P.y+Q.y)/3};
+  function outLabel(pt,text,size,color){
+    const dx=pt.x-centroid.x, dy=pt.y-centroid.y, len=Math.hypot(dx,dy)||1;
+    const lx=pt.x+dx/len*20, ly=pt.y+dy/len*20;
+    ctx.fillStyle=color||'#333'; ctx.font=`700 ${size||14}px 'Noto Sans KR',sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(text, lx, ly);
+  }
+  outLabel(R, tri.letters[0]);
+  outLabel(P, tri.letters[1]);
+  outLabel(Q, tri.letters[2]);
+
+  // 빗변: 점선 표시 + 라벨 (항상 표시)
+  const hypCurvePeak=dashedMeasureCurve(ctx, P, Q, centroid, 14, '#999');
+  const hdx=hypCurvePeak.x-centroid.x, hdy=hypCurvePeak.y-centroid.y, hlen=Math.hypot(hdx,hdy)||1;
+  ctx.fillStyle='#333'; ctx.font="700 13px 'Noto Sans KR',sans-serif";
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(`${tri.hyp}cm`, hypCurvePeak.x+hdx/hlen*13, hypCurvePeak.y+hdy/hlen*13);
+
+  if(tri.type==='RHS'){
+    // RHS: 표시된 변에도 점선 표시 + 라벨
+    const legCurvePeak=dashedMeasureCurve(ctx, R, P, centroid, 12, '#999');
+    const ldx=legCurvePeak.x-centroid.x, ldy=legCurvePeak.y-centroid.y, llen=Math.hypot(ldx,ldy)||1;
+    ctx.fillStyle='#333'; ctx.font="700 13px 'Noto Sans KR',sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(`${tri.legX}cm`, legCurvePeak.x+ldx/llen*12, legCurvePeak.y+ldy/llen*12);
+  } else {
+    // RHA: 각을 나타내는 호 + 각도 라벨 (∠RPQ, 즉 P에서 R과 Q 사이의 각)
+    angleArcAt(ctx, P, R, Q, 20, '#4f46e5');
+    const adx=centroid.x-P.x, ady=centroid.y-P.y, alen=Math.hypot(adx,ady)||1;
+    const aPos={x:P.x+adx/alen*40, y:P.y+ady/alen*40};
+    ctx.fillStyle='#4f46e5'; ctx.font="700 14px 'Noto Sans KR',sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(`${tri.shownAngle}°`, aPos.x, aPos.y);
+  }
+}
+
+/* ════════════════════════════════
+   그리드 / 상호작용
+════════════════════════════════ */
+function buildGridDOM(){
+  const grid=document.getElementById('triGrid');
+  grid.innerHTML='';
+  st.triangles.forEach((tri,slot)=>{
+    const cell=document.createElement('div');
+    cell.className='tri-cell';
+    cell.dataset.slot=slot;
+    cell.onclick=()=>onTriClick(slot);
+    const canvas=document.createElement('canvas');
+    canvas.className='tri-canvas'; canvas.width=TRI_W; canvas.height=TRI_H;
+    cell.appendChild(canvas);
+    grid.appendChild(cell);
+    drawRightTriangle(canvas, tri);
+  });
+}
+function cellEl(slot){ return document.getElementById('triGrid').querySelector(`[data-slot="${slot}"]`); }
+function updateCellClasses(){
+  st.triangles.forEach((tri,slot)=>{
+    const el=cellEl(slot);
+    if(!el) return;
+    el.classList.toggle('matched-1', tri.matched && tri.matchOrder===0);
+    el.classList.toggle('matched-2', tri.matched && tri.matchOrder===1);
+    el.classList.toggle('selected', st.selected===slot);
+  });
+}
+function flashWrong(slotA, slotB){
+  [slotA,slotB].forEach(s=>{
+    const el=cellEl(s);
+    if(!el) return;
+    el.classList.add('wrong');
+    setTimeout(()=>el.classList.remove('wrong'),350);
+  });
+}
+function hintOnMismatch(t1,t2){
+  if(t1.hyp!==t2.hyp) return '두 삼각형의 빗변 길이가 달라요! 빗변부터 비교해봐요.';
+  return '빗변은 같지만 나머지 조건(변의 길이 또는 각의 크기)이 달라요.';
+}
+function onTriClick(slot){
+  const tri=st.triangles[slot];
+  if(tri.matched || st.pendingCondition) return;
+  if(st.selected===null){ st.selected=slot; updateCellClasses(); return; }
+  if(st.selected===slot){ st.selected=null; updateCellClasses(); return; }
+  const otherSlot=st.selected;
+  const other=st.triangles[otherSlot];
+  const isMatch = tri.pairKey===other.pairKey && (tri.pairKey==='pairA'||tri.pairKey==='pairB');
+  st.selected=null;
+  if(isMatch){
+    const order=st.matchedPairCount; st.matchedPairCount++;
+    tri.matched=true; other.matched=true;
+    tri.matchOrder=order; other.matchOrder=order;
+    updateCellClasses();
+    if(st.level===2){
+      st.pendingCondition={slotA:otherSlot, slotB:slot, correct:tri.condition, order};
+      document.getElementById('condText').innerHTML=`${nameOf(other)} ≡ ${nameOf(tri)} — 합동 조건은?`;
+      document.getElementById('condPrompt').style.display='block';
+    } else {
+      st.foundListArr.push({text:`${nameOf(other)} ≡ ${nameOf(tri)}`, order});
+      renderFoundList();
+      checkSetComplete();
+    }
+  } else {
+    markWrong();
+    flashWrong(otherSlot, slot);
+    updateCellClasses();
+    setFb('wrong', hintOnMismatch(other,tri));
+  }
+}
+function chooseCondition(cond){
+  const pc=st.pendingCondition;
+  if(!pc) return;
+  if(cond===pc.correct){
+    const t1=st.triangles[pc.slotA], t2=st.triangles[pc.slotB];
+    st.foundListArr.push({text:`${nameOf(t1)} ≡ ${nameOf(t2)} (${cond} 합동)`, order:pc.order});
+    renderFoundList();
+    st.pendingCondition=null;
+    document.getElementById('condPrompt').style.display='none';
+    checkSetComplete();
+  } else {
+    markWrong();
+    setFb('wrong','다시 골라보세요. 각도(°)가 표시돼 있으면 RHA, 변의 길이(cm)가 표시돼 있으면 RHS예요.');
+  }
+}
+function renderFoundList(){
+  document.getElementById('foundList').innerHTML =
+    st.foundListArr.map((f,i)=>`<div class="fitem f${f.order+1}">${i+1}. ${f.text}</div>`).join('');
+}
+function checkSetComplete(){
+  const done = st.triangles.every(t=>(t.pairKey==='pairA'||t.pairKey==='pairB') ? t.matched : true) && !st.pendingCondition;
+  if(done){
+    markCorrect();
+    setFb('correct', `정답이에요! 두 쌍 모두 합동을 잘 찾았어요.${blockNote()}`);
+    document.getElementById('nbSet').classList.add('show');
+  }
+}
+
+/* ════════════════════════════════
+   피드백 헬퍼
+════════════════════════════════ */
+function setFb(type,msg){
+  hideFbAll();
+  const map={wrong:'fw',correct:'fc'};
+  const el=document.getElementById(map[type]);
+  if(el){ const sp=el.querySelector('span'); if(sp) sp.innerHTML=msg; el.classList.add('show'); }
+}
+function hideFbAll(){ ['fw','fc'].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove('show');}); }
+
+/* ════════════════════════════════
+   문제 세트 진행
+════════════════════════════════ */
+function loadSet(){
+  st.totalQ++; st.hadWrong=false; st.hintUsed=false;
+  st.selected=null; st.pendingCondition=null; st.foundListArr=[]; st.matchedPairCount=0;
+  st.triangles=generateSix();
+  document.getElementById('setNumBadge').textContent='Q'+st.totalQ;
+  document.getElementById('qType').textContent = st.level===2?'합동 쌍 + 조건 찾기':'합동 쌍 찾기';
+  document.getElementById('qtext').innerHTML = st.level===2
+    ? `다음 중 서로 합동인 직각삼각형을 모두 찾아 기호 <strong>≡</strong>를 사용하여 나타내고, 각각의 합동 조건을 말하시오.`
+    : `다음 중 서로 합동인 직각삼각형을 모두 찾아 기호 <strong>≡</strong>를 사용하여 나타내시오.`;
+  buildGridDOM();
+  renderFoundList();
+  document.getElementById('condPrompt').style.display='none';
+  document.getElementById('hintBox').style.display='none';
+  document.getElementById('hintBtn').style.display='';
+  document.getElementById('hintTag').style.display='none';
+  clearDrawCanvas(scratchMain);
+  hideFbAll();
+  document.getElementById('nbSet').classList.remove('show');
+}
+function nextSet(){
+  if(st.streak>=2){ complete(); return; }
+  loadSet();
+}
+
+/* ════════════════════════════════
+   완료
+════════════════════════════════ */
+function complete(){
+  clearInterval(st.timerInt);
+  document.getElementById('finalCorrect').textContent=st.totalCorrect;
+  document.getElementById('finalTotal').textContent=st.totalQ;
+  const pct=Math.round(st.totalCorrect/st.totalQ*100);
+  document.getElementById('completeMsg').innerHTML=`정답률 <strong>${pct}%</strong>!<br>`+
+    (pct>=80?'훌륭해요! 직각삼각형의 합동 조건을 완벽하게 이해했어요 🌟':
+     pct>=60?'잘 했어요! 조금만 더 연습하면 완벽해질 거예요 💪':
+     '다시 한 번 도전해봐요. 반복하면 꼭 잘 할 수 있어요! 🔥');
+  showScreen('scComplete');
+}
+
+/* ════════════════════════════════
+   필기(펜/지우개) — 계산 메모장
+   Pointer Events로 마우스/터치/펜을 동일하게 처리
+════════════════════════════════ */
+function svgCursor(svgStr, hx, hy){
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svgStr)}") ${hx} ${hy}, auto`;
+}
+function penCursorSVG(color){
+  return `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><rect x='10' y='2' width='6' height='14' rx='1' fill='#ffffff' stroke='#333' stroke-width='1.5'/><polygon points='10,16 16,16 13,23' fill='${color}' stroke='#333' stroke-width='1'/><rect x='10' y='2' width='6' height='3' fill='${color}'/></svg>`;
+}
+const ERASER_CURSOR_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><circle cx='13' cy='13' r='10' fill='rgba(255,255,255,0.4)' stroke='#333' stroke-width='1.5'/></svg>`;
+function updateCursor(canvas){
+  canvas.style.cursor = canvas._tool==='eraser'
+    ? svgCursor(ERASER_CURSOR_SVG, 13, 13)
+    : svgCursor(penCursorSVG(canvas._color||'#1a1a2e'), 13, 23);
+}
+function setupDrawCanvas(canvas){
+  const rect=canvas.getBoundingClientRect();
+  const cssW=rect.width||canvas.width, cssH=rect.height||canvas.height;
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(cssW*dpr);
+  canvas.height=Math.round(cssH*dpr);
+  canvas.style.width=cssW+'px';
+  canvas.style.height=cssH+'px';
+  canvas._cssW=cssW; canvas._cssH=cssH;
+  canvas._tool='pen';
+  canvas._color='#1a1a2e';
+  canvas._undoStack=[];
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  updateCursor(canvas);
+  let drawing=false,lastX=0,lastY=0;
+  function pos(e){
+    const r=canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left, y:e.clientY-r.top};
+  }
+  function down(e){
+    drawing=true;
+    const p=pos(e); lastX=p.x; lastY=p.y;
+    if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
+    canvas._undoStack.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+    if(canvas._undoStack.length>15) canvas._undoStack.shift();
+    e.preventDefault();
+  }
+  function movef(e){
+    if(!drawing)return;
+    const p=pos(e);
+    if(canvas._tool==='eraser'){
+      ctx.globalCompositeOperation='destination-out';
+      ctx.lineWidth=22;
+    } else {
+      ctx.globalCompositeOperation='source-over';
+      ctx.strokeStyle=canvas._color;
+      ctx.lineWidth=2.6;
+    }
+    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
+    lastX=p.x; lastY=p.y;
+    e.preventDefault();
+  }
+  function up(){ drawing=false; }
+  canvas.addEventListener('pointerdown',down);
+  canvas.addEventListener('pointermove',movef);
+  canvas.addEventListener('pointerup',up);
+  canvas.addEventListener('pointerleave',up);
+  canvas.addEventListener('pointercancel',up);
+}
+function clearDrawCanvas(canvas){
+  canvas.getContext('2d').clearRect(0,0,canvas._cssW,canvas._cssH);
+  canvas._undoStack=[];
+}
+function undoDraw(canvas){
+  if(!canvas._undoStack || !canvas._undoStack.length) return;
+  canvas.getContext('2d').putImageData(canvas._undoStack.pop(),0,0);
+}
+function ensureDrawCanvas(canvas){
+  if(canvas.dataset.ready)return;
+  canvas.dataset.ready='1';
+  setupDrawCanvas(canvas);
+}
+function initDrawToolbar(toolbar, canvases){
+  toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(btn=>{
+    btn.onclick=()=>{
+      toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      canvases.forEach(c=>{c._tool=btn.dataset.tool; updateCursor(c);});
+    };
+  });
+  toolbar.querySelectorAll('.color-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      toolbar.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+      toolbar.querySelector('.tool-btn[data-tool="pen"]').classList.add('active');
+      canvases.forEach(c=>{c._color=btn.dataset.color; c._tool='pen'; updateCursor(c);});
+    };
+  });
+  const undoBtn=toolbar.querySelector('.undo-btn');
+  if(undoBtn) undoBtn.onclick=()=>canvases.forEach(undoDraw);
+  const clearBtn=toolbar.querySelector('.clear-btn');
+  if(clearBtn) clearBtn.onclick=()=>canvases.forEach(clearDrawCanvas);
+}
+
+const scratchMain=document.getElementById('scratchMain');
+initDrawToolbar(document.getElementById('toolbarMain'), [scratchMain]);
+</script>
+</body>
+</html>
