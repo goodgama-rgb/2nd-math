@@ -1350,6 +1350,20 @@
     _docId = `${LESSON_ID}_${todayStr()}_${cls}_${String(num).padStart(2,'0')}`;
     enterApp(false);
   };
+
+  // 허브에서 학생 정보를 URL로 넘겨받으면 로그인 화면 없이 바로 시작
+  (function autoLoginFromURL(){
+    const p = new URLSearchParams(location.search);
+    const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
+    if(grade && cls && num && name){
+      document.getElementById('loginGrade').value = grade + '학년';
+      document.getElementById('loginClass').value = cls + '반';
+      document.getElementById('loginNum').value = num;
+      document.getElementById('loginName').value = name;
+      window.studentLogin();
+    }
+  })();
+
   window.teacherLogin = async function(){
     const pw = document.getElementById('teacherPw').value;
     const err = document.getElementById('teacherLoginError');

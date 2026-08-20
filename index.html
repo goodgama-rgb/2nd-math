@@ -62,6 +62,7 @@
   .card{display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:14px 16px;text-decoration:none;color:var(--ink);box-shadow:0 3px 0 rgba(46,42,34,.12);}
   .card:nth-child(odd){transform:rotate(-0.6deg);}
   .card:nth-child(even){transform:rotate(0.6deg);}
+  .card.locked{opacity:.45;cursor:not-allowed;box-shadow:none;}
   .icon{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
   .icon.explore{background:var(--mint);}
   .icon.quiz{background:var(--coral);}
@@ -73,6 +74,13 @@
   .admin-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);}
   .admin-item input{width:18px;height:18px;}
   .admin-group-title{font-family:var(--disp);font-size:16px;margin:18px 0 6px;color:var(--lav-ink);}
+  .chk-col{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--ink-dim);cursor:pointer;}
+  .admin-cols-label{display:flex;gap:10px;padding:0 4px 6px;font-size:11px;color:var(--ink-dim);}
+  .admin-cols-label span{width:34px;text-align:center;}
+  .class-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+  .class-tab{font-family:var(--sans);font-size:13px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--ink-dim);cursor:pointer;}
+  .class-tab.active{background:var(--lav);border-color:var(--lav-dark);color:var(--lav-ink);}
+  .admin-editing{font-size:13px;color:var(--ink-dim);margin:-10px 0 16px;}
   footer.foot{margin-top:36px;font-family:var(--disp);font-size:14px;color:var(--ink-dim);text-align:center;}
   .credit{font-family:var(--sans);font-size:11px;color:var(--ink-dim);opacity:.7;margin-top:8px;font-weight:400;}
 </style>
@@ -126,8 +134,14 @@
   <section class="view" id="view-teacher-login">
     <button class="backlink" onclick="go('role')">← 뒤로</button>
     <h2 class="mid">선생님 로그인</h2>
-    <p class="sub">오늘의 학습을 관리할 수 있어요</p>
-    <div class="field"><label>이메일</label><input id="in-email" type="email" placeholder="teacher@myclass.app"></div>
+    <p class="sub">담당 반의 오늘의 학습·잠금을 관리할 수 있어요</p>
+    <div class="field"><label>선생님</label>
+      <select id="in-teacher">
+        <option value="teacher1@ndmath-internal.app">선생님1 (1~5반)</option>
+        <option value="teacher2@ndmath-internal.app">선생님2 (6~9반)</option>
+        <option value="goodgama@goedu.kr">준형T (10~13반 · 전체관리)</option>
+      </select>
+    </div>
     <div class="field"><label>비밀번호</label><input id="in-pw" type="password" placeholder="비밀번호"></div>
     <button class="btn lav" onclick="teacherLogin()">로그인</button>
     <p class="msg error" id="login-msg"></p>
@@ -137,9 +151,12 @@
   <section class="view" id="view-admin">
     <button class="backlink" onclick="teacherLogout()">← 로그아웃</button>
     <h2 class="mid">오늘의 학습 설정</h2>
-    <p class="sub">체크한 항목이 학생 화면 맨 위에 뜹니다</p>
+    <p class="sub">반을 고르고, 열어줄 항목과 오늘의 학습을 체크하세요</p>
+    <div class="class-tabs" id="admin-class-tabs"></div>
+    <p class="admin-editing" id="admin-editing-label"></p>
+    <div class="admin-cols-label"><span>🔓 열기</span><span>⭐ 오늘</span><span></span></div>
     <div id="admin-list"></div>
-    <button class="btn mint" onclick="saveToday()" style="margin-top:16px;">오늘의 학습으로 저장</button>
+    <button class="btn mint" onclick="saveToday()" style="margin-top:16px;">이 반에 저장</button>
     <p class="msg" id="admin-msg"></p>
   </section>
 
@@ -202,8 +219,24 @@ const CONTENT = [
   { id:"probability", name:"경우의 수와 확률",  ready:false, subunits:[] }
 ];
 
+// ---- 담당 선생님 → 담당 반 매핑 (계정 늘어나면 여기만 수정) ----
+const TEACHER_CLASSES = {
+  'teacher1@ndmath-internal.app': { classes:[1,2,3,4,5],                    label:'선생님1' },
+  'teacher2@ndmath-internal.app': { classes:[6,7,8,9],                      label:'선생님2' },
+  'goodgama@goedu.kr':            { classes:[1,2,3,4,5,6,7,8,9,10,11,12,13], label:'준형T', admin:true }
+};
+
 let studentInfo = null;
-let todayItems = [];
+let currentUnitId = null;
+let todayIds = [];
+let unlockedIds = null; // null = 아직 설정 안 됨(전체 열림), 배열이면 그 배열에 있는 id만 열림
+let unsubStudentToday = null;
+
+let currentTeacher = null;
+let selectedAdminClass = null;
+let adminTodayIds = [];
+let adminUnlockedIds = [];
+let unsubAdminToday = null;
 
 // ---- 화면 전환 ----
 window.go = function(name){
@@ -217,12 +250,38 @@ window.submitStudentInfo = function(){
   const cls = document.getElementById('in-class').value;
   const num = document.getElementById('in-number').value;
   const name = document.getElementById('in-name').value.trim();
-  if(!name){ alert('이름을 적어주세요'); return; }
+  if(!cls || !num || !name){ alert('반, 번호, 이름을 모두 적어주세요'); return; }
   studentInfo = { grade, cls, num, name };
-  document.getElementById('units-greeting').textContent = `${grade}학년 ${cls||'?'}반 ${name} 학생, 안녕하세요!`;
+  document.getElementById('units-greeting').textContent = `${grade}학년 ${cls}반 ${name} 학생, 안녕하세요!`;
+  subscribeStudentToday(cls);
   renderUnitList();
   go('units');
 };
+
+function subscribeStudentToday(cls){
+  if(unsubStudentToday) unsubStudentToday();
+  unsubStudentToday = onSnapshot(doc(db,'todayByClass', String(cls)), (snap)=>{
+    if(snap.exists()){
+      const data = snap.data();
+      todayIds = data.todayIds || [];
+      unlockedIds = data.unlockedIds || [];
+    }else{
+      todayIds = [];
+      unlockedIds = null;
+    }
+    renderToday();
+    if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
+      openUnit(currentUnitId);
+    }
+  });
+}
+
+// ---- 학생용 링크: URL에 학생 정보를 실어보내 콘텐츠 쪽 재로그인 생략 ----
+function withStudentParams(file){
+  if(!studentInfo) return file;
+  const q = new URLSearchParams({ grade:studentInfo.grade, cls:studentInfo.cls, num:studentInfo.num, name:studentInfo.name });
+  return file + '?' + q.toString();
+}
 
 // ---- 단원 목록 렌더 ----
 function renderUnitList(){
@@ -240,6 +299,7 @@ function renderUnitList(){
 }
 
 function openUnit(unitId){
+  currentUnitId = unitId;
   const unit = CONTENT.find(u=>u.id===unitId);
   document.getElementById('hub-title').textContent = unit.name;
   const wrap = document.getElementById('hub-content');
@@ -253,13 +313,15 @@ function openUnit(unitId){
       items.innerHTML = '<p class="msg">콘텐츠 준비중이에요</p>';
     }
     su.items.forEach(it=>{
-      const a = document.createElement('a');
-      a.className = 'card'; a.href = it.file;
+      const locked = unlockedIds !== null && !unlockedIds.includes(it.id);
+      const el = document.createElement(locked ? 'div' : 'a');
+      el.className = 'card' + (locked ? ' locked' : '');
+      if(!locked){ el.href = withStudentParams(it.file); }
       const iconClass = it.type==='문제' ? 'quiz' : 'explore';
-      const emoji = it.type==='문제' ? '✏️' : '🔍';
-      a.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
-        <span><span class="card-title">${it.title}</span><span class="card-meta">${it.meta}</span></span>`;
-      items.appendChild(a);
+      const emoji = locked ? '🔒' : (it.type==='문제' ? '✏️' : '🔍');
+      el.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
+        <span><span class="card-title">${it.title}</span><span class="card-meta">${locked ? '아직 잠겨있어요' : it.meta}</span></span>`;
+      items.appendChild(el);
     });
     wrap.appendChild(sec);
   });
@@ -269,47 +331,49 @@ function openUnit(unitId){
 // ---- 오늘의 학습 (실시간 반영) ----
 function renderToday(){
   const wrap = document.getElementById('today-list');
-  if(!todayItems.length){
+  const items = allRealItems().filter(it=> todayIds.includes(it.id));
+  if(!items.length){
     wrap.innerHTML = '<span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span>';
     return;
   }
   wrap.innerHTML = '';
-  todayItems.forEach(it=>{
+  items.forEach(it=>{
     const a = document.createElement('a');
-    a.className = 'today-item'; a.href = it.file;
+    a.className = 'today-item'; a.href = withStudentParams(it.file);
     a.innerHTML = `<span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span>`;
     wrap.appendChild(a);
   });
 }
 
-onSnapshot(doc(db,'config','today'), (snap)=>{
-  todayItems = snap.exists() ? (snap.data().items || []) : [];
-  renderToday();
-  renderAdminCurrentState();
-});
-
 // ---- 선생님 로그인 ----
 window.teacherLogin = function(){
-  const email = document.getElementById('in-email').value.trim();
+  const email = document.getElementById('in-teacher').value;
   const pw = document.getElementById('in-pw').value;
   const msg = document.getElementById('login-msg');
   msg.textContent = '';
   signInWithEmailAndPassword(auth, email, pw)
-    .catch(err => { msg.textContent = '로그인 실패: 이메일 또는 비밀번호를 확인해주세요.'; });
+    .catch(err => { msg.textContent = '로그인 실패: 비밀번호를 확인해주세요.'; });
 };
 
 window.teacherLogout = function(){
+  if(unsubAdminToday) unsubAdminToday();
   signOut(auth).then(()=> go('role'));
 };
 
 onAuthStateChanged(auth, (user)=>{
-  if(user){
-    renderAdminList();
-    go('admin');
+  if(!user) return;
+  currentTeacher = TEACHER_CLASSES[user.email];
+  if(!currentTeacher){
+    alert('등록되지 않은 계정이에요. 준형T에게 문의해주세요.');
+    signOut(auth);
+    return;
   }
+  renderClassTabs();
+  selectAdminClass(currentTeacher.classes[0]);
+  go('admin');
 });
 
-// ---- 관리자: 항목 체크리스트 ----
+// ---- 관리자: 반별 항목 체크리스트 ----
 function allRealItems(){
   const list = [];
   CONTENT.forEach(u=>{
@@ -319,6 +383,39 @@ function allRealItems(){
     });
   });
   return list;
+}
+
+function renderClassTabs(){
+  const wrap = document.getElementById('admin-class-tabs');
+  wrap.innerHTML = '';
+  currentTeacher.classes.forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'class-tab';
+    b.type = 'button';
+    b.textContent = c + '반';
+    b.onclick = ()=> selectAdminClass(c);
+    wrap.appendChild(b);
+  });
+}
+
+function selectAdminClass(cls){
+  selectedAdminClass = cls;
+  document.querySelectorAll('.class-tab').forEach(b=> b.classList.toggle('active', b.textContent === cls+'반'));
+  document.getElementById('admin-editing-label').textContent = `${currentTeacher.label} · 지금 ${cls}반을 편집하고 있어요`;
+  document.getElementById('admin-msg').textContent = '';
+  if(unsubAdminToday) unsubAdminToday();
+  unsubAdminToday = onSnapshot(doc(db,'todayByClass', String(cls)), (snap)=>{
+    if(snap.exists()){
+      const data = snap.data();
+      adminTodayIds = data.todayIds || [];
+      adminUnlockedIds = data.unlockedIds || [];
+    }else{
+      // 아직 설정한 적 없는 반: 지금까지는 전체 열림 상태였으니 체크박스도 전체 열림으로 시작
+      adminTodayIds = [];
+      adminUnlockedIds = allRealItems().map(it=>it.id);
+    }
+    renderAdminList();
+  });
 }
 
 function renderAdminList(){
@@ -334,27 +431,26 @@ function renderAdminList(){
       wrap.appendChild(h);
       lastGroup = groupKey;
     }
-    const row = document.createElement('label');
+    const row = document.createElement('div');
     row.className = 'admin-item';
-    const checked = todayItems.some(t=>t.id===it.id);
-    row.innerHTML = `<input type="checkbox" value="${it.id}" ${checked?'checked':''}> <span>${it.title} <span class="card-meta">(${it.meta})</span></span>`;
+    const unlockChecked = adminUnlockedIds.includes(it.id);
+    const todayChecked = adminTodayIds.includes(it.id);
+    row.innerHTML = `<label class="chk-col"><input type="checkbox" class="chk-unlock" data-id="${it.id}" ${unlockChecked?'checked':''}><span>열기</span></label>
+      <label class="chk-col"><input type="checkbox" class="chk-today" data-id="${it.id}" ${todayChecked?'checked':''}><span>오늘</span></label>
+      <span>${it.title} <span class="card-meta">(${it.meta})</span></span>`;
+    const todayCb = row.querySelector('.chk-today');
+    const unlockCb = row.querySelector('.chk-unlock');
+    todayCb.addEventListener('change', ()=>{ if(todayCb.checked) unlockCb.checked = true; });
     wrap.appendChild(row);
   });
 }
 
-function renderAdminCurrentState(){
-  if(!document.getElementById('view-admin').classList.contains('active')) return;
-  document.querySelectorAll('#admin-list input[type=checkbox]').forEach(cb=>{
-    cb.checked = todayItems.some(t=>t.id===cb.value);
-  });
-}
-
 window.saveToday = function(){
-  const checked = Array.from(document.querySelectorAll('#admin-list input[type=checkbox]:checked')).map(cb=>cb.value);
-  const items = allRealItems().filter(it=> checked.includes(it.id))
-    .map(it=>({ id:it.id, title:it.title, type:it.type, file:it.file }));
-  setDoc(doc(db,'config','today'), { items, updatedAt: serverTimestamp() })
-    .then(()=>{ document.getElementById('admin-msg').textContent = '저장했어요! 학생 화면에 바로 반영돼요.'; document.getElementById('admin-msg').className='msg ok'; })
+  const unlockChecked = Array.from(document.querySelectorAll('.chk-unlock:checked')).map(cb=>cb.dataset.id);
+  const todayChecked = Array.from(document.querySelectorAll('.chk-today:checked')).map(cb=>cb.dataset.id);
+  const finalUnlocked = Array.from(new Set([...unlockChecked, ...todayChecked]));
+  setDoc(doc(db,'todayByClass', String(selectedAdminClass)), { todayIds: todayChecked, unlockedIds: finalUnlocked, updatedAt: serverTimestamp() })
+    .then(()=>{ document.getElementById('admin-msg').textContent = `저장했어요! ${selectedAdminClass}반 학생 화면에 바로 반영돼요.`; document.getElementById('admin-msg').className='msg ok'; })
     .catch(err=>{ document.getElementById('admin-msg').textContent = '저장 실패: ' + err.message; document.getElementById('admin-msg').className='msg error'; });
 };
 </script>
