@@ -383,11 +383,17 @@ function subscribeStudentToday(cls){
   });
 }
 
-// ---- 학생용 링크: URL에 학생 정보를 실어보내 콘텐츠 쪽 재로그인 생략 ----
-function withStudentParams(file){
+// ---- 학생용 링크: URL에 학생 정보(+문항 id)를 실어보내 콘텐츠 쪽 재로그인 생략 ----
+function withStudentParams(file, itemId){
   if(!studentInfo) return file;
-  const q = new URLSearchParams({ grade:studentInfo.grade, cls:studentInfo.cls, num:studentInfo.num, name:studentInfo.name });
+  const q = new URLSearchParams({ grade:studentInfo.grade, cls:studentInfo.cls, num:studentInfo.num, name:studentInfo.name, id: itemId||'' });
   return file + '?' + q.toString();
+}
+
+// 탐구는 열람 시점에 기록(기존 방식), 문제는 완료 시점에 그 파일이 직접 기록하므로 그냥 이동만
+function goToItem(it, href){
+  if(it.type === '탐구'){ logItemOpenThenGo(it.id, href); }
+  else{ location.href = href; }
 }
 
 // ---- 단원 목록 렌더 ----
@@ -424,9 +430,9 @@ function openUnit(unitId){
       const el = document.createElement(locked ? 'div' : 'a');
       el.className = 'card' + (locked ? ' locked' : '');
       if(!locked){
-        const href = withStudentParams(it.file);
+        const href = withStudentParams(it.file, it.id);
         el.href = href;
-        el.onclick = (e)=>{ e.preventDefault(); logItemOpenThenGo(it.id, href); };
+        el.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
       }
       const iconClass = it.type==='문제' ? 'quiz' : 'explore';
       const emoji = locked ? '🔒' : (it.type==='문제' ? '✏️' : '🔍');
@@ -452,10 +458,10 @@ function renderToday(){
   }
   wrap.innerHTML = '';
   items.forEach(it=>{
-    const href = withStudentParams(it.file);
+    const href = withStudentParams(it.file, it.id);
     const a = document.createElement('a');
     a.className = 'today-item'; a.href = href;
-    a.onclick = (e)=>{ e.preventDefault(); logItemOpenThenGo(it.id, href); };
+    a.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
     a.innerHTML = `<span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span>`;
     wrap.appendChild(a);
   });
@@ -473,10 +479,10 @@ function renderRecommend(){
   const picked = seededShuffle(pool, `${todayStr()}_${studentInfo.cls}`).slice(0, 5);
   wrap.innerHTML = '';
   picked.forEach(it=>{
-    const href = withStudentParams(it.file);
+    const href = withStudentParams(it.file, it.id);
     const a = document.createElement('a');
     a.className = 'today-item'; a.href = href;
-    a.onclick = (e)=>{ e.preventDefault(); logItemOpenThenGo(it.id, href); };
+    a.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
     a.innerHTML = `<span>✏️</span><span>${it.title} <span class="card-meta">(${it.meta})</span></span>`;
     wrap.appendChild(a);
   });

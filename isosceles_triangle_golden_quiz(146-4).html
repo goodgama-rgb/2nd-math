@@ -144,7 +144,7 @@ canvas.fig{background:#fff;border-radius:8px}
 <body>
 
 <div class="hdr">
-  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;">← 허브로</a>
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;">← 학습 선택 목록으로 돌아가기</a>
   <script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
   <span class="hdr-badge">수학</span>
   <span class="hdr-title">이등변삼각형의 성질 — 각의 이등분선과 세 이등변삼각형</span>
@@ -334,6 +334,30 @@ canvas.fig{background:#fff;border-radius:8px}
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id') };
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._reportQuizComplete = function(){
+    if(!s.cls || !s.num || !s.id) return;
+    firebase.firestore().collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('quiz complete log failed', err));
+  };
+})();
+</script>
 <script>
 /* ════════════════════════════════
    문제 데이터
@@ -851,6 +875,7 @@ function complete(){
      pct>=60?'잘 했어요! 조금만 더 연습하면 완벽해질 거예요 💪':
      '다시 한 번 도전해봐요. 반복하면 꼭 잘 할 수 있어요! 🔥');
   showScreen('scComplete');
+  if(window._reportQuizComplete) window._reportQuizComplete();
 }
 </script>
 </body>
