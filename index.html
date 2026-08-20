@@ -98,6 +98,11 @@
   .class-tab{font-family:var(--sans);font-size:13px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--ink-dim);cursor:pointer;}
   .class-tab.active{background:var(--lav);border-color:var(--lav-dark);color:var(--lav-ink);}
   .admin-editing{font-size:13px;color:var(--ink-dim);margin:-10px 0 16px;}
+  .student-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .student-row .student-name{flex:1;font-weight:700;}
+  .student-row .student-stat{color:var(--ink-dim);font-size:12px;}
+  .student-del{background:var(--coral);color:var(--coral-ink);border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;}
+  .student-empty{color:var(--ink-dim);font-size:13px;padding:6px 4px;}
   footer.foot{margin-top:36px;font-family:var(--disp);font-size:14px;color:var(--ink-dim);text-align:center;}
   .credit{font-family:var(--sans);font-size:11px;color:var(--ink-dim);opacity:.7;margin-top:8px;font-weight:400;}
 </style>
@@ -191,6 +196,9 @@
     <div id="admin-list"></div>
     <button class="btn mint" onclick="saveToday()" style="margin-top:16px;">이 반에 저장</button>
     <p class="msg" id="admin-msg"></p>
+
+    <div class="admin-group-title" style="margin-top:28px;">학생 기록 관리 (테스트로 접속한 기록 삭제 등)</div>
+    <div id="admin-students"></div>
   </section>
 
   <footer class="foot">화이팅! 모르는 건 손 들고 물어보기 🙋
@@ -202,7 +210,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp, collection, arrayUnion, increment }
+import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, collection, arrayUnion, increment }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 // ---- Firebase 설정 ----
@@ -274,6 +282,7 @@ let adminTodayIds = [];
 let adminUnlockedIds = [];
 let adminUnlockedAt = {};
 let unsubAdminToday = null;
+let unsubAdminStudents = null;
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -528,6 +537,7 @@ window.teacherLogin = function(){
 
 window.teacherLogout = function(){
   if(unsubAdminToday) unsubAdminToday();
+  if(unsubAdminStudents) unsubAdminStudents();
   signOut(auth).then(()=> go('role'));
 };
 
@@ -590,6 +600,36 @@ function selectAdminClass(cls){
       document.getElementById('admin-notice').value = '';
     }
     renderAdminList();
+  });
+
+  if(unsubAdminStudents) unsubAdminStudents();
+  unsubAdminStudents = onSnapshot(collection(db, 'classStudents', String(cls), 'students'), (snap)=>{
+    const students = [];
+    snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
+    renderAdminStudents(students);
+  });
+}
+
+function renderAdminStudents(students){
+  const wrap = document.getElementById('admin-students');
+  if(!students.length){
+    wrap.innerHTML = '<p class="student-empty">아직 이 반에서 접속한 기록이 없어요</p>';
+    return;
+  }
+  students.sort((a,b)=> (b.visitCount||0) - (a.visitCount||0));
+  wrap.innerHTML = '';
+  students.forEach(s=>{
+    const row = document.createElement('div');
+    row.className = 'student-row';
+    row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'}</span>
+      <span class="student-stat">접속 ${s.visitCount||0} · 문제 ${s.itemsOpened?.length||0}</span>
+      <button class="student-del" type="button">삭제</button>`;
+    row.querySelector('.student-del').onclick = ()=>{
+      if(confirm(`${s.id}번 ${s.name||'?'} 학생의 접속·랭킹 기록을 삭제할까요?`)){
+        deleteDoc(studentDocRef(selectedAdminClass, s.id)).catch(err=> alert('삭제 실패: '+err.message));
+      }
+    };
+    wrap.appendChild(row);
   });
 }
 
