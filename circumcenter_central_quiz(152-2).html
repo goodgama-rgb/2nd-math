@@ -141,7 +141,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 <body>
 
 <div class="hdr">
-  <a href="index.html" style="color:#fff;opacity:.85;text-decoration:none;font-size:12px;font-weight:700;">← 허브로</a>
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;">← 허브로</a>
+  <script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
   <span class="hdr-badge">수학</span>
   <span class="hdr-title">삼각형의 외심 — 세 반각의 합</span>
   <div class="hdr-right">

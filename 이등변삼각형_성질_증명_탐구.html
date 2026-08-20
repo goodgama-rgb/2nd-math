@@ -435,8 +435,9 @@
 <div id="appRoot" style="display:none">
 <div class="session-bar" id="sessionBar" style="display:none">
   <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
-  <span style="display:flex;gap:8px;"><a href="index.html">← 허브로</a><button onclick="location.reload()">로그아웃</button></span>
+  <span style="display:flex;gap:8px;"><a href="index.html" id="hubBackLink">← 허브로</a><button onclick="location.reload()">로그아웃</button></span>
 </div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
 
 <header>
   <h1>📐 이등변삼각형의 성질과 증명 — 직접 조작하며 탐구하기</h1>

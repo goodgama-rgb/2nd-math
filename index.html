@@ -313,21 +313,32 @@ window.go = function(name){
 };
 
 // ---- 학생 정보 ----
+function enterAsStudent(grade, cls, num, name, countAsVisit){
+  studentInfo = { grade, cls, num, name };
+  document.getElementById('units-greeting').textContent = `${grade}학년 ${cls}반 ${name} 학생, 안녕하세요!`;
+  applyClassTheme(cls);
+  subscribeStudentToday(cls);
+  subscribeLeaderboard(cls);
+  if(countAsVisit) logVisit(cls, num, name);
+  renderUnitList();
+  go('units');
+}
+
 window.submitStudentInfo = function(){
   const grade = document.getElementById('in-grade').value || '2';
   const cls = document.getElementById('in-class').value;
   const num = document.getElementById('in-number').value;
   const name = document.getElementById('in-name').value.trim();
   if(!cls || !num || !name){ alert('반, 번호, 이름을 모두 적어주세요'); return; }
-  studentInfo = { grade, cls, num, name };
-  document.getElementById('units-greeting').textContent = `${grade}학년 ${cls}반 ${name} 학생, 안녕하세요!`;
-  applyClassTheme(cls);
-  subscribeStudentToday(cls);
-  subscribeLeaderboard(cls);
-  logVisit(cls, num, name);
-  renderUnitList();
-  go('units');
+  enterAsStudent(grade, cls, num, name, true);
 };
+
+// 문제/탐구 파일에서 "← 허브로"로 돌아왔을 때: URL에 학생 정보가 있으면 재로그인 없이 바로 단원 목록으로
+(function autoRestoreFromURL(){
+  const p = new URLSearchParams(location.search);
+  const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
+  if(grade && cls && num && name){ enterAsStudent(grade, cls, num, name, false); }
+})();
 
 // ---- 학생 활동 기록 (랭킹용): classStudents/{반}/students/{번호} ----
 function studentDocRef(cls, num){
