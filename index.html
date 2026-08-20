@@ -12,6 +12,8 @@
     --mint:#BFE3D0; --mint-ink:#2f6b52; --mint-dark:#8fcdae;
     --lav:#E1D9F5; --lav-ink:#5b4a8f; --lav-dark:#c3b3ec;
     --coral:#F6B8B0; --coral-ink:#a13c31;
+    --peach:#FFD9A8; --peach-ink:#a15b1f;
+    --class-accent:#5b4a8f; --class-accent-bg:#E1D9F5;
     --disp:"Gaegu",sans-serif; --sans:"Noto Sans KR",sans-serif;
   }
   *{box-sizing:border-box;}
@@ -46,12 +48,27 @@
   .today-box .today-label{font-family:var(--disp);font-size:15px;color:var(--coral-ink);margin-bottom:8px;display:block;}
   .today-item{display:flex;align-items:center;gap:8px;padding:6px 0;text-decoration:none;color:var(--ink);font-size:14.5px;font-weight:500;}
   .today-empty{color:var(--ink-dim);font-size:13.5px;}
+  .notice-line{font-size:13px;color:var(--coral-ink);margin-top:8px;padding-top:8px;border-top:1px dashed var(--coral);}
+  .recommend-box{background:#fff;border:2px dashed var(--peach);border-radius:16px;padding:16px 18px;margin-bottom:26px;}
+  .recommend-box .recommend-label{font-family:var(--disp);font-size:15px;color:var(--peach-ink);margin-bottom:8px;display:block;}
+  .recommend-empty{color:var(--ink-dim);font-size:13.5px;}
+  .calendar-btn{display:inline-flex;align-items:center;gap:4px;background:none;border:none;color:var(--lav-ink);font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;padding:0;margin-bottom:26px;}
+  .leader-box{background:#fff;border-radius:16px;padding:16px 18px;margin-bottom:20px;box-shadow:0 3px 0 rgba(46,42,34,.08);}
+  .leader-title{font-family:var(--disp);font-size:15px;margin:0 0 8px;color:var(--ink);}
+  .leader-row{display:flex;align-items:center;gap:8px;font-size:13.5px;padding:4px 0;}
+  .leader-rank{color:var(--ink-dim);width:20px;flex-shrink:0;font-weight:700;}
+  .leader-name{flex:1;}
+  .leader-val{color:var(--ink-dim);font-size:12px;}
+  .leader-empty{color:var(--ink-dim);font-size:13px;}
+  .calendar-day{margin-bottom:20px;}
+  .calendar-date{font-family:var(--disp);font-size:16px;color:var(--lav-ink);margin-bottom:6px;}
+  .calendar-item{font-size:13.5px;padding:3px 0;color:var(--ink);}
   .unit-card{
     display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:16px 18px;margin-bottom:12px;
     text-decoration:none;color:var(--ink);box-shadow:0 3px 0 rgba(46,42,34,.08);
   }
   .unit-card.disabled{opacity:.5;}
-  .unit-num{font-family:var(--disp);font-size:20px;color:var(--lav-ink);background:var(--lav);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .unit-num{font-family:var(--disp);font-size:20px;color:var(--class-accent);background:var(--class-accent-bg);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .unit-title{flex:1;font-weight:700;font-size:15.5px;}
   .unit-tag{font-size:11px;color:var(--ink-dim);}
   .subunit{margin-bottom:26px;}
@@ -118,8 +135,23 @@
     <div class="today-box">
       <span class="today-label">📌 오늘의 학습</span>
       <div id="today-list"><span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span></div>
+      <div class="notice-line" id="notice-line" style="display:none;"></div>
     </div>
+    <div class="recommend-box">
+      <span class="recommend-label">🍱 오문추 (오늘의 문제 추천)</span>
+      <div id="recommend-list"><span class="recommend-empty">아직 열린 문제가 없어요</span></div>
+    </div>
+    <button class="calendar-btn" onclick="go('calendar')">📅 우리 반 진도 캘린더 보기</button>
+    <div id="leader-boxes"></div>
     <div id="unit-list"></div>
+  </section>
+
+  <!-- 3-1. 진도 캘린더 -->
+  <section class="view" id="view-calendar">
+    <button class="backlink" onclick="go('units')">← 뒤로</button>
+    <h2 class="mid">우리 반 진도 캘린더</h2>
+    <p class="sub">날짜별로 무엇을 배웠는지 모아봤어요</p>
+    <div id="calendar-content"></div>
   </section>
 
   <!-- 4. 콘텐츠 허브 (대단원 안) -->
@@ -154,6 +186,7 @@
     <p class="sub">반을 고르고, 열어줄 항목과 오늘의 학습을 체크하세요</p>
     <div class="class-tabs" id="admin-class-tabs"></div>
     <p class="admin-editing" id="admin-editing-label"></p>
+    <div class="field"><label>이 반 공지 (오늘의 학습 박스에 표시돼요)</label><input id="admin-notice" type="text" placeholder="예: 내일까지 3번 문제 풀어오세요!"></div>
     <div class="admin-cols-label"><span>🔓 열기</span><span>⭐ 오늘</span><span></span></div>
     <div id="admin-list"></div>
     <button class="btn mint" onclick="saveToday()" style="margin-top:16px;">이 반에 저장</button>
@@ -169,7 +202,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
+import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp, collection, arrayUnion, increment }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 // ---- Firebase 설정 ----
@@ -230,13 +263,39 @@ let studentInfo = null;
 let currentUnitId = null;
 let todayIds = [];
 let unlockedIds = null; // null = 아직 설정 안 됨(전체 열림), 배열이면 그 배열에 있는 id만 열림
+let unlockedAt = {};    // { itemId: '2026-08-20' } - 진도 캘린더용
+let noticeText = '';
 let unsubStudentToday = null;
+let unsubLeaderboard = null;
 
 let currentTeacher = null;
 let selectedAdminClass = null;
 let adminTodayIds = [];
 let adminUnlockedIds = [];
+let adminUnlockedAt = {};
 let unsubAdminToday = null;
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+// 날짜+반을 시드로 쓰는 결정론적 랜덤(같은 날엔 같은 결과)
+function seededShuffle(arr, seedStr){
+  let seed = 0;
+  for(let i=0;i<seedStr.length;i++){ seed = (seed*31 + seedStr.charCodeAt(i)) >>> 0; }
+  const rand = ()=>{ seed = (seed*1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(rand()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// 반별 테마 색 (반마다 은은하게 다른 색조)
+function applyClassTheme(cls){
+  const hue = Math.round(((Number(cls)||1)-1) * (360/13));
+  document.documentElement.style.setProperty('--class-accent', `hsl(${hue} 45% 35%)`);
+  document.documentElement.style.setProperty('--class-accent-bg', `hsl(${hue} 55% 88%)`);
+}
 
 // ---- 화면 전환 ----
 window.go = function(name){
@@ -253,10 +312,32 @@ window.submitStudentInfo = function(){
   if(!cls || !num || !name){ alert('반, 번호, 이름을 모두 적어주세요'); return; }
   studentInfo = { grade, cls, num, name };
   document.getElementById('units-greeting').textContent = `${grade}학년 ${cls}반 ${name} 학생, 안녕하세요!`;
+  applyClassTheme(cls);
   subscribeStudentToday(cls);
+  subscribeLeaderboard(cls);
+  logVisit(cls, num, name);
   renderUnitList();
   go('units');
 };
+
+// ---- 학생 활동 기록 (랭킹용): classStudents/{반}/students/{번호} ----
+function studentDocRef(cls, num){
+  return doc(db, 'classStudents', String(cls), 'students', String(num));
+}
+
+function logVisit(cls, num, name){
+  setDoc(studentDocRef(cls, num), { name, visitCount: increment(1), lastActive: serverTimestamp() }, { merge:true })
+    .catch(err=> console.warn('visit log failed', err));
+}
+
+// 항목 클릭 시 기록하고 나서 이동 (기록이 끊기지 않도록 이동을 살짝 늦춤)
+function logItemOpenThenGo(itemId, href){
+  const p = studentInfo
+    ? setDoc(studentDocRef(studentInfo.cls, studentInfo.num), { name: studentInfo.name, itemsOpened: arrayUnion(itemId), lastActive: serverTimestamp() }, { merge:true })
+    : Promise.resolve();
+  const timeout = new Promise(res=> setTimeout(res, 800));
+  Promise.race([p.catch(()=>{}), timeout]).finally(()=>{ location.href = href; });
+}
 
 function subscribeStudentToday(cls){
   if(unsubStudentToday) unsubStudentToday();
@@ -265,11 +346,17 @@ function subscribeStudentToday(cls){
       const data = snap.data();
       todayIds = data.todayIds || [];
       unlockedIds = data.unlockedIds || [];
+      unlockedAt = data.unlockedAt || {};
+      noticeText = data.notice || '';
     }else{
       todayIds = [];
       unlockedIds = null;
+      unlockedAt = {};
+      noticeText = '';
     }
     renderToday();
+    renderRecommend();
+    renderCalendar();
     if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
       openUnit(currentUnitId);
     }
@@ -316,7 +403,11 @@ function openUnit(unitId){
       const locked = unlockedIds !== null && !unlockedIds.includes(it.id);
       const el = document.createElement(locked ? 'div' : 'a');
       el.className = 'card' + (locked ? ' locked' : '');
-      if(!locked){ el.href = withStudentParams(it.file); }
+      if(!locked){
+        const href = withStudentParams(it.file);
+        el.href = href;
+        el.onclick = (e)=>{ e.preventDefault(); logItemOpenThenGo(it.id, href); };
+      }
       const iconClass = it.type==='문제' ? 'quiz' : 'explore';
       const emoji = locked ? '🔒' : (it.type==='문제' ? '✏️' : '🔍');
       el.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
@@ -332,17 +423,97 @@ function openUnit(unitId){
 function renderToday(){
   const wrap = document.getElementById('today-list');
   const items = allRealItems().filter(it=> todayIds.includes(it.id));
+  const noticeEl = document.getElementById('notice-line');
+  if(noticeText){ noticeEl.textContent = `📣 ${noticeText}`; noticeEl.style.display = 'block'; }
+  else{ noticeEl.style.display = 'none'; }
   if(!items.length){
     wrap.innerHTML = '<span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span>';
     return;
   }
   wrap.innerHTML = '';
   items.forEach(it=>{
+    const href = withStudentParams(it.file);
     const a = document.createElement('a');
-    a.className = 'today-item'; a.href = withStudentParams(it.file);
+    a.className = 'today-item'; a.href = href;
+    a.onclick = (e)=>{ e.preventDefault(); logItemOpenThenGo(it.id, href); };
     a.innerHTML = `<span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span>`;
     wrap.appendChild(a);
   });
+}
+
+// ---- 오문추: 날짜+반 시드로 매일 랜덤 5문제 (증명 탐구 제외) ----
+function renderRecommend(){
+  const wrap = document.getElementById('recommend-list');
+  if(!studentInfo){ return; }
+  const pool = allRealItems().filter(it=> it.type==='문제' && (unlockedIds===null || unlockedIds.includes(it.id)));
+  if(!pool.length){
+    wrap.innerHTML = '<span class="recommend-empty">아직 열린 문제가 없어요</span>';
+    return;
+  }
+  const picked = seededShuffle(pool, `${todayStr()}_${studentInfo.cls}`).slice(0, 5);
+  wrap.innerHTML = '';
+  picked.forEach(it=>{
+    const href = withStudentParams(it.file);
+    const a = document.createElement('a');
+    a.className = 'today-item'; a.href = href;
+    a.onclick = (e)=>{ e.preventDefault(); logItemOpenThenGo(it.id, href); };
+    a.innerHTML = `<span>✏️</span><span>${it.title} <span class="card-meta">(${it.meta})</span></span>`;
+    wrap.appendChild(a);
+  });
+}
+
+// ---- 진도 캘린더 ----
+function renderCalendar(){
+  const wrap = document.getElementById('calendar-content');
+  if(!wrap) return;
+  const byDate = {};
+  allRealItems().forEach(it=>{
+    const d = unlockedAt[it.id];
+    if(!d) return;
+    (byDate[d] = byDate[d] || []).push(it);
+  });
+  const dates = Object.keys(byDate).sort();
+  if(!dates.length){
+    wrap.innerHTML = '<p class="msg">아직 기록된 진도가 없어요</p>';
+    return;
+  }
+  wrap.innerHTML = '';
+  dates.forEach(d=>{
+    const day = document.createElement('div');
+    day.className = 'calendar-day';
+    const itemsHtml = byDate[d].map(it=>`<div class="calendar-item">${it.type==='문제'?'✏️':'🔍'} ${it.title} <span class="card-meta">(${it.subunitName})</span></div>`).join('');
+    day.innerHTML = `<div class="calendar-date">${d}</div>${itemsHtml}`;
+    wrap.appendChild(day);
+  });
+}
+
+// ---- 반별 Top10 랭킹 ----
+function subscribeLeaderboard(cls){
+  if(unsubLeaderboard) unsubLeaderboard();
+  unsubLeaderboard = onSnapshot(collection(db, 'classStudents', String(cls), 'students'), (snap)=>{
+    const students = [];
+    snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
+    renderLeaderboard(students);
+  });
+}
+
+function renderLeaderboard(students){
+  const wrap = document.getElementById('leader-boxes');
+  const quizIds = new Set(allRealItems().filter(it=>it.type==='문제').map(it=>it.id));
+  const quizCount = s => (s.itemsOpened||[]).filter(id=> quizIds.has(id)).length;
+  const byCount = students.slice().sort((a,b)=> quizCount(b) - quizCount(a)).slice(0,10);
+  const byVisit = students.slice().sort((a,b)=> (b.visitCount||0) - (a.visitCount||0)).slice(0,10);
+  const renderList = (list, valFn, valSuffix)=>{
+    const filtered = list.filter(s=> valFn(s) > 0);
+    if(!filtered.length) return '<p class="leader-empty">아직 기록이 없어요</p>';
+    return filtered.map((s,i)=>
+      `<div class="leader-row"><span class="leader-rank">${i+1}</span><span class="leader-name">${s.name||'?'}</span><span class="leader-val">${valFn(s)}${valSuffix}</span></div>`
+    ).join('');
+  };
+  wrap.innerHTML = `
+    <div class="leader-box"><h3 class="leader-title">🏆 문제 많이 푼 TOP 10</h3>${renderList(byCount,quizCount,'개')}</div>
+    <div class="leader-box"><h3 class="leader-title">🔥 가장 많이 접속한 TOP 10</h3>${renderList(byVisit, s=>s.visitCount||0,'회')}</div>
+  `;
 }
 
 // ---- 선생님 로그인 ----
@@ -409,10 +580,14 @@ function selectAdminClass(cls){
       const data = snap.data();
       adminTodayIds = data.todayIds || [];
       adminUnlockedIds = data.unlockedIds || [];
+      adminUnlockedAt = data.unlockedAt || {};
+      document.getElementById('admin-notice').value = data.notice || '';
     }else{
       // 아직 설정한 적 없는 반: 지금까지는 전체 열림 상태였으니 체크박스도 전체 열림으로 시작
       adminTodayIds = [];
       adminUnlockedIds = allRealItems().map(it=>it.id);
+      adminUnlockedAt = {};
+      document.getElementById('admin-notice').value = '';
     }
     renderAdminList();
   });
@@ -449,7 +624,10 @@ window.saveToday = function(){
   const unlockChecked = Array.from(document.querySelectorAll('.chk-unlock:checked')).map(cb=>cb.dataset.id);
   const todayChecked = Array.from(document.querySelectorAll('.chk-today:checked')).map(cb=>cb.dataset.id);
   const finalUnlocked = Array.from(new Set([...unlockChecked, ...todayChecked]));
-  setDoc(doc(db,'todayByClass', String(selectedAdminClass)), { todayIds: todayChecked, unlockedIds: finalUnlocked, updatedAt: serverTimestamp() })
+  const finalUnlockedAt = {...adminUnlockedAt};
+  finalUnlocked.forEach(id=>{ if(!finalUnlockedAt[id]) finalUnlockedAt[id] = todayStr(); });
+  const notice = document.getElementById('admin-notice').value.trim();
+  setDoc(doc(db,'todayByClass', String(selectedAdminClass)), { todayIds: todayChecked, unlockedIds: finalUnlocked, unlockedAt: finalUnlockedAt, notice, updatedAt: serverTimestamp() })
     .then(()=>{ document.getElementById('admin-msg').textContent = `저장했어요! ${selectedAdminClass}반 학생 화면에 바로 반영돼요.`; document.getElementById('admin-msg').className='msg ok'; })
     .catch(err=>{ document.getElementById('admin-msg').textContent = '저장 실패: ' + err.message; document.getElementById('admin-msg').className='msg error'; });
 };
