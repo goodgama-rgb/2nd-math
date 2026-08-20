@@ -91,8 +91,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 
 .fig-wrap{display:flex;justify-content:center;margin-bottom:14px}
 canvas.fig{background:#fff;border-radius:8px}
-.fig-stack{position:relative;width:360px;height:300px}
-.fig-stack canvas{position:absolute;top:0;left:0}
+.fig-stack{position:relative;width:100%;max-width:360px;aspect-ratio:360/300;margin:0 auto}
+.fig-stack canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .fig-draw{touch-action:none}
 
 .draw-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
@@ -143,6 +143,7 @@ canvas.fig{background:#fff;border-radius:8px}
 <body>
 
 <div class="hdr">
+  <a href="index.html" style="color:#fff;opacity:.85;text-decoration:none;font-size:12px;font-weight:700;">← 허브로</a>
   <span class="hdr-badge">수학</span>
   <span class="hdr-title">이등변삼각형의 성질 — 밑각과 꼭지각</span>
   <div class="hdr-right">
