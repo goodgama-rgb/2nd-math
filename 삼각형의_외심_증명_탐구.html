@@ -45,7 +45,7 @@
   .btn-primary:disabled{ background:#cdd5f5; color:#8a93c2; cursor:not-allowed; box-shadow:none; }
 
   .svg-wrap{ background:#fbfcff; border-radius:14px; border:1px solid var(--line); padding:6px; }
-  svg{ width:100%; height:auto; display:block; }
+  svg{ width:100%; height:auto; display:block; touch-action:none; }
 
   .tri-abc{ fill:#dbe4ff; stroke:#4a5568; stroke-width:2.5; }
   .vertex-dot{ fill:#4a5568; }
@@ -402,10 +402,8 @@
         </div>
 
         <div class="reveal" id="block4">
-          <p><b>탐구2.</b> 컴퍼스를 사용하여 점 O를 중심으로 △ABC의 세 꼭짓점 A, B, C를 모두 지나는 원을 그릴 수 있는지 알아봅시다.</p>
-          <div class="fillsentence" style="text-align:center;">
-            <button class="btn btn-check" id="btnCircle" style="margin-top:8px;">🧭 원 그리기</button>
-          </div>
+          <p><b>탐구2.</b> 컴퍼스를 사용하여 점 O를 중심으로 △ABC의 세 꼭짓점 A, B, C를 모두 지나는 원을 그려봅시다.</p>
+          <p class="hint">💡 왼쪽 그림에서 <b>점 O를 클릭</b>해 컴퍼스를 고정한 뒤, 마우스(손가락)를 움직여 원의 크기를 조절하고, 세 꼭짓점을 모두 지나면 <b>다시 클릭</b>해서 원을 확정해보세요.</p>
           <div class="feedback" id="fbCircle"></div>
         </div>
 
@@ -814,6 +812,7 @@
   function resetStage1Visuals(){
     state.doneAB=false; state.doneAC=false; state.doneBC=false;
     state.showO=false; state.showCircle=false;
+    resetCompass();
     ['block2','block3','block4','block5','concludeBlock1'].forEach(id=>document.getElementById(id).classList.remove('show'));
     ['fbAB','fbAC','fbBC','fbCircle','fbTerms','feedbackConclude1'].forEach(id=>{ const el=document.getElementById(id); el.className='feedback'; el.textContent=''; });
     document.querySelectorAll('input[name="predictBC"]').forEach(r=>r.checked=false);
@@ -868,27 +867,80 @@
       }
       document.getElementById('block4').classList.add('show');
       render();
+      activateCompass();
     }, 650);
   });
-  document.getElementById('btnCircle').addEventListener('click', function(){
-    if(state.showCircle) return;
-    state.showCircle = true;
-    render();
-    circumCircle.style.transition='none';
-    circumCircle.setAttribute('r',0);
-    circumCircle.getBoundingClientRect();
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        circumCircle.style.transition='r 1.1s ease';
-        circumCircle.setAttribute('r', Math.hypot(_geom.O.x-_geom.A.x, _geom.O.y-_geom.A.y));
-      });
-    });
-    setTimeout(()=>{
-      const fb = document.getElementById('fbCircle');
-      fb.className='feedback success';
-      fb.textContent = '✅ 점 O를 중심으로 한 원이 세 꼭짓점 A, B, C를 모두 정확히 지나요! OA=OB=OC 이기 때문이에요.';
-      document.getElementById('block5').classList.add('show');
-    }, 1200);
+  // ---------- 컴퍼스로 직접 원 그리기 (점 O 클릭 → 반지름 조절 → 다시 클릭해 확정) ----------
+  const COMPASS_TOL = 10; // 확정 판정 허용 오차 (svg 단위, 캔버스 폭 640 기준)
+  const COMPASS_GRAB = 30; // 점 O를 클릭했다고 인정할 허용 반경
+  let compassActive = false;
+  let compassStep = 'idle'; // idle -> sizing -> done
+  function toSvgPoint(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function onCompassMove(evt){
+    if(compassStep !== 'sizing') return;
+    const p = toSvgPoint(evt);
+    const O = _geom.O;
+    circumCircle.setAttribute('r', Math.hypot(p.x-O.x, p.y-O.y));
+  }
+  function activateCompass(){
+    compassActive = true;
+    compassStep = 'idle';
+    svg.style.cursor = 'crosshair';
+  }
+  function resetCompass(){
+    compassActive = false;
+    compassStep = 'idle';
+    svg.removeEventListener('pointermove', onCompassMove);
+    svg.style.cursor = '';
+    circumCircle.style.strokeDasharray='';
+    circumCircle.style.opacity='';
+  }
+  svg.addEventListener('pointerdown', function(evt){
+    if(!compassActive || currentPage !== 1 || !_geom) return;
+    const p = toSvgPoint(evt);
+    const O = _geom.O;
+    const fb = document.getElementById('fbCircle');
+    if(compassStep === 'idle'){
+      const d = Math.hypot(p.x-O.x, p.y-O.y);
+      if(d <= COMPASS_GRAB){
+        compassStep = 'sizing';
+        svg.addEventListener('pointermove', onCompassMove);
+        circumCircle.style.display = 'block';
+        circumCircle.style.strokeDasharray = '5 4';
+        circumCircle.style.opacity = '.6';
+        circumCircle.setAttribute('cx', O.x);
+        circumCircle.setAttribute('cy', O.y);
+        circumCircle.setAttribute('r', d);
+        fb.className = 'feedback warn';
+        fb.textContent = '📏 컴퍼스를 고정했어요! 이제 마우스(손가락)를 움직여 원의 크기를 세 꼭짓점에 맞춰보세요.';
+      }else{
+        fb.className = 'feedback warn';
+        fb.textContent = '⚠️ 점 O 근처를 클릭해 컴퍼스를 고정해주세요.';
+      }
+    }else if(compassStep === 'sizing'){
+      const R = Math.hypot(_geom.A.x-O.x, _geom.A.y-O.y);
+      const d = Math.hypot(p.x-O.x, p.y-O.y);
+      if(Math.abs(d-R) <= COMPASS_TOL){
+        compassStep = 'done';
+        svg.removeEventListener('pointermove', onCompassMove);
+        svg.style.cursor = '';
+        circumCircle.style.strokeDasharray = '';
+        circumCircle.style.opacity = '';
+        circumCircle.setAttribute('r', R);
+        state.showCircle = true;
+        render();
+        fb.className = 'feedback success';
+        fb.textContent = '✅ 점 O를 중심으로 한 원이 세 꼭짓점 A, B, C를 모두 정확히 지나요! OA=OB=OC 이기 때문이에요.';
+        document.getElementById('block5').classList.add('show');
+      }else{
+        fb.className = 'feedback warn';
+        fb.textContent = d < R ? '🔎 아직 작아요. 조금 더 크게 조절해보세요.' : '🔎 너무 커요. 조금 더 작게 조절해보세요.';
+      }
+    }
   });
   document.getElementById('checkTerms').addEventListener('click', ()=>{
     const elA = document.getElementById('t3_a'), elB = document.getElementById('t3_b'), elC = document.getElementById('t3_c');
@@ -1094,6 +1146,7 @@
       tab.classList.toggle('current', i===n);
     });
     document.getElementById('btnCycleTri').disabled = (n !== 1);
+    if(n !== 1 && typeof resetCompass === 'function'){ compassActive = false; svg.removeEventListener('pointermove', onCompassMove); svg.style.cursor=''; }
     if(n === 4){
       if(typeof P4_LIVE !== 'undefined'){
         P4_LIVE.forEach(([bid, flag])=>{
