@@ -49,7 +49,9 @@
   .today-box .today-label{font-family:var(--disp);font-size:15px;color:var(--coral-ink);margin-bottom:8px;display:block;}
   .today-item{display:flex;align-items:center;gap:8px;padding:6px 0;text-decoration:none;color:var(--ink);font-size:14.5px;font-weight:500;}
   .today-empty{color:var(--ink-dim);font-size:13.5px;}
-  .notice-line{font-size:13px;color:var(--coral-ink);margin-top:8px;padding-top:8px;border-top:1px dashed var(--coral);}
+  .notice-box{background:var(--coral);border-radius:16px;padding:14px 18px;margin-bottom:18px;}
+  .notice-box .notice-box-label{font-family:var(--disp);font-size:15px;color:var(--coral-ink);display:block;margin-bottom:4px;}
+  .notice-box #notice-box-text, .notice-box #preview-notice-text{color:var(--ink);font-size:15.5px;font-weight:700;}
   .recommend-box{background:#fff;border:2px dashed var(--peach);border-radius:16px;padding:16px 18px;margin-bottom:26px;}
   .recommend-box .recommend-label{font-family:var(--disp);font-size:15px;color:var(--peach-ink);margin-bottom:8px;display:block;}
   .recommend-empty{color:var(--ink-dim);font-size:13.5px;}
@@ -146,10 +148,13 @@
   <section class="view" id="view-units">
     <button class="backlink" onclick="go('student-info')">← 뒤로</button>
     <h2 class="mid" id="units-greeting">학습 단원을 골라주세요</h2>
+    <div class="notice-box" id="notice-box" style="display:none;">
+      <span class="notice-box-label">📣 공지사항</span>
+      <span id="notice-box-text"></span>
+    </div>
     <div class="today-box">
       <span class="today-label">📌 오늘의 학습</span>
       <div id="today-list"><span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span></div>
-      <div class="notice-line" id="notice-line" style="display:none;"></div>
     </div>
     <div class="recommend-box">
       <span class="recommend-label">🍱 오문추 (오늘의 문제 추천)</span>
@@ -217,10 +222,13 @@
         <div class="admin-group-title" style="margin-top:0;">👀 학생 화면 미리보기</div>
         <p class="admin-hint">체크만 해도 바로 반영, 저장 안 해도 확인 가능해요</p>
         <div class="preview-frame">
+          <div class="notice-box" id="preview-notice" style="display:none;">
+            <span class="notice-box-label">📣 공지사항</span>
+            <span id="preview-notice-text"></span>
+          </div>
           <div class="today-box">
             <span class="today-label">📌 오늘의 학습</span>
             <div id="preview-today"></div>
-            <div class="notice-line" id="preview-notice" style="display:none;"></div>
           </div>
           <div id="preview-units"></div>
         </div>
@@ -481,9 +489,9 @@ function openUnit(unitId){
 function renderToday(){
   const wrap = document.getElementById('today-list');
   const items = allRealItems().filter(it=> todayIds.includes(it.id));
-  const noticeEl = document.getElementById('notice-line');
-  if(noticeText){ noticeEl.textContent = `📣 ${noticeText}`; noticeEl.style.display = 'block'; }
-  else{ noticeEl.style.display = 'none'; }
+  const noticeBox = document.getElementById('notice-box');
+  if(noticeText){ document.getElementById('notice-box-text').textContent = noticeText; noticeBox.style.display = 'block'; }
+  else{ noticeBox.style.display = 'none'; }
   if(!items.length){
     wrap.innerHTML = '<span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span>';
     return;
@@ -724,7 +732,7 @@ function renderAdminPreview(){
     ? todayItemsList.map(it=>`<div class="today-item"><span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span></div>`).join('')
     : '<span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span>';
   const previewNotice = document.getElementById('preview-notice');
-  if(notice){ previewNotice.textContent = `📣 ${notice}`; previewNotice.style.display = 'block'; }
+  if(notice){ document.getElementById('preview-notice-text').textContent = notice; previewNotice.style.display = 'block'; }
   else{ previewNotice.style.display = 'none'; }
 
   const previewUnits = document.getElementById('preview-units');
