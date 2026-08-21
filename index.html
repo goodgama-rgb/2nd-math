@@ -46,7 +46,9 @@
   .row2 .field{flex:1;}
   .backlink{display:inline-flex;align-items:center;gap:4px;color:var(--ink-dim);font-size:13px;text-decoration:none;margin-bottom:16px;cursor:pointer;background:none;border:none;font-family:var(--sans);padding:0;}
   .admin-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-  .admin-topbar .backlink{margin-bottom:16px;}
+  .admin-topbar .backlink{margin-bottom:16px;font-size:19.5px;font-weight:700;padding:7px 18px;border-radius:14px;}
+  .admin-topbar .pill-coral{background:var(--coral);color:var(--coral-ink);}
+  .admin-topbar .pill-lav{background:var(--lav);color:var(--lav-ink);}
   .today-box{background:#fff;border:2px dashed var(--coral);border-radius:16px;padding:16px 18px;margin-bottom:26px;}
   .today-box .today-label{font-family:var(--disp);font-size:15px;color:var(--coral-ink);margin-bottom:8px;display:block;}
   .today-item{display:flex;align-items:center;gap:8px;padding:6px 0;text-decoration:none;color:var(--ink);font-size:14.5px;font-weight:500;}
@@ -203,8 +205,8 @@
   <!-- 6. 관리자 페이지 -->
   <section class="view" id="view-admin">
     <div class="admin-topbar">
-      <button class="backlink" onclick="teacherLogout()">← 로그아웃</button>
-      <a class="backlink" href="https://claude.ai/code/artifact/a5e4cd6e-0048-4bdb-9217-e725b22e0030" target="_blank" rel="noopener">📖 관리자 페이지 사용법</a>
+      <button class="backlink pill-coral" onclick="teacherLogout()">← 로그아웃</button>
+      <a class="backlink pill-lav" href="https://claude.ai/code/artifact/a5e4cd6e-0048-4bdb-9217-e725b22e0030" target="_blank" rel="noopener">📖 관리자 페이지 사용법</a>
     </div>
     <h2 class="mid">오늘의 학습 설정</h2>
     <p class="sub">반을 고르고, 열어줄 항목과 오늘의 학습을 체크하세요</p>
