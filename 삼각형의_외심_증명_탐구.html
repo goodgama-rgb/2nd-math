@@ -55,6 +55,17 @@
   .seg{ text-decoration-line:overline; text-decoration-thickness:1.3px; text-decoration-skip-ink:none; }
   .crease{ stroke:#7c5cff; stroke-width:2; display:none; }
   .circum-circle{ fill:none; stroke:#3fbf91; stroke-width:2; opacity:.9; display:none; }
+  .compass-leg{ stroke-width:5; stroke-linecap:round; }
+  #compassLegNeedle{ stroke:#6b7280; }
+  #compassLegPencil{ stroke:#8b5e34; }
+  .compass-hinge{ fill:#c0392b; stroke:#fff; stroke-width:1.5; }
+  .compass-tip{ fill:#8b5e34; }
+  @keyframes oPulseRing{ 0%{ r:8; stroke-opacity:.9; } 100%{ r:36; stroke-opacity:0; } }
+  @keyframes oHintBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+  .o-pulse-ring{ fill:none; stroke:#c0392b; stroke-width:3; display:none; pointer-events:none; }
+  .o-pulse-ring.active{ display:block; animation:oPulseRing 1.3s ease-out infinite; }
+  .o-click-hint{ font-size:15px; font-weight:800; fill:#c0392b; text-anchor:middle; display:none; pointer-events:none; }
+  .o-click-hint.active{ display:block; animation:oHintBob 1s ease-in-out infinite; }
   .shade-tri{ stroke:none; opacity:.38; display:none; }
   #triOBD{ fill:#6c8bff; }
   #triOCD{ fill:#ff9db3; }
@@ -319,6 +330,14 @@
         <!-- 외접원 -->
         <circle id="circumCircle" class="circum-circle" cx="0" cy="0" r="0"></circle>
 
+        <!-- 컴퍼스 그래픽: 반지름을 조절하는 동안 다리가 실시간으로 벌어짐 -->
+        <g id="compassTool" style="display:none">
+          <line id="compassLegNeedle" class="compass-leg" x1="0" y1="0" x2="0" y2="0"></line>
+          <line id="compassLegPencil" class="compass-leg" x1="0" y1="0" x2="0" y2="0"></line>
+          <circle id="compassHinge" r="6" class="compass-hinge"></circle>
+          <circle id="compassPencilTip" r="3" class="compass-tip"></circle>
+        </g>
+
         <!-- O에서 세 꼭짓점까지 선분 + 같은 거리 눈금 -->
         <line id="segOA" class="seg-line" x1="0" y1="0" x2="0" y2="0"></line>
         <line id="segOB" class="seg-line" x1="0" y1="0" x2="0" y2="0"></line>
@@ -343,8 +362,11 @@
         <text id="nameC" class="vertex-name">C</text>
         <circle id="dotD" r="4" class="vertex-dot" style="display:none"></circle>
         <text id="nameD" class="vertex-name" style="display:none">D</text>
+        <circle id="oPulseA" class="o-pulse-ring" cx="0" cy="0" r="8"></circle>
+        <circle id="oPulseB" class="o-pulse-ring" cx="0" cy="0" r="8" style="animation-delay:.65s"></circle>
         <circle id="dotO" r="4.5" class="vertex-dot" style="display:none;fill:#c0392b"></circle>
         <text id="nameO" class="o-label">O</text>
+        <text id="oClickHint" class="o-click-hint">👆 여기를 클릭!</text>
       </svg>
     </div>
 
@@ -405,6 +427,14 @@
           <p><b>탐구2.</b> 컴퍼스를 사용하여 점 O를 중심으로 △ABC의 세 꼭짓점 A, B, C를 모두 지나는 원을 그려봅시다.</p>
           <p class="hint">💡 왼쪽 그림에서 <b>점 O를 클릭</b>해 컴퍼스를 고정한 뒤, 마우스(손가락)를 움직여 원의 크기를 조절하고, 세 꼭짓점을 모두 지나면 <b>다시 클릭</b>해서 원을 확정해보세요.</p>
           <div class="feedback" id="fbCircle"></div>
+        </div>
+
+        <div class="reveal" id="block4Choice">
+          <p style="text-align:center;">🎉 <b>원을 완성했어요!</b> 다른 모양의 삼각형에서도 같은 방법이 통하는지 한 번 더 확인해볼까요?</p>
+          <div class="fillsentence" style="text-align:center; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+            <button class="btn btn-outline" id="btnRedoTriangle">🔄 다른 삼각형 모양에서도 관찰하기</button>
+            <button class="btn btn-primary" id="btnProceedTerms">다음 탐구로 넘어가기 →</button>
+          </div>
         </div>
 
         <div class="reveal" id="block5">
@@ -711,8 +741,14 @@
   const dotC=document.getElementById('dotC'), nameC=document.getElementById('nameC');
   const dotD=document.getElementById('dotD'), nameD=document.getElementById('nameD');
   const dotO=document.getElementById('dotO'), nameO=document.getElementById('nameO');
+  const oPulseA=document.getElementById('oPulseA'), oPulseB=document.getElementById('oPulseB'), oClickHint=document.getElementById('oClickHint');
   const creaseAB=document.getElementById('creaseAB'), creaseAC=document.getElementById('creaseAC'), creaseBC=document.getElementById('creaseBC');
   const circumCircle=document.getElementById('circumCircle');
+  const compassTool=document.getElementById('compassTool');
+  const compassLegNeedle=document.getElementById('compassLegNeedle');
+  const compassLegPencil=document.getElementById('compassLegPencil');
+  const compassHinge=document.getElementById('compassHinge');
+  const compassPencilTip=document.getElementById('compassPencilTip');
   const segOA=document.getElementById('segOA'), segOB=document.getElementById('segOB'), segOC=document.getElementById('segOC');
   const tickOA=document.getElementById('tickOA'), tickOB=document.getElementById('tickOB'), tickOC=document.getElementById('tickOC');
   const triOBD=document.getElementById('triOBD'), triOCD=document.getElementById('triOCD');
@@ -804,16 +840,23 @@
   }
 
   // ---------- 다른 삼각형 보기 ----------
-  document.getElementById('btnCycleTri').addEventListener('click', ()=>{
+  function cycleTriangle(){
     state.triIdx = (state.triIdx+1) % TRI_PRESETS.length;
     resetStage1Visuals();
     render();
+    document.getElementById('page1').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  document.getElementById('btnCycleTri').addEventListener('click', cycleTriangle);
+  document.getElementById('btnRedoTriangle').addEventListener('click', cycleTriangle);
+  document.getElementById('btnProceedTerms').addEventListener('click', ()=>{
+    document.getElementById('block5').classList.add('show');
+    document.getElementById('block5').scrollIntoView({behavior:'smooth', block:'start'});
   });
   function resetStage1Visuals(){
     state.doneAB=false; state.doneAC=false; state.doneBC=false;
     state.showO=false; state.showCircle=false;
     resetCompass();
-    ['block2','block3','block4','block5','concludeBlock1'].forEach(id=>document.getElementById(id).classList.remove('show'));
+    ['block2','block3','block4','block4Choice','block5','concludeBlock1'].forEach(id=>document.getElementById(id).classList.remove('show'));
     ['fbAB','fbAC','fbBC','fbCircle','fbTerms','feedbackConclude1'].forEach(id=>{ const el=document.getElementById(id); el.className='feedback'; el.textContent=''; });
     document.querySelectorAll('input[name="predictBC"]').forEach(r=>r.checked=false);
     document.getElementById('blank1a').value='?';
@@ -880,24 +923,54 @@
     pt.x = evt.clientX; pt.y = evt.clientY;
     return pt.matrixTransform(svg.getScreenCTM().inverse());
   }
+  const COMPASS_LEG = 150; // 컴퍼스 다리 길이(고정, svg 단위)
+  function updateCompassGraphic(O, P){
+    const dx=P.x-O.x, dy=P.y-O.y;
+    const d = Math.hypot(dx,dy) || 0.001;
+    const ux=dx/d, uy=dy/d;
+    const dCapped = Math.min(d, COMPASS_LEG*2*0.98); // 다리 길이 한계 이상은 물리적으로 못 벌어짐
+    const h = Math.sqrt(Math.max(0, COMPASS_LEG*COMPASS_LEG - (dCapped/2)*(dCapped/2)));
+    const mid = {x:O.x+ux*dCapped/2, y:O.y+uy*dCapped/2};
+    const perp = {x:-uy, y:ux};
+    const H = {x:mid.x+perp.x*h, y:mid.y+perp.y*h};
+    const tip = {x:O.x+ux*dCapped, y:O.y+uy*dCapped};
+    compassLegNeedle.setAttribute('x1',H.x); compassLegNeedle.setAttribute('y1',H.y);
+    compassLegNeedle.setAttribute('x2',O.x); compassLegNeedle.setAttribute('y2',O.y);
+    compassLegPencil.setAttribute('x1',H.x); compassLegPencil.setAttribute('y1',H.y);
+    compassLegPencil.setAttribute('x2',tip.x); compassLegPencil.setAttribute('y2',tip.y);
+    compassHinge.setAttribute('cx',H.x); compassHinge.setAttribute('cy',H.y);
+    compassPencilTip.setAttribute('cx',tip.x); compassPencilTip.setAttribute('cy',tip.y);
+  }
   function onCompassMove(evt){
     if(compassStep !== 'sizing') return;
     const p = toSvgPoint(evt);
     const O = _geom.O;
     circumCircle.setAttribute('r', Math.hypot(p.x-O.x, p.y-O.y));
+    updateCompassGraphic(O, p);
+  }
+  function startOHint(){
+    const O = _geom.O;
+    [oPulseA, oPulseB].forEach(el=>{ el.setAttribute('cx',O.x); el.setAttribute('cy',O.y); el.classList.add('active'); });
+    oClickHint.setAttribute('x', O.x);
+    oClickHint.setAttribute('y', O.y-38);
+    oClickHint.classList.add('active');
+  }
+  function stopOHint(){
+    [oPulseA, oPulseB, oClickHint].forEach(el=>el.classList.remove('active'));
   }
   function activateCompass(){
     compassActive = true;
     compassStep = 'idle';
-    svg.style.cursor = 'crosshair';
+    startOHint();
   }
   function resetCompass(){
     compassActive = false;
     compassStep = 'idle';
     svg.removeEventListener('pointermove', onCompassMove);
-    svg.style.cursor = '';
     circumCircle.style.strokeDasharray='';
     circumCircle.style.opacity='';
+    compassTool.style.display='none';
+    stopOHint();
   }
   svg.addEventListener('pointerdown', function(evt){
     if(!compassActive || currentPage !== 1 || !_geom) return;
@@ -908,6 +981,7 @@
       const d = Math.hypot(p.x-O.x, p.y-O.y);
       if(d <= COMPASS_GRAB){
         compassStep = 'sizing';
+        stopOHint();
         svg.addEventListener('pointermove', onCompassMove);
         circumCircle.style.display = 'block';
         circumCircle.style.strokeDasharray = '5 4';
@@ -915,6 +989,8 @@
         circumCircle.setAttribute('cx', O.x);
         circumCircle.setAttribute('cy', O.y);
         circumCircle.setAttribute('r', d);
+        compassTool.style.display = 'block';
+        updateCompassGraphic(O, p);
         fb.className = 'feedback warn';
         fb.textContent = '📏 컴퍼스를 고정했어요! 이제 마우스(손가락)를 움직여 원의 크기를 세 꼭짓점에 맞춰보세요.';
       }else{
@@ -927,7 +1003,7 @@
       if(Math.abs(d-R) <= COMPASS_TOL){
         compassStep = 'done';
         svg.removeEventListener('pointermove', onCompassMove);
-        svg.style.cursor = '';
+        compassTool.style.display = 'none';
         circumCircle.style.strokeDasharray = '';
         circumCircle.style.opacity = '';
         circumCircle.setAttribute('r', R);
@@ -935,7 +1011,7 @@
         render();
         fb.className = 'feedback success';
         fb.textContent = '✅ 점 O를 중심으로 한 원이 세 꼭짓점 A, B, C를 모두 정확히 지나요! OA=OB=OC 이기 때문이에요.';
-        document.getElementById('block5').classList.add('show');
+        document.getElementById('block4Choice').classList.add('show');
       }else{
         fb.className = 'feedback warn';
         fb.textContent = d < R ? '🔎 아직 작아요. 조금 더 크게 조절해보세요.' : '🔎 너무 커요. 조금 더 작게 조절해보세요.';
