@@ -91,10 +91,12 @@
   .msg.ok{color:var(--mint-ink);}
   .admin-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);}
   .admin-item input{width:18px;height:18px;}
-  .admin-group-title{font-family:var(--disp);font-size:16px;margin:18px 0 6px;color:var(--lav-ink);}
-  .chk-col{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--ink-dim);cursor:pointer;}
+  .admin-group-title{display:inline-block;font-family:var(--disp);font-size:20px;padding:4px 14px;margin:26px 0 4px;background:var(--lav);color:var(--lav-ink);border-radius:12px;}
+  .admin-hint{color:var(--ink-dim);font-size:13px;margin:0 0 12px;}
+  .admin-notice-label{font-family:var(--disp);font-size:19px;color:var(--coral-ink);margin-bottom:8px;display:block;font-weight:400;}
+  .chk-col{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--ink-dim);cursor:pointer;flex-shrink:0;white-space:nowrap;}
   .admin-cols-label{display:flex;gap:10px;padding:0 4px 6px;font-size:11px;color:var(--ink-dim);}
-  .admin-cols-label span{width:34px;text-align:center;}
+  .admin-cols-label span{min-width:34px;text-align:center;white-space:nowrap;}
   .class-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
   .class-tab{font-family:var(--sans);font-size:13px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--ink-dim);cursor:pointer;}
   .class-tab.active{background:var(--lav);border-color:var(--lav-dark);color:var(--lav-ink);}
@@ -202,14 +204,19 @@
 
     <div class="admin-split">
       <div class="admin-split-left">
-        <div class="field"><label>이 반 공지 (오늘의 학습 박스에 표시돼요)</label><input id="admin-notice" type="text" placeholder="예: 내일까지 3번 문제 풀어오세요!"></div>
+        <div class="field">
+          <label class="admin-notice-label">💬 이 반 공지</label>
+          <p class="admin-hint">오늘의 학습 박스 아래에 그대로 표시돼요</p>
+          <input id="admin-notice" type="text" placeholder="예: 내일까지 3번 문제 풀어오세요!">
+        </div>
         <div class="admin-cols-label"><span>🔓 열기</span><span>⭐ 오늘</span><span></span></div>
         <div id="admin-list"></div>
         <button class="btn mint" onclick="saveToday()" style="margin-top:16px;">이 반에 저장</button>
         <p class="msg" id="admin-msg"></p>
       </div>
       <div class="admin-split-right">
-        <div class="admin-group-title" style="margin-top:0;">👀 학생 화면 미리보기 (체크만 해도 바로 반영, 저장 안 해도 확인 가능)</div>
+        <div class="admin-group-title" style="margin-top:0;">👀 학생 화면 미리보기</div>
+        <p class="admin-hint">체크만 해도 바로 반영, 저장 안 해도 확인 가능해요</p>
         <div class="preview-frame">
           <div class="today-box">
             <span class="today-label">📌 오늘의 학습</span>
@@ -221,7 +228,8 @@
       </div>
     </div>
 
-    <div class="admin-group-title" style="margin-top:28px;">학생 기록 관리 (테스트로 접속한 기록 삭제 등)</div>
+    <div class="admin-group-title">🧹 학생 기록 관리</div>
+    <p class="admin-hint">테스트로 접속한 기록 삭제 등</p>
     <div id="admin-students"></div>
   </section>
 
