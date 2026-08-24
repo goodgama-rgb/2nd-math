@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼각형의 외심 — ∠A와 ∠BOC의 관계</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --teal:#0d9488;--teal-l:#ccfbf1;--teal-ll:#f0fdfa;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --yellow-l:#fef9c3;--yellow:#854d0e;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--teal-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+
+.hdr{background:var(--teal);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-badge{background:rgba(255,255,255,.2);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:.06em}
+.hdr-title{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.timer{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.timer.warn{color:#f97316}
+.timer.danger{color:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.name-wrap{display:flex;gap:6px;align-items:center}
+.name-wrap label{font-size:12px;opacity:.7}
+.name-wrap input{border:none;border-radius:6px;padding:5px 9px;font-size:13px;width:90px;color:var(--ink);background:rgba(255,255,255,.9)}
+
+.streak-bar{background:var(--teal-ll);border-bottom:1px solid #ccfbf1;padding:8px 24px}
+.streak-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.streak-label{font-size:12px;color:var(--ink2);font-weight:600}
+.streak-dots{display:flex;gap:6px}
+.sdot{width:14px;height:14px;border-radius:50%;background:#a7f3ea;transition:all .3s}
+.sdot.hit{background:var(--green)}
+
+.main{max-width:720px;margin:0 auto;padding:24px 16px}
+
+.level-screen{text-align:center;padding:40px 20px}
+.level-screen h2{font-size:24px;font-weight:700;margin-bottom:8px}
+.level-screen p{font-size:14px;color:var(--ink2);line-height:1.7;margin-bottom:32px}
+.level-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:480px;margin:0 auto}
+.level-card{background:#fff;border:2px solid #ccfbf1;border-radius:var(--r);padding:24px 20px;cursor:pointer;transition:all .2s;text-align:left}
+.level-card:hover{border-color:var(--teal);box-shadow:var(--shadow)}
+.lc-icon{font-size:32px;margin-bottom:10px}
+.lc-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.lc-desc{font-size:13px;color:var(--ink2);line-height:1.6}
+.lc-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:8px;font-weight:600}
+.tag1{background:#dbeafe;color:#1d4ed8}
+.tag2{background:#fde8d8;color:#b45309}
+
+.concept{background:var(--teal-ll);border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink);line-height:1.8}
+.concept strong{color:var(--teal)}
+
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #ccfbf1;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.qtop{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.qnum{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--teal-l);color:var(--teal)}
+.qtype{font-size:10px;padding:2px 7px;border-radius:20px;background:#f0f0f8;color:var(--ink3)}
+.qtext{font-size:15px;font-weight:600;line-height:1.7;margin-bottom:4px}
+.qdesc{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:14px}
+.formula{background:#fff8f0;border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:9px 14px;margin-bottom:14px;font-size:13px;color:var(--ink);line-height:1.7}
+.formula strong{color:var(--orange)}
+
+.hint-box{margin-bottom:14px}
+.hint-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px dashed #99f0e6;color:var(--teal);font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit}
+.hint-toggle-btn:hover{background:var(--teal-ll);border-color:var(--teal)}
+.hint-used-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink3);font-weight:600}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-card{background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px 22px;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+.modal-card p{font-size:14px;line-height:1.8;color:var(--ink);margin-bottom:20px}
+.modal-btns{display:flex;gap:10px}
+.modal-btn{flex:1;padding:11px 10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid transparent}
+.modal-btn-no{background:var(--ink);color:#fff}
+.modal-btn-no:hover{background:#111122}
+.modal-btn-yes{background:#fff;border-color:#e0e0ee;color:var(--ink2)}
+.modal-btn-yes:hover{background:#f4f4f8}
+
+.fig-wrap{display:flex;justify-content:center;margin-bottom:14px}
+.fig-stack{position:relative;width:100%;margin:0 auto;aspect-ratio:450/450;max-width:450px}
+.fig-stack canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.fig-draw{touch-action:none}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.tool-btn{padding:8px 14px;border-radius:8px;border:1.5px solid #cdeee9;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink2);font-family:inherit}
+.tool-btn:hover{background:var(--teal-ll)}
+.tool-btn.active{background:var(--teal-ll);border-color:var(--teal);color:var(--teal)}
+.tool-btn.clear-btn{margin-left:auto;color:var(--ink3)}
+.color-swatches{display:flex;gap:6px;align-items:center;padding:0 8px;border-left:1.5px solid #d7f3ee;border-right:1.5px solid #d7f3ee}
+.color-btn{width:24px;height:24px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;box-shadow:0 0 0 1.5px #cdeee9}
+.color-btn.active{box-shadow:0 0 0 2px var(--ink)}
+.scratch-wrap{margin-bottom:14px}
+.scratch-label{font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:6px}
+.scratch-canvas{width:100%;max-width:600px;height:150px;border:1.5px dashed #cdeee9;border-radius:8px;background:#fffef9;display:block;touch-action:none}
+
+.input-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.eq-prefix{font-size:16px;font-weight:700;color:var(--teal)}
+.eq-input{border:1.5px solid #d0d0e0;border-radius:8px;padding:9px 12px;font-size:16px;font-weight:600;width:90px;text-align:center;color:var(--ink);font-family:inherit}
+.eq-input:focus{outline:none;border-color:var(--teal)}
+.eq-suffix{font-size:16px;font-weight:700;color:var(--ink)}
+.submit-btn{padding:10px 24px;border-radius:8px;background:var(--teal);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.submit-btn:hover{background:#0f766e}
+
+.fb{border-radius:8px;padding:12px 16px;margin-top:12px;font-size:14px;line-height:1.7;display:none}
+.fb.show{display:block}
+.fb-correct{background:var(--green-ll);border-left:3px solid var(--green);color:#14532d}
+.fb-wrong{background:var(--orange-l);border-left:3px solid var(--orange);color:#7c2d12}
+.fb-hint{background:var(--yellow-l);border-left:3px solid #ca8a04;color:var(--yellow)}
+.fb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.em{font-weight:700;color:var(--teal)}
+
+.next-btn{padding:10px 24px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;display:none;font-family:inherit;margin-top:6px}
+.next-btn:hover{background:#15803d}
+.next-btn.show{display:inline-block}
+
+.complete-wrap{text-align:center;padding:48px 20px}
+.complete-icon{font-size:56px;margin-bottom:16px}
+.complete-wrap h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.complete-wrap p{font-size:14px;color:var(--ink2);line-height:1.8}
+.score-box{display:inline-block;background:var(--green-l);border:2px solid var(--green);border-radius:12px;padding:16px 32px;margin:18px 0}
+.sc-num{font-size:42px;font-weight:700;color:var(--green)}
+.sc-label{font-size:13px;color:var(--green)}
+.restart-btn{padding:11px 28px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+
+.screen{display:none}
+.screen.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;">← 학습 선택 목록으로 돌아가기</a>
+  <script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+  <span class="hdr-badge">수학</span>
+  <span class="hdr-title">삼각형의 외심 — ∠A와 ∠BOC의 관계</span>
+  <div class="hdr-right">
+    <div class="timer" id="timerEl">10:00</div>
+    <div class="name-wrap"><label>이름</label><input id="sname" type="text" placeholder="이름 입력"></div>
+  </div>
+</div>
+
+<div class="streak-bar" id="streakBar" style="display:none">
+  <div class="streak-inner">
+    <span class="streak-label">연속 정답 (오답 없이)</span>
+    <div class="streak-dots"><span class="sdot" id="sd0"></span><span class="sdot" id="sd1"></span></div>
+    <span style="font-size:12px;color:var(--ink2)" id="streakMsg">오답 없이 2문제 연속 → 완료!</span>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="main screen active" id="scLevel">
+  <div class="level-screen">
+    <h2>나의 레벨을 선택하세요</h2>
+    <p>점 O가 △ABC의 외심일 때, ∠x의 크기를 구하는 연습이에요.<br>2문제 연속 정답이면 완료!</p>
+    <div class="level-cards">
+      <div class="level-card" onclick="startLevel(1)">
+        <div class="lc-icon">🌱</div>
+        <div class="lc-title">레벨 1</div>
+        <div class="lc-desc">교과서 문제와 같은 유형.<br>숫자만 달라지는 문제를 풀어봐요.</div>
+        <span class="lc-tag tag1">기본</span>
+      </div>
+      <div class="level-card" onclick="startLevel(2)">
+        <div class="lc-icon">🔥</div>
+        <div class="lc-title">레벨 2</div>
+        <div class="lc-desc">주어지는 각과 구하는 각의<br>위치가 바뀌어요!</div>
+        <span class="lc-tag tag2">심화</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE A -->
+<div class="main screen" id="scA">
+  <div class="concept">
+    <strong>외심의 성질:</strong> 외심 O에서 세 꼭짓점까지의 거리는 같아요(OA=OB=OC). 이 성질을 이용하면
+    ∠BOC의 크기는 항상 ∠A의 크기의 <strong>2배</strong>가 된다는 걸 알 수 있어요! 즉 ∠BOC = 2 × ∠A
+  </div>
+  <div class="qcard" id="qA">
+    <div class="qtop"><span class="qnum" id="qAnumBadge">Q1</span><span class="qtype" id="qAtype">∠A 구하기</span></div>
+    <div class="qtext">다음 그림에서 점 O가 △ABC의 외심일 때, ∠x의 크기를 구하시오.</div>
+    <div class="qdesc" id="qAdesc"></div>
+    <div class="hint-box">
+      <button class="hint-toggle-btn" id="hintBtnA" onclick="requestHint('A')">💡 힌트 보기</button>
+      <span class="hint-used-tag" id="hintTagA" style="display:none">💡 힌트를 열람했어요</span>
+      <div class="formula" id="qAformula" style="display:none"></div>
+    </div>
+    <div class="fig-wrap">
+      <div class="fig-stack">
+        <canvas id="figA" class="fig" width="450" height="450"></canvas>
+        <canvas id="figA_draw" class="fig-draw" width="450" height="450"></canvas>
+      </div>
+    </div>
+    <div class="draw-toolbar" id="toolbarA">
+      <button class="tool-btn active" data-tool="pen">✏️ 펜</button>
+      <button class="tool-btn" data-tool="eraser">🧹 지우개</button>
+      <span class="color-swatches">
+        <button class="color-btn active" data-color="#1a1a2e" style="background:#1a1a2e" title="검정"></button>
+        <button class="color-btn" data-color="#dc2626" style="background:#dc2626" title="빨강"></button>
+        <button class="color-btn" data-color="#2563eb" style="background:#2563eb" title="파랑"></button>
+        <button class="color-btn" data-color="#ca8a04" style="background:#ca8a04" title="노랑"></button>
+        <button class="color-btn" data-color="#16a34a" style="background:#16a34a" title="초록"></button>
+      </span>
+      <button class="tool-btn undo-btn">↩️ 되돌리기</button>
+      <button class="tool-btn clear-btn">🗑️ 전체 지우기</button>
+    </div>
+    <div class="scratch-wrap">
+      <div class="scratch-label">📝 계산 메모장 (자유롭게 풀이를 써보세요)</div>
+      <canvas id="scratchA" class="scratch-canvas"></canvas>
+    </div>
+    <div class="input-row">
+      <span class="eq-prefix">∠x =</span>
+      <input type="number" class="eq-input" id="aVal" placeholder="?" onkeydown="if(event.key==='Enter')checkA()">
+      <span class="eq-suffix">°</span>
+      <button class="submit-btn" onclick="checkA()">확인</button>
+    </div>
+    <div class="fb fb-wrong" id="fwA"><div class="fb-label">틀렸어요</div><span id="fwAtxt"></span></div>
+    <div class="fb fb-hint" id="fhA"><div class="fb-label">힌트</div><span id="fhAtxt"></span></div>
+    <div class="fb fb-correct" id="fcA"><div class="fb-label">정답!</div><span id="fcAtxt"></span></div>
+    <div style="margin-top:8px"><button class="next-btn" id="nbA" onclick="nextA()">다음 문제 →</button></div>
+  </div>
+</div>
+
+<!-- 힌트 열람 확인 모달 -->
+<div class="modal-overlay" id="hintModal">
+  <div class="modal-card">
+    <p>한 번 더 생각해보세요. 스스로 문제를 풀었을 때 더 학습 효과가 좋습니다.<br><br>
+    또한, 힌트를 열람하면 이 문제는 정답을 맞춰도 <strong>'연속 2문제 정답'</strong>에 해당하지 않습니다.<br><br>
+    그래도 힌트를 열람하시겠습니까?</p>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-no" onclick="closeHintModal(false)">아니오, 다시 풀어볼게요</button>
+      <button class="modal-btn modal-btn-yes" onclick="closeHintModal(true)">예, 힌트 볼게요</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div class="main screen" id="scComplete">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">🎉</div>
+      <h2>모든 문제 통과!</h2>
+      <div class="score-box">
+        <div class="sc-num" id="finalCorrect">0</div>
+        <div class="sc-label">/ <span id="finalTotal">0</span> 문제 정답</div>
+      </div>
+      <p id="completeMsg"></p><br>
+      <button class="restart-btn" onclick="restart()">처음부터 다시 하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMEOUT -->
+<div class="main screen" id="scTimeout">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">⏰</div>
+      <h2 style="color:var(--red)">시간이 끝났어요!</h2>
+      <div class="score-box"><div class="sc-num" id="toCorrect">0</div><div class="sc-label">문제 정답</div></div>
+      <button class="restart-btn" onclick="restart()">다시 도전하기</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id') };
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._reportQuizComplete = function(){
+    if(!s.cls || !s.num || !s.id) return;
+    firebase.firestore().collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('quiz complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   문제 데이터
+   원주각(∠A)과 중심각(∠BOC)의 관계: ∠BOC = 2×∠A (A가 O와 같은 쪽 큰 호 위에 있을 때 항상 성립)
+   레벨1(giveBOC): ∠BOC 제시 → x=∠A
+   레벨2(giveA): ∠A 제시 → x=∠BOC
+════════════════════════════════ */
+const BOC_LIST=[60,70,80,90,100,110,120,130];
+const A_LIST=[20,22,25,28,30,32,35,38];
+const poolA1=BOC_LIST.map(theta=>({kind:'giveBOC', boc:theta, a:theta/2, x:theta/2}));
+const poolA2=A_LIST.map(aVal=>({kind:'giveA', boc:2*aVal, a:aVal, x:2*aVal}));
+
+const kindDescA={
+  giveBOC: p=>`∠BOC=<span class="em">${p.boc}°</span>일 때, ∠x(=∠A)의 크기를 구하시오.`,
+  giveA: p=>`∠A=<span class="em">${p.a}°</span>일 때, ∠x(=∠BOC)의 크기를 구하시오.`
+};
+const formulaA={
+  giveBOC:'<strong>힌트:</strong> 점 O와 점 A를 연결해서 선분 OA를 그려보세요. 그리고 ∠BAO를 o(동그라미 기호), ∠CAO를 △(세모 기호)로 나타내 보세요.',
+  giveA:'<strong>힌트:</strong> 점 O와 점 A를 연결해서 선분 OA를 그려보세요. 그리고 ∠BAO를 o(동그라미 기호), ∠CAO를 △(세모 기호)로 나타내 보세요.'
+};
+
+/* ════════════════════════════════
+   상태
+════════════════════════════════ */
+const st={
+  level:1, streak:0, hadWrong:false, hintUsed:false,
+  totalCorrect:0, totalQ:0,
+  usedIdx:{A:[]}, curP:null, phaseAttempts:0,
+  timerSec:600, timerInt:null
+};
+let hintModalPhase=null;
+function isNear(a,b,t=0.4){return Math.abs(a-b)<t;}
+function isBlocked(){ return st.hadWrong || st.hintUsed; }
+function blockNote(){
+  if(!isBlocked()) return '';
+  if(st.hadWrong && st.hintUsed) return '<br><span style="font-size:12px;color:#888">※ 오답 및 힌트 열람 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  if(st.hadWrong) return '<br><span style="font-size:12px;color:#888">※ 오답 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  return '<br><span style="font-size:12px;color:#888">※ 힌트를 열람해 연속 정답에 포함되지 않아요</span>';
+}
+function requestHint(phase){
+  hintModalPhase=phase;
+  document.getElementById('hintModal').classList.add('show');
+}
+function closeHintModal(confirmed){
+  document.getElementById('hintModal').classList.remove('show');
+  const phase=hintModalPhase;
+  hintModalPhase=null;
+  if(confirmed && phase){
+    st.hintUsed=true;
+    document.getElementById('q'+phase+'formula').style.display='block';
+    document.getElementById('hintBtn'+phase).style.display='none';
+    document.getElementById('hintTag'+phase).style.display='inline-flex';
+    updateStreak();
+  }
+}
+function pick(pool, used){
+  if(used.length>=pool.length) used.length=0;
+  let idx;
+  do{idx=Math.floor(Math.random()*pool.length);}while(used.includes(idx));
+  used.push(idx); return pool[idx];
+}
+
+/* ════════════════════════════════
+   타이머 / 화면 전환
+════════════════════════════════ */
+function startTimer(){
+  st.timerInt=setInterval(()=>{
+    st.timerSec--;
+    const m=Math.floor(st.timerSec/60), s=st.timerSec%60;
+    const el=document.getElementById('timerEl');
+    el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    el.className='timer'+(st.timerSec<=60?' danger':st.timerSec<=180?' warn':'');
+    if(st.timerSec<=0){
+      clearInterval(st.timerInt);
+      document.getElementById('toCorrect').textContent=st.totalCorrect;
+      showScreen('scTimeout');
+    }
+  },1000);
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function restart(){clearInterval(st.timerInt);location.reload();}
+
+function updateStreak(){
+  ['sd0','sd1'].forEach((id,i)=>document.getElementById(id).className='sdot'+(i<st.streak?' hit':''));
+  const msg=document.getElementById('streakMsg');
+  if(st.streak>=2) msg.textContent='통과!';
+  else if(st.hadWrong && st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답+힌트 열람 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hadWrong) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 힌트 열람 — 연속 정답에 미포함</span>';
+  else if(st.streak===1) msg.textContent='1개 완료! 하나 더!';
+  else msg.textContent='오답 없이 2문제 연속 → 완료!';
+}
+function markCorrect(){
+  st.totalCorrect++;
+  if(!isBlocked()) st.streak++; else st.streak=0;
+  updateStreak();
+}
+function markWrong(){ st.hadWrong=true; st.streak=0; updateStreak(); }
+
+function startLevel(lv){
+  st.level=lv;
+  document.getElementById('streakBar').style.display='';
+  startTimer();
+  loadPhaseA();
+}
+
+/* ════════════════════════════════
+   도형 그리기 헬퍼
+════════════════════════════════ */
+function angleArcAt(ctx,v,p1,p2,r,color){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
+  const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1;
+  while(diff<=-Math.PI)diff+=2*Math.PI;
+  while(diff>Math.PI)diff-=2*Math.PI;
+  ctx.strokeStyle=color; ctx.lineWidth=1.7;
+  ctx.beginPath();
+  ctx.arc(v.x,v.y,r,a1,a1+diff,diff<0);
+  ctx.stroke();
+}
+function drawLabel(ctx,x,y,text,color,size,weight){
+  ctx.fillStyle=color;
+  ctx.font=`${weight||700} ${size||13}px 'Noto Sans KR',sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,x,y);
+}
+function outsideLabelPos(pt, centroid, dist){
+  const dx=pt.x-centroid.x, dy=pt.y-centroid.y, len=Math.hypot(dx,dy)||1;
+  return {x:pt.x+dx/len*dist, y:pt.y+dy/len*dist};
+}
+function angleMidPoint(v,p1,p2,r){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x), a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1; while(diff<=-Math.PI)diff+=2*Math.PI; while(diff>Math.PI)diff-=2*Math.PI;
+  const mid=a1+diff/2;
+  return {x:v.x+r*Math.cos(mid), y:v.y+r*Math.sin(mid)};
+}
+function fitPointsToCanvas(pointsObj, canvasW, canvasH, pad){
+  const keys=Object.keys(pointsObj);
+  const xs=keys.map(k=>pointsObj[k].x), ys=keys.map(k=>pointsObj[k].y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const bw=(maxX-minX)||1, bh=(maxY-minY)||1;
+  const availW=canvasW-2*pad, availH=canvasH-2*pad;
+  const scale=Math.min(availW/bw, availH/bh);
+  const offX=pad-minX*scale+(availW-bw*scale)/2;
+  const offY=pad-minY*scale+(availH-bh*scale)/2;
+  const out={};
+  keys.forEach(k=>{ out[k]={x:pointsObj[k].x*scale+offX, y:pointsObj[k].y*scale+offY}; });
+  return out;
+}
+// A가 원의 맨 위(90°)에, B,C가 아래쪽에서 중심각 theta만큼 벌어진 대칭 구성 — A는 항상 큰 호(BC를 포함하지 않는 쪽) 위에 있어 원주각 성질이 그대로 성립
+function computeInscribedPts(theta, R){
+  function pt(deg,r){ const rad=deg*Math.PI/180; return {x:r*Math.cos(rad), y:-r*Math.sin(rad)}; }
+  const A=pt(90,R);
+  const B=pt(270-theta/2,R);
+  const C=pt(270+theta/2,R);
+  const O={x:0,y:0};
+  return {A,B,C,O};
+}
+
+function renderFigureA(canvas, p){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-300)/2,(canvas.height-300)/2);
+  const raw=computeInscribedPts(p.boc, 8);
+  const F=fitPointsToCanvas(raw, 300, 300, 56);
+  const {A,B,C,O}=F;
+
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.closePath(); ctx.stroke();
+
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.4;
+  [B,C].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(O.x,O.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+
+  const centroid={x:(A.x+B.x+C.x)/3,y:(A.y+B.y+C.y)/3};
+  const lblA=outsideLabelPos(A,centroid,18), lblB=outsideLabelPos(B,centroid,18), lblC=outsideLabelPos(C,centroid,18);
+  drawLabel(ctx,lblA.x,lblA.y,'A','#333',14);
+  drawLabel(ctx,lblB.x,lblB.y,'B','#333',14);
+  drawLabel(ctx,lblC.x,lblC.y,'C','#333',14);
+  drawLabel(ctx,O.x,O.y-13,'O','#333',12);
+  ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(O.x,O.y,2.4,0,Math.PI*2); ctx.fill();
+
+  if(p.kind==='giveBOC'){
+    angleArcAt(ctx,O,B,C,20,'#666');
+    const oLbl=angleMidPoint(O,B,C,36); drawLabel(ctx,oLbl.x,oLbl.y,`${p.boc}°`,'#333',12);
+    angleArcAt(ctx,A,B,C,18,'#0d9488');
+    const aLbl=angleMidPoint(A,B,C,32); drawLabel(ctx,aLbl.x,aLbl.y,'x','#0d9488',15);
+  } else {
+    angleArcAt(ctx,A,B,C,18,'#666');
+    const aLbl=angleMidPoint(A,B,C,32); drawLabel(ctx,aLbl.x,aLbl.y,`${p.a}°`,'#333',12);
+    angleArcAt(ctx,O,B,C,20,'#0d9488');
+    const oLbl=angleMidPoint(O,B,C,36); drawLabel(ctx,oLbl.x,oLbl.y,'x','#0d9488',15);
+  }
+  ctx.restore();
+}
+
+/* ════════════════════════════════
+   피드백 헬퍼
+════════════════════════════════ */
+function setFb(phase,type,msg){
+  hideFb(phase);
+  const map={wrong:`fw${phase}`,hint:`fh${phase}`,correct:`fc${phase}`};
+  const el=document.getElementById(map[type]);
+  if(el){const sp=el.querySelector('span'); if(sp)sp.innerHTML=msg; el.classList.add('show');}
+}
+function hideFb(phase){[`fw${phase}`,`fh${phase}`,`fc${phase}`].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('show');});}
+
+function wrongMsgA(p){
+  if(p.kind==='giveBOC') return `∠A는 ∠BOC의 절반이에요. x=${p.boc}°÷2를 계산해봐요.`;
+  return `∠BOC는 ∠A의 2배예요. x=${p.a}°×2를 계산해봐요.`;
+}
+function hintMsgA(p){
+  if(p.kind==='giveBOC') return `힌트: x=∠BOC÷2=${p.boc}°÷2=${p.x}°`;
+  return `힌트: x=∠A×2=${p.a}°×2=${p.x}°`;
+}
+function correctMsgA(p){
+  if(p.kind==='giveBOC') return `정답! x=${p.boc}°÷2=<span class="em">${p.x}°</span>`;
+  return `정답! x=${p.a}°×2=<span class="em">${p.x}°</span>`;
+}
+
+/* ════════════════════════════════
+   문제 진행
+════════════════════════════════ */
+function loadPhaseA(){
+  st.streak=0; st.hadWrong=false; st.hintUsed=false;
+  updateStreak();
+  showScreen('scA');
+  ensureDrawCanvas(figADraw); ensureDrawCanvas(scratchA);
+  nextA_prob();
+}
+function nextA_prob(){
+  const pool=st.level===1?poolA1:poolA2;
+  st.curP=pick(pool, st.usedIdx.A);
+  st.totalQ++; st.phaseAttempts=0; st.hadWrong=false; st.hintUsed=false;
+  const p=st.curP;
+  document.getElementById('qAnumBadge').textContent='Q'+st.totalQ;
+  document.getElementById('qAtype').textContent=p.kind==='giveBOC'?'∠A 구하기':'∠BOC 구하기';
+  document.getElementById('qAdesc').innerHTML=kindDescA[p.kind](p);
+  document.getElementById('qAformula').innerHTML=formulaA[p.kind];
+  document.getElementById('qAformula').style.display='none';
+  document.getElementById('hintBtnA').style.display='';
+  document.getElementById('hintTagA').style.display='none';
+  document.getElementById('aVal').value='';
+  renderFigureA(document.getElementById('figA'), p);
+  clearDrawCanvas(figADraw); clearDrawCanvas(scratchA);
+  hideFb('A'); document.getElementById('nbA').classList.remove('show');
+}
+function checkA(){
+  const p=st.curP;
+  const v=parseFloat(document.getElementById('aVal').value);
+  if(isNaN(v)){alert('숫자를 입력해주세요!');return;}
+  st.phaseAttempts++;
+  if(isNear(v,p.x)){
+    markCorrect();
+    setFb('A','correct',correctMsgA(p)+blockNote());
+    document.getElementById('nbA').classList.add('show');
+  } else {
+    markWrong();
+    setFb('A', st.phaseAttempts===1?'wrong':'hint', st.phaseAttempts===1?wrongMsgA(p):hintMsgA(p));
+    document.getElementById('aVal').value='';
+    document.getElementById('aVal').focus();
+  }
+}
+function nextA(){ if(st.streak>=2){ complete(); return; } nextA_prob(); }
+
+/* ════════════════════════════════
+   완료
+════════════════════════════════ */
+function complete(){
+  clearInterval(st.timerInt);
+  document.getElementById('finalCorrect').textContent=st.totalCorrect;
+  document.getElementById('finalTotal').textContent=st.totalQ;
+  const pct=Math.round(st.totalCorrect/st.totalQ*100);
+  document.getElementById('completeMsg').innerHTML=`정답률 <strong>${pct}%</strong>!<br>`+
+    (pct>=80?'훌륭해요! ∠A와 ∠BOC 사이의 관계를 완벽하게 이해했어요 🌟':
+     pct>=60?'잘 했어요! 조금만 더 연습하면 완벽해질 거예요 💪':
+     '다시 한 번 도전해봐요. 반복하면 꼭 잘 할 수 있어요! 🔥');
+  showScreen('scComplete');
+  if(window._reportQuizComplete) window._reportQuizComplete();
+}
+
+/* ════════════════════════════════
+   필기(펜/지우개) — 도형 위 겹쳐그리기 + 계산 메모장
+   Pointer Events로 마우스/터치/펜을 동일하게 처리
+════════════════════════════════ */
+function svgCursor(svgStr, hx, hy){
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svgStr)}") ${hx} ${hy}, auto`;
+}
+function penCursorSVG(color){
+  return `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><rect x='10' y='2' width='6' height='14' rx='1' fill='#ffffff' stroke='#333' stroke-width='1.5'/><polygon points='10,16 16,16 13,23' fill='${color}' stroke='#333' stroke-width='1'/><rect x='10' y='2' width='6' height='3' fill='${color}'/></svg>`;
+}
+const ERASER_CURSOR_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><circle cx='13' cy='13' r='10' fill='rgba(255,255,255,0.4)' stroke='#333' stroke-width='1.5'/></svg>`;
+function updateCursor(canvas){
+  canvas.style.cursor = canvas._tool==='eraser'
+    ? svgCursor(ERASER_CURSOR_SVG, 13, 13)
+    : svgCursor(penCursorSVG(canvas._color||'#1a1a2e'), 13, 23);
+}
+function setupDrawCanvas(canvas){
+  const rect=canvas.getBoundingClientRect();
+  const cssW=rect.width||canvas.width, cssH=rect.height||canvas.height;
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(cssW*dpr);
+  canvas.height=Math.round(cssH*dpr);
+  canvas.style.width=cssW+'px';
+  canvas.style.height=cssH+'px';
+  canvas._cssW=cssW; canvas._cssH=cssH;
+  canvas._tool='pen';
+  canvas._color='#1a1a2e';
+  canvas._undoStack=[];
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  updateCursor(canvas);
+  let drawing=false,lastX=0,lastY=0;
+  function pos(e){
+    const r=canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left, y:e.clientY-r.top};
+  }
+  function down(e){
+    drawing=true;
+    const p=pos(e); lastX=p.x; lastY=p.y;
+    if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
+    canvas._undoStack.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+    if(canvas._undoStack.length>15) canvas._undoStack.shift();
+    e.preventDefault();
+  }
+  function movef(e){
+    if(!drawing)return;
+    const p=pos(e);
+    if(canvas._tool==='eraser'){
+      ctx.globalCompositeOperation='destination-out';
+      ctx.lineWidth=22;
+    } else {
+      ctx.globalCompositeOperation='source-over';
+      ctx.strokeStyle=canvas._color;
+      ctx.lineWidth=2.6;
+    }
+    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
+    lastX=p.x; lastY=p.y;
+    e.preventDefault();
+  }
+  function up(){ drawing=false; }
+  canvas.addEventListener('pointerdown',down);
+  canvas.addEventListener('pointermove',movef);
+  canvas.addEventListener('pointerup',up);
+  canvas.addEventListener('pointerleave',up);
+  canvas.addEventListener('pointercancel',up);
+}
+function clearDrawCanvas(canvas){
+  canvas.getContext('2d').clearRect(0,0,canvas._cssW,canvas._cssH);
+  canvas._undoStack=[];
+}
+function undoDraw(canvas){
+  if(!canvas._undoStack || !canvas._undoStack.length) return;
+  canvas.getContext('2d').putImageData(canvas._undoStack.pop(),0,0);
+}
+function ensureDrawCanvas(canvas){
+  if(canvas.dataset.ready)return;
+  canvas.dataset.ready='1';
+  setupDrawCanvas(canvas);
+}
+function initDrawToolbar(toolbar, canvases){
+  toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(btn=>{
+    btn.onclick=()=>{
+      toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      canvases.forEach(c=>{c._tool=btn.dataset.tool; updateCursor(c);});
+    };
+  });
+  toolbar.querySelectorAll('.color-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      toolbar.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      toolbar.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+      toolbar.querySelector('.tool-btn[data-tool="pen"]').classList.add('active');
+      canvases.forEach(c=>{c._color=btn.dataset.color; c._tool='pen'; updateCursor(c);});
+    };
+  });
+  const undoBtn=toolbar.querySelector('.undo-btn');
+  if(undoBtn) undoBtn.onclick=()=>canvases.forEach(undoDraw);
+  const clearBtn=toolbar.querySelector('.clear-btn');
+  if(clearBtn) clearBtn.onclick=()=>canvases.forEach(clearDrawCanvas);
+}
+
+const figADraw=document.getElementById('figA_draw'), scratchA=document.getElementById('scratchA');
+initDrawToolbar(document.getElementById('toolbarA'), [figADraw,scratchA]);
+</script>
+</body>
+</html>
