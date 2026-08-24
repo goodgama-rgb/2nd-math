@@ -321,7 +321,7 @@
       </svg>
     </div>
 
-    <div class="shape-badge badge-acute" id="shapeBadge">현재: 예각삼각형 → 외심이 삼각형 내부에 있어요</div>
+    <div class="shape-badge badge-acute" id="shapeBadge">현재: 예각삼각형 → 외심은 어디있을까요?</div>
 
     <div class="legend">
       <span><i class="dot" style="background:#7c5cff"></i> 수직이등분선</span>
@@ -673,11 +673,11 @@
 
     const c = classify();
     const info = {
-      acute:{label:'예각삼각형', pos:'삼각형 내부', cls:'badge-acute'},
-      right:{label:'직각삼각형', pos:'빗변의 중점', cls:'badge-right'},
-      obtuse:{label:'둔각삼각형', pos:'삼각형 외부', cls:'badge-obtuse'}
+      acute:{label:'예각삼각형', cls:'badge-acute'},
+      right:{label:'직각삼각형', cls:'badge-right'},
+      obtuse:{label:'둔각삼각형', cls:'badge-obtuse'}
     }[c];
-    shapeBadge.textContent = `현재: ${info.label} → 외심이 ${info.pos}에 있어요`;
+    shapeBadge.textContent = `현재: ${info.label} → 외심은 어디있을까요?`;
     shapeBadge.className = 'shape-badge ' + info.cls;
     return c;
   }
