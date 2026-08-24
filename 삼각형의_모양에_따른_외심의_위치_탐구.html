@@ -49,11 +49,23 @@
   .tri-abc{ fill:#dbe4ff; stroke:#4a5568; stroke-width:2.5; }
   .vertex-dot{ fill:#4a5568; cursor:grab; }
   .vertex-dot.grabbing{ cursor:grabbing; }
+  .vertex-dot.locked{ cursor:default; }
   .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; }
-  .crease{ stroke:#7c5cff; stroke-width:2; }
+  .crease{ stroke:#7c5cff; stroke-width:2; display:none; }
   .circum-circle{ fill:none; stroke:#3fbf91; stroke-width:2; opacity:.9; display:none; }
-  .o-dot{ fill:#c0392b; }
-  .o-label{ font-size:16px; font-weight:800; fill:#c0392b; }
+  .compass-leg{ stroke-width:5; stroke-linecap:round; }
+  #compassLegNeedle{ stroke:#6b7280; }
+  #compassLegPencil{ stroke:#8b5e34; }
+  .compass-hinge{ fill:#c0392b; stroke:#fff; stroke-width:1.5; }
+  .compass-tip{ fill:#8b5e34; }
+  @keyframes oPulseRing{ 0%{ r:8; stroke-opacity:.9; } 100%{ r:36; stroke-opacity:0; } }
+  @keyframes oHintBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+  .o-pulse-ring{ fill:none; stroke:#c0392b; stroke-width:3; display:none; pointer-events:none; }
+  .o-pulse-ring.active{ display:block; animation:oPulseRing 1.3s ease-out infinite; }
+  .o-click-hint{ font-size:15px; font-weight:800; fill:#c0392b; text-anchor:middle; display:none; pointer-events:none; }
+  .o-click-hint.active{ display:block; animation:oHintBob 1s ease-in-out infinite; }
+  .o-dot{ fill:#c0392b; display:none; }
+  .o-label{ font-size:16px; font-weight:800; fill:#c0392b; display:none; }
 
   .shape-badge{ margin-top:10px; padding:12px 14px; border-radius:12px; text-align:center; font-size:14.5px; font-weight:700; transition:.2s; }
   .shape-badge.badge-acute{ background:#e7f8f0; color:#1e7a53; border:1.5px solid #b7ead2; }
@@ -63,6 +75,10 @@
   .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
   .legend span{ display:inline-flex; align-items:center; gap:5px; }
   .dot{ width:10px;height:10px;border-radius:3px;display:inline-block; }
+
+  .cp-badge{ width:26px;height:26px;border-radius:50%; background:var(--primary); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; margin-right:8px; }
+  .cp-head{ display:flex; align-items:center; margin:22px 0 4px; font-size:15.5px; font-weight:800; }
+  .cp-head:first-child{ margin-top:0; }
 
   .step-card{ background:var(--card); border-radius:16px; padding:18px 20px 20px; border-left:6px solid var(--primary); box-shadow:0 4px 14px rgba(43,47,66,.05); position:relative; }
   .step-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
@@ -80,13 +96,14 @@
   .feedback.warn{ display:block; background:#fff6e0; color:#9a6b00; border:1px solid #ffe4a3; }
 
   .fillsentence{ background:#f7f8fc; border:1.5px dashed #c9d4fb; border-radius:12px; padding:14px 16px; font-size:15px; line-height:2; margin:10px 0 14px; color:#2b2f42; }
+  .fillsentence select{ border:1.5px solid var(--primary); border-radius:8px; padding:4px 8px; font-size:14.5px; font-weight:700; color:var(--primary-dark); background:#fff; font-family:inherit; margin:0 3px; }
 
   .summary-box{ margin-top:12px; padding:14px 16px; border-radius:12px; background:linear-gradient(135deg,#eef2ff,#fff5f8); border:1.5px dashed #b9c4f5; font-size:13.5px; line-height:1.7; max-height:0; opacity:0; overflow:hidden; transition:.4s ease; }
   .summary-box.show{ max-height:400px; opacity:1; margin-top:12px; }
   .summary-box b{ color:var(--primary-dark); }
 
   .reveal{ max-height:0; opacity:0; overflow:hidden; transition:.45s ease; }
-  .reveal.show{ max-height:1200px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
+  .reveal.show{ max-height:2000px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
 
   .blank{ display:inline-block; width:80px; border:none; border-bottom:2px solid var(--primary); background:transparent; text-align:center; font-weight:700; font-size:14px; font-family:inherit; padding:2px 4px; margin:0 3px; color:var(--primary-dark); }
   .blank:focus{ outline:none; border-bottom-color:var(--primary-dark); background:#eef2ff; }
@@ -271,8 +288,7 @@
   <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
   <div class="card sticky">
     <div class="toolbar">
-      <button class="btn btn-outline" id="btnToggleCircle">⭕ 외접원 보기</button>
-      <button class="btn btn-outline" id="btnResetTri">↺ 처음 모양으로</button>
+      <button class="btn btn-outline" id="btnRestartCP">↺ 이 체크포인트 다시하기</button>
     </div>
 
     <div class="svg-wrap">
@@ -282,14 +298,26 @@
         <line id="creaseAC" class="crease" x1="0" y1="0" x2="0" y2="0"></line>
         <line id="creaseBC" class="crease" x1="0" y1="0" x2="0" y2="0"></line>
         <circle id="circumCircle" class="circum-circle" cx="0" cy="0" r="0"></circle>
+
+        <!-- 컴퍼스 그래픽 -->
+        <g id="compassTool" style="display:none">
+          <line id="compassLegNeedle" class="compass-leg" x1="0" y1="0" x2="0" y2="0"></line>
+          <line id="compassLegPencil" class="compass-leg" x1="0" y1="0" x2="0" y2="0"></line>
+          <circle id="compassHinge" r="6" class="compass-hinge"></circle>
+          <circle id="compassPencilTip" r="3" class="compass-tip"></circle>
+        </g>
+
         <circle id="dotA" r="9" class="vertex-dot"></circle>
         <text id="nameA" class="vertex-name">A</text>
         <circle id="dotB" r="9" class="vertex-dot"></circle>
         <text id="nameB" class="vertex-name">B</text>
         <circle id="dotC" r="9" class="vertex-dot"></circle>
         <text id="nameC" class="vertex-name">C</text>
+        <circle id="oPulseA" class="o-pulse-ring" cx="0" cy="0" r="8"></circle>
+        <circle id="oPulseB" class="o-pulse-ring" cx="0" cy="0" r="8" style="animation-delay:.65s"></circle>
         <circle id="dotO" r="4.5" class="o-dot"></circle>
         <text id="nameO" class="o-label">O</text>
+        <text id="oClickHint" class="o-click-hint">👆 여기를 클릭!</text>
       </svg>
     </div>
 
@@ -311,58 +339,169 @@
       <div class="step-body">
         <div class="goal-banner">
           <span class="tag">🎯 탐구 목표</span>
-          <b>삼각형의 모양(예각·직각·둔각)에 따라 외심의 위치가 어떻게 달라지는지 알아보자.</b>
+          <b>삼각형의 모양(예각·둔각·직각)에 따라 외심의 위치가 어떻게 달라지는지, 매번 직접 작도해서 확인해보자.</b>
         </div>
+        <p class="hint">💡 아래 각 체크포인트에서: ① 삼각형 모양 만들기 → ② 세 변의 수직이등분선을 그려 외심 찾기 → ③ 컴퍼스로 외접원 그리기 → ④ 결론 내기 순서로 진행해요. 모양을 확정하면 삼각형은 잠기고, 다음 체크포인트로 넘어갈 때 다시 움직일 수 있어요.</p>
 
-        <p>왼쪽 그림에서 삼각형의 <b>꼭짓점 A, B, C를 자유롭게 드래그</b>해서 모양을 바꿔보세요. 세 변의 수직이등분선과 외심 O가 실시간으로 함께 움직여요.</p>
-        <p class="hint">💡 위쪽 배지가 지금 삼각형이 예각·직각·둔각 중 무엇인지, 외심이 어디에 있는지 실시간으로 알려줘요.</p>
-
-        <div class="fillsentence" style="text-align:center;">
-          <b>체크포인트 1</b> — 삼각형을 움직여 <b>예각삼각형</b>을 만들어보세요.<br>
-          <button class="btn btn-check" id="checkAcute" style="margin-top:8px;">확인</button>
-        </div>
-        <div class="feedback" id="fbAcute"></div>
-
-        <div class="reveal" id="blockAcute">
-          <div class="fillsentence">
-            예각삼각형의 외심은 삼각형의 <input type="text" class="blank" id="ans_acute" maxlength="4" autocomplete="off"> 에 있다.
-          </div>
-          <button class="btn btn-check" id="checkAcuteBlank">확인</button>
-          <div class="feedback" id="fbAcuteBlank"></div>
-        </div>
-
-        <div class="reveal" id="blockRight1">
+        <!-- ===================== 체크포인트 1 : 예각삼각형 ===================== -->
+        <div class="cp-head"><span class="cp-badge">1</span>예각삼각형</div>
+        <div id="cpBlock1">
           <div class="fillsentence" style="text-align:center;">
-            <b>체크포인트 2</b> — 이번엔 삼각형을 움직여 <b>직각삼각형</b>을 만들어보세요.<br>
-            <button class="btn btn-check" id="checkRight" style="margin-top:8px;">확인</button>
+            <b>① 삼각형을 움직여 예각삼각형을 만들어보세요.</b><br>
+            <button class="btn btn-check" id="cp1_checkShape" style="margin-top:8px;">확인</button>
           </div>
-          <div class="feedback" id="fbRight"></div>
+          <div class="feedback" id="cp1_fbShape"></div>
+
+          <div class="reveal" id="cp1_block_construct">
+            <p><b>② 외심을 찾아봅시다.</b></p>
+            <div class="fillsentence" style="text-align:center;">
+              <button class="btn btn-check" id="cp1_btnAB">🧭 AB의 수직이등분선 그리기</button>
+            </div>
+            <div class="feedback" id="cp1_fbAB"></div>
+            <div class="reveal" id="cp1_block2">
+              <div class="fillsentence" style="text-align:center;">
+                <button class="btn btn-check" id="cp1_btnCA">🧭 CA의 수직이등분선 그리기</button>
+              </div>
+              <div class="feedback" id="cp1_fbCA"></div>
+            </div>
+            <div class="reveal" id="cp1_block3">
+              <div class="fillsentence" style="text-align:center;">
+                <button class="btn btn-check" id="cp1_btnBC">🧭 BC의 수직이등분선 그리기</button>
+              </div>
+              <div class="feedback" id="cp1_fbBC"></div>
+            </div>
+          </div>
+
+          <div class="reveal" id="cp1_block_circle">
+            <p><b>③ 외접원 그려보기</b> — 왼쪽 그림에서 점 O를 클릭해 컴퍼스를 고정한 뒤, 마우스(손가락)를 움직여 원의 크기를 조절하고, 세 꼭짓점을 모두 지나면 다시 클릭해서 확정해보세요.</p>
+            <div class="feedback" id="cp1_fbCircle"></div>
+          </div>
+
+          <div class="reveal" id="cp1_block_conclude">
+            <p><b>④ 결론 내기</b></p>
+            <div class="fillsentence">
+              예각삼각형의 외심은
+              <select id="cp1_ans">
+                <option value="?">〔 선택 〕</option>
+                <option value="in">삼각형의 내부</option>
+                <option value="out">삼각형의 외부</option>
+                <option value="mid">빗변의 중점</option>
+              </select>
+              에 있다.
+            </div>
+            <button class="btn btn-check" id="cp1_checkAns">확인</button>
+            <div class="feedback" id="cp1_fbAns"></div>
+          </div>
         </div>
 
-        <div class="reveal" id="blockRight2">
-          <div class="fillsentence">
-            직각삼각형의 외심은 <input type="text" class="blank" id="ans_right" maxlength="6" autocomplete="off" style="width:100px"> 이다.
+        <!-- ===================== 체크포인트 2 : 둔각삼각형 ===================== -->
+        <div class="reveal" id="cpBlock2Wrap">
+          <div class="cp-head"><span class="cp-badge">2</span>둔각삼각형</div>
+          <div id="cpBlock2">
+            <div class="fillsentence" style="text-align:center;">
+              <b>① 삼각형을 움직여 둔각삼각형을 만들어보세요.</b><br>
+              <button class="btn btn-check" id="cp2_checkShape" style="margin-top:8px;">확인</button>
+            </div>
+            <div class="feedback" id="cp2_fbShape"></div>
+
+            <div class="reveal" id="cp2_block_construct">
+              <p><b>② 외심을 찾아봅시다.</b></p>
+              <div class="fillsentence" style="text-align:center;">
+                <button class="btn btn-check" id="cp2_btnAB">🧭 AB의 수직이등분선 그리기</button>
+              </div>
+              <div class="feedback" id="cp2_fbAB"></div>
+              <div class="reveal" id="cp2_block2">
+                <div class="fillsentence" style="text-align:center;">
+                  <button class="btn btn-check" id="cp2_btnCA">🧭 CA의 수직이등분선 그리기</button>
+                </div>
+                <div class="feedback" id="cp2_fbCA"></div>
+              </div>
+              <div class="reveal" id="cp2_block3">
+                <div class="fillsentence" style="text-align:center;">
+                  <button class="btn btn-check" id="cp2_btnBC">🧭 BC의 수직이등분선 그리기</button>
+                </div>
+                <div class="feedback" id="cp2_fbBC"></div>
+              </div>
+            </div>
+
+            <div class="reveal" id="cp2_block_circle">
+              <p><b>③ 외접원 그려보기</b> — 점 O를 클릭해 컴퍼스를 고정한 뒤, 원의 크기를 조절해서 세 꼭짓점에 맞춰 확정해보세요.</p>
+              <div class="feedback" id="cp2_fbCircle"></div>
+            </div>
+
+            <div class="reveal" id="cp2_block_conclude">
+              <p><b>④ 결론 내기</b></p>
+              <div class="fillsentence">
+                둔각삼각형의 외심은
+                <select id="cp2_ans">
+                  <option value="?">〔 선택 〕</option>
+                  <option value="in">삼각형의 내부</option>
+                  <option value="out">삼각형의 외부</option>
+                  <option value="mid">빗변의 중점</option>
+                </select>
+                에 있다.
+              </div>
+              <button class="btn btn-check" id="cp2_checkAns">확인</button>
+              <div class="feedback" id="cp2_fbAns"></div>
+            </div>
           </div>
-          <button class="btn btn-check" id="checkRightBlank">확인</button>
-          <div class="feedback" id="fbRightBlank"></div>
         </div>
 
-        <div class="reveal" id="blockObtuse1">
-          <div class="fillsentence" style="text-align:center;">
-            <b>체크포인트 3</b> — 이번엔 삼각형을 움직여 <b>둔각삼각형</b>을 만들어보세요.<br>
-            <button class="btn btn-check" id="checkObtuse" style="margin-top:8px;">확인</button>
+        <!-- ===================== 체크포인트 3 : 직각삼각형 ===================== -->
+        <div class="reveal" id="cpBlock3Wrap">
+          <div class="cp-head"><span class="cp-badge">3</span>직각삼각형</div>
+          <div id="cpBlock3">
+            <div class="fillsentence" style="text-align:center;">
+              <b>① 꼭짓점 A를 움직여 직각삼각형을 만들어보세요.</b><br>
+              <span class="hint">💡 ∠A가 90° 근처에 가까워지면 자동으로 딱 맞춰져요.</span><br>
+              <button class="btn btn-check" id="cp3_checkShape" style="margin-top:8px;">확인</button>
+            </div>
+            <div class="feedback" id="cp3_fbShape"></div>
+
+            <div class="reveal" id="cp3_block_construct">
+              <p><b>② 외심을 찾아봅시다.</b></p>
+              <div class="fillsentence" style="text-align:center;">
+                <button class="btn btn-check" id="cp3_btnAB">🧭 AB의 수직이등분선 그리기</button>
+              </div>
+              <div class="feedback" id="cp3_fbAB"></div>
+              <div class="reveal" id="cp3_block2">
+                <div class="fillsentence" style="text-align:center;">
+                  <button class="btn btn-check" id="cp3_btnCA">🧭 CA의 수직이등분선 그리기</button>
+                </div>
+                <div class="feedback" id="cp3_fbCA"></div>
+              </div>
+              <div class="reveal" id="cp3_block3">
+                <div class="fillsentence" style="text-align:center;">
+                  <button class="btn btn-check" id="cp3_btnBC">🧭 BC의 수직이등분선 그리기</button>
+                </div>
+                <div class="feedback" id="cp3_fbBC"></div>
+              </div>
+            </div>
+
+            <div class="reveal" id="cp3_block_circle">
+              <p><b>③ 외접원 그려보기</b> — 점 O를 클릭해 컴퍼스를 고정한 뒤, 원의 크기를 조절해서 세 꼭짓점에 맞춰 확정해보세요.</p>
+              <div class="feedback" id="cp3_fbCircle"></div>
+            </div>
+
+            <div class="reveal" id="cp3_block_conclude">
+              <p><b>④ 결론 내기</b></p>
+              <div class="fillsentence">
+                직각삼각형의 외심은
+                <select id="cp3_ans">
+                  <option value="?">〔 선택 〕</option>
+                  <option value="in">삼각형의 내부</option>
+                  <option value="out">삼각형의 외부</option>
+                  <option value="mid">빗변의 중점</option>
+                </select>
+                이다.
+              </div>
+              <button class="btn btn-check" id="cp3_checkAns">확인</button>
+              <div class="feedback" id="cp3_fbAns"></div>
+            </div>
           </div>
-          <div class="feedback" id="fbObtuse"></div>
         </div>
 
-        <div class="reveal" id="blockObtuse2">
-          <div class="fillsentence">
-            둔각삼각형의 외심은 삼각형의 <input type="text" class="blank" id="ans_obtuse" maxlength="4" autocomplete="off"> 에 있다.
-          </div>
-          <button class="btn btn-check" id="checkObtuseBlank">확인</button>
-          <div class="feedback" id="fbObtuseBlank"></div>
-        </div>
-
+        <!-- ===================== 최종 정리 ===================== -->
         <div class="reveal" id="blockSummary">
           <p>📝 <b>지금까지 알아낸 사실을 하나의 문장으로 정리해봅시다.</b></p>
           <div class="fillsentence">
@@ -372,7 +511,7 @@
           <div class="feedback" id="fbSummary"></div>
         </div>
 
-        <div class="summary-box" id="summaryBox">
+        <div class="summary-box" id="summaryDone">
           🎉 <b>정리</b><br>
           예각삼각형의 외심은 삼각형의 <b>내부</b>에, 둔각삼각형의 외심은 삼각형의 <b>외부</b>에 위치하고, 직각삼각형의 외심은 <b>빗변의 중점</b>이다.<br>
           훌륭해요! 삼각형의 모양이 바뀌어도 "세 변의 수직이등분선이 한 점에서 만난다"는 사실 자체는 항상 성립한다는 것도 함께 기억해두세요.
@@ -394,18 +533,23 @@
 (function(){
   "use strict";
 
+  const CHECKPOINTS = [
+    { n:1, shape:'acute',  label:'예각삼각형', ans:'in' },
+    { n:2, shape:'obtuse', label:'둔각삼각형', ans:'out' },
+    { n:3, shape:'right',  label:'직각삼각형', ans:'mid' }
+  ];
+
   // ---------- 상태 ----------
-  let tri = {
-    A:{x:300,y:90},
-    B:{x:150,y:340},
-    C:{x:490,y:310}
-  };
-  const state = {
-    showCircle:false,
-    acuteDone:false, rightDone:false, obtuseDone:false,
-    progressStage:1
-  };
+  let tri = { A:{x:300,y:90}, B:{x:150,y:340}, C:{x:490,y:310} };
   let dragTarget = null;
+  let dragLocked = false;
+
+  const constr = { doneAB:false, doneAC:false, doneBC:false, showO:false, showCircle:false };
+  let compassActive = false;
+  let compassStep = 'idle'; // idle -> sizing -> done
+  let compassCP = 1;
+  let _geom = null;
+  let cpIndex = 1;
 
   // ---------- DOM refs ----------
   const svg = document.getElementById('canvas');
@@ -414,8 +558,14 @@
   const dotB=document.getElementById('dotB'), nameB=document.getElementById('nameB');
   const dotC=document.getElementById('dotC'), nameC=document.getElementById('nameC');
   const dotO=document.getElementById('dotO'), nameO=document.getElementById('nameO');
+  const oPulseA=document.getElementById('oPulseA'), oPulseB=document.getElementById('oPulseB'), oClickHint=document.getElementById('oClickHint');
   const creaseAB=document.getElementById('creaseAB'), creaseAC=document.getElementById('creaseAC'), creaseBC=document.getElementById('creaseBC');
   const circumCircle=document.getElementById('circumCircle');
+  const compassTool=document.getElementById('compassTool');
+  const compassLegNeedle=document.getElementById('compassLegNeedle');
+  const compassLegPencil=document.getElementById('compassLegPencil');
+  const compassHinge=document.getElementById('compassHinge');
+  const compassPencilTip=document.getElementById('compassPencilTip');
   const shapeBadge=document.getElementById('shapeBadge');
 
   // ---------- 기하 헬퍼 ----------
@@ -450,13 +600,13 @@
   }
   function isValidTriangle(A,B,C){
     const area = Math.abs((B.x-A.x)*(C.y-A.y)-(C.x-A.x)*(B.y-A.y))/2;
-    if(area < 2500) return false; // 너무 얇은 삼각형 방지
+    if(area < 2500) return false;
     const ang = triAngles(A,B,C);
     const maxA = Math.max(ang.A,ang.B,ang.C);
     const minA = Math.min(ang.A,ang.B,ang.C);
     if(maxA > 170 || minA < 8) return false;
     const O = circumcenter(A,B,C);
-    if(O.x < 10 || O.x > 630 || O.y < 10 || O.y > 470) return false; // 외심이 캔버스를 벗어나지 않도록
+    if(O.x < 10 || O.x > 630 || O.y < 10 || O.y > 470) return false;
     return true;
   }
   function classify(){
@@ -466,6 +616,30 @@
     return maxA > 90 ? 'obtuse' : 'acute';
   }
 
+  // ---------- draw-in 애니메이션 ----------
+  function showEl(el, on, opts){
+    opts = opts || {};
+    if(!on){ el.style.display='none'; return; }
+    el.style.display = 'block';
+    if(opts.animate){
+      const len = el.getTotalLength();
+      el.style.transition='none';
+      el.style.strokeDasharray=len;
+      el.style.strokeDashoffset=len;
+      el.getBoundingClientRect();
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          el.style.transition=`stroke-dashoffset ${opts.duration||600}ms ease`;
+          el.style.strokeDashoffset='0';
+        });
+      });
+    }else{
+      el.style.transition='none';
+      el.style.strokeDasharray='';
+      el.style.strokeDashoffset='';
+    }
+  }
+
   // ---------- 렌더 ----------
   function render(){
     const {A,B,C} = tri;
@@ -473,21 +647,29 @@
     dotA.setAttribute('cx',A.x); dotA.setAttribute('cy',A.y); nameA.setAttribute('x',A.x-6); nameA.setAttribute('y',A.y-16);
     dotB.setAttribute('cx',B.x); dotB.setAttribute('cy',B.y); nameB.setAttribute('x',B.x-22); nameB.setAttribute('y',B.y+20);
     dotC.setAttribute('cx',C.x); dotC.setAttribute('cy',C.y); nameC.setAttribute('x',C.x+12); nameC.setAttribute('y',C.y+20);
+    [dotA,dotB,dotC].forEach(el=>el.classList.toggle('locked', dragLocked));
 
     const O = circumcenter(A,B,C);
     const ab = creaseEnds(A,B,O,50);
     const ac = creaseEnds(A,C,O,50);
     const bc = creaseEnds(B,C,O,50);
+    _geom = {A,B,C,O,ab,ac,bc};
+
     creaseAB.setAttribute('x1',ab.P1.x); creaseAB.setAttribute('y1',ab.P1.y); creaseAB.setAttribute('x2',ab.P2.x); creaseAB.setAttribute('y2',ab.P2.y);
     creaseAC.setAttribute('x1',ac.P1.x); creaseAC.setAttribute('y1',ac.P1.y); creaseAC.setAttribute('x2',ac.P2.x); creaseAC.setAttribute('y2',ac.P2.y);
     creaseBC.setAttribute('x1',bc.P1.x); creaseBC.setAttribute('y1',bc.P1.y); creaseBC.setAttribute('x2',bc.P2.x); creaseBC.setAttribute('y2',bc.P2.y);
+    showEl(creaseAB, constr.doneAB);
+    showEl(creaseAC, constr.doneAC);
+    showEl(creaseBC, constr.doneBC);
 
+    dotO.style.display = constr.showO ? 'block':'none';
+    nameO.style.display = constr.showO ? 'block':'none';
     dotO.setAttribute('cx',O.x); dotO.setAttribute('cy',O.y);
     nameO.setAttribute('x',O.x+8); nameO.setAttribute('y',O.y-8);
 
     const R = Math.hypot(O.x-A.x, O.y-A.y);
-    circumCircle.style.display = state.showCircle ? 'block' : 'none';
-    circumCircle.setAttribute('cx',O.x); circumCircle.setAttribute('cy',O.y); circumCircle.setAttribute('r',R);
+    circumCircle.style.display = constr.showCircle ? 'block' : 'none';
+    circumCircle.setAttribute('cx',O.x); circumCircle.setAttribute('cy',O.y); circumCircle.setAttribute('r', constr.showCircle ? R : 0);
 
     const c = classify();
     const info = {
@@ -500,7 +682,7 @@
     return c;
   }
 
-  // ---------- 드래그 ----------
+  // ---------- 드래그 (+ 직각삼각형 자석 효과) ----------
   function toSvgPoint(evt){
     const pt = svg.createSVGPoint();
     pt.x = evt.clientX; pt.y = evt.clientY;
@@ -508,15 +690,26 @@
   }
   [['A',dotA],['B',dotB],['C',dotC]].forEach(([key,el])=>{
     el.addEventListener('pointerdown', function(evt){
+      if(dragLocked) return;
       dragTarget = key;
       el.setPointerCapture(evt.pointerId);
       el.classList.add('grabbing');
     });
   });
   svg.addEventListener('pointermove', function(evt){
-    if(!dragTarget) return;
+    if(!dragTarget || dragLocked) return;
     const p = toSvgPoint(evt);
-    const clamped = { x: Math.max(20,Math.min(620,p.x)), y: Math.max(20,Math.min(460,p.y)) };
+    let clamped = { x: Math.max(20,Math.min(620,p.x)), y: Math.max(20,Math.min(460,p.y)) };
+    if(dragTarget === 'A'){
+      // 마그넷 효과: BC를 지름으로 하는 원(탈레스 원) 근처면 그 원 위로 스냅 → ∠A가 정확히 90°가 됨
+      const M = {x:(tri.B.x+tri.C.x)/2, y:(tri.B.y+tri.C.y)/2};
+      const Rt = Math.hypot(tri.C.x-tri.B.x, tri.C.y-tri.B.y)/2;
+      const d = Math.hypot(clamped.x-M.x, clamped.y-M.y);
+      if(Rt > 1 && Math.abs(d-Rt) < 18 && d > 0.01){
+        const ux=(clamped.x-M.x)/d, uy=(clamped.y-M.y)/d;
+        clamped = { x:M.x+ux*Rt, y:M.y+uy*Rt };
+      }
+    }
     const trial = Object.assign({}, tri, {[dragTarget]: clamped});
     if(isValidTriangle(trial.A, trial.B, trial.C)){
       tri = trial;
@@ -532,106 +725,204 @@
   svg.addEventListener('pointerup', endDrag);
   svg.addEventListener('pointercancel', endDrag);
 
-  // ---------- 툴바 ----------
-  document.getElementById('btnToggleCircle').addEventListener('click', function(){
-    state.showCircle = !state.showCircle;
-    this.classList.toggle('active', state.showCircle);
+  // ---------- 체크포인트 진행 ----------
+  function resetConstruction(){
+    constr.doneAB=false; constr.doneAC=false; constr.doneBC=false;
+    constr.showO=false; constr.showCircle=false;
+    resetCompass();
     render();
+  }
+  function startCheckpoint(n){
+    cpIndex = n;
+    dragLocked = false;
+    resetConstruction();
+    if(typeof syncProgress === 'function') syncProgress(true);
+  }
+  function bisectorStep(n, key, lineEl, nextRevealId, feedbackId, msg, after){
+    render();
+    showEl(lineEl, true, {animate:true, duration:600});
+    setTimeout(()=>{
+      constr['done'+key] = true;
+      if(after) after();
+      const fb = document.getElementById(feedbackId);
+      fb.className='feedback success'; fb.textContent = msg;
+      if(nextRevealId) document.getElementById(nextRevealId).classList.add('show');
+      render();
+    }, 650);
+  }
+  CHECKPOINTS.forEach(cp=>{
+    const n = cp.n, pfx = `cp${n}_`;
+    document.getElementById(pfx+'checkShape').addEventListener('click', ()=>{
+      const fb = document.getElementById(pfx+'fbShape');
+      if(classify() === cp.shape){
+        fb.className='feedback success';
+        fb.textContent = `✅ ${cp.label}이 되었어요! 삼각형이 잠겼어요. 이제 외심을 찾아봅시다.`;
+        dragLocked = true;
+        render();
+        document.getElementById(pfx+'block_construct').classList.add('show');
+      }else{
+        fb.className='feedback warn';
+        fb.textContent = `🔎 아직 ${cp.label}이 아니에요. 계속 움직여보세요.`;
+      }
+    });
+    document.getElementById(pfx+'btnAB').addEventListener('click', ()=>{
+      if(constr.doneAB) return;
+      bisectorStep(n, 'AB', creaseAB, pfx+'block2', pfx+'fbAB', '✅ 이 선분이 AB의 수직이등분선이에요.');
+    });
+    document.getElementById(pfx+'btnCA').addEventListener('click', ()=>{
+      if(!constr.doneAB || constr.doneAC) return;
+      bisectorStep(n, 'AC', creaseAC, pfx+'block3', pfx+'fbCA', '✅ 두 수직이등분선이 만나는 점이 나타났어요. 이 점을 O라고 합니다.', ()=>{ constr.showO=true; });
+    });
+    document.getElementById(pfx+'btnBC').addEventListener('click', ()=>{
+      if(!constr.doneAC || constr.doneBC) return;
+      bisectorStep(n, 'BC', creaseBC, pfx+'block_circle', pfx+'fbBC', '✅ 세 수직이등분선이 모두 점 O에서 만나요!', ()=>{ activateCompassFor(n); });
+    });
+    document.getElementById(pfx+'checkAns').addEventListener('click', ()=>{
+      const sel = document.getElementById(pfx+'ans');
+      const fb = document.getElementById(pfx+'fbAns');
+      if(sel.value === cp.ans){
+        fb.className='feedback success';
+        fb.textContent = '🎉 정확해요!';
+        if(n < 3){
+          document.getElementById(`cpBlock${n+1}Wrap`).classList.add('show');
+          setTimeout(()=>{
+            startCheckpoint(n+1);
+            document.getElementById(`cpBlock${n+1}Wrap`).scrollIntoView({behavior:'smooth', block:'start'});
+          }, 500);
+        }else{
+          if(typeof syncProgress === 'function'){ cpIndex = 4; syncProgress(true); }
+          document.getElementById('blockSummary').classList.add('show');
+          document.getElementById('blockSummary').scrollIntoView({behavior:'smooth', block:'start'});
+        }
+      }else{
+        fb.className='feedback error';
+        fb.textContent = '❌ 다시 생각해보세요.';
+      }
+    });
   });
-  document.getElementById('btnResetTri').addEventListener('click', function(){
-    tri = {A:{x:300,y:90}, B:{x:150,y:340}, C:{x:490,y:310}};
-    render();
+  document.getElementById('btnRestartCP').addEventListener('click', ()=>{
+    startCheckpoint(cpIndex);
+    [1,2,3].forEach(n=>{
+      if(n===cpIndex){
+        ['block_construct','block2','block3','block_circle','block_conclude'].forEach(id=>{
+          const el = document.getElementById(`cp${n}_${id}`);
+          if(el) el.classList.remove('show');
+        });
+        ['fbShape','fbAB','fbCA','fbBC','fbCircle','fbAns'].forEach(id=>{
+          const el = document.getElementById(`cp${n}_${id}`);
+          if(el){ el.className='feedback'; el.textContent=''; }
+        });
+        const ansSel = document.getElementById(`cp${n}_ans`);
+        if(ansSel) ansSel.value='?';
+      }
+    });
   });
 
-  // ---------- 체크포인트 ----------
+  // ---------- 컴퍼스로 직접 외접원 그리기 ----------
+  const COMPASS_TOL = 10;
+  const COMPASS_GRAB = 30;
+  const COMPASS_LEG = 150;
+  function updateCompassGraphic(O, P){
+    const dx=P.x-O.x, dy=P.y-O.y;
+    const d = Math.hypot(dx,dy) || 0.001;
+    const ux=dx/d, uy=dy/d;
+    const dCapped = Math.min(d, COMPASS_LEG*2*0.98);
+    const h = Math.sqrt(Math.max(0, COMPASS_LEG*COMPASS_LEG - (dCapped/2)*(dCapped/2)));
+    const mid = {x:O.x+ux*dCapped/2, y:O.y+uy*dCapped/2};
+    const perp = {x:-uy, y:ux};
+    const H = {x:mid.x+perp.x*h, y:mid.y+perp.y*h};
+    const tip = {x:O.x+ux*dCapped, y:O.y+uy*dCapped};
+    compassLegNeedle.setAttribute('x1',H.x); compassLegNeedle.setAttribute('y1',H.y);
+    compassLegNeedle.setAttribute('x2',O.x); compassLegNeedle.setAttribute('y2',O.y);
+    compassLegPencil.setAttribute('x1',H.x); compassLegPencil.setAttribute('y1',H.y);
+    compassLegPencil.setAttribute('x2',tip.x); compassLegPencil.setAttribute('y2',tip.y);
+    compassHinge.setAttribute('cx',H.x); compassHinge.setAttribute('cy',H.y);
+    compassPencilTip.setAttribute('cx',tip.x); compassPencilTip.setAttribute('cy',tip.y);
+  }
+  function onCompassMove(evt){
+    if(compassStep !== 'sizing') return;
+    const p = toSvgPoint(evt);
+    const O = _geom.O;
+    circumCircle.setAttribute('r', Math.hypot(p.x-O.x, p.y-O.y));
+    updateCompassGraphic(O, p);
+  }
+  function startOHint(){
+    const O = _geom.O;
+    [oPulseA, oPulseB].forEach(el=>{ el.setAttribute('cx',O.x); el.setAttribute('cy',O.y); el.classList.add('active'); });
+    oClickHint.setAttribute('x', O.x);
+    oClickHint.setAttribute('y', O.y-38);
+    oClickHint.classList.add('active');
+  }
+  function stopOHint(){
+    [oPulseA, oPulseB, oClickHint].forEach(el=>el.classList.remove('active'));
+  }
+  function activateCompassFor(n){
+    compassActive = true;
+    compassStep = 'idle';
+    compassCP = n;
+    startOHint();
+  }
+  function resetCompass(){
+    compassActive = false;
+    compassStep = 'idle';
+    svg.removeEventListener('pointermove', onCompassMove);
+    circumCircle.style.strokeDasharray='';
+    circumCircle.style.opacity='';
+    compassTool.style.display='none';
+    stopOHint();
+  }
+  svg.addEventListener('pointerdown', function(evt){
+    if(!compassActive || !_geom) return;
+    const p = toSvgPoint(evt);
+    const O = _geom.O;
+    const n = compassCP;
+    const fb = document.getElementById(`cp${n}_fbCircle`);
+    if(compassStep === 'idle'){
+      const d = Math.hypot(p.x-O.x, p.y-O.y);
+      if(d <= COMPASS_GRAB){
+        compassStep = 'sizing';
+        stopOHint();
+        svg.addEventListener('pointermove', onCompassMove);
+        circumCircle.style.display = 'block';
+        circumCircle.style.strokeDasharray = '5 4';
+        circumCircle.style.opacity = '.6';
+        circumCircle.setAttribute('cx', O.x);
+        circumCircle.setAttribute('cy', O.y);
+        circumCircle.setAttribute('r', d);
+        compassTool.style.display = 'block';
+        updateCompassGraphic(O, p);
+        fb.className = 'feedback warn';
+        fb.textContent = '📏 컴퍼스를 고정했어요! 이제 마우스(손가락)를 움직여 원의 크기를 세 꼭짓점에 맞춰보세요.';
+      }else{
+        fb.className = 'feedback warn';
+        fb.textContent = '⚠️ 점 O 근처를 클릭해 컴퍼스를 고정해주세요.';
+      }
+    }else if(compassStep === 'sizing'){
+      const R = Math.hypot(_geom.A.x-O.x, _geom.A.y-O.y);
+      const d = Math.hypot(p.x-O.x, p.y-O.y);
+      if(Math.abs(d-R) <= COMPASS_TOL){
+        compassStep = 'done';
+        svg.removeEventListener('pointermove', onCompassMove);
+        compassTool.style.display = 'none';
+        circumCircle.style.strokeDasharray = '';
+        circumCircle.style.opacity = '';
+        circumCircle.setAttribute('r', R);
+        constr.showCircle = true;
+        render();
+        fb.className = 'feedback success';
+        fb.textContent = '✅ 점 O를 중심으로 한 원이 세 꼭짓점을 모두 정확히 지나요!';
+        document.getElementById(`cp${n}_block_conclude`).classList.add('show');
+      }else{
+        fb.className = 'feedback warn';
+        fb.textContent = d < R ? '🔎 아직 작아요. 조금 더 크게 조절해보세요.' : '🔎 너무 커요. 조금 더 작게 조절해보세요.';
+      }
+    }
+  });
+
+  // ---------- 최종 정리 ----------
   function normalizeAns(s){
     return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
   }
-  document.getElementById('checkAcute').addEventListener('click', ()=>{
-    const fb = document.getElementById('fbAcute');
-    if(classify()==='acute'){
-      fb.className='feedback success';
-      fb.textContent = '✅ 예각삼각형이 되었어요! 외심 O의 위치를 잘 살펴보고 아래 빈칸을 채워보세요.';
-      document.getElementById('blockAcute').classList.add('show');
-    }else{
-      fb.className='feedback warn';
-      fb.textContent = '🔎 아직 예각삼각형이 아니에요. 꼭짓점을 조금 더 움직여보세요.';
-    }
-  });
-  document.getElementById('checkAcuteBlank').addEventListener('click', ()=>{
-    const el = document.getElementById('ans_acute');
-    const ok = normalizeAns(el.value) === '내부';
-    el.classList.toggle('correct', ok); el.classList.toggle('wrong', !ok && el.value.trim()!=='');
-    const fb = document.getElementById('fbAcuteBlank');
-    if(ok){
-      fb.className='feedback success';
-      fb.textContent = '🎉 정확해요! 이번엔 직각삼각형을 만들어봅시다.';
-      state.acuteDone = true;
-      state.progressStage = Math.max(state.progressStage, 2);
-      if(typeof syncProgress === 'function') syncProgress(true);
-      document.getElementById('blockRight1').classList.add('show');
-    }else{
-      fb.className='feedback error';
-      fb.textContent = '❌ 다시 확인해보세요.';
-    }
-  });
-  document.getElementById('checkRight').addEventListener('click', ()=>{
-    const fb = document.getElementById('fbRight');
-    if(classify()==='right'){
-      fb.className='feedback success';
-      fb.textContent = '✅ 직각삼각형이 되었어요! 외심 O가 어디에 있는지 잘 살펴보세요.';
-      document.getElementById('blockRight2').classList.add('show');
-    }else{
-      fb.className='feedback warn';
-      fb.textContent = '🔎 아직 직각삼각형이 아니에요. 배지에 "직각삼각형"이 뜰 때까지 조절해보세요.';
-    }
-  });
-  document.getElementById('checkRightBlank').addEventListener('click', ()=>{
-    const el = document.getElementById('ans_right');
-    const v = normalizeAns(el.value);
-    const ok = v.indexOf('빗변') >= 0 && (v.indexOf('중점') >= 0 || v.indexOf('중앙') >= 0);
-    el.classList.toggle('correct', ok); el.classList.toggle('wrong', !ok && el.value.trim()!=='');
-    const fb = document.getElementById('fbRightBlank');
-    if(ok){
-      fb.className='feedback success';
-      fb.textContent = '🎉 정확해요! 이번엔 둔각삼각형을 만들어봅시다.';
-      state.rightDone = true;
-      state.progressStage = Math.max(state.progressStage, 3);
-      if(typeof syncProgress === 'function') syncProgress(true);
-      document.getElementById('blockObtuse1').classList.add('show');
-    }else{
-      fb.className='feedback error';
-      fb.textContent = '❌ 다시 확인해보세요. "빗변의 중점"이라는 표현을 떠올려보세요.';
-    }
-  });
-  document.getElementById('checkObtuse').addEventListener('click', ()=>{
-    const fb = document.getElementById('fbObtuse');
-    if(classify()==='obtuse'){
-      fb.className='feedback success';
-      fb.textContent = '✅ 둔각삼각형이 되었어요! 외심 O가 삼각형 안에 있는지 밖에 있는지 확인해보세요.';
-      document.getElementById('blockObtuse2').classList.add('show');
-    }else{
-      fb.className='feedback warn';
-      fb.textContent = '🔎 아직 둔각삼각형이 아니에요. 한 각을 90°보다 뚜렷하게 크게 만들어보세요.';
-    }
-  });
-  document.getElementById('checkObtuseBlank').addEventListener('click', ()=>{
-    const el = document.getElementById('ans_obtuse');
-    const ok = normalizeAns(el.value) === '외부';
-    el.classList.toggle('correct', ok); el.classList.toggle('wrong', !ok && el.value.trim()!=='');
-    const fb = document.getElementById('fbObtuseBlank');
-    if(ok){
-      fb.className='feedback success';
-      fb.textContent = '🎉 정확해요! 이제 지금까지 알아낸 사실을 한 문장으로 정리해봅시다.';
-      state.obtuseDone = true;
-      state.progressStage = Math.max(state.progressStage, 4);
-      if(typeof syncProgress === 'function') syncProgress(true);
-      document.getElementById('blockSummary').classList.add('show');
-    }else{
-      fb.className='feedback error';
-      fb.textContent = '❌ 다시 확인해보세요.';
-    }
-  });
   document.getElementById('checkSummary').addEventListener('click', ()=>{
     const e1=document.getElementById('sum1'), e2=document.getElementById('sum2'), e3=document.getElementById('sum3');
     const v1=normalizeAns(e1.value), v2=normalizeAns(e2.value), v3=normalizeAns(e3.value);
@@ -643,7 +934,7 @@
     if(ok1 && ok2 && ok3){
       fb.className='feedback success';
       fb.textContent = '🎉 완벽해요! 탐구를 모두 마쳤습니다.';
-      document.getElementById('summaryBox').classList.add('show');
+      document.getElementById('summaryDone').classList.add('show');
     }else{
       fb.className='feedback error';
       fb.textContent = '❌ 아직 정확하지 않아요. 위 체크포인트에서 확인한 내용을 다시 떠올려보세요.';
@@ -663,7 +954,7 @@
 
   // ================= 로그인 / Firebase / 관리자 / 이탈 감지 =================
   const LESSON_ID = 'circumcenter-shape1';
-  const STAGE_NAMES = {1:'1.탐구 시작', 2:'2.예각 확인', 3:'3.직각 확인', 4:'4.둔각+정리 완료'};
+  const STAGE_NAMES = {1:'1.예각 체크포인트', 2:'2.둔각 체크포인트', 3:'3.직각 체크포인트', 4:'4.전체 완료'};
   const PW_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
 
   let _db = null;
@@ -726,20 +1017,6 @@
     _docId = `${LESSON_ID}_${todayStr()}_${cls}_${String(num).padStart(2,'0')}`;
     enterApp(false);
   };
-
-  // 허브에서 학생 정보를 URL로 넘겨받으면 로그인 화면 없이 바로 시작
-  (function autoLoginFromURL(){
-    const p = new URLSearchParams(location.search);
-    const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
-    if(grade && cls && num && name){
-      document.getElementById('loginGrade').value = grade + '학년';
-      document.getElementById('loginClass').value = cls + '반';
-      document.getElementById('loginNum').value = num;
-      document.getElementById('loginName').value = name;
-      window.studentLogin();
-    }
-  })();
-
   window.teacherLogin = async function(){
     const pw = document.getElementById('teacherPw').value;
     const err = document.getElementById('teacherLoginError');
@@ -778,7 +1055,7 @@
         cls: _studentInfo.cls,
         num: parseInt(_studentInfo.num),
         name: _studentInfo.name,
-        stage: state.progressStage,
+        stage: cpIndex,
         awayCount: _awayCount,
         isAway: document.hidden,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
