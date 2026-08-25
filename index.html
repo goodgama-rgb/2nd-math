@@ -43,6 +43,7 @@
   .btn.lav{background:var(--lav);}
   .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(46,42,34,.15);}
   .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .install-link{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--mint-ink);font-size:13px;font-weight:700;text-decoration:none;background:var(--mint);padding:7px 15px;border-radius:12px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:13px;color:var(--ink-dim);margin-bottom:5px;font-weight:500;}
   .field input, .field select{
@@ -146,6 +147,7 @@
     <p class="sub">누구로 들어갈지 골라주세요</p>
     <button class="btn mint" onclick="go('student-info')">🙋 학생이에요</button>
     <button class="btn lav" onclick="go('teacher-login')">🍎 선생님이에요</button>
+    <a class="install-link" href="https://claude.ai/code/artifact/52b36988-f8c9-47aa-adff-4d6301950ce0" target="_blank" rel="noopener">📱 앱처럼 설치하기</a>
   </section>
 
   <!-- 2. 학생 정보 입력 -->
