@@ -453,7 +453,7 @@
           <div id="cpBlock3">
             <div class="fillsentence" style="text-align:center;">
               <b>① 꼭짓점 A를 움직여 직각삼각형을 만들어보세요.</b><br>
-              <span class="hint">💡 ∠A가 90° 근처에 가까워지면 자동으로 딱 맞춰져요.</span><br>
+              <span class="hint">💡 ∠A, ∠B, ∠C 중 하나가 90° 근처에 가까워지면 자동으로 딱 맞춰져요.</span><br>
               <button class="btn btn-check" id="cp3_checkShape" style="margin-top:8px;">확인</button>
             </div>
             <div class="feedback" id="cp3_fbShape"></div>
@@ -701,13 +701,32 @@
     const p = toSvgPoint(evt);
     let clamped = { x: Math.max(20,Math.min(620,p.x)), y: Math.max(20,Math.min(460,p.y)) };
     if(dragTarget === 'A'){
-      // 마그넷 효과: BC를 지름으로 하는 원(탈레스 원) 근처면 그 원 위로 스냅 → ∠A가 정확히 90°가 됨
-      const M = {x:(tri.B.x+tri.C.x)/2, y:(tri.B.y+tri.C.y)/2};
-      const Rt = Math.hypot(tri.C.x-tri.B.x, tri.C.y-tri.B.y)/2;
-      const d = Math.hypot(clamped.x-M.x, clamped.y-M.y);
-      if(Rt > 1 && Math.abs(d-Rt) < 18 && d > 0.01){
-        const ux=(clamped.x-M.x)/d, uy=(clamped.y-M.y)/d;
-        clamped = { x:M.x+ux*Rt, y:M.y+uy*Rt };
+      // 마그넷 효과: 꼭짓점 A가 아래 세 위치 중 하나에 가까워지면 그 위치로 스냅한다.
+      //  1) BC를 지름으로 하는 원(탈레스 원) 위 → ∠A = 90°
+      //  2) 점 B를 지나고 BC에 수직인 직선 위 → ∠B = 90°
+      //  3) 점 C를 지나고 BC에 수직인 직선 위 → ∠C = 90°
+      const B = tri.B, C = tri.C;
+      const M = {x:(B.x+C.x)/2, y:(B.y+C.y)/2};
+      const bcLen = Math.hypot(C.x-B.x, C.y-B.y) || 1;
+      const Rt = bcLen/2;
+      const perpDir = {x:-(C.y-B.y)/bcLen, y:(C.x-B.x)/bcLen};
+      const projectOntoLine = (P, linePoint, dir)=>{
+        const t = (P.x-linePoint.x)*dir.x + (P.y-linePoint.y)*dir.y;
+        return { x: linePoint.x+dir.x*t, y: linePoint.y+dir.y*t };
+      };
+      const candidates = [];
+      const dCirc = Math.hypot(clamped.x-M.x, clamped.y-M.y);
+      if(Rt > 1 && dCirc > 0.01){
+        const ux=(clamped.x-M.x)/dCirc, uy=(clamped.y-M.y)/dCirc;
+        candidates.push({ dist: Math.abs(dCirc-Rt), point:{x:M.x+ux*Rt, y:M.y+uy*Rt} });
+      }
+      const projB = projectOntoLine(clamped, B, perpDir);
+      candidates.push({ dist: Math.hypot(clamped.x-projB.x, clamped.y-projB.y), point: projB });
+      const projC = projectOntoLine(clamped, C, perpDir);
+      candidates.push({ dist: Math.hypot(clamped.x-projC.x, clamped.y-projC.y), point: projC });
+      candidates.sort((a,b)=>a.dist-b.dist);
+      if(candidates.length && candidates[0].dist < 18){
+        clamped = candidates[0].point;
       }
     }
     const trial = Object.assign({}, tri, {[dragTarget]: clamped});
