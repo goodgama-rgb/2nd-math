@@ -105,6 +105,8 @@
   .msg.error{color:var(--coral-ink);}
   .msg.ok{color:var(--mint-ink);}
   .admin-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);}
+  .admin-item-link{flex:1;color:var(--ink);text-decoration:none;font-weight:500;}
+  .admin-item-link:hover{color:var(--lav-ink);text-decoration:underline;}
   .admin-item input{width:18px;height:18px;}
   .admin-group-title{display:inline-block;font-family:var(--disp);font-size:20px;padding:4px 14px;margin:26px 0 4px;background:var(--lav);color:var(--lav-ink);border-radius:12px;}
   .admin-hint{color:var(--ink-dim);font-size:13px;margin:0 0 12px;}
@@ -763,6 +765,17 @@ function renderAdminStudents(students){
   });
 }
 
+// 관리자가 잠금 여부와 상관없이 콘텐츠를 바로 열어볼 수 있는 링크.
+// 탐구 파일은 로그인 화면을 건너뛰도록 "선생님(미리보기)" 정보를 실어 보낸다 (번호 99는 실제 학생과 안 겹치는 자리표시자).
+// 문제 파일은 파라미터 없이 그냥 열어서, 다 풀어도 랭킹/기록에 전혀 남지 않는다.
+function adminOpenHref(it){
+  if(it.type === '탐구'){
+    const q = new URLSearchParams({ grade:'2', cls:String(selectedAdminClass), num:'99', name:'선생님(미리보기)' });
+    return it.file + '?' + q.toString();
+  }
+  return it.file;
+}
+
 function renderAdminList(){
   const wrap = document.getElementById('admin-list');
   wrap.innerHTML = '';
@@ -782,7 +795,7 @@ function renderAdminList(){
     const todayChecked = adminTodayIds.includes(it.id);
     row.innerHTML = `<label class="chk-col"><input type="checkbox" class="chk-unlock" data-id="${it.id}" ${unlockChecked?'checked':''}><span>열기</span></label>
       <label class="chk-col"><input type="checkbox" class="chk-today" data-id="${it.id}" ${todayChecked?'checked':''}><span>오늘</span></label>
-      <span>${it.title} <span class="card-meta">(${it.meta})</span></span>`;
+      <a class="admin-item-link" href="${adminOpenHref(it)}" target="_blank" rel="noopener">${it.title} <span class="card-meta">(${it.meta})</span> ▶</a>`;
     const todayCb = row.querySelector('.chk-today');
     const unlockCb = row.querySelector('.chk-unlock');
     todayCb.addEventListener('change', ()=>{ if(todayCb.checked) unlockCb.checked = true; renderAdminPreview(); });
