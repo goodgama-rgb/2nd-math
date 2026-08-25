@@ -106,6 +106,11 @@
   .class-tab{font-family:var(--sans);font-size:13px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--ink-dim);cursor:pointer;}
   .class-tab.active{background:var(--lav);border-color:var(--lav-dark);color:var(--lav-ink);}
   .admin-editing{font-size:13px;color:var(--ink-dim);margin:-10px 0 16px;}
+  #update-banner{position:fixed;top:0;left:0;right:0;z-index:999;background:var(--peach);color:var(--peach-ink);
+    padding:10px 16px;display:none;align-items:center;justify-content:center;gap:10px;
+    font-family:var(--sans);font-size:13.5px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  #update-banner button{background:var(--peach-ink);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
+  body.banner-shown .wrap{margin-top:44px;}
   .preview-frame{border:2px dashed var(--lav-dark);border-radius:18px;padding:16px;background:var(--paper);}
   .admin-split{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start;}
   .admin-split-right{position:sticky;top:20px;}
@@ -123,6 +128,7 @@
 </style>
 </head>
 <body>
+<div id="update-banner"><span>🔄 사이트가 업데이트됐어요!</span><button onclick="location.reload()">새로고침</button></div>
 <div class="wrap">
 
   <!-- 1. 역할 선택 -->
@@ -271,6 +277,25 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// ---- 새 버전 배포 감지: 브라우저 캐시(10분) 때문에 옛날 화면을 보고 있으면 알려줌 ----
+(function watchForNewVersion(){
+  const pageVersion = new Date(document.lastModified).getTime();
+  if(!pageVersion) return;
+  async function check(){
+    try{
+      const res = await fetch(location.pathname, { method:'HEAD', cache:'no-store' });
+      const lm = res.headers.get('Last-Modified');
+      if(!lm) return;
+      const serverVersion = new Date(lm).getTime();
+      if(serverVersion > pageVersion){
+        document.getElementById('update-banner').style.display = 'flex';
+        document.body.classList.add('banner-shown');
+      }
+    }catch(e){ /* 네트워크 오류는 무시 */ }
+  }
+  setInterval(check, 60000);
+})();
 
 // ---- 콘텐츠 데이터: 새 단원/문제 추가할 땐 이 배열만 수정하면 됩니다 ----
 const CONTENT = [
