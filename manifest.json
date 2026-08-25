@@ -1,6 +1,6 @@
 {
   "name": "준형T의 수학 학습 허브",
-  "short_name": "준형T 허브",
+  "short_name": "준형T's Math",
   "description": "덕이중학교 2학년 수학 학습 허브",
   "start_url": "./index.html",
   "scope": "./",
