@@ -288,6 +288,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ---- PWA 설치 배너 조건 충족용 서비스워커 등록 (캐싱은 안 함, sw.js 참고) ----
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(err=> console.warn('sw register failed', err));
+}
+
 // ---- 새 버전 배포 감지: 브라우저 캐시(10분) 때문에 옛날 화면을 보고 있으면 알려줌 ----
 (function watchForNewVersion(){
   const pageVersion = new Date(document.lastModified).getTime();
