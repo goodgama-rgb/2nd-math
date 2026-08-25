@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>정삼각형의 외심과 내심의 위치 탐구</title>
+<style>
+  :root{
+    --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+    --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --yellow:#ffce6b;
+    --line:#e3e8f4; --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--ink); -webkit-tap-highlight-color:transparent; }
+  header{ padding:22px 24px 16px; text-align:center; background:linear-gradient(135deg,#eef2ff,#fff0f5); border-bottom:1px solid var(--line); }
+  header h1{ margin:0 0 6px; font-size:22px; letter-spacing:-0.3px; }
+  header p{ margin:0; color:var(--muted); font-size:14px; }
+
+  .layout{ max-width:1280px; margin:20px auto; padding:0 16px 60px; display:grid; grid-template-columns:1.15fr 1fr; gap:22px; align-items:start; }
+  .mobile-tabs{ display:none; }
+  @media (max-width:960px){
+    .layout{ grid-template-columns:1fr; }
+    .mobile-tabs{ display:flex; gap:8px; position:sticky; top:0; z-index:80; background:var(--bg); padding:12px 16px 8px; margin:0 -16px 4px; box-shadow:0 4px 10px rgba(43,47,66,.05); }
+    .mobile-tab-btn{ flex:1; padding:11px; border-radius:12px; border:none; background:#eef1fa; color:var(--muted); font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s; }
+    .mobile-tab-btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+    .layout.mobile-show-canvas .activity{ display:none; }
+    .layout.mobile-show-activity .card.sticky{ display:none; }
+    .card.sticky{ position:static; }
+  }
+
+  .card{ background:var(--card); border-radius:var(--radius); padding:18px 18px 20px; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  .sticky{ position:sticky; top:16px; }
+
+  .toolbar{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .btn{ border:none; border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:700; cursor:pointer; background:#eef1fa; color:var(--ink); transition:.15s; font-family:inherit; }
+  .btn:hover{ background:#e2e7f8; }
+  .btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .btn-outline{ background:transparent; border:2px solid var(--line); color:var(--muted); }
+  .btn-outline:hover{ background:#f5f7fc; }
+  .btn-sm{ padding:7px 11px; font-size:12.5px; border-radius:9px; }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-check{ background:var(--primary); color:#fff; }
+  .btn-check:hover{ background:var(--primary-dark); }
+  .btn-perp{ background:#fdeceb; color:#c0392b; }
+  .btn-perp:hover{ background:#fbdcda; }
+  .btn-ang{ background:#e8edfd; color:#2f52b0; }
+  .btn-ang:hover{ background:#d9e1fb; }
+
+  .svg-wrap{ background:#fbfcff; border-radius:14px; border:1px solid var(--line); padding:6px; }
+  svg{ width:100%; height:auto; display:block; }
+
+  .tri-abc{ fill:#eef1fb; stroke:#4a5568; stroke-width:2.5; }
+  .vertex-dot{ fill:#4a5568; }
+  .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; }
+  .bis-perp{ stroke:#e0455a; stroke-width:2.5; display:none; }
+  .bis-angle{ stroke:#3b6fe0; stroke-width:7; opacity:.8; display:none; }
+
+  @keyframes ptPulseRing{ 0%{ r:8; stroke-opacity:.9; } 100%{ r:36; stroke-opacity:0; } }
+  @keyframes ptHintBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+  .pt-pulse-ring{ fill:none; stroke-width:3; display:none; pointer-events:none; }
+  .pt-pulse-ring.active{ display:block; animation:ptPulseRing 1.1s ease-out 2; }
+  .pt-hint{ font-size:15px; font-weight:800; text-anchor:middle; display:none; pointer-events:none; }
+  .pt-hint.active{ display:block; animation:ptHintBob .9s ease-in-out 2; }
+  #pulseO1, #pulseO2{ stroke:#e0455a; }
+  #hintO{ fill:#c0392b; }
+  #pulseI1, #pulseI2{ stroke:#3b6fe0; }
+  #hintI{ fill:#2f52b0; }
+
+  .o-dot{ fill:#c0392b; display:none; }
+  .o-label{ font-size:16px; font-weight:800; fill:#c0392b; display:none; }
+  .i-dot{ fill:#2f52b0; display:none; }
+  .i-label{ font-size:16px; font-weight:800; fill:#2f52b0; display:none; }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .dot{ width:10px;height:10px;border-radius:3px;display:inline-block; }
+
+  .step-card{ background:var(--card); border-radius:16px; padding:18px 20px 20px; border-left:6px solid var(--primary); box-shadow:0 4px 14px rgba(43,47,66,.05); position:relative; }
+  .step-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .step-head h2{ margin:0; font-size:16.5px; }
+  .step-body p{ margin:6px 0 10px; font-size:14px; line-height:1.6; color:#3c4257; }
+  .hint{ font-size:12.5px; color:#8b93a8; margin-top:4px; }
+
+  .goal-banner{ background:linear-gradient(135deg,#eef2ff,#fff0f5); border:2px solid #c9d4fb; border-radius:14px; padding:16px 18px; text-align:center; font-size:14.5px; line-height:1.7; color:var(--primary-dark); margin-bottom:16px; }
+  .goal-banner .tag{ font-size:12px; font-weight:700; letter-spacing:.5px; color:#8b93c2; display:block; margin-bottom:4px; }
+  .goal-banner b{ font-size:16.5px; }
+
+  .feedback{ margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13.5px; line-height:1.6; display:none; }
+  .feedback.success{ display:block; background:#e7f8f0; color:#1e7a53; border:1px solid #b7ead2; }
+  .feedback.error{ display:block; background:#fdeceb; color:#b3261e; border:1px solid #f6c6c2; }
+  .feedback.warn{ display:block; background:#fff6e0; color:#9a6b00; border:1px solid #ffe4a3; }
+
+  .fillsentence{ background:#f7f8fc; border:1.5px dashed #c9d4fb; border-radius:12px; padding:14px 16px; font-size:15px; line-height:2; margin:10px 0 14px; color:#2b2f42; }
+  .fillsentence select{ border:1.5px solid var(--primary); border-radius:8px; padding:4px 8px; font-size:14.5px; font-weight:700; color:var(--primary-dark); background:#fff; font-family:inherit; margin:0 3px; }
+
+  .summary-box{ margin-top:12px; padding:14px 16px; border-radius:12px; background:linear-gradient(135deg,#eef2ff,#fff5f8); border:1.5px dashed #b9c4f5; font-size:13.5px; line-height:1.7; max-height:0; opacity:0; overflow:hidden; transition:.4s ease; }
+  .summary-box.show{ max-height:400px; opacity:1; margin-top:12px; }
+  .summary-box b{ color:var(--primary-dark); }
+
+  .reveal{ max-height:0; opacity:0; overflow:hidden; transition:.45s ease; }
+  .reveal.show{ max-height:2000px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
+
+  .blank{ display:inline-block; width:80px; border:none; border-bottom:2px solid var(--primary); background:transparent; text-align:center; font-weight:700; font-size:14px; font-family:inherit; padding:2px 4px; margin:0 3px; color:var(--primary-dark); }
+  .blank:focus{ outline:none; border-bottom-color:var(--primary-dark); background:#eef2ff; }
+  .blank.correct{ border-bottom-color:#3fbf91; background:#e9faf3; color:#1e7a53; }
+  .blank.wrong{ border-bottom-color:#e97a7a; background:#fdecec; color:#b3261e; }
+  textarea.blank-area{ display:block; width:100%; min-height:70px; border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:14px; resize:vertical; margin-top:8px; }
+  textarea.blank-area:focus{ outline:none; border-color:var(--primary); }
+  textarea.blank-area.correct{ border-color:#3fbf91; background:#e9faf3; }
+  textarea.blank-area.wrong{ border-color:#e97a7a; background:#fdecec; }
+
+  .answer-box{ margin-top:10px; padding:12px 14px; border-radius:10px; background:#eef2ff; border:1.5px dashed #b9c4f5; font-size:13.5px; line-height:1.6; color:var(--primary-dark); display:none; }
+  .answer-box.show{ display:block; }
+
+  .restart-wrap{ text-align:center; margin-top:14px; }
+
+  /* ===== 로그인 ===== */
+  #loginScreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#6c8bff 0%,#4f6fe0 100%); padding:24px; }
+  .login-box{ background:#fff; border-radius:20px; padding:36px 32px; width:100%; max-width:400px; box-shadow:0 12px 40px rgba(43,47,66,.25); }
+  .login-header{ text-align:center; margin-bottom:26px; }
+  .login-header .emoji{ font-size:36px; margin-bottom:8px; }
+  .login-header .title{ font-size:19px; font-weight:800; color:var(--ink); margin-bottom:4px; }
+  .login-header .sub{ font-size:12.5px; color:var(--muted); }
+  .role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .role-btn{ padding:22px 10px; border-radius:14px; border:2px solid var(--line); background:#f7f8fc; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer; font-family:inherit; transition:.15s; }
+  .role-btn:hover{ border-color:var(--primary); background:#eef2ff; }
+  .role-btn .emoji{ font-size:24px; display:block; margin-bottom:6px; }
+  .login-form{ display:none; }
+  .login-form.show{ display:block; }
+  .login-back{ background:none; border:none; color:var(--muted); font-size:12.5px; cursor:pointer; margin-bottom:14px; font-family:inherit; padding:0; }
+  .login-form-title{ font-size:14px; font-weight:800; color:var(--ink); margin-bottom:14px; }
+  .login-grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+  .login-field label{ font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:4px; }
+  .login-field select, .login-field input{ width:100%; border:1.5px solid var(--line); border-radius:9px; padding:9px 8px; font-size:13.5px; font-family:inherit; color:var(--ink); background:#fff; }
+  .login-error{ display:none; font-size:12px; color:#b3261e; margin-bottom:10px; padding:8px 12px; background:#fdeceb; border-radius:8px; }
+  .login-submit{ width:100%; padding:12px; border-radius:10px; background:var(--primary); color:#fff; border:none; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+  .login-submit:hover{ background:var(--primary-dark); }
+  .login-submit.admin{ background:#2b2f42; }
+  .login-submit.admin:hover{ background:#1c1f2e; }
+  .session-bar{ background:#2b2f42; color:#fff; padding:8px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .session-bar b{ color:#c7d2fe; }
+  .session-bar button, .session-bar a{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; text-decoration:none; }
+
+  /* ===== 관리자 대시보드 ===== */
+  #adminScreen{ display:none; min-height:100vh; background:var(--bg); }
+  .admin-header{ background:#1e1b3a; color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .admin-header .title{ font-size:17px; font-weight:800; }
+  .admin-header .sub{ font-size:12px; color:#a5b4fc; margin-top:2px; }
+  .admin-logout{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:8px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .admin-body{ max-width:1000px; margin:24px auto; padding:0 20px 60px; }
+  .admin-filter-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; background:#fff; border-radius:14px; padding:12px 16px; box-shadow:0 4px 14px rgba(43,47,66,.05); }
+  .admin-filter-row label{ font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .admin-filter-row select{ border:1.5px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; font-family:inherit; color:var(--ink); background:#fff; }
+  .btn-admin-delete{ margin-left:auto; background:#fdeceb; border:1.5px solid #f6c6c2; color:#b3261e; border-radius:8px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn-admin-delete:hover{ background:#fbdcda; }
+  .btn-admin-delete:disabled{ opacity:.4; cursor:not-allowed; }
+  .admin-table-wrap{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  table.admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.admin-table th{ background:#f4f6fc; padding:10px 12px; text-align:left; color:var(--muted); font-size:11.5px; font-weight:700; }
+  table.admin-table td{ padding:10px 12px; border-top:1px solid var(--line); }
+  table.admin-table tr.away td{ background:#fdeceb; }
+
+  /* ===== 이탈 경고 오버레이 ===== */
+  #awayWarning{ position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(179,38,30,.94); text-align:center; padding:24px; }
+  #awayWarning.show{ display:flex; }
+  #awayWarning .box{ color:#fff; max-width:440px; }
+  #awayWarning .emoji{ font-size:52px; margin-bottom:14px; }
+  #awayWarning .msg{ font-size:20px; font-weight:800; line-height:1.5; margin-bottom:22px; }
+  #awayWarning button{ background:#fff; color:#b3261e; border:none; border-radius:10px; padding:12px 28px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+</style>
+</head>
+<body>
+
+<!-- ══ 로그인 화면 ══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="emoji">🔺</div>
+      <div class="title">정삼각형의 외심과 내심의 위치</div>
+      <div class="sub">중2 수학 · 인터랙티브 탐구 수업</div>
+    </div>
+    <div id="roleSelect">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:14px">역할을 선택하세요</div>
+      <div class="role-grid">
+        <button class="role-btn" onclick="showStudentForm()"><span class="emoji">🎒</span>학생</button>
+        <button class="role-btn" onclick="showTeacherForm()"><span class="emoji">📋</span>교사</button>
+      </div>
+    </div>
+    <div id="studentForm" class="login-form">
+      <button class="login-back" onclick="backToRole()">← 뒤로</button>
+      <div class="login-form-title">🎒 학생 정보 입력</div>
+      <div class="login-grid3">
+        <div class="login-field">
+          <label>학년</label>
+          <select id="loginGrade"><option value="">-</option><option>1학년</option><option selected>2학년</option><option>3학년</option></select>
+        </div>
+        <div class="login-field">
+          <label>반</label>
+          <select id="loginClass">
+            <option value="">-</option>
+            <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+          </select>
+        </div>
+        <div class="login-field">
+          <label>번호</label>
+          <input id="loginNum" type="number" min="1" max="40" placeholder="번호">
+        </div>
+      </div>
+      <div class="login-field" style="margin-bottom:16px">
+        <label>이름</label>
+        <input id="loginName" type="text" placeholder="이름을 입력하세요">
+      </div>
+      <div id="studentLoginError" class="login-error"></div>
+      <button class="login-submit" onclick="studentLogin()">학습 시작 →</button>
+    </div>
+    <div id="teacherForm" class="login-form">
+      <button class="login-back" onclick="backToRole()">← 뒤로</button>
+      <div class="login-form-title">📋 교사 로그인</div>
+      <div class="login-field" style="margin-bottom:16px">
+        <label>비밀번호</label>
+        <input id="teacherPw" type="password" placeholder="비밀번호를 입력하세요" onkeydown="if(event.key==='Enter')teacherLogin()">
+      </div>
+      <div id="teacherLoginError" class="login-error">비밀번호가 틀렸어요.</div>
+      <button class="login-submit admin" onclick="teacherLogin()">관리자 모드 입장 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 관리자 대시보드 ══ -->
+<div id="adminScreen">
+  <div class="admin-header">
+    <div>
+      <div class="title">⚙ 관리자 모드 — 정삼각형의 외심과 내심의 위치</div>
+      <div class="sub" id="adminSummary">불러오는 중...</div>
+    </div>
+    <button class="admin-logout" onclick="adminLogout()">로그아웃</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-filter-row">
+      <label>학년
+        <select id="filterGrade">
+          <option value="">전체</option>
+          <option>1학년</option><option>2학년</option><option>3학년</option>
+        </select>
+      </label>
+      <label>반
+        <select id="filterCls">
+          <option value="">전체</option>
+          <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+        </select>
+      </label>
+      <button class="btn-admin-delete" id="btnAdminDelete" disabled>🗑 이 반 기록 삭제</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>학년/반/번호</th><th>이름</th><th>진행 단계</th><th>상태</th><th>이탈 횟수</th><th>마지막 활동</th></tr></thead>
+        <tbody id="adminTableBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 이탈 경고 오버레이 ══ -->
+<div id="awayWarning">
+  <div class="box">
+    <div class="emoji">🚨</div>
+    <div class="msg">경고입니다!<br>수업 외 행동을 하지 말고<br>지금 주어진 과제를 완료하세요.</div>
+    <button onclick="dismissWarning()">확인했습니다</button>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none">
+<div class="session-bar" id="sessionBar" style="display:none">
+  <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
+  <span style="display:flex;gap:8px;"><a href="index.html" id="hubBackLink">← 학습 선택 목록으로 돌아가기</a><button onclick="location.reload()">로그아웃</button></span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<header>
+  <h1>🔺 정삼각형의 외심과 내심의 위치</h1>
+  <p>일반 삼각형과 정삼각형에서 외심과 내심을 각각 찾아보고, 정삼각형에서 두 점이 일치하는 이유를 알아봅시다.</p>
+</header>
+
+<div class="layout mobile-show-canvas" id="layoutRoot">
+  <div class="mobile-tabs">
+    <button class="mobile-tab-btn active" id="mtabCanvas" onclick="showMobileTab('canvas')">📐 그림</button>
+    <button class="mobile-tab-btn" id="mtabActivity" onclick="showMobileTab('activity')">📝 활동</button>
+  </div>
+
+  <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
+  <div class="card sticky">
+    <div class="toolbar">
+      <button class="btn btn-outline" id="btnGenTri">🔻 일반 삼각형 보기</button>
+      <button class="btn btn-outline" id="btnEquiTri">🔺 정삼각형 보기</button>
+    </div>
+
+    <div class="svg-wrap">
+      <svg id="canvas" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+        <polygon id="triABC" class="tri-abc" points=""></polygon>
+
+        <line id="angA" class="bis-angle" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="angB" class="bis-angle" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="angC" class="bis-angle" x1="0" y1="0" x2="0" y2="0"></line>
+
+        <line id="perpAB" class="bis-perp" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="perpCA" class="bis-perp" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="perpBC" class="bis-perp" x1="0" y1="0" x2="0" y2="0"></line>
+
+        <circle id="dotA" r="4" class="vertex-dot"></circle>
+        <text id="nameA" class="vertex-name">A</text>
+        <circle id="dotB" r="4" class="vertex-dot"></circle>
+        <text id="nameB" class="vertex-name">B</text>
+        <circle id="dotC" r="4" class="vertex-dot"></circle>
+        <text id="nameC" class="vertex-name">C</text>
+
+        <circle id="pulseO1" class="pt-pulse-ring" cx="0" cy="0" r="8"></circle>
+        <circle id="pulseO2" class="pt-pulse-ring" cx="0" cy="0" r="8" style="animation-delay:.55s"></circle>
+        <text id="hintO" class="pt-hint">🎯 외심이에요!</text>
+        <circle id="dotO" r="5" class="o-dot"></circle>
+        <text id="nameO" class="o-label">O</text>
+
+        <circle id="pulseI1" class="pt-pulse-ring" cx="0" cy="0" r="8"></circle>
+        <circle id="pulseI2" class="pt-pulse-ring" cx="0" cy="0" r="8" style="animation-delay:.55s"></circle>
+        <text id="hintI" class="pt-hint">🎯 내심이에요!</text>
+        <circle id="dotI" r="5" class="i-dot"></circle>
+        <text id="nameI" class="i-label">I</text>
+      </svg>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#e0455a"></i> 수직이등분선 (외심)</span>
+      <span><i class="dot" style="background:#3b6fe0"></i> 각의 이등분선 (내심)</span>
+    </div>
+    <p class="hint">💡 정삼각형에서는 빨간 선 양옆으로 파란 선이 살짝 삐져나와 보여요 — 두 선이 같은 자리에 있다는 뜻이에요!</p>
+  </div>
+
+  <!-- ================= 영역 2: 탐구 활동지 ================= -->
+  <div class="activity">
+    <section class="step-card" id="mainCard">
+      <div class="step-head">
+        <h2>🔍 정삼각형에서는 외심과 내심이 왜 같을까?</h2>
+      </div>
+      <div class="step-body">
+        <div class="goal-banner">
+          <span class="tag">🎯 탐구 목표</span>
+          <b>일반 삼각형과 정삼각형에서 외심·내심을 각각 찾아보고, 정삼각형에서 두 점이 일치하는 이유를 설명해보자.</b>
+        </div>
+
+        <p>왼쪽 위 <b>[🔻 일반 삼각형 보기]</b> 또는 <b>[🔺 정삼각형 보기]</b> 버튼을 눌러 삼각형을 만들고, 아래 버튼으로 외심과 내심을 각각 찾아보세요.</p>
+
+        <p><b>① 외심 찾기</b> (수직이등분선, 빨간색)</p>
+        <div class="toolbar">
+          <button class="btn btn-perp" id="btnPerpAB">AB의 수직이등분선</button>
+          <button class="btn btn-perp" id="btnPerpCA">CA의 수직이등분선</button>
+          <button class="btn btn-perp" id="btnPerpBC">BC의 수직이등분선</button>
+        </div>
+        <div class="feedback" id="fbPerp"></div>
+
+        <p><b>② 내심 찾기</b> (각의 이등분선, 파란색)</p>
+        <div class="toolbar">
+          <button class="btn btn-ang" id="btnAngA">∠A의 이등분선</button>
+          <button class="btn btn-ang" id="btnAngB">∠B의 이등분선</button>
+          <button class="btn btn-ang" id="btnAngC">∠C의 이등분선</button>
+        </div>
+        <div class="feedback" id="fbAng"></div>
+
+        <div class="reveal" id="blockGeneralConclude">
+          <p><b>③ 일반 삼각형에서는?</b></p>
+          <div class="fillsentence">
+            일반 삼각형에서는 외심과 내심의 위치가
+            <select id="genAns">
+              <option value="?">〔 선택 〕</option>
+              <option value="same">같다</option>
+              <option value="diff">다르다</option>
+            </select>
+            .
+          </div>
+          <button class="btn btn-check" id="checkGen">확인</button>
+          <div class="feedback" id="fbGen"></div>
+        </div>
+
+        <div class="reveal" id="blockEquiConclude">
+          <p><b>③ 정삼각형에서는?</b></p>
+          <div class="fillsentence">
+            정삼각형에서는 외심과 내심의 위치가
+            <select id="equiAns">
+              <option value="?">〔 선택 〕</option>
+              <option value="same">같다</option>
+              <option value="diff">다르다</option>
+            </select>
+            .
+          </div>
+          <button class="btn btn-check" id="checkEqui">확인</button>
+          <div class="feedback" id="fbEqui"></div>
+        </div>
+
+        <div class="reveal" id="blockExplain">
+          <p><b>④ 정삼각형에서 외심과 내심의 위치가 같은 이유는 무엇일까요?</b> 직접 문장으로 설명해보세요.</p>
+          <textarea class="blank-area" id="explainText" placeholder="예: 정삼각형에서는 ~이기 때문에 외심과 내심이 같은 점이 된다."></textarea>
+          <button class="btn btn-check" id="checkExplain" style="margin-top:8px;">확인</button>
+          <div class="feedback" id="fbExplain"></div>
+
+          <div class="reveal" id="blockAiWarn">
+            <p class="hint">⚠️ AI의 채점이라 정확하지 않을 수 있어요!</p>
+            <div class="toolbar">
+              <button class="btn btn-outline btn-sm" id="btnAskTeacher">🙋 선생님께 맞는지 여쭤보기</button>
+              <button class="btn btn-outline btn-sm" id="btnShowAnswer">📖 정답 확인하기</button>
+            </div>
+            <div class="feedback" id="fbAskTeacher"></div>
+            <div class="answer-box" id="answerBox">
+              정삼각형에서는 세 변의 수직이등분선과 세 각의 이등분선이 같다. 즉, 세 변의 수직이등분선의 교점(외심)과 세 각의 이등분선의 교점(내심)이 같다.
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-box" id="summaryBox">
+          🎉 <b>정리</b><br>
+          정삼각형에서는 세 변의 수직이등분선과 세 각의 이등분선이 같은 자리에 있어서, 외심과 내심이 같은 점이 됩니다.<br>
+          아래 버튼으로 다른 삼각형에서도 다시 관찰해볼 수 있어요!
+        </div>
+      </div>
+    </section>
+
+    <div class="restart-wrap">
+      <button class="btn btn-outline" id="restartAll">🔄 다른 삼각형에서도 관찰하기</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /#appRoot -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  const GENERAL_PRESETS = [
+    {A:{x:300,y:70}, B:{x:150,y:330}, C:{x:500,y:300}},
+    {A:{x:250,y:90}, B:{x:150,y:320}, C:{x:500,y:350}},
+    {A:{x:390,y:100}, B:{x:170,y:290}, C:{x:460,y:340}},
+    {A:{x:270,y:110}, B:{x:150,y:350}, C:{x:520,y:300}}
+  ];
+  function equilateralTri(cx,cy,R){
+    const angles = [-90,30,150].map(d=>d*Math.PI/180);
+    const pts = angles.map(a=>({x:cx+R*Math.cos(a), y:cy+R*Math.sin(a)}));
+    return {A:pts[0], B:pts[1], C:pts[2]};
+  }
+  const EQUI_PRESETS = [110,140,170,195].map(R=>equilateralTri(320,260,R));
+
+  let triType = 'general';
+  let genIdx = 0, equiIdx = 0;
+  let tri = GENERAL_PRESETS[0];
+
+  const constr = { doneAB:false, doneCA:false, doneBC:false, doneA:false, doneB:false, doneC:false, showO:false, showI:false };
+  const state = { doneGeneral:false, doneEquilateral:false, explainDone:false, progressStage:1 };
+
+  // ---------- DOM refs ----------
+  const svg = document.getElementById('canvas');
+  const triABC = document.getElementById('triABC');
+  const dotA=document.getElementById('dotA'), nameA=document.getElementById('nameA');
+  const dotB=document.getElementById('dotB'), nameB=document.getElementById('nameB');
+  const dotC=document.getElementById('dotC'), nameC=document.getElementById('nameC');
+  const perpAB=document.getElementById('perpAB'), perpCA=document.getElementById('perpCA'), perpBC=document.getElementById('perpBC');
+  const angA=document.getElementById('angA'), angB=document.getElementById('angB'), angC=document.getElementById('angC');
+  const dotO=document.getElementById('dotO'), nameO=document.getElementById('nameO');
+  const dotI=document.getElementById('dotI'), nameI=document.getElementById('nameI');
+  const pulseO1=document.getElementById('pulseO1'), pulseO2=document.getElementById('pulseO2'), hintO=document.getElementById('hintO');
+  const pulseI1=document.getElementById('pulseI1'), pulseI2=document.getElementById('pulseI2'), hintI=document.getElementById('hintI');
+
+  // ---------- 기하 헬퍼 ----------
+  function circumcenter(A,B,C){
+    const ax=A.x, ay=A.y, bx=B.x, by=B.y, cx=C.x, cy=C.y;
+    const d = 2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
+    const ux = ((ax*ax+ay*ay)*(by-cy)+(bx*bx+by*by)*(cy-ay)+(cx*cx+cy*cy)*(ay-by))/d;
+    const uy = ((ax*ax+ay*ay)*(cx-bx)+(bx*bx+by*by)*(ax-cx)+(cx*cx+cy*cy)*(bx-ax))/d;
+    return {x:ux, y:uy};
+  }
+  function incenter(A,B,C){
+    const a = Math.hypot(B.x-C.x,B.y-C.y);
+    const b = Math.hypot(C.x-A.x,C.y-A.y);
+    const c = Math.hypot(A.x-B.x,A.y-B.y);
+    const sum = a+b+c;
+    return { x:(a*A.x+b*B.x+c*C.x)/sum, y:(a*A.y+b*B.y+c*C.y)/sum };
+  }
+  function unitPerp(P,Q){
+    const dx=Q.x-P.x, dy=Q.y-P.y;
+    const len=Math.hypot(dx,dy)||1;
+    return {x:-dy/len, y:dx/len};
+  }
+  function creaseEnds(P,Q,O,margin){
+    const M={x:(P.x+Q.x)/2,y:(P.y+Q.y)/2};
+    const perp=unitPerp(P,Q);
+    const h=Math.hypot(O.x-M.x,O.y-M.y)+margin;
+    return { P1:{x:M.x+perp.x*h,y:M.y+perp.y*h}, P2:{x:M.x-perp.x*h,y:M.y-perp.y*h} };
+  }
+  function bisectorFoot(V,P,Q){
+    const VP = Math.hypot(P.x-V.x,P.y-V.y);
+    const VQ = Math.hypot(Q.x-V.x,Q.y-V.y);
+    const t = VP/(VP+VQ);
+    return {x:P.x+t*(Q.x-P.x), y:P.y+t*(Q.y-P.y)};
+  }
+
+  // ---------- draw-in 애니메이션 ----------
+  function showEl(el, on, opts){
+    opts = opts || {};
+    if(!on){ el.style.display='none'; return; }
+    el.style.display = 'block';
+    if(opts.animate){
+      const len = el.getTotalLength();
+      el.style.transition='none';
+      el.style.strokeDasharray=len;
+      el.style.strokeDashoffset=len;
+      el.getBoundingClientRect();
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          el.style.transition=`stroke-dashoffset ${opts.duration||600}ms ease`;
+          el.style.strokeDashoffset='0';
+        });
+      });
+    }else{
+      el.style.transition='none';
+      el.style.strokeDasharray='';
+      el.style.strokeDashoffset='';
+    }
+  }
+  function flashPoint(pulseEls, hintEl, x, y){
+    pulseEls.forEach(el=>{ el.setAttribute('cx',x); el.setAttribute('cy',y); el.classList.remove('active'); void el.offsetWidth; el.classList.add('active'); });
+    hintEl.setAttribute('x', x); hintEl.setAttribute('y', y-42);
+    hintEl.classList.remove('active'); void hintEl.offsetWidth; hintEl.classList.add('active');
+    setTimeout(()=>{ pulseEls.forEach(el=>el.classList.remove('active')); hintEl.classList.remove('active'); }, 2300);
+  }
+
+  // ---------- 렌더 ----------
+  let _geom = null;
+  function render(){
+    const {A,B,C} = tri;
+    triABC.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`);
+    dotA.setAttribute('cx',A.x); dotA.setAttribute('cy',A.y); nameA.setAttribute('x',A.x-6); nameA.setAttribute('y',A.y-14);
+    dotB.setAttribute('cx',B.x); dotB.setAttribute('cy',B.y); nameB.setAttribute('x',B.x-20); nameB.setAttribute('y',B.y+20);
+    dotC.setAttribute('cx',C.x); dotC.setAttribute('cy',C.y); nameC.setAttribute('x',C.x+10); nameC.setAttribute('y',C.y+20);
+
+    const O = circumcenter(A,B,C);
+    const I = incenter(A,B,C);
+    const ab = creaseEnds(A,B,O,50), ca = creaseEnds(C,A,O,50), bc = creaseEnds(B,C,O,50);
+    const fA = bisectorFoot(A,B,C), fB = bisectorFoot(B,A,C), fC = bisectorFoot(C,A,B);
+    _geom = {A,B,C,O,I};
+
+    perpAB.setAttribute('x1',ab.P1.x); perpAB.setAttribute('y1',ab.P1.y); perpAB.setAttribute('x2',ab.P2.x); perpAB.setAttribute('y2',ab.P2.y);
+    perpCA.setAttribute('x1',ca.P1.x); perpCA.setAttribute('y1',ca.P1.y); perpCA.setAttribute('x2',ca.P2.x); perpCA.setAttribute('y2',ca.P2.y);
+    perpBC.setAttribute('x1',bc.P1.x); perpBC.setAttribute('y1',bc.P1.y); perpBC.setAttribute('x2',bc.P2.x); perpBC.setAttribute('y2',bc.P2.y);
+    showEl(perpAB, constr.doneAB);
+    showEl(perpCA, constr.doneCA);
+    showEl(perpBC, constr.doneBC);
+
+    angA.setAttribute('x1',A.x); angA.setAttribute('y1',A.y); angA.setAttribute('x2',fA.x); angA.setAttribute('y2',fA.y);
+    angB.setAttribute('x1',B.x); angB.setAttribute('y1',B.y); angB.setAttribute('x2',fB.x); angB.setAttribute('y2',fB.y);
+    angC.setAttribute('x1',C.x); angC.setAttribute('y1',C.y); angC.setAttribute('x2',fC.x); angC.setAttribute('y2',fC.y);
+    showEl(angA, constr.doneA);
+    showEl(angB, constr.doneB);
+    showEl(angC, constr.doneC);
+
+    dotO.style.display = constr.showO ? 'block':'none';
+    nameO.style.display = constr.showO ? 'block':'none';
+    dotO.setAttribute('cx',O.x); dotO.setAttribute('cy',O.y);
+    nameO.setAttribute('x',O.x-18); nameO.setAttribute('y',O.y-10);
+
+    dotI.style.display = constr.showI ? 'block':'none';
+    nameI.style.display = constr.showI ? 'block':'none';
+    dotI.setAttribute('cx',I.x); dotI.setAttribute('cy',I.y);
+    nameI.setAttribute('x',I.x+12); nameI.setAttribute('y',I.y+22);
+  }
+
+  // ---------- 삼각형 선택 ----------
+  function resetConstruction(){
+    constr.doneAB=false; constr.doneCA=false; constr.doneBC=false;
+    constr.doneA=false; constr.doneB=false; constr.doneC=false;
+    constr.showO=false; constr.showI=false;
+    const fb1=document.getElementById('fbPerp'), fb2=document.getElementById('fbAng');
+    fb1.className='feedback'; fb1.textContent='';
+    fb2.className='feedback'; fb2.textContent='';
+    render();
+  }
+  document.getElementById('btnGenTri').addEventListener('click', ()=>{
+    triType='general';
+    genIdx = (genIdx+1) % GENERAL_PRESETS.length;
+    tri = GENERAL_PRESETS[genIdx];
+    resetConstruction();
+  });
+  document.getElementById('btnEquiTri').addEventListener('click', ()=>{
+    triType='equilateral';
+    equiIdx = (equiIdx+1) % EQUI_PRESETS.length;
+    tri = EQUI_PRESETS[equiIdx];
+    resetConstruction();
+  });
+
+  // ---------- 외심/내심 작도 ----------
+  function afterBothFound(){
+    if(constr.showO && constr.showI){
+      if(triType === 'general' && !state.doneGeneral){
+        state.doneGeneral = true;
+        state.progressStage = Math.max(state.progressStage, 2);
+        if(typeof syncProgress === 'function') syncProgress(true);
+        document.getElementById('blockGeneralConclude').classList.add('show');
+      }
+      if(triType === 'equilateral' && !state.doneEquilateral){
+        state.doneEquilateral = true;
+        state.progressStage = Math.max(state.progressStage, 3);
+        if(typeof syncProgress === 'function') syncProgress(true);
+        document.getElementById('blockEquiConclude').classList.add('show');
+      }
+    }
+  }
+  document.getElementById('btnPerpAB').addEventListener('click', ()=>{
+    if(constr.doneAB) return;
+    render();
+    showEl(perpAB, true, {animate:true, duration:550});
+    setTimeout(()=>{ constr.doneAB=true; render(); }, 600);
+  });
+  document.getElementById('btnPerpCA').addEventListener('click', ()=>{
+    if(!constr.doneAB || constr.doneCA) return;
+    render();
+    showEl(perpCA, true, {animate:true, duration:550});
+    setTimeout(()=>{
+      constr.doneCA=true; constr.showO=true; render();
+      flashPoint([pulseO1,pulseO2], hintO, _geom.O.x, _geom.O.y);
+      afterBothFound();
+    }, 600);
+  });
+  document.getElementById('btnPerpBC').addEventListener('click', ()=>{
+    if(!constr.doneCA || constr.doneBC) return;
+    render();
+    showEl(perpBC, true, {animate:true, duration:550});
+    setTimeout(()=>{
+      constr.doneBC=true; render();
+      const fb = document.getElementById('fbPerp');
+      fb.className='feedback success'; fb.textContent='✅ 세 수직이등분선이 모두 점 O에서 만나요!';
+    }, 600);
+  });
+  document.getElementById('btnAngA').addEventListener('click', ()=>{
+    if(constr.doneA) return;
+    render();
+    showEl(angA, true, {animate:true, duration:550});
+    setTimeout(()=>{ constr.doneA=true; render(); }, 600);
+  });
+  document.getElementById('btnAngB').addEventListener('click', ()=>{
+    if(!constr.doneA || constr.doneB) return;
+    render();
+    showEl(angB, true, {animate:true, duration:550});
+    setTimeout(()=>{
+      constr.doneB=true; constr.showI=true; render();
+      flashPoint([pulseI1,pulseI2], hintI, _geom.I.x, _geom.I.y);
+      afterBothFound();
+    }, 600);
+  });
+  document.getElementById('btnAngC').addEventListener('click', ()=>{
+    if(!constr.doneB || constr.doneC) return;
+    render();
+    showEl(angC, true, {animate:true, duration:550});
+    setTimeout(()=>{
+      constr.doneC=true; render();
+      const fb = document.getElementById('fbAng');
+      fb.className='feedback success'; fb.textContent='✅ 세 각의 이등분선이 모두 점 I에서 만나요!';
+    }, 600);
+  });
+
+  // ---------- 결론 ----------
+  document.getElementById('checkGen').addEventListener('click', ()=>{
+    const fb = document.getElementById('fbGen');
+    if(document.getElementById('genAns').value === 'diff'){
+      const equiOk = document.getElementById('equiAns').value === 'same';
+      fb.className='feedback success';
+      fb.textContent = equiOk
+        ? '✅ 맞아요! 일반 삼각형에서는 외심과 내심의 위치가 달라요.'
+        : '✅ 맞아요! 일반 삼각형에서는 외심과 내심의 위치가 달라요. 이제 정삼각형에서도 확인해봅시다. 위쪽의 [🔺 정삼각형 보기]를 눌러주세요!';
+      maybeRevealExplainBlock();
+    }else{
+      fb.className='feedback error'; fb.textContent='❌ 다시 생각해보세요. 방금 그린 O와 I의 위치를 비교해보세요.';
+    }
+  });
+  document.getElementById('checkEqui').addEventListener('click', ()=>{
+    const fb = document.getElementById('fbEqui');
+    if(document.getElementById('equiAns').value === 'same'){
+      const genOk = document.getElementById('genAns').value === 'diff';
+      fb.className='feedback success';
+      fb.textContent = genOk
+        ? '✅ 맞아요! 정삼각형에서는 외심과 내심의 위치가 같아요.'
+        : '✅ 맞아요! 정삼각형에서는 외심과 내심의 위치가 같아요. 이제 일반 삼각형에서도 확인해봅시다. 위쪽의 [🔻 일반 삼각형 보기]를 눌러주세요!';
+      maybeRevealExplainBlock();
+    }else{
+      fb.className='feedback error'; fb.textContent='❌ 다시 생각해보세요. 방금 그린 O와 I의 위치를 비교해보세요.';
+    }
+  });
+  function maybeRevealExplainBlock(){
+    const genOk = document.getElementById('genAns').value === 'diff';
+    const equiOk = document.getElementById('equiAns').value === 'same';
+    if(genOk && equiOk){
+      document.getElementById('blockExplain').classList.add('show');
+    }
+  }
+
+  // ---------- 서술형 설명 ----------
+  function normalizeAns(s){
+    return (s || '').replace(/\s+/g,'');
+  }
+  document.getElementById('checkExplain').addEventListener('click', ()=>{
+    const el = document.getElementById('explainText');
+    const v = normalizeAns(el.value);
+    const hasBoth = v.indexOf('수직이등분선') >= 0 && v.indexOf('각의이등분선') >= 0;
+    const hasEq = v.indexOf('같다') >= 0 || v.indexOf('일치') >= 0 || v.indexOf('겹친다') >= 0;
+    const ok = hasBoth && hasEq;
+    const fb = document.getElementById('fbExplain');
+    el.classList.toggle('correct', ok);
+    el.classList.toggle('wrong', !ok);
+    if(ok){
+      fb.className='feedback success';
+      fb.textContent = '🎉 정확해요! 정삼각형에서는 수직이등분선과 각의 이등분선이 같은 자리에 있어서 외심과 내심이 일치해요.';
+      document.getElementById('blockAiWarn').classList.remove('show');
+      completeActivity();
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 아직 정확하지 않아요. "수직이등분선"과 "각의 이등분선"이라는 표현이 모두 들어가고, "같다/일치/겹친다" 중 하나가 들어가야 해요.';
+      document.getElementById('blockAiWarn').classList.add('show');
+    }
+  });
+  document.getElementById('btnAskTeacher').addEventListener('click', ()=>{
+    const fb = document.getElementById('fbAskTeacher');
+    fb.className='feedback warn';
+    fb.textContent = '🙋 선생님을 불러보세요!';
+  });
+  document.getElementById('btnShowAnswer').addEventListener('click', ()=>{
+    document.getElementById('answerBox').classList.add('show');
+    completeActivity();
+  });
+  function completeActivity(){
+    if(state.explainDone) return;
+    state.explainDone = true;
+    state.progressStage = 4;
+    if(typeof syncProgress === 'function') syncProgress(true);
+    document.getElementById('summaryBox').classList.add('show');
+  }
+  document.getElementById('restartAll').addEventListener('click', ()=>{
+    // 로그인은 그대로 두고, 활동 진행 상태만 처음으로 되돌린다.
+    if(Math.random() < 0.5){
+      triType='general';
+      genIdx = (genIdx+1) % GENERAL_PRESETS.length;
+      tri = GENERAL_PRESETS[genIdx];
+    }else{
+      triType='equilateral';
+      equiIdx = (equiIdx+1) % EQUI_PRESETS.length;
+      tri = EQUI_PRESETS[equiIdx];
+    }
+    resetConstruction();
+    state.doneGeneral = false;
+    state.doneEquilateral = false;
+    state.explainDone = false;
+    state.progressStage = 1;
+    if(typeof syncProgress === 'function') syncProgress(true);
+    ['blockGeneralConclude','blockEquiConclude','blockExplain','blockAiWarn','summaryBox'].forEach(id=>{
+      document.getElementById(id).classList.remove('show');
+    });
+    document.getElementById('answerBox').classList.remove('show');
+    document.getElementById('genAns').value = '?';
+    document.getElementById('equiAns').value = '?';
+    const explainEl = document.getElementById('explainText');
+    explainEl.value = '';
+    explainEl.classList.remove('correct','wrong');
+    ['fbGen','fbEqui','fbExplain','fbAskTeacher'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.className='feedback'; el.textContent='';
+    });
+    document.getElementById('mainCard').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  // ---------- 모바일 탭 전환 ----------
+  window.showMobileTab = function(tab){
+    const layoutRoot = document.getElementById('layoutRoot');
+    layoutRoot.classList.toggle('mobile-show-canvas', tab === 'canvas');
+    layoutRoot.classList.toggle('mobile-show-activity', tab === 'activity');
+    document.getElementById('mtabCanvas').classList.toggle('active', tab === 'canvas');
+    document.getElementById('mtabActivity').classList.toggle('active', tab === 'activity');
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  // ================= 로그인 / Firebase / 관리자 / 이탈 감지 =================
+  const LESSON_ID = 'equilateral-oi1';
+  const STAGE_NAMES = {1:'1.탐구 시작', 2:'2.일반삼각형 완료', 3:'3.정삼각형 완료', 4:'4.설명 작성 완료'};
+  const PW_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyAEFxLqfhcl6RJlS3ju9InTx9AbFHQ_Yfg",
+      authDomain:"climate-lesson.firebaseapp.com",
+      projectId:"climate-lesson",
+      storageBucket:"climate-lesson.firebasestorage.app",
+      messagingSenderId:"699342489530",
+      appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('Firebase init:', e); }
+
+  let isAdmin = false;
+  let _studentInfo = null;
+  let _docId = null;
+  let _syncTimer = null;
+  let _awayCount = 0;
+  let _adminUnsub = null;
+  let _latestRows = [];
+
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  async function hashPw(pw){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  window.showStudentForm = function(){
+    document.getElementById('roleSelect').style.display = 'none';
+    document.getElementById('studentForm').classList.add('show');
+    document.getElementById('loginName').focus();
+  };
+  window.showTeacherForm = function(){
+    document.getElementById('roleSelect').style.display = 'none';
+    document.getElementById('teacherForm').classList.add('show');
+    document.getElementById('teacherPw').focus();
+  };
+  window.backToRole = function(){
+    document.getElementById('studentForm').classList.remove('show');
+    document.getElementById('teacherForm').classList.remove('show');
+    document.getElementById('studentLoginError').style.display = 'none';
+    document.getElementById('teacherLoginError').style.display = 'none';
+    document.getElementById('roleSelect').style.display = 'block';
+  };
+  window.studentLogin = function(){
+    const grade = document.getElementById('loginGrade').value;
+    const cls = document.getElementById('loginClass').value;
+    const num = document.getElementById('loginNum').value;
+    const name = document.getElementById('loginName').value.trim();
+    const err = document.getElementById('studentLoginError');
+    if(!grade || !cls || !num || !name){
+      err.textContent = '학년, 반, 번호, 이름을 모두 입력해주세요!';
+      err.style.display = 'block';
+      return;
+    }
+    err.style.display = 'none';
+    _studentInfo = {grade, cls, num, name};
+    _docId = `${LESSON_ID}_${todayStr()}_${cls}_${String(num).padStart(2,'0')}`;
+    enterApp(false);
+  };
+  window.teacherLogin = async function(){
+    const pw = document.getElementById('teacherPw').value;
+    const err = document.getElementById('teacherLoginError');
+    const hash = await hashPw(pw);
+    if(hash === PW_HASH){
+      err.style.display = 'none';
+      enterApp(true);
+    }else{
+      err.style.display = 'block';
+      document.getElementById('teacherPw').value = '';
+      document.getElementById('teacherPw').focus();
+    }
+  };
+  function enterApp(admin){
+    isAdmin = admin;
+    document.getElementById('loginScreen').style.display = 'none';
+    if(admin){
+      document.getElementById('adminScreen').style.display = 'block';
+      startAdminWatch();
+    }else{
+      document.getElementById('appRoot').style.display = 'block';
+      document.getElementById('sessionBar').style.display = 'flex';
+      document.getElementById('sessionName').textContent = `${_studentInfo.grade} ${_studentInfo.cls} ${_studentInfo.num}번 ${_studentInfo.name}`;
+      setupAwayDetection();
+      syncProgress(true);
+    }
+  }
+  function syncProgress(immediate){
+    if(!_db || !_studentInfo || isAdmin) return;
+    clearTimeout(_syncTimer);
+    const write = ()=>{
+      _db.collection('progress').doc(_docId).set({
+        lesson: LESSON_ID,
+        date: todayStr(),
+        grade: _studentInfo.grade,
+        cls: _studentInfo.cls,
+        num: parseInt(_studentInfo.num),
+        name: _studentInfo.name,
+        stage: state.progressStage,
+        awayCount: _awayCount,
+        isAway: document.hidden,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true}).catch(e=>console.warn('sync:', e));
+    };
+    if(immediate){ write(); } else { _syncTimer = setTimeout(write, 1200); }
+  }
+  function setupAwayDetection(){
+    function onAway(){
+      _awayCount++;
+      document.getElementById('awayWarning').classList.add('show');
+      syncProgress(true);
+    }
+    function onBack(){ syncProgress(true); }
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) onAway(); else onBack(); });
+    window.addEventListener('blur', onAway);
+    window.addEventListener('focus', onBack);
+    setInterval(()=>syncProgress(true), 20000);
+  }
+  window.dismissWarning = function(){
+    document.getElementById('awayWarning').classList.remove('show');
+    syncProgress(true);
+  };
+  function startAdminWatch(){
+    if(!_db){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171">Firebase 연결 실패</td></tr>';
+      return;
+    }
+    const today = todayStr();
+    _adminUnsub = _db.collection('progress')
+      .where('lesson','==', LESSON_ID)
+      .where('date','==', today)
+      .onSnapshot(snap=>{
+        const rows = [];
+        snap.forEach(d=>rows.push(Object.assign({_id:d.id}, d.data())));
+        rows.sort((a,b)=> String(a.cls||'').localeCompare(String(b.cls||'')) || ((a.num||0)-(b.num||0)));
+        _latestRows = rows;
+        applyAdminFilter();
+      }, err=>{
+        document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="6" style="color:#f87171">오류: ${err.message}</td></tr>`;
+      });
+  }
+  function applyAdminFilter(){
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    const filtered = _latestRows.filter(r => (!g || r.grade===g) && (!c || r.cls===c));
+    document.getElementById('btnAdminDelete').disabled = !(g && c);
+    renderAdminTable(filtered, g, c);
+  }
+  document.getElementById('filterGrade').addEventListener('change', applyAdminFilter);
+  document.getElementById('filterCls').addEventListener('change', applyAdminFilter);
+  function renderAdminTable(rows, g, c){
+    const total = rows.length;
+    const awayNow = rows.filter(r=>r.isAway).length;
+    const scopeLabel = (g || c) ? `${g||'전체 학년'} ${c||'전체 반'} · ` : '';
+    document.getElementById('adminSummary').textContent = `${scopeLabel}접속 ${total}명 · 현재 이탈 ${awayNow}명 (실시간)`;
+    if(!rows.length){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">아직 접속한 학생이 없어요.</td></tr>';
+      return;
+    }
+    document.getElementById('adminTableBody').innerHTML = rows.map(r=>{
+      const lastMs = (r.lastUpdated && r.lastUpdated.toDate) ? r.lastUpdated.toDate().getTime() : 0;
+      const staleMin = lastMs ? Math.max(0, Math.round((Date.now()-lastMs)/60000)) : null;
+      const status = r.isAway ? '⚠️ 다른 화면' : '✅ 정상';
+      return `<tr class="${r.isAway?'away':''}">
+        <td>${r.grade||''} ${r.cls||''} ${String(r.num).padStart(2,'0')}번</td>
+        <td>${r.name||''}</td>
+        <td>${STAGE_NAMES[r.stage]||('?'+r.stage)}</td>
+        <td>${status}</td>
+        <td>${r.awayCount||0}회</td>
+        <td>${staleMin!=null ? staleMin+'분 전' : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('btnAdminDelete').addEventListener('click', async ()=>{
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    if(!g || !c) return;
+    const targets = _latestRows.filter(r => r.grade===g && r.cls===c);
+    if(!targets.length){ alert('삭제할 접속 기록이 없어요.'); return; }
+    if(!confirm(`${g} ${c} 학생 ${targets.length}명의 오늘 접속 기록을 삭제할까요?\n(이 작업은 되돌릴 수 없습니다)`)) return;
+    try{
+      await Promise.all(targets.map(r => _db.collection('progress').doc(r._id).delete()));
+    }catch(e){
+      alert('삭제 중 오류가 발생했어요: ' + e.message);
+    }
+  });
+  window.adminLogout = function(){
+    if(_adminUnsub) _adminUnsub();
+    location.reload();
+  };
+
+  // ---------- init ----------
+  render();
+})();
+</script>
+</body>
+</html>
