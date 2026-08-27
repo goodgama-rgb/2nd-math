@@ -1496,6 +1496,17 @@
     location.reload();
   };
 
+  // ---- 허브에서 학생 정보를 URL로 넘겨주면 재로그인 없이 바로 진입 ----
+  (function tryAutoLogin(){
+    const p = new URLSearchParams(location.search);
+    const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
+    if(grade && cls && num && name){
+      _studentInfo = {grade, cls, num, name};
+      _docId = `${LESSON_ID}_${todayStr()}_${cls}_${String(num).padStart(2,'0')}`;
+      enterApp(false);
+    }
+  })();
+
   // ---------- init ----------
   syncButtons();
   update();

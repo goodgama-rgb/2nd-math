@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>삼각형의 내심 탐구</title>
+<title>평행사변형의 성질 탐구</title>
 <style>
   :root{
     --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
@@ -35,7 +35,6 @@
   .btn{ border:none; border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:700; cursor:pointer; background:#eef1fa; color:var(--ink); transition:.15s; font-family:inherit; }
   .btn:hover{ background:#e2e7f8; }
   .btn:disabled{ opacity:.35; cursor:not-allowed; }
-  .btn:disabled:hover{ background:#eef1fa; }
   .btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
   .btn-outline{ background:transparent; border:2px solid var(--line); color:var(--muted); }
   .btn-outline:hover{ background:#f5f7fc; }
@@ -45,32 +44,28 @@
   .btn-primary:disabled{ background:#cdd5f5; color:#8a93c2; cursor:not-allowed; box-shadow:none; }
 
   .svg-wrap{ background:#fbfcff; border-radius:14px; border:1px solid var(--line); padding:6px; }
-  svg{ width:100%; height:auto; display:block; touch-action:none; }
+  svg{ width:100%; height:auto; display:block; }
 
-  .tri-abc{ fill:#dbe4ff; stroke:#4a5568; stroke-width:2.5; }
+  .quad{ fill:#eef1fb; stroke:#4a5568; stroke-width:2.5; }
+  .diag{ stroke:#4a5568; stroke-width:2; stroke-dasharray:5 4; display:none; }
+  .tri-half{ stroke:none; display:none; transition:transform .8s ease; }
+  #triABC{ fill:#6c8bff; opacity:.55; }
+  #triCDA{ fill:#ff9db3; opacity:.55; }
   .vertex-dot{ fill:#4a5568; }
   .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; }
-  .tick{ stroke:#4a5568; stroke-width:2; display:none; }
-  .right-angle-mark{ fill:none; stroke:#c0392b; stroke-width:2; display:none; }
   .seg{ text-decoration-line:overline; text-decoration-thickness:1.3px; text-decoration-skip-ink:none; }
-  .bis-line{ stroke:#7c5cff; stroke-width:2; display:none; }
-  .in-circle{ fill:none; stroke:#3fbf91; stroke-width:2; opacity:.9; display:none; }
-  .compass-leg{ stroke-width:5; stroke-linecap:round; }
-  #compassLegNeedle{ stroke:#6b7280; }
-  #compassLegPencil{ stroke:#8b5e34; }
-  .compass-hinge{ fill:#c0392b; stroke:#fff; stroke-width:1.5; }
-  .compass-tip{ fill:#8b5e34; }
-  @keyframes iPulseRing{ 0%{ r:8; stroke-opacity:.9; } 100%{ r:36; stroke-opacity:0; } }
-  @keyframes iHintBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
-  .i-pulse-ring{ fill:none; stroke:#c0392b; stroke-width:3; display:none; pointer-events:none; }
-  .i-pulse-ring.active{ display:block; animation:iPulseRing 1.3s ease-out infinite; }
-  .i-click-hint{ font-size:15px; font-weight:800; fill:#c0392b; text-anchor:middle; display:none; pointer-events:none; }
-  .i-click-hint.active{ display:block; animation:iHintBob 1s ease-in-out infinite; }
-  .shade-tri{ stroke:none; opacity:.38; display:none; }
-  #triIEC{ fill:#6c8bff; }
-  #triIFC{ fill:#ff9db3; }
-  .seg-line{ stroke:#4a5568; stroke-width:1.6; stroke-dasharray:4 3; display:none; }
-  .i-label{ font-size:16px; font-weight:800; fill:#c0392b; display:none; }
+  .parallel-sym{ display:inline-block; position:relative; width:11px; height:15px; vertical-align:-2px; margin:0 1px; }
+  .parallel-sym::before, .parallel-sym::after{ content:''; position:absolute; top:1px; width:2px; height:14px; background:currentColor; transform:skewX(-16deg); }
+  .parallel-sym::before{ left:1px; }
+  .parallel-sym::after{ left:7px; }
+
+  .angle-arc{ fill:none; stroke-width:2; display:none; }
+  .arc-pair1{ stroke:#3fbf91; }
+  .arc-pair2{ stroke:#9b7cff; }
+  .angle-mark{ display:none; }
+  .mark-x{ stroke-width:2.4; }
+  .mark-x.pair1{ stroke:#3fbf91; }
+  .mark-x.pair2{ stroke:#9b7cff; }
 
   .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
   .legend span{ display:inline-flex; align-items:center; gap:5px; }
@@ -100,6 +95,9 @@
   .goal-banner .tag{ font-size:12px; font-weight:700; letter-spacing:.5px; color:#8b93c2; display:block; margin-bottom:4px; }
   .goal-banner b{ font-size:16.5px; }
 
+  .recall-box{ background:#fff6e0; border:1.5px dashed #ffce6b; border-radius:12px; padding:12px 14px; font-size:13px; color:#9a6b00; margin-bottom:12px; }
+  .recall-box b{ color:#7a5400; }
+
   .choice-list{ display:flex; flex-direction:column; gap:7px; margin:8px 0 12px; }
   .choice-list label{ display:flex; align-items:center; gap:8px; background:#f7f8fc; border:1.5px solid var(--line); padding:9px 11px; border-radius:10px; font-size:13.5px; cursor:pointer; transition:.15s; }
   .choice-list label:hover{ background:#eef1fb; }
@@ -118,7 +116,7 @@
   .summary-box b{ color:var(--primary-dark); }
 
   .reveal{ max-height:0; opacity:0; overflow:hidden; transition:.45s ease; }
-  .reveal.show{ max-height:1200px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
+  .reveal.show{ max-height:1600px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
 
   .proof-block{ background:#fbfcff; border:1.5px solid var(--line); border-radius:14px; padding:16px 18px; margin:14px 0; font-size:14.5px; line-height:2.35; color:#2b2f42; }
   .proof-block .given{ margin:0 0 6px; color:#4a5568; font-size:13.5px; }
@@ -199,8 +197,8 @@
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-header">
-      <div class="emoji">🎯</div>
-      <div class="title">삼각형의 내심</div>
+      <div class="emoji">📐</div>
+      <div class="title">평행사변형의 성질</div>
       <div class="sub">중2 수학 · 인터랙티브 탐구 수업</div>
     </div>
     <div id="roleSelect">
@@ -254,7 +252,7 @@
 <div id="adminScreen">
   <div class="admin-header">
     <div>
-      <div class="title">⚙ 관리자 모드 — 삼각형의 내심</div>
+      <div class="title">⚙ 관리자 모드 — 평행사변형의 성질</div>
       <div class="sub" id="adminSummary">불러오는 중...</div>
     </div>
     <button class="admin-logout" onclick="adminLogout()">로그아웃</button>
@@ -301,8 +299,8 @@
 <script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
 
 <header>
-  <h1>🎯 삼각형의 내심 — 존재성과 성질</h1>
-  <p>컴퍼스 작도로 세 내각의 이등분선이 만나는 점(내심)을 직접 찾아보고, 그 점의 성질을 증명해봅시다.</p>
+  <h1>📐 평행사변형의 성질</h1>
+  <p>대각선을 그어 만든 두 삼각형을 겹쳐보며, 평행사변형의 대변과 대각의 성질을 증명해봅시다.</p>
 </header>
 
 <div class="layout mobile-show-canvas" id="layoutRoot">
@@ -314,70 +312,37 @@
   <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
   <div class="card sticky">
     <div class="toolbar">
-      <button class="btn btn-outline" id="btnCycleTri">🔄 다른 삼각형 보기</button>
+      <button class="btn btn-outline" id="btnCycleQuad">🔄 다른 평행사변형 보기</button>
     </div>
 
     <div class="svg-wrap">
       <svg id="canvas" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
-        <!-- 삼각형 ABC -->
-        <polygon id="triABC" class="tri-abc" points=""></polygon>
+        <polygon id="quadABCD" class="quad" points=""></polygon>
+        <polygon id="triABC" class="tri-half" points=""></polygon>
+        <polygon id="triCDA" class="tri-half" points=""></polygon>
+        <line id="diagAC" class="diag" x1="0" y1="0" x2="0" y2="0"></line>
 
-        <!-- 각의 이등분선 -->
-        <line id="bisA" class="bis-line" x1="0" y1="0" x2="0" y2="0"></line>
-        <line id="bisB" class="bis-line" x1="0" y1="0" x2="0" y2="0"></line>
-        <line id="bisC" class="bis-line" x1="0" y1="0" x2="0" y2="0"></line>
+        <path id="arcBAC" class="angle-arc arc-pair1" d=""></path>
+        <path id="arcDCA" class="angle-arc arc-pair1" d=""></path>
+        <path id="arcACB" class="angle-arc arc-pair2" d=""></path>
+        <path id="arcCAD" class="angle-arc arc-pair2" d=""></path>
 
-        <!-- 내접원 -->
-        <circle id="inCircle" class="in-circle" cx="0" cy="0" r="0"></circle>
-
-        <!-- 컴퍼스 그래픽: 반지름을 조절하는 동안 다리가 실시간으로 벌어짐 -->
-        <g id="compassTool" style="display:none">
-          <line id="compassLegNeedle" class="compass-leg" x1="0" y1="0" x2="0" y2="0"></line>
-          <line id="compassLegPencil" class="compass-leg" x1="0" y1="0" x2="0" y2="0"></line>
-          <circle id="compassHinge" r="6" class="compass-hinge"></circle>
-          <circle id="compassPencilTip" r="3" class="compass-tip"></circle>
-        </g>
-
-        <!-- I에서 D,E,F까지 선분 + 같은 거리 눈금 -->
-        <line id="segID" class="seg-line" x1="0" y1="0" x2="0" y2="0"></line>
-        <line id="segIE" class="seg-line" x1="0" y1="0" x2="0" y2="0"></line>
-        <line id="segIF" class="seg-line" x1="0" y1="0" x2="0" y2="0"></line>
-        <path id="tickID" class="tick" d=""></path>
-        <path id="tickIE" class="tick" d=""></path>
-        <path id="tickIF" class="tick" d=""></path>
-
-        <!-- CI를 그어서 만드는 두 직각삼각형 IEC, IFC -->
-        <polygon id="triIEC" class="shade-tri" points=""></polygon>
-        <polygon id="triIFC" class="shade-tri" points=""></polygon>
-        <line id="segCI" class="seg-line" x1="0" y1="0" x2="0" y2="0"></line>
-        <path id="rightIEC" class="right-angle-mark" d=""></path>
-        <path id="rightIFC" class="right-angle-mark" d=""></path>
-
-        <!-- 꼭짓점 -->
         <circle id="dotA" r="4" class="vertex-dot"></circle>
         <text id="nameA" class="vertex-name">A</text>
         <circle id="dotB" r="4" class="vertex-dot"></circle>
         <text id="nameB" class="vertex-name">B</text>
         <circle id="dotC" r="4" class="vertex-dot"></circle>
         <text id="nameC" class="vertex-name">C</text>
-        <circle id="dotD" r="4" class="vertex-dot" style="display:none"></circle>
-        <text id="nameD" class="vertex-name" style="display:none">D</text>
-        <circle id="dotE" r="4" class="vertex-dot" style="display:none"></circle>
-        <text id="nameE" class="vertex-name" style="display:none">E</text>
-        <circle id="dotF" r="4" class="vertex-dot" style="display:none"></circle>
-        <text id="nameF" class="vertex-name" style="display:none">F</text>
-        <circle id="iPulseA" class="i-pulse-ring" cx="0" cy="0" r="8"></circle>
-        <circle id="iPulseB" class="i-pulse-ring" cx="0" cy="0" r="8" style="animation-delay:.65s"></circle>
-        <circle id="dotI" r="4.5" class="vertex-dot" style="display:none;fill:#c0392b"></circle>
-        <text id="nameI" class="i-label">I</text>
-        <text id="iClickHint" class="i-click-hint">👆 여기를 클릭!</text>
+        <circle id="dotD" r="4" class="vertex-dot"></circle>
+        <text id="nameD" class="vertex-name">D</text>
       </svg>
     </div>
 
     <div class="legend">
-      <span><i class="dot" style="background:#7c5cff"></i> 각의 이등분선</span>
-      <span><i class="dot" style="background:#3fbf91"></i> 세 변에 접하는 원</span>
-      <span><i class="dot" style="background:#4a5568"></i> 하나의 눈금 = 같은 거리</span>
+      <span><i class="dot" style="background:#6c8bff"></i> △ABC</span>
+      <span><i class="dot" style="background:#ff9db3"></i> △CDA</span>
+      <span><i class="dot" style="background:#3fbf91"></i> 엇각 쌍 ①</span>
+      <span><i class="dot" style="background:#9b7cff"></i> 엇각 쌍 ②</span>
     </div>
   </div>
 
@@ -395,77 +360,64 @@
     <section class="step-card" data-step="1" id="page1">
       <div class="step-head">
         <div class="step-badge">1</div>
-        <h2>삼각형의 내심을 찾아보자</h2>
+        <h2>평행사변형에는 어떤 성질이 있을까?</h2>
       </div>
       <div class="step-body">
-        <p>색종이를 접는 대신, 컴퍼스 작도로 각 내각의 이등분선을 직접 그려봅시다. 아래 버튼을 순서대로 눌러보세요. (오른쪽 위 [🔄 다른 삼각형 보기]를 누르면 다른 모양의 삼각형으로 똑같이 다시 해볼 수 있어요.)</p>
-
-        <div class="fillsentence" style="text-align:center;">
-          <b>① ∠A의 이등분선 작도하기</b><br>
-          <button class="btn btn-check" id="btnBisA" style="margin-top:8px;">🧭 ∠A 작도하기</button>
+        <div class="recall-box">
+          <b>초3~4 배웠어요!</b> 평행사변형: 마주 보는 두 쌍의 변이 서로 평행한 사각형
         </div>
-        <div class="feedback" id="fbA"></div>
+
+        <p>사각형 ABCD는 기호로 <b>□ABCD</b>와 같이 나타내요. 빈칸을 채워 용어를 정리해봅시다.</p>
+        <div class="fillsentence">
+          마주 보는 두 변(예: <span class="seg">AB</span>와 <span class="seg">DC</span>)을
+          <input type="text" class="blank" id="term1" maxlength="4" autocomplete="off">
+          (이)라 하고, 마주 보는 두 각(예: ∠A와 ∠C)을
+          <input type="text" class="blank" id="term2" maxlength="4" autocomplete="off">
+          (이)라고 한다.
+        </div>
+        <button class="btn btn-check" id="checkTerms">확인</button>
+        <div class="feedback" id="fbTerms"></div>
 
         <div class="reveal" id="block2">
+          <p><b>평행사변형 ABCD에 대각선 AC를 그어, 두 삼각형 ABC와 CDA를 만들어봅시다.</b></p>
           <div class="fillsentence" style="text-align:center;">
-            <b>② ∠B의 이등분선 작도하기</b><br>
-            <button class="btn btn-check" id="btnBisB" style="margin-top:8px;">🧭 ∠B 작도하기</button>
+            <button class="btn btn-check" id="btnDrawDiag">📐 대각선 AC 긋기</button>
           </div>
-          <div class="feedback" id="fbB"></div>
+          <div class="feedback" id="fbDiag"></div>
         </div>
 
         <div class="reveal" id="block3">
-          <p>🎯 두 이등분선이 만나는 점을 <b>I</b>라고 합니다.</p>
-          <p><b>탐구1.</b> 같은 방법으로 ∠C의 이등분선을 만들어 이 선분이 점 I를 지나는지 확인해 보자.</p>
+          <p><b>탐구1.</b> △ABC와 △CDA가 완전히 포개어질까요?</p>
           <div class="choice-list">
-            <label><input type="radio" name="predictC" value="yes"> 지난다</label>
-            <label><input type="radio" name="predictC" value="no"> 지나지 않는다</label>
+            <label><input type="radio" name="predictOverlap" value="yes"> 완전히 포개어진다</label>
+            <label><input type="radio" name="predictOverlap" value="no"> 포개어지지 않는다</label>
           </div>
           <div class="fillsentence" style="text-align:center;">
-            <button class="btn btn-check" id="btnBisC" style="margin-top:8px;">🧭 ∠C 작도해서 확인하기</button>
+            <button class="btn btn-check" id="btnOverlay">🔍 겹쳐서 확인하기</button>
           </div>
-          <div class="feedback" id="fbC"></div>
+          <div class="feedback" id="fbOverlay"></div>
+        </div>
+
+        <div class="reveal" id="observeMoreBlock">
+          <p style="text-align:center;">🔄 <b>다른 평행사변형에서도 확인해보세요!</b> 위쪽의 [🔄 다른 평행사변형 보기]를 눌러 새로운 모양에서 탐구1을 다시 해봅시다.</p>
         </div>
 
         <div class="reveal" id="block4">
-          <p><b>탐구2.</b> 컴퍼스를 사용하여 점 I를 중심으로 △ABC의 세 변과 각각 한 점에서 만나는 원을 그려봅시다.</p>
-          <p class="hint">💡 왼쪽 그림에서 <b>점 I를 클릭</b>해 컴퍼스를 고정한 뒤, 마우스(손가락)를 움직여 원의 크기를 조절하고, 세 변에 각각 한 점에서 닿으면 <b>다시 클릭</b>해서 원을 확정해보세요.</p>
-          <div class="feedback" id="fbCircle"></div>
-        </div>
-
-        <div class="reveal" id="block4Choice">
-          <p style="text-align:center;">🎉 <b>원을 완성했어요!</b> 다른 모양의 삼각형에서도 같은 방법이 통하는지 한 번 더 확인해볼까요?</p>
-          <div class="fillsentence" style="text-align:center; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
-            <button class="btn btn-outline" id="btnRedoTriangle">🔄 다른 삼각형 모양에서도 관찰하기</button>
-            <button class="btn btn-primary" id="btnProceedTerms">다음 탐구로 넘어가기 →</button>
-          </div>
-        </div>
-
-        <div class="reveal" id="block5">
-          <p><b>탐구3.</b> 지금까지 알아낸 사실에 이름을 붙여봅시다.</p>
+          <p><b>탐구2.</b> 탐구1을 통해 알 수 있는 평행사변형 ABCD의 성질을 정리해봅시다.</p>
           <div class="fillsentence">
-            삼각형의 세 변이 모두 원에 접할 때, 원 I는 삼각형 ABC에 <input type="text" class="blank" id="t3_a" maxlength="4" autocomplete="off"> 한다고 하고, 원 I를 삼각형 ABC의 <input type="text" class="blank" id="t3_b" maxlength="6" autocomplete="off"> 이라고 한다. 또 이 원의 중심을 그 삼각형의 <input type="text" class="blank" id="t3_c" maxlength="4" autocomplete="off"> 이라고 한다.
-          </div>
-          <button class="btn btn-check" id="checkTerms">확인</button>
-          <div class="feedback" id="fbTerms"></div>
-        </div>
-
-        <div class="reveal" id="concludeBlock1">
-          <p>📝 <b>우리가 관찰한 사실은 무엇일까요? 문장을 완성해보세요.</b></p>
-          <div class="fillsentence">
-            삼각형의 세 내각의 이등분선은
-            <select id="blank1a">
+            평행사변형에서 두 쌍의
+            <select id="concl1">
               <option value="?">〔 선택 〕</option>
-              <option value="no">한 점에서 만나지 않는다</option>
-              <option value="yes">한 점에서 만난다</option>
+              <option value="side">대변</option>
+              <option value="angle">대각</option>
             </select>
-            . 이때 이 점에서 세 변에 이르는 거리는
-            <select id="blank1b">
+            의 길이는 각각 같고, 두 쌍의
+            <select id="concl2">
               <option value="?">〔 선택 〕</option>
-              <option value="diff">서로 다르다</option>
-              <option value="same">모두 같다</option>
+              <option value="side">대변</option>
+              <option value="angle">대각</option>
             </select>
-            .
+            의 크기는 각각 같다.
           </div>
           <button class="btn btn-check" id="checkConclude1">결론 확인</button>
           <div class="feedback" id="feedbackConclude1"></div>
@@ -487,58 +439,79 @@
       <div class="step-body">
         <div class="goal-banner">
           <span class="tag">🎯 증명 목표</span>
-          <b>삼각형의 세 내각의 이등분선은 한 점에서 만나고, 이 점에서 세 변에 이르는 거리는 같다.</b><br>
-          (∠A, ∠B의 이등분선의 교점을 I라 하면, I는 ∠C의 이등분선 위에도 있고 ID=IE=IF이다)
+          <b>평행사변형 ABCD에서 두 쌍의 대변의 길이는 각각 같고, 두 쌍의 대각의 크기는 각각 같다.</b>
         </div>
 
-        <div class="reveal show" id="reviewBlock">
-          <p>💡 <b>복습</b> — 각의 이등분선 위의 한 점에서 그 각의 두 변에 이르는 거리는 같습니다.</p>
-          <p><b>Q1.</b> 점 I가 ∠A, ∠B의 이등분선 위의 점이라면, ID, IE, IF 사이에는 어떤 관계가 성립할까요? (D, E, F는 점 I에서 각각 변 AB, BC, CA에 내린 수선의 발입니다)</p>
+        <div class="reveal show" id="motivateBlock">
+          <p><b>Q1.</b> 만약 △ABC와 △CDA가 합동이라면, 어떤 사실을 알 수 있을까요? <i>(해당하는 것을 모두 고르세요)</i></p>
           <div class="choice-list">
-            <label><input type="radio" name="q1ieq" value="all"> ID = IE = IF</label>
-            <label><input type="radio" name="q1ieq" value="de"> ID = IE 이지만 IF는 관계없다</label>
-            <label><input type="radio" name="q1ieq" value="none"> 아무 관계 없다</label>
+            <label><input type="checkbox" class="q1a" data-correct="true"> <span class="seg">AB</span> = <span class="seg">CD</span></label>
+            <label><input type="checkbox" class="q1a" data-correct="true"> <span class="seg">BC</span> = <span class="seg">DA</span></label>
+            <label><input type="checkbox" class="q1a" data-correct="false"> <span class="seg">AC</span> = <span class="seg">BD</span></label>
+            <label><input type="checkbox" class="q1a" data-correct="true"> ∠B = ∠D</label>
           </div>
-          <button class="btn btn-check" id="checkQ1ieq">확인</button>
-          <div class="feedback" id="fbQ1ieq"></div>
-        </div>
+          <button class="btn btn-check" id="checkQ1">확인</button>
+          <div class="feedback" id="feedbackQ1"></div>
 
-        <div class="reveal" id="footBlock">
-          <p>이제 이 사실(<span class="seg">ID</span>=<span class="seg">IE</span>=<span class="seg">IF</span>)을 이용해서, ∠C의 이등분선도 점 I를 지난다는 것을 증명해봅시다.</p>
-          <div class="fillsentence" style="text-align:center;">
-            <button class="btn btn-check" id="btnShowCI">📐 CI를 긋고 두 직각삼각형 만들기</button>
-          </div>
-        </div>
-
-        <div class="reveal" id="rhsBlock">
-          <div class="fillsentence">
-            CI를 그으면 두 직각삼각형 IEC와 IFC에서<br>
-            ∠IEC = ∠IFC =
-            <select id="ang90Sel"><option value="?">〔 선택 〕</option><option value="45">45°</option><option value="90">90°</option></select>
-            , CI는
-            <select id="ciSel"><option value="?">〔 선택 〕</option><option value="common">공통</option><option value="diff">서로 다른 변</option></select>
-            , <span class="seg">IE</span> =
-            <select id="ieifSel"><option value="?">〔 선택 〕</option><option value="if">IF</option><option value="ic">IC</option></select>
-            이다.
-          </div>
-          <p><b>Q2.</b> 위 세 조건으로 △IEC ≡ △IFC 임을 보이려면 어떤 합동 조건을 사용해야 할까요?</p>
+          <p style="margin-top:16px;"><b>Q2.</b> 두 삼각형이 합동임을 보이려면 무엇을 해야 할까요?</p>
           <div class="choice-list">
-            <label><input type="radio" name="rhsType" value="SAS"> SAS 합동</label>
-            <label><input type="radio" name="rhsType" value="RHA"> RHA 합동</label>
-            <label><input type="radio" name="rhsType" value="RHS"> RHS 합동 (빗변의 길이와 다른 한 변의 길이가 각각 같다)</label>
+            <label><input type="radio" name="q2" value="ruler"> 자로 모든 변의 길이를 직접 재본다</label>
+            <label><input type="radio" name="q2" value="diag"> 두 쌍의 대변이 평행함을 이용하여 같은 각의 크기를 확인한다</label>
+            <label><input type="radio" name="q2" value="protractor"> 각도기로 아무 각이나 재본다</label>
           </div>
-          <button class="btn btn-check" id="checkRhs">확인</button>
-          <div class="feedback" id="fbRhs"></div>
+          <button class="btn btn-check" id="checkQ2">확인</button>
+          <div class="feedback" id="feedbackQ2"></div>
+        </div>
+
+        <div class="reveal" id="recallBlock">
+          <div class="recall-box">
+            <b>복습</b> — 평행한 두 직선이 한 직선과 만날 때 생기는 엇각의 크기는 서로 같다.
+          </div>
+          <p><b>Q3.</b> <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>일 때, ∠BAC의 엇각은 무엇일까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="alt1" value="dca"> ∠DCA</label>
+            <label><input type="radio" name="alt1" value="bca"> ∠BCA</label>
+            <label><input type="radio" name="alt1" value="adc"> ∠ADC</label>
+            <label><input type="radio" name="alt1" value="dcb"> ∠DCB</label>
+          </div>
+          <button class="btn btn-check" id="checkArc1">확인</button>
+          <div class="feedback" id="fbArc1"></div>
+
+          <div class="reveal" id="arc2Block">
+            <p><b>Q4.</b> <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>일 때, ∠ACB의 엇각은 무엇일까요?</p>
+            <div class="choice-list">
+              <label><input type="radio" name="alt2" value="cad"> ∠CAD</label>
+              <label><input type="radio" name="alt2" value="bac"> ∠BAC</label>
+              <label><input type="radio" name="alt2" value="adb"> ∠ADB</label>
+              <label><input type="radio" name="alt2" value="dab"> ∠DAB</label>
+            </div>
+            <button class="btn btn-check" id="checkArc2">확인</button>
+            <div class="feedback" id="fbArc2"></div>
+          </div>
+        </div>
+
+        <div class="reveal" id="congTypeBlock">
+          <p><b>Q3.</b> 정리하면 <span class="seg">AC</span>는 공통, ∠BAC=∠DCA, ∠ACB=∠CAD가 성립합니다. 어떤 합동 조건일까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="congType" value="SAS"> SAS 합동</label>
+            <label><input type="radio" name="congType" value="ASA"> ASA 합동</label>
+            <label><input type="radio" name="congType" value="RHA"> RHA 합동</label>
+            <label><input type="radio" name="congType" value="RHS"> RHS 합동</label>
+          </div>
+          <button class="btn btn-check" id="checkCongType">확인</button>
+          <div class="feedback" id="feedbackCongType"></div>
         </div>
 
         <div class="reveal" id="concludeBlock2">
           <div class="fillsentence">
-            △IEC ≡ △IFC (RHS 합동) 이므로 ∠ICE =
-            <select id="angSel"><option value="?">〔 선택 〕</option><option value="icf">∠ICF</option><option value="ice">∠ICB</option></select>
-            이다. 따라서 CI는 ∠C의
-            <select id="bisCSel"><option value="?">〔 선택 〕</option><option value="median">중선</option><option value="bisector">이등분선</option></select>
+            △ABC ≡ △CDA (ASA 합동) 이므로 <span class="seg">AB</span> =
+            <select id="abSel"><option value="?">〔 선택 〕</option><option value="cd">CD</option><option value="da">DA</option></select>
+            , <span class="seg">BC</span> =
+            <select id="bcSel"><option value="?">〔 선택 〕</option><option value="cd">CD</option><option value="da">DA</option></select>
+            이다. 또 ∠B = ∠D이고, ∠A = ∠BAC+∠CAD = ∠DCA+∠ACB =
+            <select id="angleCSel"><option value="?">〔 선택 〕</option><option value="c">∠C</option><option value="d">∠D</option></select>
             이다.<br>
-            따라서, 점 <input type="text" class="blank" id="concI" maxlength="4" autocomplete="off">는 세 내각의 이등분선의 교점이다. 즉, 삼각형 ABC의 세 내각의 <input type="text" class="blank" id="concBis" maxlength="8" autocomplete="off" style="width:90px">은 한 점 I에서 만난다.
+            즉, 평행사변형에서 두 쌍의 <input type="text" class="blank" id="concSide" maxlength="4" autocomplete="off">의 길이는 각각 같고, 두 쌍의 <input type="text" class="blank" id="concAngle" maxlength="4" autocomplete="off">의 크기는 각각 같다.
           </div>
           <button class="btn btn-check" id="checkStep2Final">최종 확인</button>
           <div class="feedback" id="feedbackStep2Final"></div>
@@ -555,18 +528,17 @@
     <section class="step-card" data-step="3" id="page3" style="display:none">
       <div class="step-head">
         <div class="step-badge">3</div>
-        <h2>결론을 정리하고 이름을 붙여보자</h2>
+        <h2>결론을 정리하자</h2>
       </div>
       <div class="step-body">
-        <p>2단계에서 확인한 대로, △IEC ≡ △IFC (RHS 합동) 였습니다. 이를 통해 알게 된 사실을 정리해봅시다.</p>
+        <p>2단계에서 확인한 대로, <b>△ABC ≡ △CDA (ASA 합동)</b> 입니다. 빈칸을 채워 결론을 완성해보세요.</p>
 
         <div class="fillsentence">
-          삼각형의 세 내각의 이등분선은
-          <select id="c_meet"><option value="?">〔 선택 〕</option><option value="no">만나지 않는다</option><option value="yes">한 점에서 만난다</option></select>
-          . 이때 이 점에서 삼각형의 세 변에 이르는 거리는
-          <select id="c_dist"><option value="?">〔 선택 〕</option><option value="diff">서로 다르다</option><option value="same">모두 같다</option></select>
-          .<br>
-          이 점을 삼각형의 <input type="text" class="blank" id="c_name" maxlength="6" autocomplete="off">(이)라고 부른다.
+          평행사변형에서 두 쌍의 대변의 길이는
+          <select id="c_side"><option value="?">〔 선택 〕</option><option value="diff">서로 다르다</option><option value="same">각각 같다</option></select>
+          . 두 쌍의 대각의 크기는
+          <select id="c_angle"><option value="?">〔 선택 〕</option><option value="diff">서로 다르다</option><option value="same">각각 같다</option></select>
+          .
         </div>
 
         <button class="btn btn-check" id="checkStep3">결론 확인</button>
@@ -574,9 +546,8 @@
 
         <div class="summary-box" id="summaryBox">
           🎉 <b>정리</b><br>
-          삼각형의 세 내각의 이등분선은 한 점에서 만나고, 이 점에서 세 변에 이르는 거리는 모두 같다.<br>
-          👉 이 점을 삼각형의 <b>내심</b>이라고 하고, 내심을 중심으로 세 변에 모두 접하는 원을 <b>내접원</b>이라고 합니다.<br>
-          캔버스에서 내심 I를 중심으로 한 내접원과 <span class="seg">ID</span>=<span class="seg">IE</span>=<span class="seg">IF</span> 눈금을 다시 확인해보세요!
+          평행사변형에서 두 쌍의 대변의 길이는 각각 같고, 두 쌍의 대각의 크기는 각각 같다.<br>
+          👉 대각선 AC를 그어 만든 △ABC와 △CDA가 ASA 합동임을 이용해서 증명했어요.
         </div>
 
         <div class="page-nav">
@@ -594,33 +565,32 @@
       </div>
       <div class="step-body">
         <p>지금까지의 활동을 바탕으로, 이번엔 선택지 없이 <b>빈칸을 직접 채워서</b> 증명을 완성해보세요. 힌트가 필요하면 아래 단어 은행을 참고할 수 있어요.</p>
-        <p class="hint">💡 왼쪽 그림은 정답을 미리 보여주지 않도록 깨끗하게 표시돼요. 빈칸을 맞게 채울 때마다 그림에 관련된 표시가 하나씩 나타납니다. 아래 <b>[📐 CI 구성 표시]</b> 버튼은 참고용으로 자유롭게 눌러볼 수 있어요.</p>
+        <p class="hint">💡 왼쪽 그림에는 대각선과 엇각 표시가 참고용으로 항상 나와 있어요. 빈칸을 채워 증명을 완성해보세요.</p>
 
         <div class="proof-block">
-          <p class="given"><b>[가정]</b> △ABC에서 ∠A와 ∠B의 이등분선의 교점을 I라 하고, 점 I에서 세 변 AB, BC, CA에 내린 수선의 발을 각각 D, E, F라 한다.</p>
-          <p class="given"><b>[증명할 것]</b> 삼각형의 세 내각의 이등분선은 한 점에서 만나고, 이 점에서 각 변에 이르는 거리는 같다.</p>
+          <p class="given"><b>[가정]</b> □ABCD는 평행사변형이다.</p>
+          <p class="given"><b>[증명할 것]</b> 두 쌍의 대변의 길이는 각각 같고, 두 쌍의 대각의 크기는 각각 같다.</p>
           <hr>
-          <p><b>[증명]</b></p>
-          <p>① 점 I는 ∠A, ∠B의 이등분선 위의 점이므로 <span class="seg">ID</span>=<span class="seg">IF</span>, <span class="seg">ID</span>= <input type="text" class="blank" data-id="b1" maxlength="6" autocomplete="off"> 이다. 따라서 <span class="seg">ID</span>=<span class="seg">IE</span>=<span class="seg">IF</span>이다. ······ (1)</p>
-          <p>② CI를 그으면 두 직각삼각형 IEC와 IFC에서 ∠IEC=∠IFC=90°, CI는 <input type="text" class="blank" data-id="b2" maxlength="6" autocomplete="off"> , <span class="seg">IE</span>= <input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"> 이므로 △IEC≡△IFC( <input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 합동)이다.</p>
-          <p>③ 따라서 ∠ICE= <input type="text" class="blank" data-id="b5" maxlength="8" autocomplete="off"> 이므로 CI는 ∠C의 <input type="text" class="blank" data-id="b6" maxlength="8" autocomplete="off" style="width:90px"> 이다. 즉, △ABC의 세 내각의 이등분선은 한 점에서 만난다.</p>
-          <p>④ 이때 (1)에 의해 점 I에서 △ABC의 세 변에 이르는 거리는 <input type="text" class="blank" data-id="b7" maxlength="6" autocomplete="off"> . ∎</p>
+          <p><b>[증명]</b> 대각선 AC를 긋자.</p>
+          <p>① △ABC와 △CDA에서 <span class="seg">AC</span>는 <input type="text" class="blank" data-id="b1" maxlength="6" autocomplete="off"> , <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>이므로 ∠BAC=∠DCA(엇각), <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>이므로 ∠ACB=∠CAD(엇각)이다. 따라서 △ABC≡△CDA( <input type="text" class="blank" data-id="b2" maxlength="6" autocomplete="off"> 합동)이므로 <span class="seg">AB</span>= <input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"> , <span class="seg">BC</span>= <input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 이다. ······(1)</p>
+          <p>② 즉, 평행사변형에서 두 쌍의 <input type="text" class="blank" data-id="b5" maxlength="4" autocomplete="off">의 길이는 각각 같다.</p>
+          <p>③ 한편 (1)에 의해 ∠B= <input type="text" class="blank" data-id="b6" maxlength="6" autocomplete="off"> 이고, ∠A=∠BAC+∠CAD=∠DCA+∠ACB= <input type="text" class="blank" data-id="b7" maxlength="6" autocomplete="off"> 이다.</p>
+          <p>④ 즉, 평행사변형의 두 쌍의 <input type="text" class="blank" data-id="b8" maxlength="4" autocomplete="off">의 크기는 각각 같다. ∎</p>
         </div>
 
         <div class="toolbar">
-          <button class="btn btn-outline btn-sm" id="btnToggleCI4">📐 CI 구성 표시</button>
           <button class="btn btn-outline btn-sm" id="toggleWordbank">🗂 단어 은행 보기</button>
           <button class="btn btn-check" id="checkProof">채점하기</button>
           <button class="btn btn-outline btn-sm" id="resetProof">↺ 다시 쓰기</button>
         </div>
         <div class="wordbank" id="wordbank">
-          <span class="word">IE</span><span class="word">공통</span><span class="word">IF</span><span class="word">RHS</span><span class="word">∠ICF</span><span class="word">이등분선</span><span class="word">같다</span>
+          <span class="word">공통</span><span class="word">ASA</span><span class="word">CD</span><span class="word">DA</span><span class="word">대변</span><span class="word">∠D</span><span class="word">∠C</span><span class="word">대각</span>
         </div>
         <div class="feedback" id="feedbackProof"></div>
 
         <div class="summary-box" id="proofDone">
           🎉 <b>증명 완성!</b><br>
-          "삼각형의 세 내각의 이등분선은 한 점(내심)에서 만나고, 이 점에서 세 변에 이르는 거리는 같다"를 이제 도움 없이 스스로 증명할 수 있습니다. 훌륭해요!
+          "평행사변형에서 두 쌍의 대변의 길이는 각각 같고, 두 쌍의 대각의 크기는 각각 같다"를 이제 도움 없이 스스로 증명할 수 있습니다. 훌륭해요!
         </div>
 
         <div class="page-nav">
@@ -644,476 +614,281 @@
 (function(){
   "use strict";
 
-  // ---------- 삼각형 프리셋 (외심 파일과 동일: 세 각의 크기가 다른 예각삼각형) ----------
-  const TRI_PRESETS = [
-    {A:{x:300,y:70}, B:{x:150,y:330}, C:{x:500,y:300}},
-    {A:{x:250,y:90}, B:{x:150,y:320}, C:{x:500,y:350}},
-    {A:{x:390,y:100}, B:{x:170,y:290}, C:{x:460,y:340}},
-    {A:{x:270,y:110}, B:{x:150,y:350}, C:{x:520,y:300}}
+  // ---------- 평행사변형 프리셋 (A, AB벡터 u, AD벡터 v) ----------
+  const QUAD_PRESETS = [
+    { A:{x:140,y:360}, u:{x:300,y:-10}, v:{x:-70,y:-182} },
+    { A:{x:130,y:120}, u:{x:180,y:28}, v:{x:67,y:251} },
+    { A:{x:300,y:110}, u:{x:297,y:-42}, v:{x:-26,y:148} },
+    { A:{x:520,y:130}, u:{x:-279,y:24}, v:{x:-17,y:189} }
   ];
+  let quadIdx = 0;
+  const MIN_OBSERVE = 2; // 탐구2로 넘어가기 전 최소 관찰해야 하는 평행사변형 개수
 
   const state = {
-    triIdx: 0,
-    doneA:false, doneB:false, doneC:false,
-    showI:false, showCircle:false,
-    showCI:false,
-    q1Revealed:false, step2Concluded:false,
-    p4ShowCI:false,
-    p4_b1ok:false, p4_b6ok:false
+    doneDiag:false, rotateOn:false,
+    doneArc1:false, doneArc2:false,
+    observedSet: new Set(),
+    p4_b2ok:false, p4_b5ok:false, p4_b8ok:false
   };
-
-  // ---------- 기하 헬퍼 ----------
-  function incenter(A,B,C){
-    const a = Math.hypot(B.x-C.x,B.y-C.y); // 변 BC (∠A의 대변)
-    const b = Math.hypot(C.x-A.x,C.y-A.y); // 변 CA (∠B의 대변)
-    const c = Math.hypot(A.x-B.x,A.y-B.y); // 변 AB (∠C의 대변)
-    const sum = a+b+c;
-    return { x:(a*A.x+b*B.x+c*C.x)/sum, y:(a*A.y+b*B.y+c*C.y)/sum };
-  }
-  function footOfPerp(O,P,Q){
-    const dx=Q.x-P.x, dy=Q.y-P.y;
-    const t = ((O.x-P.x)*dx+(O.y-P.y)*dy)/(dx*dx+dy*dy);
-    return {x:P.x+t*dx, y:P.y+t*dy};
-  }
-  function bisectorFoot(V,P,Q){
-    // V의 내각의 이등분선이 변 PQ와 만나는 점 (각의 이등분선 정리)
-    const VP = Math.hypot(P.x-V.x,P.y-V.y);
-    const VQ = Math.hypot(Q.x-V.x,Q.y-V.y);
-    const t = VP/(VP+VQ);
-    return {x:P.x+t*(Q.x-P.x), y:P.y+t*(Q.y-P.y)};
-  }
-  function tickPath(p1, p2, count){
-    const dx = p2.x-p1.x, dy = p2.y-p1.y;
-    const len = Math.hypot(dx,dy) || 1;
-    const ux = dx/len, uy = dy/len;
-    const px = -uy, py = ux;
-    const mx = (p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-    const half = 5, gap = 5;
-    let d = '';
-    for(let i=0;i<count;i++){
-      const off = (i-(count-1)/2)*gap;
-      const cx = mx+ux*off, cy = my+uy*off;
-      d += `M ${cx-px*half} ${cy-py*half} L ${cx+px*half} ${cy+py*half} `;
-    }
-    return d.trim();
-  }
-  function rightAngleCornerGeneral(V, dir1, dir2, s){
-    s = s || 12;
-    const p1 = {x:V.x+dir1.x*s, y:V.y+dir1.y*s};
-    const p2 = {x:p1.x+dir2.x*s, y:p1.y+dir2.y*s};
-    const p3 = {x:V.x+dir2.x*s, y:V.y+dir2.y*s};
-    return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`;
-  }
-  function unit(P,Q){
-    const dx=Q.x-P.x, dy=Q.y-P.y;
-    const len=Math.hypot(dx,dy)||1;
-    return {x:dx/len, y:dy/len};
-  }
-
-  // ---------- draw-in 애니메이션 ----------
-  function showEl(el, on, opts){
-    opts = opts || {};
-    if(!on){ el.style.display='none'; return; }
-    el.style.display = 'block';
-    if(opts.animate){
-      const len = el.getTotalLength();
-      el.style.transition='none';
-      el.style.strokeDasharray=len;
-      el.style.strokeDashoffset=len;
-      el.getBoundingClientRect();
-      requestAnimationFrame(()=>{
-        requestAnimationFrame(()=>{
-          el.style.transition=`stroke-dashoffset ${opts.duration||600}ms ease`;
-          el.style.strokeDashoffset='0';
-        });
-      });
-    }else{
-      el.style.transition='none';
-      el.style.strokeDasharray='';
-      el.style.strokeDashoffset='';
-    }
-  }
 
   // ---------- DOM refs ----------
   const svg = document.getElementById('canvas');
+  const quadABCD = document.getElementById('quadABCD');
   const triABC = document.getElementById('triABC');
+  const triCDA = document.getElementById('triCDA');
+  const diagAC = document.getElementById('diagAC');
   const dotA=document.getElementById('dotA'), nameA=document.getElementById('nameA');
   const dotB=document.getElementById('dotB'), nameB=document.getElementById('nameB');
   const dotC=document.getElementById('dotC'), nameC=document.getElementById('nameC');
   const dotD=document.getElementById('dotD'), nameD=document.getElementById('nameD');
-  const dotE=document.getElementById('dotE'), nameE=document.getElementById('nameE');
-  const dotF=document.getElementById('dotF'), nameF=document.getElementById('nameF');
-  const dotI=document.getElementById('dotI'), nameI=document.getElementById('nameI');
-  const iPulseA=document.getElementById('iPulseA'), iPulseB=document.getElementById('iPulseB'), iClickHint=document.getElementById('iClickHint');
-  const bisA=document.getElementById('bisA'), bisB=document.getElementById('bisB'), bisC=document.getElementById('bisC');
-  const inCircle=document.getElementById('inCircle');
-  const compassTool=document.getElementById('compassTool');
-  const compassLegNeedle=document.getElementById('compassLegNeedle');
-  const compassLegPencil=document.getElementById('compassLegPencil');
-  const compassHinge=document.getElementById('compassHinge');
-  const compassPencilTip=document.getElementById('compassPencilTip');
-  const segID=document.getElementById('segID'), segIE=document.getElementById('segIE'), segIF=document.getElementById('segIF');
-  const tickID=document.getElementById('tickID'), tickIE=document.getElementById('tickIE'), tickIF=document.getElementById('tickIF');
-  const triIEC=document.getElementById('triIEC'), triIFC=document.getElementById('triIFC');
-  const segCI=document.getElementById('segCI');
-  const rightIEC=document.getElementById('rightIEC'), rightIFC=document.getElementById('rightIFC');
+  const arcBAC=document.getElementById('arcBAC'), arcDCA=document.getElementById('arcDCA');
+  const arcACB=document.getElementById('arcACB'), arcCAD=document.getElementById('arcCAD');
+
+  // ---------- 기하 헬퍼 ----------
+  function describeArc(cx, cy, r, a1, a2){
+    let diff = a2-a1;
+    while(diff > Math.PI) diff -= 2*Math.PI;
+    while(diff < -Math.PI) diff += 2*Math.PI;
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const x2 = cx + r*Math.cos(a1+diff), y2 = cy + r*Math.sin(a1+diff);
+    const largeArc = Math.abs(diff) > Math.PI ? 1 : 0;
+    const sweep = diff > 0 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} ${sweep} ${x2} ${y2}`;
+  }
+  function vertexArc(V, P, Q, r){
+    const a1 = Math.atan2(P.y-V.y, P.x-V.x);
+    const a2 = Math.atan2(Q.y-V.y, Q.x-V.x);
+    return describeArc(V.x, V.y, r, a1, a2);
+  }
 
   let _geom = null;
-
-  function curTri(){
-    return (currentPage === 1) ? TRI_PRESETS[state.triIdx] : TRI_PRESETS[0];
+  function curQuad(){
+    const p = QUAD_PRESETS[quadIdx];
+    const A = p.A;
+    const B = {x:A.x+p.u.x, y:A.y+p.u.y};
+    const D = {x:A.x+p.v.x, y:A.y+p.v.y};
+    const C = {x:A.x+p.u.x+p.v.x, y:A.y+p.u.y+p.v.y};
+    return {A,B,C,D};
   }
-  function showConstruction(key){
-    // 1단계: 학생이 직접 작도한 것만 표시 / 2~4단계: 이미 작도되어 있다고 가정
-    return currentPage !== 1 || state['done'+key];
+  function showDiagNow(){ return currentPage !== 1 || state.doneDiag; }
+  function showArc1Now(){
+    if(currentPage === 1) return false;
+    if(currentPage === 2) return state.doneArc1;
+    return true; // 3,4단계는 이미 확인된 사실로 취급
   }
-  function showBisC(){
-    // ∠C의 이등분선은 "증명해서 알아내는" 대상이므로, 증명이 끝나기 전까지는 숨긴다.
-    if(currentPage === 1) return state.doneC;
-    if(currentPage === 2) return state.step2Concluded;
-    if(currentPage === 4) return state.p4_b6ok;
-    return true; // 3단계는 이미 증명이 끝난 뒤이므로 항상 표시
-  }
-  function showSegsIDIEIF(){
-    if(currentPage === 1) return state.showCircle;
-    if(currentPage === 2) return state.q1Revealed;
-    if(currentPage === 4) return state.p4_b1ok;
-    return true; // 3단계
+  function showArc2Now(){
+    if(currentPage === 1) return false;
+    if(currentPage === 2) return state.doneArc2;
+    return true;
   }
 
   // ---------- 메인 렌더 ----------
   function render(){
-    const {A,B,C} = curTri();
+    const {A,B,C,D} = curQuad();
+    const O = {x:(A.x+C.x)/2, y:(A.y+C.y)/2};
+    _geom = {A,B,C,D,O};
+
+    quadABCD.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}`);
+    dotA.setAttribute('cx',A.x); dotA.setAttribute('cy',A.y);
+    dotB.setAttribute('cx',B.x); dotB.setAttribute('cy',B.y);
+    dotC.setAttribute('cx',C.x); dotC.setAttribute('cy',C.y);
+    dotD.setAttribute('cx',D.x); dotD.setAttribute('cy',D.y);
+    nameA.setAttribute('x',A.x-18); nameA.setAttribute('y',A.y+6);
+    nameB.setAttribute('x',B.x+8); nameB.setAttribute('y',B.y+6);
+    nameC.setAttribute('x',C.x+8); nameC.setAttribute('y',C.y-8);
+    nameD.setAttribute('x',D.x-18); nameD.setAttribute('y',D.y-8);
+
+    diagAC.setAttribute('x1',A.x); diagAC.setAttribute('y1',A.y); diagAC.setAttribute('x2',C.x); diagAC.setAttribute('y2',C.y);
+    diagAC.style.display = showDiagNow() ? 'block' : 'none';
+
     triABC.setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`);
-    dotA.setAttribute('cx',A.x); dotA.setAttribute('cy',A.y); nameA.setAttribute('x',A.x-6); nameA.setAttribute('y',A.y-12);
-    dotB.setAttribute('cx',B.x); dotB.setAttribute('cy',B.y); nameB.setAttribute('x',B.x-20); nameB.setAttribute('y',B.y+18);
-    dotC.setAttribute('cx',C.x); dotC.setAttribute('cy',C.y); nameC.setAttribute('x',C.x+8); nameC.setAttribute('y',C.y+18);
+    triCDA.setAttribute('points', `${C.x},${C.y} ${D.x},${D.y} ${A.x},${A.y}`);
+    const showHalves = showDiagNow();
+    triABC.style.display = showHalves ? 'block' : 'none';
+    triCDA.style.display = showHalves ? 'block' : 'none';
+    triABC.style.transform = state.rotateOn ? `matrix(-1,0,0,-1,${2*O.x},${2*O.y})` : '';
 
-    const I = incenter(A,B,C);
-    const D = footOfPerp(I,A,B);
-    const E = footOfPerp(I,B,C);
-    const F = footOfPerp(I,C,A);
-    const bA = bisectorFoot(A,B,C);
-    const bB = bisectorFoot(B,A,C);
-    const bC = bisectorFoot(C,A,B);
-    _geom = {A,B,C,I,D,E,F,bA,bB,bC};
-
-    bisA.setAttribute('x1',A.x); bisA.setAttribute('y1',A.y); bisA.setAttribute('x2',bA.x); bisA.setAttribute('y2',bA.y);
-    bisB.setAttribute('x1',B.x); bisB.setAttribute('y1',B.y); bisB.setAttribute('x2',bB.x); bisB.setAttribute('y2',bB.y);
-    bisC.setAttribute('x1',C.x); bisC.setAttribute('y1',C.y); bisC.setAttribute('x2',bC.x); bisC.setAttribute('y2',bC.y);
-    showEl(bisA, showConstruction('A'));
-    showEl(bisB, showConstruction('B'));
-    showEl(bisC, showBisC());
-
-    const showInow = (currentPage===1) ? state.showI : true;
-    dotI.style.display = showInow ? 'block':'none';
-    nameI.style.display = showInow ? 'block':'none';
-    dotI.setAttribute('cx',I.x); dotI.setAttribute('cy',I.y);
-    nameI.setAttribute('x',I.x+8); nameI.setAttribute('y',I.y-8);
-
-    const r = Math.hypot(I.x-E.x, I.y-E.y);
-    const showCircleNow = (currentPage===1) ? state.showCircle : (currentPage===3);
-    inCircle.style.display = showCircleNow ? 'block':'none';
-    inCircle.setAttribute('cx',I.x); inCircle.setAttribute('cy',I.y);
-    inCircle.setAttribute('r', showCircleNow ? r : 0);
-
-    const showSegsNow = showSegsIDIEIF();
-    [ [segID,I,D,tickID,dotD,nameD], [segIE,I,E,tickIE,dotE,nameE], [segIF,I,F,tickIF,dotF,nameF] ].forEach(([seg,P,Q,tick,dot,name])=>{
-      seg.setAttribute('x1',P.x); seg.setAttribute('y1',P.y); seg.setAttribute('x2',Q.x); seg.setAttribute('y2',Q.y);
-      seg.style.display = showSegsNow ? 'block':'none';
-      tick.setAttribute('d', tickPath(P,Q,1));
-      tick.style.display = showSegsNow ? 'block':'none';
-      dot.setAttribute('cx',Q.x); dot.setAttribute('cy',Q.y);
-      dot.style.display = showSegsNow ? 'block':'none';
-      name.style.display = showSegsNow ? 'block':'none';
-    });
-    nameD.setAttribute('x',D.x-6); nameD.setAttribute('y',D.y-10);
-    nameE.setAttribute('x',E.x-6); nameE.setAttribute('y',E.y+20);
-    nameF.setAttribute('x',F.x+8); nameF.setAttribute('y',F.y+4);
-
-    const showCINow = (currentPage===2 && state.showCI) || currentPage===3 || (currentPage===4 && state.p4ShowCI);
-    segCI.setAttribute('x1',C.x); segCI.setAttribute('y1',C.y); segCI.setAttribute('x2',I.x); segCI.setAttribute('y2',I.y);
-    segCI.style.display = showCINow ? 'block':'none';
-    const dirIE_atE = unit(E,I), dirCE_atE = unit(E,C);
-    const dirIF_atF = unit(F,I), dirCF_atF = unit(F,C);
-    rightIEC.setAttribute('d', rightAngleCornerGeneral(E, dirIE_atE, dirCE_atE));
-    rightIFC.setAttribute('d', rightAngleCornerGeneral(F, dirIF_atF, dirCF_atF));
-    rightIEC.style.display = showCINow ? 'block':'none';
-    rightIFC.style.display = showCINow ? 'block':'none';
-    triIEC.setAttribute('points', `${I.x},${I.y} ${E.x},${E.y} ${C.x},${C.y}`);
-    triIFC.setAttribute('points', `${I.x},${I.y} ${F.x},${F.y} ${C.x},${C.y}`);
-    triIEC.style.display = showCINow ? 'block':'none';
-    triIFC.style.display = showCINow ? 'block':'none';
+    const r1 = 26, r2 = 34;
+    arcBAC.setAttribute('d', vertexArc(A, B, C, r1));
+    arcDCA.setAttribute('d', vertexArc(C, D, A, r1));
+    arcACB.setAttribute('d', vertexArc(C, A, B, r2));
+    arcCAD.setAttribute('d', vertexArc(A, C, D, r2));
+    arcBAC.style.display = showArc1Now() ? 'block' : 'none';
+    arcDCA.style.display = showArc1Now() ? 'block' : 'none';
+    arcACB.style.display = showArc2Now() ? 'block' : 'none';
+    arcCAD.style.display = showArc2Now() ? 'block' : 'none';
   }
 
-  // ---------- 다른 삼각형 보기 ----------
-  function cycleTriangle(){
-    state.triIdx = (state.triIdx+1) % TRI_PRESETS.length;
+  // ---------- 다른 평행사변형 보기 ----------
+  document.getElementById('btnCycleQuad').addEventListener('click', ()=>{
+    quadIdx = (quadIdx+1) % QUAD_PRESETS.length;
     resetStage1Visuals();
     render();
-    document.getElementById('page1').scrollIntoView({behavior:'smooth', block:'start'});
-  }
-  document.getElementById('btnCycleTri').addEventListener('click', cycleTriangle);
-  document.getElementById('btnRedoTriangle').addEventListener('click', cycleTriangle);
-  document.getElementById('btnProceedTerms').addEventListener('click', ()=>{
-    document.getElementById('block5').classList.add('show');
-    document.getElementById('block5').scrollIntoView({behavior:'smooth', block:'start'});
   });
   function resetStage1Visuals(){
-    state.doneA=false; state.doneB=false; state.doneC=false;
-    state.showI=false; state.showCircle=false;
-    resetCompass();
-    ['block2','block3','block4','block4Choice','block5','concludeBlock1'].forEach(id=>document.getElementById(id).classList.remove('show'));
-    ['fbA','fbB','fbC','fbCircle','fbTerms','feedbackConclude1'].forEach(id=>{ const el=document.getElementById(id); el.className='feedback'; el.textContent=''; });
-    document.querySelectorAll('input[name="predictC"]').forEach(r=>r.checked=false);
-    document.getElementById('blank1a').value='?';
-    document.getElementById('blank1b').value='?';
-    ['t3_a','t3_b','t3_c'].forEach(id=>{ const el=document.getElementById(id); el.value=''; el.classList.remove('correct','wrong'); });
+    state.doneDiag=false; state.rotateOn=false;
+    ['block2','block3','observeMoreBlock'].forEach(id=>document.getElementById(id).classList.remove('show'));
+    ['fbDiag','fbOverlay','feedbackConclude1'].forEach(id=>{ const el=document.getElementById(id); el.className='feedback'; el.textContent=''; });
+    document.querySelectorAll('input[name="predictOverlap"]').forEach(r=>r.checked=false);
+    document.getElementById('concl1').value='?';
+    document.getElementById('concl2').value='?';
+    document.getElementById('btnOverlay').textContent = '🔍 겹쳐서 확인하기';
   }
 
-  // ---------- 1단계: 작도 버튼 ----------
-  document.getElementById('btnBisA').addEventListener('click', function(){
-    if(state.doneA) return;
-    render();
-    showEl(bisA, true, {animate:true, duration:600});
-    setTimeout(()=>{
-      state.doneA = true;
-      const fb = document.getElementById('fbA');
-      fb.className='feedback success';
-      fb.textContent = '✅ 이 선분이 ∠A의 이등분선이에요.';
-      document.getElementById('block2').classList.add('show');
-      render();
-    }, 650);
-  });
-  document.getElementById('btnBisB').addEventListener('click', function(){
-    if(!state.doneA || state.doneB) return;
-    render();
-    showEl(bisB, true, {animate:true, duration:600});
-    setTimeout(()=>{
-      state.doneB = true;
-      state.showI = true;
-      const fb = document.getElementById('fbB');
-      fb.className='feedback success';
-      fb.textContent = '✅ 두 이등분선이 만나는 점이 나타났어요. 이 점을 I라고 합니다.';
-      document.getElementById('block3').classList.add('show');
-      render();
-    }, 650);
-  });
-  document.getElementById('btnBisC').addEventListener('click', function(){
-    const sel = document.querySelector('input[name="predictC"]:checked');
-    const fb = document.getElementById('fbC');
-    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 먼저 예상을 선택해주세요.'; return; }
-    if(state.doneC) return;
-    render();
-    showEl(bisC, true, {animate:true, duration:600});
-    setTimeout(()=>{
-      state.doneC = true;
-      if(sel.value === 'yes'){
-        fb.className='feedback success';
-        fb.textContent = '✅ 예상대로 ∠C의 이등분선도 정확히 점 I를 지나요!';
-      }else{
-        fb.className='feedback error';
-        fb.textContent = '🤔 예상과 다르게, ∠C의 이등분선도 점 I를 정확히 지나가네요! 세 내각의 이등분선은 항상 한 점에서 만나요.';
-      }
-      document.getElementById('block4').classList.add('show');
-      render();
-      activateCompass();
-    }, 650);
-  });
-
-  // ---------- 컴퍼스로 직접 내접원 그리기 (점 I 클릭 → 반지름 조절 → 다시 클릭해 확정) ----------
-  const COMPASS_TOL = 10;
-  const COMPASS_GRAB = 30;
-  let compassActive = false;
-  let compassStep = 'idle'; // idle -> sizing -> done
-  function toSvgPoint(evt){
-    const pt = svg.createSVGPoint();
-    pt.x = evt.clientX; pt.y = evt.clientY;
-    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  // ---------- 1단계 ----------
+  function normalizeAns(s){
+    return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
   }
-  const COMPASS_LEG = 150;
-  function updateCompassGraphic(O, P){
-    const dx=P.x-O.x, dy=P.y-O.y;
-    const d = Math.hypot(dx,dy) || 0.001;
-    const ux=dx/d, uy=dy/d;
-    const dCapped = Math.min(d, COMPASS_LEG*2*0.98);
-    const h = Math.sqrt(Math.max(0, COMPASS_LEG*COMPASS_LEG - (dCapped/2)*(dCapped/2)));
-    const mid = {x:O.x+ux*dCapped/2, y:O.y+uy*dCapped/2};
-    const perp = {x:-uy, y:ux};
-    const H = {x:mid.x+perp.x*h, y:mid.y+perp.y*h};
-    const tip = {x:O.x+ux*dCapped, y:O.y+uy*dCapped};
-    compassLegNeedle.setAttribute('x1',H.x); compassLegNeedle.setAttribute('y1',H.y);
-    compassLegNeedle.setAttribute('x2',O.x); compassLegNeedle.setAttribute('y2',O.y);
-    compassLegPencil.setAttribute('x1',H.x); compassLegPencil.setAttribute('y1',H.y);
-    compassLegPencil.setAttribute('x2',tip.x); compassLegPencil.setAttribute('y2',tip.y);
-    compassHinge.setAttribute('cx',H.x); compassHinge.setAttribute('cy',H.y);
-    compassPencilTip.setAttribute('cx',tip.x); compassPencilTip.setAttribute('cy',tip.y);
-  }
-  function onCompassMove(evt){
-    if(compassStep !== 'sizing') return;
-    const p = toSvgPoint(evt);
-    const I = _geom.I;
-    inCircle.setAttribute('r', Math.hypot(p.x-I.x, p.y-I.y));
-    updateCompassGraphic(I, p);
-  }
-  function startIHint(){
-    const I = _geom.I;
-    [iPulseA, iPulseB].forEach(el=>{ el.setAttribute('cx',I.x); el.setAttribute('cy',I.y); el.classList.add('active'); });
-    iClickHint.setAttribute('x', I.x);
-    iClickHint.setAttribute('y', I.y-38);
-    iClickHint.classList.add('active');
-  }
-  function stopIHint(){
-    [iPulseA, iPulseB, iClickHint].forEach(el=>el.classList.remove('active'));
-  }
-  function activateCompass(){
-    compassActive = true;
-    compassStep = 'idle';
-    startIHint();
-  }
-  function resetCompass(){
-    compassActive = false;
-    compassStep = 'idle';
-    svg.removeEventListener('pointermove', onCompassMove);
-    inCircle.style.strokeDasharray='';
-    inCircle.style.opacity='';
-    compassTool.style.display='none';
-    stopIHint();
-  }
-  svg.addEventListener('pointerdown', function(evt){
-    if(!compassActive || currentPage !== 1 || !_geom) return;
-    const p = toSvgPoint(evt);
-    const I = _geom.I;
-    const fb = document.getElementById('fbCircle');
-    if(compassStep === 'idle'){
-      const d = Math.hypot(p.x-I.x, p.y-I.y);
-      if(d <= COMPASS_GRAB){
-        compassStep = 'sizing';
-        stopIHint();
-        svg.addEventListener('pointermove', onCompassMove);
-        inCircle.style.display = 'block';
-        inCircle.style.strokeDasharray = '5 4';
-        inCircle.style.opacity = '.6';
-        inCircle.setAttribute('cx', I.x);
-        inCircle.setAttribute('cy', I.y);
-        inCircle.setAttribute('r', d);
-        compassTool.style.display = 'block';
-        updateCompassGraphic(I, p);
-        fb.className = 'feedback warn';
-        fb.textContent = '📏 컴퍼스를 고정했어요! 이제 마우스(손가락)를 움직여 원의 크기를 세 변에 맞춰보세요.';
-      }else{
-        fb.className = 'feedback warn';
-        fb.textContent = '⚠️ 점 I 근처를 클릭해 컴퍼스를 고정해주세요.';
-      }
-    }else if(compassStep === 'sizing'){
-      const r = Math.hypot(I.x-_geom.E.x, I.y-_geom.E.y);
-      const d = Math.hypot(p.x-I.x, p.y-I.y);
-      if(Math.abs(d-r) <= COMPASS_TOL){
-        compassStep = 'done';
-        svg.removeEventListener('pointermove', onCompassMove);
-        compassTool.style.display = 'none';
-        inCircle.style.strokeDasharray = '';
-        inCircle.style.opacity = '';
-        inCircle.setAttribute('r', r);
-        state.showCircle = true;
-        render();
-        fb.className = 'feedback success';
-        fb.textContent = '✅ 점 I를 중심으로 한 원이 세 변에 각각 한 점에서 닿아요! ID=IE=IF 이기 때문이에요.';
-        document.getElementById('block4Choice').classList.add('show');
-      }else{
-        fb.className = 'feedback warn';
-        fb.textContent = d < r ? '🔎 아직 작아요. 조금 더 크게 조절해보세요.' : '🔎 너무 커요. 조금 더 작게 조절해보세요.';
-      }
-    }
-  });
   document.getElementById('checkTerms').addEventListener('click', ()=>{
-    const elA = document.getElementById('t3_a'), elB = document.getElementById('t3_b'), elC = document.getElementById('t3_c');
-    const a = normalizeAns(elA.value), b = normalizeAns(elB.value), c = normalizeAns(elC.value);
-    const okA = a==='내접', okB = b==='내접원', okC = c==='내심';
-    elA.classList.toggle('correct', okA); elA.classList.toggle('wrong', !okA && a!=='');
-    elB.classList.toggle('correct', okB); elB.classList.toggle('wrong', !okB && b!=='');
-    elC.classList.toggle('correct', okC); elC.classList.toggle('wrong', !okC && c!=='');
+    const t1 = document.getElementById('term1'), t2 = document.getElementById('term2');
+    const ok1 = normalizeAns(t1.value) === '대변';
+    const ok2 = normalizeAns(t2.value) === '대각';
+    t1.classList.toggle('correct', ok1); t1.classList.toggle('wrong', !ok1 && t1.value.trim()!=='');
+    t2.classList.toggle('correct', ok2); t2.classList.toggle('wrong', !ok2 && t2.value.trim()!=='');
     const fb = document.getElementById('fbTerms');
-    if(okA && okB && okC){
+    if(ok1 && ok2){
       fb.className='feedback success';
-      fb.textContent = '✅ 정확해요! 이제 이 용어들을 기억하고 다음 문장을 완성해봅시다.';
-      document.getElementById('concludeBlock1').classList.add('show');
+      fb.textContent = '✅ 정확해요! 이제 대각선을 그어서 평행사변형의 성질을 직접 확인해봅시다.';
+      document.getElementById('block2').classList.add('show');
     }else{
       fb.className='feedback error';
       fb.textContent = '❌ 다시 확인해보세요.';
     }
   });
+  document.getElementById('btnDrawDiag').addEventListener('click', function(){
+    if(state.doneDiag) return;
+    state.doneDiag = true;
+    render();
+    const fb = document.getElementById('fbDiag');
+    fb.className='feedback success';
+    fb.textContent = '✅ 대각선 AC로 △ABC(파랑)와 △CDA(분홍)가 만들어졌어요.';
+    document.getElementById('block3').classList.add('show');
+  });
+  document.getElementById('btnOverlay').addEventListener('click', function(){
+    const sel = document.querySelector('input[name="predictOverlap"]:checked');
+    const fb = document.getElementById('fbOverlay');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 먼저 예상을 선택해주세요.'; return; }
+    state.rotateOn = !state.rotateOn;
+    render();
+    this.textContent = state.rotateOn ? '↩ 원래대로 보기' : '🔍 겹쳐서 확인하기';
+    if(state.rotateOn){
+      state.observedSet.add(quadIdx);
+      const n = state.observedSet.size;
+      const countMsg = ` (지금까지 확인한 평행사변형: ${n}개)`;
+      if(sel.value === 'yes'){
+        fb.className='feedback success';
+        fb.textContent = '✅ 예상대로 완전히 포개어져요! △ABC ≡ △CDA 입니다.' + countMsg;
+      }else{
+        fb.className='feedback error';
+        fb.textContent = '🤔 예상과 다르게, 완전히 포개어지네요! △ABC ≡ △CDA 입니다.' + countMsg;
+      }
+      if(n >= MIN_OBSERVE){
+        document.getElementById('observeMoreBlock').classList.remove('show');
+        document.getElementById('block4').classList.add('show');
+      }else{
+        document.getElementById('observeMoreBlock').classList.add('show');
+      }
+    }
+  });
   document.getElementById('checkConclude1').addEventListener('click', ()=>{
-    const a = document.getElementById('blank1a').value;
-    const b = document.getElementById('blank1b').value;
+    const v1 = document.getElementById('concl1').value;
+    const v2 = document.getElementById('concl2').value;
     const fb = document.getElementById('feedbackConclude1');
-    if(a==='?' || b==='?'){ fb.className='feedback warn'; fb.textContent='⚠️ 빈칸을 모두 선택해주세요.'; return; }
-    if(a==='yes' && b==='same'){
+    if(v1==='?' || v2==='?'){ fb.className='feedback warn'; fb.textContent='⚠️ 빈칸을 모두 선택해주세요.'; return; }
+    if(v1==='side' && v2==='angle'){
       fb.className='feedback success';
       fb.textContent = '✅ 정확해요! 2단계에서 왜 그런지 직접 증명해봅시다!';
       unlockStep(2);
       document.getElementById('next1').disabled=false;
     }else{
       fb.className='feedback error';
-      fb.textContent = '❌ 다시 생각해보세요. 방금 관찰한 결과를 떠올려보세요.';
+      fb.textContent = '❌ 다시 생각해보세요.';
     }
   });
 
   // ---------- 2단계 ----------
-  document.getElementById('checkQ1ieq').addEventListener('click', ()=>{
-    const sel = document.querySelector('input[name="q1ieq"]:checked');
-    const fb = document.getElementById('fbQ1ieq');
-    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
-    if(sel.value==='all'){
+  document.getElementById('checkQ1').addEventListener('click', ()=>{
+    const boxes = document.querySelectorAll('#motivateBlock .q1a');
+    let allCorrect = true;
+    boxes.forEach(b=>{ if(b.checked !== (b.dataset.correct === 'true')) allCorrect = false; });
+    const fb = document.getElementById('feedbackQ1');
+    if(allCorrect){
       fb.className='feedback success';
-      fb.innerHTML = '✅ 맞아요! 점 I는 ∠A의 이등분선 위의 점이므로 ID=IF, ∠B의 이등분선 위의 점이므로 ID=IE 입니다. 따라서 ID=IE=IF 입니다.';
-      state.q1Revealed = true;
-      render();
-      document.getElementById('footBlock').classList.add('show');
+      fb.innerHTML = '✅ 맞아요! 합동이면 대응변, 대응각이 각각 같아지므로 <span class="seg">AB</span>=<span class="seg">CD</span>, <span class="seg">BC</span>=<span class="seg">DA</span>, ∠B=∠D 라는 사실을 알 수 있어요.';
     }else{
       fb.className='feedback error';
-      fb.textContent = '❌ 다시 생각해보세요. "각의 이등분선 위의 한 점은 그 각의 두 변까지 거리가 같다"는 성질을 두 번 적용해보세요.';
+      fb.textContent = '❌ 다시 확인해보세요. 대응하는 변과 각만 같아진다는 점에 주의하세요.';
     }
   });
-  document.getElementById('btnShowCI').addEventListener('click', function(){
-    state.showCI = true;
-    render();
-    document.getElementById('rhsBlock').classList.add('show');
-  });
-  document.getElementById('checkRhs').addEventListener('click', ()=>{
-    const ang = document.getElementById('ang90Sel').value;
-    const ci = document.getElementById('ciSel').value;
-    const ieif = document.getElementById('ieifSel').value;
-    const sel = document.querySelector('input[name="rhsType"]:checked');
-    const fb = document.getElementById('fbRhs');
+  document.getElementById('checkQ2').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="q2"]:checked');
+    const fb = document.getElementById('feedbackQ2');
     if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
-    const ok = ang==='90' && ci==='common' && ieif==='if' && sel.value==='RHS';
-    if(ok){
+    if(sel.value === 'diag'){
       fb.className='feedback success';
-      fb.innerHTML = '✅ 맞아요! 빗변 CI가 공통, 다른 한 변 IE=IF이므로 RHS 합동에 의해 △IEC ≡ △IFC 입니다.';
+      fb.textContent = '✅ 맞아요! 대각선 AC를 그으면, 평행한 두 쌍의 대변이 만드는 엇각을 이용해서 두 삼각형이 합동임을 논리적으로 증명할 수 있어요.';
+      document.getElementById('recallBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 자나 각도기로 재는 것은 "측정"일 뿐 "증명"이 아니에요.';
+    }
+  });
+  document.getElementById('checkArc1').addEventListener('click', function(){
+    const sel = document.querySelector('input[name="alt1"]:checked');
+    const fb = document.getElementById('fbArc1');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'dca'){
+      state.doneArc1 = true;
+      render();
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! AB와 DC가 평행하고 AC가 그 둘을 가로지르므로, ∠BAC의 엇각은 ∠DCA예요.';
+      document.getElementById('arc2Block').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 선분 AC를 가로지르는 선으로 보고, 그 반대쪽에서 어긋난 위치의 각을 찾아보세요.';
+    }
+  });
+  document.getElementById('checkArc2').addEventListener('click', function(){
+    const sel = document.querySelector('input[name="alt2"]:checked');
+    const fb = document.getElementById('fbArc2');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'cad'){
+      state.doneArc2 = true;
+      render();
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! AD와 BC가 평행하고 AC가 그 둘을 가로지르므로, ∠ACB의 엇각은 ∠CAD예요. 이제 합동 조건을 정해봅시다.';
+      document.getElementById('congTypeBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요.';
+    }
+  });
+  document.getElementById('checkCongType').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="congType"]:checked');
+    const fb = document.getElementById('feedbackCongType');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'ASA'){
+      fb.className='feedback success';
+      fb.innerHTML = '✅ 맞아요! <span class="seg">AC</span>가 공통이고 그 양 끝의 두 각이 각각 같으므로 ASA 합동에 의해 △ABC ≡ △CDA 입니다.';
       document.getElementById('concludeBlock2').classList.add('show');
     }else{
       fb.className='feedback error';
-      fb.textContent = '❌ 다시 확인해보세요. 두 직각삼각형에서 빗변과 다른 한 변이 각각 같을 때 쓰는 합동 조건이 무엇이었나요?';
+      fb.textContent = '❌ 다시 생각해보세요. 공통인 "한 변"과 그 "양 끝 각"이 각각 같다는 조합을 떠올려보세요.';
     }
   });
   document.getElementById('checkStep2Final').addEventListener('click', ()=>{
-    const ang = document.getElementById('angSel').value;
-    const bc = document.getElementById('bisCSel').value;
-    const concIEl = document.getElementById('concI'), concBisEl = document.getElementById('concBis');
-    const concI = normalizeAns(concIEl.value);
-    const concBis = normalizeAns(concBisEl.value);
-    const okConcI = concI==='I';
-    const okConcBis = concBis.indexOf('이등분선')>=0;
-    concIEl.classList.toggle('correct', okConcI); concIEl.classList.toggle('wrong', !okConcI && concI!=='');
-    concBisEl.classList.toggle('correct', okConcBis); concBisEl.classList.toggle('wrong', !okConcBis && concBis!=='');
+    const ab = document.getElementById('abSel').value;
+    const bc = document.getElementById('bcSel').value;
+    const angleC = document.getElementById('angleCSel').value;
+    const sideEl = document.getElementById('concSide'), angleEl = document.getElementById('concAngle');
+    const sideOk = normalizeAns(sideEl.value) === '대변';
+    const angleOk = normalizeAns(angleEl.value) === '대각';
+    sideEl.classList.toggle('correct', sideOk); sideEl.classList.toggle('wrong', !sideOk && sideEl.value.trim()!=='');
+    angleEl.classList.toggle('correct', angleOk); angleEl.classList.toggle('wrong', !angleOk && angleEl.value.trim()!=='');
     const fb = document.getElementById('feedbackStep2Final');
-    if(ang==='icf' && bc==='bisector' && okConcI && okConcBis){
+    if(ab==='cd' && bc==='da' && angleC==='c' && sideOk && angleOk){
       fb.className='feedback success';
-      fb.innerHTML = '🎉 완벽해요! △IEC≡△IFC 이므로 ∠ICE=∠ICF, 즉 CI는 ∠C의 이등분선입니다. 그러므로 △ABC의 세 내각의 이등분선은 한 점 I에서 만나고, ID=IE=IF 이므로 I에서 세 변까지의 거리는 같습니다.';
-      state.step2Concluded = true;
-      render();
-      showEl(bisC, true, {animate:true, duration:700});
+      fb.innerHTML = '🎉 완벽해요! △ABC≡△CDA 이므로 AB=CD, BC=DA(두 쌍의 대변)이고, ∠A=∠C, ∠B=∠D(두 쌍의 대각)입니다.';
       unlockStep(3);
       document.getElementById('next2').disabled=false;
     }else{
@@ -1124,18 +899,13 @@
 
   // ---------- 3단계 ----------
   document.getElementById('checkStep3').addEventListener('click', ()=>{
-    const meet = document.getElementById('c_meet').value;
-    const dist = document.getElementById('c_dist').value;
-    const name = document.getElementById('c_name');
-    const nameOk = normalizeAns(name.value) === '내심';
+    const side = document.getElementById('c_side').value;
+    const angle = document.getElementById('c_angle').value;
     const fb = document.getElementById('feedback3');
-    name.classList.toggle('correct', nameOk);
-    name.classList.toggle('wrong', !nameOk && name.value.trim()!=='');
-    if(meet==='yes' && dist==='same' && nameOk){
+    if(side==='same' && angle==='same'){
       fb.className='feedback success';
-      fb.textContent = '🎉 정확해요! 이 점을 삼각형의 내심이라고 부릅니다.';
+      fb.textContent = '🎉 정확해요!';
       document.getElementById('summaryBox').classList.add('show');
-      render();
       unlockStep(4);
       document.getElementById('next3').disabled=false;
     }else{
@@ -1145,24 +915,19 @@
   });
 
   // ---------- 4단계 ----------
-  const PROOF_ANSWERS = { b1:['IE'], b2:['공통'], b3:['IF'], b4:['RHS'], b5:['ICF'], b6:['이등분선'], b7:['같다'] };
-  function normalizeAns(s){
-    return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
-  }
+  const PROOF_ANSWERS = { b1:['공통'], b2:['ASA'], b3:['CD'], b4:['DA'], b5:['대변'], b6:['∠D'], b7:['∠C'], b8:['대각'] };
   function isBlankCorrect(id, raw){
     const v = normalizeAns(raw);
     if(!v) return false;
-    if(id === 'b4') return v.indexOf('RHS') >= 0;
-    if(id === 'b5') return v.indexOf('ICF') >= 0;
-    if(id === 'b6') return v.indexOf('이등분선') >= 0;
-    if(id === 'b7') return v.indexOf('같다') >= 0 || v.indexOf('같음') >= 0;
+    if(id === 'b2') return v.indexOf('ASA') >= 0;
+    if(id === 'b5') return v.indexOf('대변') >= 0;
+    if(id === 'b8') return v.indexOf('대각') >= 0;
     return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
   }
-  const P4_LIVE = [['b1','p4_b1ok'], ['b6','p4_b6ok']];
+  const P4_LIVE = [['b2','p4_b2ok'], ['b5','p4_b5ok'], ['b8','p4_b8ok']];
   P4_LIVE.forEach(([bid, flag])=>{
     document.querySelector(`#page4 .blank[data-id="${bid}"]`).addEventListener('input', function(){
       state[flag] = isBlankCorrect(bid, this.value);
-      render();
     });
   });
   document.getElementById('checkProof').addEventListener('click', ()=>{
@@ -1192,17 +957,9 @@
     fb.className='feedback'; fb.textContent='';
     document.getElementById('proofDone').classList.remove('show');
     P4_LIVE.forEach(([bid, flag])=>{ state[flag]=false; });
-    state.p4ShowCI = false;
-    document.getElementById('btnToggleCI4').classList.remove('active');
-    render();
   });
   document.getElementById('toggleWordbank').addEventListener('click', ()=>{
     document.getElementById('wordbank').classList.toggle('show');
-  });
-  document.getElementById('btnToggleCI4').addEventListener('click', function(){
-    state.p4ShowCI = !state.p4ShowCI;
-    this.classList.toggle('active', state.p4ShowCI);
-    render();
   });
   document.getElementById('restartAll').addEventListener('click', ()=>{ location.reload(); });
 
@@ -1230,15 +987,16 @@
       const i = Number(tab.dataset.goto);
       tab.classList.toggle('current', i===n);
     });
-    document.getElementById('btnCycleTri').disabled = (n !== 1);
-    if(n !== 1 && typeof resetCompass === 'function'){ compassActive = false; svg.removeEventListener('pointermove', onCompassMove); }
+    document.getElementById('btnCycleQuad').disabled = (n !== 1);
+    if(n !== 1 && state.rotateOn){
+      state.rotateOn = false;
+      document.getElementById('btnOverlay').textContent = '🔍 겹쳐서 확인하기';
+    }
     if(n === 4){
-      if(typeof P4_LIVE !== 'undefined'){
-        P4_LIVE.forEach(([bid, flag])=>{
-          const inp = document.querySelector(`#page4 .blank[data-id="${bid}"]`);
-          state[flag] = isBlankCorrect(bid, inp.value);
-        });
-      }
+      P4_LIVE.forEach(([bid, flag])=>{
+        const inp = document.querySelector(`#page4 .blank[data-id="${bid}"]`);
+        state[flag] = isBlankCorrect(bid, inp.value);
+      });
     }
     render();
     document.getElementById('page'+n).scrollIntoView({behavior:'smooth', block:'start'});
@@ -1263,7 +1021,7 @@
   document.getElementById('prev4').addEventListener('click', ()=> showPage(3));
 
   // ================= 로그인 / Firebase / 관리자 / 이탈 감지 =================
-  const LESSON_ID = 'incenter1';
+  const LESSON_ID = 'parallelogram-prop1';
   const STAGE_NAMES = {1:'1.관찰하기', 2:'2.증명 설계', 3:'3.결론 확인', 4:'4.최종 증명'};
   const PW_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
 

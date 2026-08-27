@@ -368,7 +368,12 @@ const CONTENT = [
       ] }
     ]
   },
-  { id:"quad",        name:"사각형의 성질",     ready:false, subunits:[] },
+  { id:"quad",        name:"사각형의 성질",     ready:true, subunits:[
+      { name: "평행사변형", items: [
+        { id:"para-proof", title:"평행사변형의 성질 증명 탐구", type:"탐구", meta:"증명 활동", file:"평행사변형의_성질_증명_탐구.html" }
+      ] }
+    ]
+  },
   { id:"similarity",  name:"도형의 닮음",       ready:false, subunits:[] },
   { id:"pythagoras",  name:"피타고라스 정리",   ready:false, subunits:[] },
   { id:"probability", name:"경우의 수와 확률",  ready:false, subunits:[] }
