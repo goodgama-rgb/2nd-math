@@ -1463,8 +1463,10 @@
     const p = new URLSearchParams(location.search);
     const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
     if(grade && cls && num && name){
-      _studentInfo = {grade, cls, num, name};
-      _docId = `${LESSON_ID}_${todayStr()}_${cls}_${String(num).padStart(2,'0')}`;
+      const gradeFull = grade.endsWith('학년') ? grade : grade+'학년';
+      const clsFull = cls.endsWith('반') ? cls : cls+'반';
+      _studentInfo = {grade:gradeFull, cls:clsFull, num, name};
+      _docId = `${LESSON_ID}_${todayStr()}_${clsFull}_${String(num).padStart(2,'0')}`;
       enterApp(false);
     }
   })();
