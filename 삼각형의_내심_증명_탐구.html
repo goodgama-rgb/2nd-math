@@ -1149,14 +1149,24 @@
   function normalizeAns(s){
     return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
   }
+  function answerEquivalent(a, b){
+    // 두 글자 선분 이름은 순서 상관없이 같다 (AB = BA)
+    if(/^[A-Z]{2}$/.test(a) && /^[A-Z]{2}$/.test(b)){
+      return a.split('').sort().join('') === b.split('').sort().join('');
+    }
+    // 세 글자 각 이름은 가운데(꼭짓점) 글자만 같으면 양 끝 두 글자 순서는 상관없다 (∠ICF = ∠FCI)
+    if(/^[A-Z]{3}$/.test(a) && /^[A-Z]{3}$/.test(b)){
+      return a[1]===b[1] && [a[0],a[2]].sort().join('') === [b[0],b[2]].sort().join('');
+    }
+    return a === b;
+  }
   function isBlankCorrect(id, raw){
     const v = normalizeAns(raw);
     if(!v) return false;
     if(id === 'b4') return v.indexOf('RHS') >= 0;
-    if(id === 'b5') return v.indexOf('ICF') >= 0;
     if(id === 'b6') return v.indexOf('이등분선') >= 0;
     if(id === 'b7') return v.indexOf('같다') >= 0 || v.indexOf('같음') >= 0;
-    return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
+    return PROOF_ANSWERS[id].some(a => answerEquivalent(normalizeAns(a), v));
   }
   const P4_LIVE = [['b1','p4_b1ok'], ['b6','p4_b6ok']];
   P4_LIVE.forEach(([bid, flag])=>{

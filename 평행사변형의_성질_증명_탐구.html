@@ -922,13 +922,24 @@
 
   // ---------- 4단계 ----------
   const PROOF_ANSWERS = { b1:['공통'], b2:['ASA'], b3:['CD'], b4:['DA'], b5:['대변'], b6:['∠D'], b7:['∠C'], b8:['대각'] };
+  function answerEquivalent(a, b){
+    // 두 글자 선분 이름은 순서 상관없이 같다 (AB = BA)
+    if(/^[A-Z]{2}$/.test(a) && /^[A-Z]{2}$/.test(b)){
+      return a.split('').sort().join('') === b.split('').sort().join('');
+    }
+    // 세 글자 각 이름은 가운데(꼭짓점) 글자만 같으면 양 끝 두 글자 순서는 상관없다 (∠CAD = ∠DAC)
+    if(/^[A-Z]{3}$/.test(a) && /^[A-Z]{3}$/.test(b)){
+      return a[1]===b[1] && [a[0],a[2]].sort().join('') === [b[0],b[2]].sort().join('');
+    }
+    return a === b;
+  }
   function isBlankCorrect(id, raw){
     const v = normalizeAns(raw);
     if(!v) return false;
     if(id === 'b2') return v.indexOf('ASA') >= 0;
     if(id === 'b5') return v.indexOf('대변') >= 0;
     if(id === 'b8') return v.indexOf('대각') >= 0;
-    return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
+    return PROOF_ANSWERS[id].some(a => answerEquivalent(normalizeAns(a), v));
   }
   const P4_LIVE = [['b2','p4_b2ok'], ['b5','p4_b5ok'], ['b8','p4_b8ok']];
   P4_LIVE.forEach(([bid, flag])=>{
