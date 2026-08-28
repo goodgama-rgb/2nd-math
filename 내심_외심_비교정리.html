@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼각형의 내심과 외심 — 비교 정리</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --violet:#7c3aed;--violet-l:#ede9fe;--violet-ll:#f5f3ff;
+  --teal:#0d9488;--teal-l:#ccfbf1;--teal-ll:#f0fdfa;
+  --green:#16a34a;--green-l:#dcfce7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:#f7f7fb;color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--ink);color:#fff;padding:16px 24px}
+.hdr-title{font-size:18px;font-weight:700}
+.hdr-sub{font-size:12px;opacity:.7;margin-top:2px}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px}
+.sec{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.sec-title{padding:12px 18px;font-size:15px;font-weight:700;background:#f0f0f5;color:var(--ink);border-bottom:1px solid #e5e5ee}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0}
+.col{padding:16px 18px}
+.col+.col{border-left:1px solid #eee}
+.col-h{font-size:13px;font-weight:700;margin-bottom:10px;display:inline-block;padding:3px 10px;border-radius:20px}
+.col-h.inc{background:var(--violet-l);color:var(--violet)}
+.col-h.circ{background:var(--teal-l);color:var(--teal)}
+.sentence{font-size:14px;line-height:2.2;color:var(--ink2)}
+.blank-wrap{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;vertical-align:middle;margin:0 2px}
+.blank-input{text-align:center;padding:3px 8px;border-radius:6px;background:#fbfbfe;color:var(--ink);font-weight:700;border:1.5px solid #ccc;font-family:inherit;font-size:14px}
+.blank-input:focus{outline:none;border-color:var(--violet)}
+.blank-input.correct{background:var(--green-l);color:#14532d;border:1.5px solid var(--green)}
+.blank-input.wrong{background:var(--red-l);color:var(--red);border:1.5px solid var(--red)}
+.ans-btn{font-size:11px;padding:3px 10px;border-radius:20px;border:1.5px solid #d8d8e8;background:#fff;color:var(--ink3);cursor:pointer;font-family:inherit;font-weight:600;margin-left:4px}
+.ans-btn:not(:disabled):hover{border-color:var(--violet);color:var(--violet)}
+.ans-btn:disabled{opacity:.35;cursor:not-allowed}
+.sec-grade{padding:12px 18px;text-align:right;border-top:1px solid #eee;background:#fafafd}
+.grade-btn{font-size:13px;font-weight:700;padding:8px 18px;border-radius:8px;border:none;background:var(--ink);color:#fff;cursor:pointer;font-family:inherit}
+.grade-btn:hover{background:#333}
+.fig-box{display:flex;justify-content:center;margin-bottom:8px}
+.fig-box canvas{max-width:100%;height:auto;cursor:pointer}
+.match-msg{text-align:center;font-size:13px;font-weight:600;min-height:18px;margin-bottom:6px}
+.match-msg.ok{color:var(--green)}
+.match-msg.no{color:var(--red)}
+.match-done{text-align:center;font-size:13px;font-weight:700;color:var(--green);margin-top:4px}
+.loc-table{width:100%;border-collapse:collapse;font-size:13px}
+.loc-table th,.loc-table td{border:1px solid #e5e5ee;padding:10px 8px;text-align:center}
+.loc-table th{background:#f7f7fb;color:var(--ink2);font-weight:700}
+.loc-note{font-size:13px;line-height:2;color:var(--ink2);padding:14px 18px;border-top:1px solid #eee}
+.app-block{padding:18px;border-bottom:1px solid #eee}
+.app-block:last-child{border-bottom:none}
+.app-flex{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.app-fig{flex:0 0 auto;width:220px;max-width:100%}
+.app-fig canvas{width:100%;height:auto}
+.app-main{flex:1;min-width:220px}
+.app-formula{font-size:15px;font-weight:600;margin-bottom:10px;line-height:1.8}
+.app-toggle{font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;border:1.5px solid var(--violet);background:#fff;color:var(--violet);cursor:pointer;font-family:inherit}
+.app-toggle:hover{background:var(--violet-ll)}
+.ex-area{display:none;margin-top:14px;padding:14px;background:#f9f8ff;border-radius:10px;border:1px solid var(--violet-l)}
+.ex-area.show{display:block}
+.ex-q{font-size:13px;color:var(--ink2);margin-bottom:10px;line-height:1.6}
+.ex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ex-input{border:1.5px solid #d0d0e0;border-radius:8px;padding:7px 10px;font-size:15px;font-weight:600;width:75px;text-align:center;font-family:inherit}
+.ex-btn{padding:7px 16px;border-radius:8px;background:var(--violet);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.ex-btn.sec{background:#fff;color:var(--ink2);border:1.5px solid #d8d8e8}
+.ex-fb{font-size:13px;margin-top:8px;font-weight:600;min-height:18px}
+.ex-fb.ok{color:var(--green)}
+.ex-fb.no{color:var(--red)}
+</style>
+</head>
+<body>
+
+<div class="hdr" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+  <div>
+    <div class="hdr-title">삼각형의 내심과 외심 — 비교 정리</div>
+    <div class="hdr-sub">빈칸을 채우며 내심·외심의 성질을 복습해봐요</div>
+  </div>
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;white-space:nowrap;flex-shrink:0;">← 학습 선택 목록으로 돌아가기</a>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="wrap">
+
+<!-- 그림: 합동인 삼각형 찾기 -->
+<div class="sec">
+  <div class="sec-title">① 그림 — 합동인 삼각형 두 개씩 짝지어 클릭해보세요</div>
+  <div class="cols2">
+    <div class="col">
+      <span class="col-h inc">삼각형의 내심</span>
+      <div class="fig-box"><canvas id="incFig" width="300" height="270"></canvas></div>
+      <div class="match-msg" id="incMsg"></div>
+      <div class="match-done" id="incDone" style="display:none">🎉 세 쌍 모두 찾았어요!</div>
+    </div>
+    <div class="col">
+      <span class="col-h circ">삼각형의 외심</span>
+      <div class="fig-box"><canvas id="circFig" width="300" height="270"></canvas></div>
+      <div class="match-msg" id="circMsg"></div>
+      <div class="match-done" id="circDone" style="display:none">🎉 세 쌍 모두 찾았어요!</div>
+    </div>
+  </div>
+</div>
+
+<!-- 뜻 -->
+<div class="sec">
+  <div class="sec-title">② 뜻</div>
+  <div class="cols2">
+    <div class="col">
+      <span class="col-h inc">삼각형의 내심</span>
+      <div class="sentence" id="s-meaning-inc"></div>
+    </div>
+    <div class="col">
+      <span class="col-h circ">삼각형의 외심</span>
+      <div class="sentence" id="s-meaning-circ"></div>
+    </div>
+  </div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-meaning')">✅ 채점하기</button></div>
+</div>
+
+<!-- 찾기 -->
+<div class="sec">
+  <div class="sec-title">③ 찾기</div>
+  <div class="cols2">
+    <div class="col">
+      <span class="col-h inc">삼각형의 내심</span>
+      <div class="sentence" id="s-find-inc"></div>
+    </div>
+    <div class="col">
+      <span class="col-h circ">삼각형의 외심</span>
+      <div class="sentence" id="s-find-circ"></div>
+    </div>
+  </div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-find')">✅ 채점하기</button></div>
+</div>
+
+<!-- 성질 -->
+<div class="sec">
+  <div class="sec-title">④ 성질</div>
+  <div class="cols2">
+    <div class="col">
+      <span class="col-h inc">삼각형의 내심</span>
+      <div class="sentence" id="s-prop-inc"></div>
+    </div>
+    <div class="col">
+      <span class="col-h circ">삼각형의 외심</span>
+      <div class="sentence" id="s-prop-circ"></div>
+    </div>
+  </div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-prop')">✅ 채점하기</button></div>
+</div>
+
+<!-- 위치 -->
+<div class="sec">
+  <div class="sec-title">⑤ 위치</div>
+  <div class="cols2">
+    <div class="col">
+      <span class="col-h inc">삼각형의 내심</span>
+      <div class="sentence" id="s-loc-inc"></div>
+    </div>
+    <div class="col">
+      <span class="col-h circ">삼각형의 외심</span>
+      <table class="loc-table">
+        <tr><th>예각삼각형</th><th>직각삼각형</th><th>둔각삼각형</th></tr>
+        <tr>
+          <td id="loc-acute"></td>
+          <td id="loc-right"></td>
+          <td id="loc-obtuse"></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="cols2">
+    <div class="col" style="text-align:center">
+      <div class="fig-box" style="cursor:default"><canvas id="isoFig" width="210" height="180"></canvas></div>
+      <div class="loc-note" id="s-loc-note1" style="border-top:none;padding-top:0"></div>
+    </div>
+    <div class="col" style="text-align:center">
+      <div class="fig-box" style="cursor:default"><canvas id="equilFig" width="210" height="180"></canvas></div>
+      <div class="loc-note" id="s-loc-note2" style="border-top:none;padding-top:0"></div>
+    </div>
+  </div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-loc')">✅ 채점하기</button></div>
+</div>
+
+<!-- 응용 -->
+<div class="sec">
+  <div class="sec-title">⑥ 응용 — 공식을 완성하고, 원하면 예제도 풀어보세요</div>
+
+  <div class="app-block">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="app1Fig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <div class="app-formula" id="app1-formula"></div>
+        <button class="app-toggle" onclick="toggleEx('ex1')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="ex1-area">
+          <div class="ex-q" id="ex1-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--violet)">x =</span>
+            <input type="number" class="ex-input" id="ex1-val">
+            <button class="ex-btn" onclick="checkEx('ex1')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('ex1')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="ex1-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-block">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="app2Fig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <div class="app-formula" id="app2-formula"></div>
+        <button class="app-toggle" onclick="toggleEx('ex2')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="ex2-area">
+          <div class="ex-q" id="ex2-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--violet)">x =</span>
+            <input type="number" class="ex-input" id="ex2-val">
+            <button class="ex-btn" onclick="checkEx('ex2')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('ex2')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="ex2-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-block">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="app3Fig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <div class="app-formula" id="app3-formula"></div>
+        <button class="app-toggle" onclick="toggleEx('ex3')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="ex3-area">
+          <div class="ex-q" id="ex3-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--violet)">x =</span>
+            <input type="number" class="ex-input" id="ex3-val">
+            <button class="ex-btn" onclick="checkEx('ex3')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('ex3')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="ex3-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-block">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="app4Fig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <div class="app-formula" id="app4-formula"></div>
+        <button class="app-toggle" onclick="toggleEx('ex4')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="ex4-area">
+          <div class="ex-q" id="ex4-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--violet)">x =</span>
+            <input type="number" class="ex-input" id="ex4-val">
+            <button class="ex-btn" onclick="checkEx('ex4')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('ex4')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="ex4-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-block">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="app5Fig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <div class="app-formula" id="app5-formula"></div>
+        <button class="app-toggle" onclick="toggleEx('ex5')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="ex5-area">
+          <div class="ex-q" id="ex5-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--violet)">x =</span>
+            <input type="number" class="ex-input" id="ex5-val">
+            <button class="ex-btn" onclick="checkEx('ex5')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('ex5')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="ex5-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-block">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="app6Fig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <div class="app-formula" id="app6-formula"></div>
+        <button class="app-toggle" onclick="toggleEx('ex6')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="ex6-area">
+          <div class="ex-q" id="ex6-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--violet)">x =</span>
+            <input type="number" class="ex-input" id="ex6-val">
+            <button class="ex-btn" onclick="checkEx('ex6')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('ex6')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="ex6-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-app')">✅ 채점하기</button></div>
+</div>
+
+</div>
+
+<script>
+/* ════════════════════════════════
+   공통 도형 헬퍼
+════════════════════════════════ */
+function drawLabel(ctx,x,y,text,color,size,weight){
+  ctx.fillStyle=color;
+  ctx.font=`${weight||700} ${size||13}px 'Noto Sans KR',sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,x,y);
+}
+function outsideLabelPos(pt, centroid, dist){
+  const dx=pt.x-centroid.x, dy=pt.y-centroid.y, len=Math.hypot(dx,dy)||1;
+  return {x:pt.x+dx/len*dist, y:pt.y+dy/len*dist};
+}
+function angleArcAt(ctx,v,p1,p2,r,color){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
+  const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1;
+  while(diff<=-Math.PI)diff+=2*Math.PI;
+  while(diff>Math.PI)diff-=2*Math.PI;
+  ctx.strokeStyle=color; ctx.lineWidth=1.7;
+  ctx.beginPath();
+  ctx.arc(v.x,v.y,r,a1,a1+diff,diff<0);
+  ctx.stroke();
+}
+function angleMidPoint(v,p1,p2,r){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x), a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1; while(diff<=-Math.PI)diff+=2*Math.PI; while(diff>Math.PI)diff-=2*Math.PI;
+  const mid=a1+diff/2;
+  return {x:v.x+r*Math.cos(mid), y:v.y+r*Math.sin(mid)};
+}
+function fitPointsToCanvas(pointsObj, canvasW, canvasH, pad){
+  const keys=Object.keys(pointsObj);
+  const xs=keys.map(k=>pointsObj[k].x), ys=keys.map(k=>pointsObj[k].y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const bw=(maxX-minX)||1, bh=(maxY-minY)||1;
+  const availW=canvasW-2*pad, availH=canvasH-2*pad;
+  const scale=Math.min(availW/bw, availH/bh);
+  const offX=pad-minX*scale+(availW-bw*scale)/2;
+  const offY=pad-minY*scale+(availH-bh*scale)/2;
+  const out={};
+  keys.forEach(k=>{ out[k]={x:pointsObj[k].x*scale+offX, y:pointsObj[k].y*scale+offY}; });
+  return out;
+}
+function midDashLabel(ctx,p1,p2,centroid,text,color,size,bow){
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy)||1;
+  let px=-dy/len, py=dx/len;
+  const toOut={x:mx-centroid.x, y:my-centroid.y};
+  if(px*toOut.x+py*toOut.y<0){ px=-px; py=-py; }
+  const cx=mx+px*(bow||10), cy=my+py*(bow||10);
+  ctx.save();
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.2; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.quadraticCurveTo(cx,cy,p2.x,p2.y); ctx.stroke();
+  ctx.restore();
+  const lx=cx+px*11, ly=cy+py*11;
+  drawLabel(ctx,lx,ly,text,color,size||12);
+}
+function pointInTriangle(pt,v1,v2,v3){
+  function sign(p1,p2,p3){return (p1.x-p3.x)*(p2.y-p3.y)-(p2.x-p3.x)*(p1.y-p3.y);}
+  const d1=sign(pt,v1,v2), d2=sign(pt,v2,v3), d3=sign(pt,v3,v1);
+  const hasNeg=(d1<0)||(d2<0)||(d3<0), hasPos=(d1>0)||(d2>0)||(d3>0);
+  return !(hasNeg&&hasPos);
+}
+// 길이가 같음을 표시하는 눈금 — 반드시 변(p1-p2)과 수직으로 그림
+function tickMark(ctx,p1,p2,count,color){
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy)||1;
+  const ux=dx/len, uy=dy/len, px=-uy, py=ux;
+  ctx.strokeStyle=color||'#333'; ctx.lineWidth=1.6;
+  const spacing=5;
+  for(let i=0;i<count;i++){
+    const off=(i-(count-1)/2)*spacing;
+    const cx=mx+ux*off, cy=my+uy*off;
+    ctx.beginPath();
+    ctx.moveTo(cx-px*5, cy-py*5);
+    ctx.lineTo(cx+px*5, cy+py*5);
+    ctx.stroke();
+  }
+}
+// 이등분된 각 표시 — 두 반각에 같은 기호(symbol)를 겹쳐 그림
+function bisectMark(ctx,v,p1,p2,symbol,color,r){
+  angleArcAt(ctx,v,p1,p2,r||12,color);
+  const mid=angleMidPoint(v,p1,p2,(r||12)+9);
+  drawLabel(ctx,mid.x,mid.y,symbol,color,11,700);
+}
+// 평행 표시 — 두 변에 같은 방향의 화살표(셰브런)를 겹쳐 그림
+function parallelMark(ctx,p1,p2,color){
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy)||1;
+  const ux=dx/len, uy=dy/len, px=-uy, py=ux;
+  const s=6;
+  ctx.strokeStyle=color; ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.moveTo(mx-ux*s+px*s, my-uy*s+py*s);
+  ctx.lineTo(mx+ux*s, my+uy*s);
+  ctx.lineTo(mx-ux*s-px*s, my-uy*s-py*s);
+  ctx.stroke();
+}
+function rightAngleMark(ctx,corner,p1,p2,size,color){
+  const u0={x:p1.x-corner.x,y:p1.y-corner.y}, ulen=Math.hypot(u0.x,u0.y)||1, u={x:u0.x/ulen,y:u0.y/ulen};
+  const v0={x:p2.x-corner.x,y:p2.y-corner.y}, vlen=Math.hypot(v0.x,v0.y)||1, v={x:v0.x/vlen,y:v0.y/vlen};
+  ctx.strokeStyle=color; ctx.lineWidth=1.4;
+  ctx.beginPath();
+  ctx.moveTo(corner.x+u.x*size, corner.y+u.y*size);
+  ctx.lineTo(corner.x+u.x*size+v.x*size, corner.y+u.y*size+v.y*size);
+  ctx.lineTo(corner.x+v.x*size, corner.y+v.y*size);
+  ctx.stroke();
+}
+function drawCircleStroke(ctx,center,radius,color,dash){
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=1.2;
+  if(dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.arc(center.x,center.y,radius,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+/* ════════════════════════════════
+   ① 그림 — 합동인 삼각형 찾기
+════════════════════════════════ */
+function computeIncenterFig(xA,xB,xC){
+  const a=xB+xC, b=xC+xA, c=xA+xB;
+  const B={x:0,y:0}, C={x:a,y:0};
+  const Ax=(a*a+c*c-b*b)/(2*a);
+  const Ay=Math.sqrt(Math.max(c*c-Ax*Ax,0.01));
+  const A={x:Ax,y:-Ay};
+  const per=a+b+c;
+  const I={x:(a*A.x+b*B.x+c*C.x)/per, y:(a*A.y+b*B.y+c*C.y)/per};
+  function pointAt(P,Q,dist){ const dx=Q.x-P.x,dy=Q.y-P.y,len=Math.hypot(dx,dy); return {x:P.x+dx/len*dist, y:P.y+dy/len*dist}; }
+  const D=pointAt(A,B,xA), E=pointAt(B,C,xB), F=pointAt(A,C,xA);
+  return {A,B,C,I,D,E,F};
+}
+function computeCircumFig(a,b,c){
+  const B={x:0,y:0}, C={x:a,y:0};
+  const Ax=(a*a+c*c-b*b)/(2*a);
+  const Ay=Math.sqrt(Math.max(c*c-Ax*Ax,0.01));
+  const A={x:Ax,y:-Ay};
+  const x1=A.x,y1=A.y,x2=B.x,y2=B.y,x3=C.x,y3=C.y;
+  const Dd=2*(x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2));
+  const Ux=((x1*x1+y1*y1)*(y2-y3)+(x2*x2+y2*y2)*(y3-y1)+(x3*x3+y3*y3)*(y1-y2))/Dd;
+  const Uy=((x1*x1+y1*y1)*(x3-x2)+(x2*x2+y2*y2)*(x1-x3)+(x3*x3+y3*y3)*(x2-x1))/Dd;
+  const O={x:Ux,y:Uy};
+  const D={x:(A.x+B.x)/2,y:(A.y+B.y)/2};
+  const E={x:(B.x+C.x)/2,y:(B.y+C.y)/2};
+  const F={x:(A.x+C.x)/2,y:(A.y+C.y)/2};
+  return {A,B,C,O,D,E,F};
+}
+function setupMatcher(canvasId, msgId, doneId, raw, centerKey, regionDefs, validPairs, labelDrawer){
+  const canvas=document.getElementById(canvasId);
+  const ctx=canvas.getContext('2d');
+  const F=fitPointsToCanvas(raw, canvas.width, canvas.height, 42);
+  const regions={};
+  Object.entries(regionDefs).forEach(([name,keys])=>{ regions[name]=keys.map(k=>F[k]); });
+  const colors=['#dc2626','#2563eb','#16a34a'];
+  const matchedColor={};
+  let selected=null, pairsFound=0;
+  const msgEl=document.getElementById(msgId), doneEl=document.getElementById(doneId);
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    Object.entries(regions).forEach(([name,pts])=>{
+      if(matchedColor[name]!==undefined){
+        ctx.fillStyle=colors[matchedColor[name]]+'4d';
+        ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); ctx.lineTo(pts[1].x,pts[1].y); ctx.lineTo(pts[2].x,pts[2].y); ctx.closePath(); ctx.fill();
+      } else if(name===selected){
+        ctx.fillStyle='#fde68a99';
+        ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); ctx.lineTo(pts[1].x,pts[1].y); ctx.lineTo(pts[2].x,pts[2].y); ctx.closePath(); ctx.fill();
+      }
+    });
+    labelDrawer(ctx, F);
+  }
+  function findPairFor(name){
+    for(const [n1,n2] of validPairs){
+      if(n1===name) return n2;
+      if(n2===name) return n1;
+    }
+    return null;
+  }
+  canvas.addEventListener('click', e=>{
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+    const px=(e.clientX-rect.left)*scaleX, py=(e.clientY-rect.top)*scaleY;
+    let clicked=null;
+    for(const [name,pts] of Object.entries(regions)){
+      if(matchedColor[name]!==undefined) continue;
+      if(pointInTriangle({x:px,y:py},pts[0],pts[1],pts[2])){ clicked=name; break; }
+    }
+    if(!clicked) return;
+    if(selected===null){
+      selected=clicked; msgEl.textContent=''; msgEl.className='match-msg'; draw();
+    } else if(selected===clicked){
+      selected=null; draw();
+    } else {
+      const correctPartner=findPairFor(selected);
+      if(correctPartner===clicked){
+        matchedColor[selected]=pairsFound; matchedColor[clicked]=pairsFound; pairsFound++;
+        selected=null;
+        msgEl.textContent='정답이에요! 합동인 삼각형이에요 👍'; msgEl.className='match-msg ok';
+        if(pairsFound>=3){ doneEl.style.display='block'; }
+      } else {
+        msgEl.textContent='합동이 아니에요. 다시 선택해보세요.'; msgEl.className='match-msg no';
+        selected=null;
+      }
+      draw();
+    }
+  });
+  draw();
+}
+
+// 내심 그림: 고정된 접선 길이(5,4,6)로 구성
+const incRaw=computeIncenterFig(5,4,6);
+setupMatcher('incFig','incMsg','incDone', {A:incRaw.A,B:incRaw.B,C:incRaw.C,I:incRaw.I,D:incRaw.D,E:incRaw.E,F:incRaw.F}, 'I',
+  { ADI:['A','D','I'], AFI:['A','F','I'], BDI:['B','D','I'], BEI:['B','E','I'], CEI:['C','E','I'], CFI:['C','F','I'] },
+  [ ['ADI','AFI'], ['BDI','BEI'], ['CEI','CFI'] ],
+  function(ctx,F){
+    const {A,B,C,I,D,E,F:Fp}=F;
+    const r=Math.hypot(I.x-D.x,I.y-D.y);
+    drawCircleStroke(ctx,I,r,'#c4b5fd',[]);
+    ctx.strokeStyle='#333'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.closePath(); ctx.stroke();
+    ctx.strokeStyle='#888'; ctx.lineWidth=1.4;
+    [A,B,C].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(I.x,I.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+    [D,E,Fp].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(I.x,I.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+    rightAngleMark(ctx,D,A,I,6,'#666');
+    rightAngleMark(ctx,E,B,I,6,'#666');
+    rightAngleMark(ctx,Fp,C,I,6,'#666');
+    tickMark(ctx,I,D,1,'#7c3aed'); tickMark(ctx,I,E,1,'#7c3aed'); tickMark(ctx,I,Fp,1,'#7c3aed');
+    bisectMark(ctx,A,B,I,'○','#db2777',16); bisectMark(ctx,A,I,C,'○','#db2777',16);
+    bisectMark(ctx,B,A,I,'×','#2563eb',16); bisectMark(ctx,B,I,C,'×','#2563eb',16);
+    bisectMark(ctx,C,I,A,'△','#16a34a',16); bisectMark(ctx,C,B,I,'△','#16a34a',16);
+    const centroid={x:(A.x+B.x+C.x)/3,y:(A.y+B.y+C.y)/3};
+    const lblA=outsideLabelPos(A,centroid,16), lblB=outsideLabelPos(B,centroid,16), lblC=outsideLabelPos(C,centroid,16);
+    drawLabel(ctx,lblA.x,lblA.y,'A','#333',13);
+    drawLabel(ctx,lblB.x,lblB.y,'B','#333',13);
+    drawLabel(ctx,lblC.x,lblC.y,'C','#333',13);
+    const lblD=outsideLabelPos(D,centroid,12), lblE=outsideLabelPos(E,centroid,12), lblF=outsideLabelPos(Fp,centroid,12);
+    drawLabel(ctx,lblD.x,lblD.y,'D','#333',11);
+    drawLabel(ctx,lblE.x,lblE.y,'E','#333',11);
+    drawLabel(ctx,lblF.x,lblF.y,'F','#333',11);
+    drawLabel(ctx,I.x-10,I.y,'I','#333',11);
+    ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(I.x,I.y,2.2,0,Math.PI*2); ctx.fill();
+  }
+);
+
+// 외심 그림: 고정된 예각삼각형(8,7,9)으로 구성 (외접원이 삼각형 경계 밖으로 나가므로, 원의 경계 4점을 fit 계산에 포함시켜 잘리지 않게 함)
+const circRaw=computeCircumFig(8,7,9);
+const circR0=Math.hypot(circRaw.O.x-circRaw.A.x, circRaw.O.y-circRaw.A.y);
+setupMatcher('circFig','circMsg','circDone', {
+    A:circRaw.A,B:circRaw.B,C:circRaw.C,O:circRaw.O,D:circRaw.D,E:circRaw.E,F:circRaw.F,
+    __b1:{x:circRaw.O.x-circR0,y:circRaw.O.y}, __b2:{x:circRaw.O.x+circR0,y:circRaw.O.y},
+    __b3:{x:circRaw.O.x,y:circRaw.O.y-circR0}, __b4:{x:circRaw.O.x,y:circRaw.O.y+circR0}
+  }, 'O',
+  { ADO:['A','D','O'], BDO:['B','D','O'], BEO:['B','E','O'], CEO:['C','E','O'], CFO:['C','F','O'], AFO:['A','F','O'] },
+  [ ['ADO','BDO'], ['BEO','CEO'], ['CFO','AFO'] ],
+  function(ctx,F){
+    const {A,B,C,O,D,E,F:Fp}=F;
+    const r=Math.hypot(O.x-A.x,O.y-A.y);
+    drawCircleStroke(ctx,O,r,'#99f0e6',[]);
+    ctx.strokeStyle='#333'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.closePath(); ctx.stroke();
+    ctx.strokeStyle='#888'; ctx.lineWidth=1.4;
+    [A,B,C].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(O.x,O.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+    [D,E,Fp].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(O.x,O.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+    rightAngleMark(ctx,D,A,O,6,'#666');
+    rightAngleMark(ctx,E,B,O,6,'#666');
+    rightAngleMark(ctx,Fp,C,O,6,'#666');
+    tickMark(ctx,A,D,1,'#0d9488'); tickMark(ctx,D,B,1,'#0d9488');
+    tickMark(ctx,B,E,2,'#0d9488'); tickMark(ctx,E,C,2,'#0d9488');
+    tickMark(ctx,C,Fp,3,'#0d9488'); tickMark(ctx,Fp,A,3,'#0d9488');
+    const centroid={x:(A.x+B.x+C.x)/3,y:(A.y+B.y+C.y)/3};
+    const lblA=outsideLabelPos(A,centroid,16), lblB=outsideLabelPos(B,centroid,16), lblC=outsideLabelPos(C,centroid,16);
+    drawLabel(ctx,lblA.x,lblA.y,'A','#333',13);
+    drawLabel(ctx,lblB.x,lblB.y,'B','#333',13);
+    drawLabel(ctx,lblC.x,lblC.y,'C','#333',13);
+    const lblD=outsideLabelPos(D,centroid,12), lblE=outsideLabelPos(E,centroid,12), lblF=outsideLabelPos(Fp,centroid,12);
+    drawLabel(ctx,lblD.x,lblD.y,'D','#333',11);
+    drawLabel(ctx,lblE.x,lblE.y,'E','#333',11);
+    drawLabel(ctx,lblF.x,lblF.y,'F','#333',11);
+    drawLabel(ctx,O.x,O.y-11,'O','#333',11);
+    ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(O.x,O.y,2.2,0,Math.PI*2); ctx.fill();
+  }
+);
+
+/* ════════════════════════════════
+   ② ~ ⑤ 빈칸 (직접 타이핑) + 채점하기/정답보기
+════════════════════════════════ */
+const PROBLEMS={
+  p_m1:{section:'sec-meaning', blanks:['m1']}, p_m2:{section:'sec-meaning', blanks:['m2']},
+  p_f1:{section:'sec-find', blanks:['f1','f2']}, p_f2:{section:'sec-find', blanks:['f3','f4']},
+  p_p1:{section:'sec-prop', blanks:['p1','p2']}, p_p2:{section:'sec-prop', blanks:['p3','p4']},
+  p_loc1:{section:'sec-loc', blanks:['l1','l2','l3']}, p_loc2:{section:'sec-loc', blanks:['l0']},
+  p_loc3:{section:'sec-loc', blanks:['l4']}, p_loc4:{section:'sec-loc', blanks:['l5']},
+  p_a1:{section:'sec-app', blanks:['a1']}, p_a2:{section:'sec-app', blanks:['a2']},
+  p_a3:{section:'sec-app', blanks:['a3']}, p_a4:{section:'sec-app', blanks:['a4']},
+  p_a5:{section:'sec-app', blanks:['a5']}, p_a6:{section:'sec-app', blanks:['a6']}
+};
+function blank(id, correct){
+  const w=Math.max(46, correct.length*13+18);
+  return `<input type="text" class="blank-input" style="width:${w}px" id="${id}-inp" data-answer="${correct}">`;
+}
+function ansBtn(pid){
+  return `<button class="ans-btn" id="ans-${pid}" disabled onclick="showAnswer('${pid}')">정답 보기</button>`;
+}
+function gradeSection(sectionId){
+  Object.entries(PROBLEMS).forEach(([pid,info])=>{
+    if(info.section!==sectionId) return;
+    info.blanks.forEach(bid=>{
+      const inp=document.getElementById(bid+'-inp');
+      const val=inp.value.trim();
+      inp.classList.remove('correct','wrong');
+      if(val && val===inp.dataset.answer) inp.classList.add('correct');
+      else inp.classList.add('wrong');
+    });
+    const btn=document.getElementById('ans-'+pid);
+    if(btn) btn.disabled=false;
+  });
+}
+function showAnswer(pid){
+  PROBLEMS[pid].blanks.forEach(bid=>{
+    const inp=document.getElementById(bid+'-inp');
+    inp.value=inp.dataset.answer;
+    inp.classList.remove('wrong'); inp.classList.add('correct');
+  });
+}
+document.getElementById('s-meaning-inc').innerHTML = `내심은 ${blank('m1','내접원')}의 중심이다. ${ansBtn('p_m1')}`;
+document.getElementById('s-meaning-circ').innerHTML = `외심은 ${blank('m2','외접원')}의 중심이다. ${ansBtn('p_m2')}`;
+
+document.getElementById('s-find-inc').innerHTML = `세 ${blank('f1','각')}의 ${blank('f2','이등분선')}의 교점 ${ansBtn('p_f1')}`;
+document.getElementById('s-find-circ').innerHTML = `세 ${blank('f3','변')}의 ${blank('f4','수직이등분선')}의 교점 ${ansBtn('p_f2')}`;
+
+document.getElementById('s-prop-inc').innerHTML = `세 ${blank('p1','변')}에 이르는 거리가 ${blank('p2','같다')}. ${ansBtn('p_p1')}`;
+document.getElementById('s-prop-circ').innerHTML = `세 ${blank('p3','꼭짓점')}에 이르는 거리가 ${blank('p4','같다')}. ${ansBtn('p_p2')}`;
+
+document.getElementById('s-loc-inc').innerHTML = `예각삼각형, 직각삼각형, 둔각삼각형 모두 ${blank('l0','내부')}에 있다. ${ansBtn('p_loc2')}`;
+document.getElementById('loc-acute').innerHTML = blank('l1','내부');
+document.getElementById('loc-right').innerHTML = blank('l2','빗변의 중점');
+document.getElementById('loc-obtuse').innerHTML = blank('l3','외부') + ' ' + ansBtn('p_loc1');
+
+document.getElementById('s-loc-note1').innerHTML = `1. 이등변삼각형의 내심과 외심은 ${blank('l4','꼭지각의 이등분선')} 위에 있다. ${ansBtn('p_loc3')}`;
+document.getElementById('s-loc-note2').innerHTML = `2. 정삼각형의 내심과 외심은 ${blank('l5','일치')}한다. ${ansBtn('p_loc4')}`;
+
+/* ════════════════════════════════
+   ⑥ 응용 — 공식 빈칸 + 예제
+════════════════════════════════ */
+document.getElementById('app1-formula').innerHTML = `∠x+∠y+∠z = ${blank('a1','90')}° ${ansBtn('p_a1')}`;
+document.getElementById('app2-formula').innerHTML = `∠BIC = 90° + ${blank('a2','½∠A')} ${ansBtn('p_a2')}`;
+document.getElementById('app3-formula').innerHTML = `∠x+∠y+∠z = ${blank('a3','90')}° ${ansBtn('p_a3')}`;
+document.getElementById('app4-formula').innerHTML = `∠BOC = ${blank('a4','2∠A')} ${ansBtn('p_a4')}`;
+document.getElementById('app5-formula').innerHTML = `△ABC = ${blank('a5','½')} × r × (a+b+c) ${ansBtn('p_a5')}`;
+document.getElementById('app6-formula').innerHTML = `△ADE의 둘레 = ${blank('a6','AB+AC')} ${ansBtn('p_a6')}`;
+
+// --- 응용 참고 그림 (고정, 정적) ---
+function drawIncenterMini(canvas, a,b,c, kind){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw=computeIncenterFig(a,b,c);
+  const F=fitPointsToCanvas({A:raw.A,B:raw.B,C:raw.C,I:raw.I}, canvas.width, canvas.height, 34);
+  const {A,B,C:Cp,I}=F;
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(Cp.x,Cp.y); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.2;
+  [A,B,Cp].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(I.x,I.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+  const centroid={x:(A.x+B.x+Cp.x)/3,y:(A.y+B.y+Cp.y)/3};
+  drawLabel(ctx,outsideLabelPos(A,centroid,14).x,outsideLabelPos(A,centroid,14).y,'A','#333',12);
+  drawLabel(ctx,outsideLabelPos(B,centroid,14).x,outsideLabelPos(B,centroid,14).y,'B','#333',12);
+  drawLabel(ctx,outsideLabelPos(Cp,centroid,14).x,outsideLabelPos(Cp,centroid,14).y,'C','#333',12);
+  if(kind==='xyz'){
+    angleArcAt(ctx,A,B,I,14,'#7c3aed'); const l1=angleMidPoint(A,B,I,24); drawLabel(ctx,l1.x,l1.y,'x','#7c3aed',12);
+    angleArcAt(ctx,B,I,Cp,14,'#7c3aed'); const l2=angleMidPoint(B,I,Cp,24); drawLabel(ctx,l2.x,l2.y,'y','#7c3aed',12);
+    angleArcAt(ctx,Cp,I,A,14,'#7c3aed'); const l3=angleMidPoint(Cp,I,A,24); drawLabel(ctx,l3.x,l3.y,'z','#7c3aed',12);
+    drawLabel(ctx,I.x,I.y-10,'I','#333',10);
+  } else if(kind==='bic'){
+    angleArcAt(ctx,A,B,Cp,14,'#666'); const l1=angleMidPoint(A,B,Cp,24); drawLabel(ctx,l1.x,l1.y,'a','#333',12);
+    angleArcAt(ctx,I,B,Cp,16,'#7c3aed'); const l2=angleMidPoint(I,B,Cp,30); drawLabel(ctx,l2.x,l2.y,'90+½a','#7c3aed',10);
+    drawLabel(ctx,outsideLabelPos(I,A,10).x,outsideLabelPos(I,A,10).y,'I','#333',10);
+  }
+}
+function drawCircumMini(canvas, a,b,c, kind){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw=computeCircumFig(a,b,c);
+  const F=fitPointsToCanvas({A:raw.A,B:raw.B,C:raw.C,O:raw.O}, canvas.width, canvas.height, 34);
+  const {A,B,C:Cp,O}=F;
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(Cp.x,Cp.y); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.2;
+  [A,B,Cp].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(O.x,O.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+  const centroid={x:(A.x+B.x+Cp.x)/3,y:(A.y+B.y+Cp.y)/3};
+  drawLabel(ctx,outsideLabelPos(A,centroid,14).x,outsideLabelPos(A,centroid,14).y,'A','#333',12);
+  drawLabel(ctx,outsideLabelPos(B,centroid,14).x,outsideLabelPos(B,centroid,14).y,'B','#333',12);
+  drawLabel(ctx,outsideLabelPos(Cp,centroid,14).x,outsideLabelPos(Cp,centroid,14).y,'C','#333',12);
+  if(kind==='xyz'){
+    angleArcAt(ctx,A,B,O,14,'#0d9488'); const l1=angleMidPoint(A,B,O,24); drawLabel(ctx,l1.x,l1.y,'x','#0d9488',12);
+    angleArcAt(ctx,B,O,Cp,14,'#0d9488'); const l2=angleMidPoint(B,O,Cp,24); drawLabel(ctx,l2.x,l2.y,'y','#0d9488',12);
+    angleArcAt(ctx,Cp,O,A,14,'#0d9488'); const l3=angleMidPoint(Cp,O,A,24); drawLabel(ctx,l3.x,l3.y,'z','#0d9488',12);
+    drawLabel(ctx,O.x,O.y-10,'O','#333',10);
+  } else if(kind==='boc'){
+    angleArcAt(ctx,A,B,Cp,14,'#666'); const l1=angleMidPoint(A,B,Cp,24); drawLabel(ctx,l1.x,l1.y,'a','#333',12);
+    angleArcAt(ctx,O,B,Cp,16,'#0d9488'); const l2=angleMidPoint(O,B,Cp,30); drawLabel(ctx,l2.x,l2.y,'2a','#0d9488',11);
+    drawLabel(ctx,O.x,O.y-10,'O','#333',10);
+  }
+}
+function drawAreaMini(canvas){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw=computeIncenterFig(5,4,6);
+  const F=fitPointsToCanvas({A:raw.A,B:raw.B,C:raw.C,I:raw.I,D:raw.D,E:raw.E,F:raw.F}, canvas.width, canvas.height, 34);
+  const {A,B,C:Cp,I,D,E,F:Fp}=F;
+  const r=Math.hypot(I.x-D.x,I.y-D.y);
+  drawCircleStroke(ctx,I,r,'#c4b5fd',[]);
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(Cp.x,Cp.y); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.2;
+  [A,B,Cp].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(I.x,I.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+  ctx.strokeStyle='#7c3aed'; ctx.lineWidth=1.3;
+  [D,E,Fp].forEach(pt=>{ ctx.beginPath(); ctx.moveTo(I.x,I.y); ctx.lineTo(pt.x,pt.y); ctx.stroke(); });
+  rightAngleMark(ctx,D,A,I,6,'#666');
+  rightAngleMark(ctx,E,B,I,6,'#666');
+  rightAngleMark(ctx,Fp,Cp,I,6,'#666');
+  tickMark(ctx,I,D,1,'#7c3aed'); tickMark(ctx,I,Fp,1,'#7c3aed');
+  const centroid={x:(A.x+B.x+Cp.x)/3,y:(A.y+B.y+Cp.y)/3};
+  drawLabel(ctx,outsideLabelPos(A,centroid,14).x,outsideLabelPos(A,centroid,14).y,'A','#333',12);
+  drawLabel(ctx,outsideLabelPos(B,centroid,14).x,outsideLabelPos(B,centroid,14).y,'B','#333',12);
+  drawLabel(ctx,outsideLabelPos(Cp,centroid,14).x,outsideLabelPos(Cp,centroid,14).y,'C','#333',12);
+  drawLabel(ctx,I.x-9,I.y-4,'I','#333',10);
+  midDashLabel(ctx,A,B,centroid,'c','#333',12,9);
+  midDashLabel(ctx,A,Cp,centroid,'b','#333',12,9);
+  midDashLabel(ctx,B,Cp,centroid,'a','#333',12,9);
+  midDashLabel(ctx,I,E,centroid,'r','#7c3aed',12,7);
+}
+function drawPerimMini(canvas){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw=computeIncenterFig(5,4,6);
+  const F=fitPointsToCanvas({A:raw.A,B:raw.B,C:raw.C,I:raw.I}, canvas.width, canvas.height, 34);
+  const {A,B,C:Cp,I}=F;
+  const t=(I.y-A.y)/(B.y-A.y);
+  const D={x:A.x+t*(B.x-A.x), y:A.y+t*(B.y-A.y)};
+  const E={x:A.x+t*(Cp.x-A.x), y:A.y+t*(Cp.y-A.y)};
+  ctx.fillStyle='#bbf7d066';
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(D.x,D.y); ctx.lineTo(E.x,E.y); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(Cp.x,Cp.y); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#16a34a'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(D.x,D.y); ctx.lineTo(E.x,E.y); ctx.stroke();
+  parallelMark(ctx,D,E,'#16a34a');
+  parallelMark(ctx,B,Cp,'#16a34a');
+  ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(I.x,I.y); ctx.stroke();
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(Cp.x,Cp.y); ctx.lineTo(I.x,I.y); ctx.stroke();
+  const centroid={x:(A.x+B.x+Cp.x)/3,y:(A.y+B.y+Cp.y)/3};
+  drawLabel(ctx,outsideLabelPos(A,centroid,14).x,outsideLabelPos(A,centroid,14).y,'A','#333',12);
+  drawLabel(ctx,outsideLabelPos(B,centroid,14).x,outsideLabelPos(B,centroid,14).y,'B','#333',12);
+  drawLabel(ctx,outsideLabelPos(Cp,centroid,14).x,outsideLabelPos(Cp,centroid,14).y,'C','#333',12);
+  drawLabel(ctx,D.x-13,D.y,'D','#333',11);
+  drawLabel(ctx,E.x+13,E.y,'E','#333',11);
+  drawLabel(ctx,I.x,I.y+11,'I','#333',10);
+}
+// 이등변삼각형: ∠A의 이등분선=BC의 수직이등분선(D에서 만남) 위에 O,I가 있음을 보이고,
+// AB의 수직이등분선도 실제로 그려서 그 교점이 O임을 함께 보여줌 (O,I는 실제 외심·내심 공식으로 계산)
+function drawIsoPosFig(canvas){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const a=100,b=130,c=130; // a=BC, b=CA, c=AB (AB=AC 이등변)
+  const raw0=computeCircumFig(a,b,c); // A,B,C,O, D=mid(AB), E=mid(BC), F=mid(AC)
+  const per=a+b+c;
+  const I0={x:(a*raw0.A.x+b*raw0.B.x+c*raw0.C.x)/per, y:(a*raw0.A.y+b*raw0.B.y+c*raw0.C.y)/per};
+  const F=fitPointsToCanvas({A:raw0.A,B:raw0.B,C:raw0.C,O:raw0.O,I:I0,Dfoot:raw0.E,Mab:raw0.D}, canvas.width, canvas.height, 30);
+  const {A,B,C,O,I,Dfoot,Mab}=F;
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.7;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.closePath(); ctx.stroke();
+  // ∠A의 이등분선(=BC의 수직이등분선), D에서 BC와 만남
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.3;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(Dfoot.x,Dfoot.y); ctx.stroke();
+  rightAngleMark(ctx,Dfoot,B,A,6,'#666');
+  // AB의 수직이등분선: M(AB의 중점)에서 O까지
+  ctx.strokeStyle='#0d9488'; ctx.lineWidth=1.3;
+  ctx.beginPath(); ctx.moveTo(Mab.x,Mab.y); ctx.lineTo(O.x,O.y); ctx.stroke();
+  rightAngleMark(ctx,Mab,A,O,6,'#666');
+  // ∠B의 이등분선: B에서 내심 I까지
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=1.3;
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(I.x,I.y); ctx.stroke();
+  tickMark(ctx,A,B,1,'#333'); tickMark(ctx,A,C,1,'#333');
+  tickMark(ctx,B,Dfoot,1,'#333'); tickMark(ctx,Dfoot,C,1,'#333');
+  bisectMark(ctx,A,B,Dfoot,'○','#db2777',10); bisectMark(ctx,A,Dfoot,C,'○','#db2777',10);
+  bisectMark(ctx,B,A,I,'×','#2563eb',10); bisectMark(ctx,B,I,Dfoot,'×','#2563eb',10);
+  const centroid={x:(A.x+B.x+C.x)/3,y:(A.y+B.y+C.y)/3};
+  drawLabel(ctx,outsideLabelPos(A,centroid,14).x,outsideLabelPos(A,centroid,14).y,'A','#333',12);
+  drawLabel(ctx,outsideLabelPos(B,centroid,14).x,outsideLabelPos(B,centroid,14).y,'B','#333',12);
+  drawLabel(ctx,outsideLabelPos(C,centroid,14).x,outsideLabelPos(C,centroid,14).y,'C','#333',12);
+  drawLabel(ctx,Dfoot.x,Dfoot.y+13,'D','#333',11);
+  ctx.fillStyle='#0d9488'; ctx.beginPath(); ctx.arc(O.x,O.y,2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#7c3aed'; ctx.beginPath(); ctx.arc(I.x,I.y,2,0,Math.PI*2); ctx.fill();
+  drawLabel(ctx,O.x+16,O.y-2,'O','#0d9488',11);
+  drawLabel(ctx,I.x+16,I.y+2,'I','#7c3aed',11);
+}
+// 정삼각형: 세 중선(=각의 이등분선=대변의 수직이등분선)을 모두 그려서 한 점(O=I)에서 만남을 보임
+function drawEquilPosFig(canvas){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw={A:{x:50,y:0}, B:{x:0,y:86.6}, C:{x:100,y:86.6}};
+  const F=fitPointsToCanvas(raw, canvas.width, canvas.height, 28);
+  const {A,B,C}=F;
+  const Mbc={x:(B.x+C.x)/2,y:(B.y+C.y)/2};
+  const Mac={x:(A.x+C.x)/2,y:(A.y+C.y)/2};
+  const Mab={x:(A.x+B.x)/2,y:(A.y+B.y)/2};
+  const centroid={x:(A.x+B.x+C.x)/3,y:(A.y+B.y+C.y)/3};
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.7;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.2;
+  [[A,Mbc],[B,Mac],[C,Mab]].forEach(([p,m])=>{ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(m.x,m.y); ctx.stroke(); });
+  rightAngleMark(ctx,Mbc,B,A,6,'#666');
+  rightAngleMark(ctx,Mac,C,B,6,'#666');
+  rightAngleMark(ctx,Mab,A,C,6,'#666');
+  tickMark(ctx,A,B,1,'#333'); tickMark(ctx,B,C,1,'#333'); tickMark(ctx,C,A,1,'#333');
+  drawLabel(ctx,outsideLabelPos(A,centroid,14).x,outsideLabelPos(A,centroid,14).y,'A','#333',12);
+  drawLabel(ctx,outsideLabelPos(B,centroid,14).x,outsideLabelPos(B,centroid,14).y,'B','#333',12);
+  drawLabel(ctx,outsideLabelPos(C,centroid,14).x,outsideLabelPos(C,centroid,14).y,'C','#333',12);
+  ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(centroid.x,centroid.y,2.4,0,Math.PI*2); ctx.fill();
+  drawLabel(ctx,centroid.x+22,centroid.y,'O=I','#333',12);
+}
+
+drawIncenterMini(document.getElementById('app1Fig'),5,4,6,'xyz');
+drawIncenterMini(document.getElementById('app2Fig'),5,4,6,'bic');
+drawCircumMini(document.getElementById('app3Fig'),8,7,9,'xyz');
+drawCircumMini(document.getElementById('app4Fig'),8,7,9,'boc');
+drawAreaMini(document.getElementById('app5Fig'));
+drawPerimMini(document.getElementById('app6Fig'));
+drawIsoPosFig(document.getElementById('isoFig'));
+drawEquilPosFig(document.getElementById('equilFig'));
+
+/* ════════════════════════════════
+   ⑥ 예제 문제 pool + 진행 로직
+════════════════════════════════ */
+function computeIncenterFromHalfAngles(a,b){
+  const fullA=2*a, fullB=2*b;
+  const rad=d=>d*Math.PI/180;
+  const R_BC=10;
+  const fullC=180-fullA-fullB;
+  const cSide=R_BC*Math.sin(rad(fullC))/Math.sin(rad(fullA));
+  const B={x:0,y:0}, C={x:R_BC,y:0};
+  const A={x:cSide*Math.cos(rad(fullB)), y:-cSide*Math.sin(rad(fullB))};
+  const bSide=Math.hypot(A.x-C.x,A.y-C.y);
+  const per=R_BC+bSide+cSide;
+  const I={x:(R_BC*A.x+bSide*B.x+cSide*C.x)/per, y:(R_BC*A.y+bSide*B.y+cSide*C.y)/per};
+  return {A,B,C,I};
+}
+function computeIncenterPtsBIC(fullA, fullB, R_BC){
+  const rad=d=>d*Math.PI/180;
+  const fullC=180-fullA-fullB;
+  const a=R_BC;
+  const c=a*Math.sin(rad(fullC))/Math.sin(rad(fullA));
+  const B={x:0,y:0}, C={x:a,y:0};
+  const A={x:c*Math.cos(rad(fullB)), y:-c*Math.sin(rad(fullB))};
+  const b=Math.hypot(A.x-C.x,A.y-C.y);
+  const per=a+b+c;
+  const I={x:(a*A.x+b*B.x+c*C.x)/per, y:(a*A.y+b*B.y+c*C.y)/per};
+  return {A,B,C,I};
+}
+function computeCirclePts(beta, gamma, R){
+  const centralAB=180-2*beta, centralBC=180-2*gamma;
+  const thetaA=90, thetaB=thetaA-centralAB, thetaC=thetaB-centralBC;
+  function pt(theta,r){ const rad=theta*Math.PI/180; return {x:r*Math.cos(rad), y:-r*Math.sin(rad)}; }
+  return { O:{x:0,y:0}, A:pt(thetaA,R), B:pt(thetaB,R), C:pt(thetaC,R) };
+}
+function computeInscribedPts(theta, R){
+  function pt(deg,r){ const rad=deg*Math.PI/180; return {x:r*Math.cos(rad), y:-r*Math.sin(rad)}; }
+  const A=pt(90,R);
+  const B=pt(270-theta/2,R);
+  const C=pt(270+theta/2,R);
+  const O={x:0,y:0};
+  return {A,B,C,O};
+}
+
+const EX_POOLS={
+  ex1:[{y:20,z:30,x:40},{y:15,z:45,x:30},{y:25,z:35,x:30},{y:10,z:20,x:60},{y:35,z:15,x:40}],
+  ex2:[20,40,50,60,80].map(a=>({a,x:90+a/2})),
+  ex3:[{g:15,d:35,x:40},{g:20,d:20,x:50},{g:10,d:50,x:30},{g:25,d:15,x:50},{g:30,d:20,x:40}],
+  ex4:[30,40,50,60,70].map(a=>({a,x:2*a})),
+  ex5:[{r:3,per:20,x:30},{r:4,per:24,x:48},{r:5,per:18,x:45},{r:6,per:30,x:90},{r:7,per:28,x:98}],
+  ex6:[{ab:5,ac:4,x:9},{ab:6,ac:5,x:11},{ab:7,ac:6,x:13},{ab:8,ac:7,x:15},{ab:9,ac:5,x:14}]
+};
+const EX_STATE={ ex1:{used:[],cur:null}, ex2:{used:[],cur:null}, ex3:{used:[],cur:null}, ex4:{used:[],cur:null}, ex5:{used:[],cur:null}, ex6:{used:[],cur:null} };
+
+function pickEx(id){
+  const pool=EX_POOLS[id], st=EX_STATE[id];
+  if(st.used.length>=pool.length) st.used.length=0;
+  let idx; do{ idx=Math.floor(Math.random()*pool.length); }while(st.used.includes(idx));
+  st.used.push(idx); st.cur=pool[idx]; return st.cur;
+}
+function renderEx1(){
+  const e=EX_STATE.ex1.cur;
+  document.getElementById('ex1-q').innerHTML=`점 I가 △ABC의 내심일 때, ∠y=${e.y}°, ∠z=${e.z}°이면 ∠x의 크기는?`;
+}
+function renderEx2(){
+  const e=EX_STATE.ex2.cur;
+  document.getElementById('ex2-q').innerHTML=`점 I가 △ABC의 내심일 때, ∠A=${e.a}°이면 ∠BIC의 크기는?`;
+}
+function renderEx3(){
+  const e=EX_STATE.ex3.cur;
+  document.getElementById('ex3-q').innerHTML=`점 O가 △ABC의 외심일 때, ∠y=${e.g}°, ∠z=${e.d}°이면 ∠x의 크기는?`;
+}
+function renderEx4(){
+  const e=EX_STATE.ex4.cur;
+  document.getElementById('ex4-q').innerHTML=`점 O가 △ABC의 외심일 때, ∠A=${e.a}°이면 ∠BOC의 크기는?`;
+}
+function renderEx5(){
+  const e=EX_STATE.ex5.cur;
+  document.getElementById('ex5-q').innerHTML=`내접원의 반지름이 r=${e.r}cm, △ABC의 둘레가 ${e.per}cm일 때, △ABC의 넓이는?`;
+}
+function renderEx6(){
+  const e=EX_STATE.ex6.cur;
+  document.getElementById('ex6-q').innerHTML=`DE가 내접원에 접하고 BC에 평행할 때, AB=${e.ab}cm, AC=${e.ac}cm이면 △ADE의 둘레는?`;
+}
+const EX_RENDER={ex1:renderEx1,ex2:renderEx2,ex3:renderEx3,ex4:renderEx4,ex5:renderEx5,ex6:renderEx6};
+
+function toggleEx(id){
+  const area=document.getElementById(id+'-area');
+  const opening=!area.classList.contains('show');
+  area.classList.toggle('show');
+  if(opening && !EX_STATE[id].cur){ pickEx(id); EX_RENDER[id](); }
+}
+function nextEx(id){
+  pickEx(id); EX_RENDER[id]();
+  document.getElementById(id+'-val').value='';
+  document.getElementById(id+'-fb').textContent='';
+  document.getElementById(id+'-fb').className='ex-fb';
+}
+function checkEx(id){
+  const v=parseFloat(document.getElementById(id+'-val').value);
+  const cur=EX_STATE[id].cur;
+  const fb=document.getElementById(id+'-fb');
+  if(isNaN(v)){ alert('숫자를 입력해주세요!'); return; }
+  if(Math.abs(v-cur.x)<0.4){
+    fb.textContent='정답이에요! 🎉'; fb.className='ex-fb ok';
+  } else {
+    fb.textContent=`아쉬워요. 정답은 ${cur.x}이에요. 다시 도전해보고 싶으면 숫자를 바꿔보세요!`; fb.className='ex-fb no';
+  }
+}
+</script>
+</body>
+</html>
