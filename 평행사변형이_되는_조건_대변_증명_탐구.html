@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>평행사변형이 되는 조건 — 대변의 길이</title>
+<style>
+  :root{
+    --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+    --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --yellow:#ffce6b;
+    --line:#e3e8f4; --step1:#6c8bff; --step2:#ff8fac; --step3:#3fbf91; --step4:#9b7cff; --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--ink); -webkit-tap-highlight-color:transparent; }
+  header{ padding:22px 24px 16px; text-align:center; background:linear-gradient(135deg,#eef2ff,#fff0f5); border-bottom:1px solid var(--line); }
+  header h1{ margin:0 0 6px; font-size:22px; letter-spacing:-0.3px; }
+  header p{ margin:0; color:var(--muted); font-size:14px; }
+
+  .layout{ max-width:1280px; margin:20px auto; padding:0 16px 60px; display:grid; grid-template-columns:1.15fr 1fr; gap:22px; align-items:start; }
+  .mobile-tabs{ display:none; }
+  @media (max-width:960px){
+    .layout{ grid-template-columns:1fr; }
+    .mobile-tabs{ display:flex; gap:8px; position:sticky; top:0; z-index:80; background:var(--bg); padding:12px 16px 8px; margin:0 -16px 4px; box-shadow:0 4px 10px rgba(43,47,66,.05); }
+    .mobile-tab-btn{ flex:1; padding:11px; border-radius:12px; border:none; background:#eef1fa; color:var(--muted); font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s; }
+    .mobile-tab-btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+    .layout.mobile-show-canvas .activity{ display:none; }
+    .layout.mobile-show-activity .card.sticky{ display:none; }
+    .card.sticky{ position:static; }
+  }
+
+  .card{ background:var(--card); border-radius:var(--radius); padding:18px 18px 20px; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  .sticky{ position:sticky; top:16px; }
+
+  .toolbar{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .btn{ border:none; border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:700; cursor:pointer; background:#eef1fa; color:var(--ink); transition:.15s; font-family:inherit; }
+  .btn:hover{ background:#e2e7f8; }
+  .btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .btn-outline{ background:transparent; border:2px solid var(--line); color:var(--muted); }
+  .btn-outline:hover{ background:#f5f7fc; }
+  .btn-sm{ padding:7px 11px; font-size:12.5px; border-radius:9px; }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:hover{ background:var(--primary-dark); }
+  .btn-primary:disabled{ background:#cdd5f5; color:#8a93c2; cursor:not-allowed; box-shadow:none; }
+
+  .svg-wrap{ background:#fbfcff; border-radius:14px; border:1px solid var(--line); padding:6px; }
+  svg{ width:100%; height:auto; display:block; touch-action:none; }
+
+  .quad{ fill:#eef1fb; stroke:#4a5568; stroke-width:2.5; }
+  .diag{ stroke:#4a5568; stroke-width:2; display:none; }
+  .tri-half{ stroke:none; display:none; }
+  #triABC{ fill:#6c8bff; opacity:.55; }
+  #triCDA{ fill:#ff9db3; opacity:.55; }
+  .guide-arc{ fill:none; stroke:#c3cef2; stroke-width:1.5; stroke-dasharray:3 4; }
+  .handle{ cursor:grab; }
+  .handle:active{ cursor:grabbing; }
+  .handle-hit{ fill:transparent; cursor:grab; }
+  .handle-hit:active{ cursor:grabbing; }
+  .vertex-dot{ fill:#4a5568; }
+  .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; text-anchor:middle; dominant-baseline:central; }
+  .handle-dot{ fill:#fff; stroke-width:3; }
+  .handle-dot.hb{ stroke:#e0455a; }
+  .handle-dot.hd{ stroke:#3b6fe0; }
+
+  .tick{ stroke-width:2; display:none; }
+  .tick.pair1{ stroke:#e0455a; }
+  .tick.pair2{ stroke:#3b6fe0; }
+  .chev{ fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; display:none; }
+  .chev.pair1{ stroke:#e0455a; }
+  .chev.pair2{ stroke:#3b6fe0; }
+
+  .angle-arc{ fill:none; stroke-width:2; display:none; }
+  .arc-p1{ stroke:#3fbf91; }
+  .arc-p2{ stroke:#9b7cff; }
+  .angle-leader{ stroke-width:1.3; stroke-dasharray:2 3; display:none; }
+  .angle-num{ font-size:12.5px; font-weight:800; display:none; text-anchor:middle; dominant-baseline:central; }
+  .angle-num.arc-p1{ fill:#1e7a53; }
+  .angle-num.arc-p2{ fill:#6a4fc9; }
+
+  .ext-line{ stroke-width:1.6; stroke-dasharray:5 4; display:none; }
+  .ext-line.pair1{ stroke:#e0455a; }
+  .ext-line.pair2{ stroke:#3b6fe0; }
+
+  .rod{ stroke-width:9; stroke-linecap:round; cursor:grab; pointer-events:none; }
+  .rod.type-long{ stroke:#e0455a; }
+  .rod.type-short{ stroke:#3b6fe0; }
+  .rod-hit{ stroke-width:26; stroke:transparent; cursor:grab; pointer-events:stroke; }
+  .endpoint-hit{ fill:transparent; cursor:grab; pointer-events:fill; }
+  .endpoint-dot{ fill:#fff; stroke-width:3; cursor:grab; pointer-events:none; }
+  .endpoint-dot.type-long{ stroke:#e0455a; }
+  .endpoint-dot.type-short{ stroke:#3b6fe0; }
+  .endpoint-dot.joint{ fill:#4a5568; stroke:#4a5568; }
+  .endpoint-dot.snap-target{ stroke:#ffce6b; stroke-width:5; }
+
+  .seg{ text-decoration-line:overline; text-decoration-thickness:1.3px; text-decoration-skip-ink:none; }
+  .parallel-sym{ display:inline-block; position:relative; width:11px; height:15px; vertical-align:-2px; margin:0 1px; }
+  .parallel-sym::before, .parallel-sym::after{ content:''; position:absolute; top:1px; width:2px; height:14px; background:currentColor; transform:skewX(-16deg); }
+  .parallel-sym::before{ left:1px; }
+  .parallel-sym::after{ left:7px; }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .dot{ width:10px;height:10px;border-radius:3px;display:inline-block; }
+
+  .stepper{ display:flex; gap:8px; margin-bottom:16px; }
+  .step-tab{ flex:1; text-align:center; padding:10px 6px; border-radius:12px; background:#eef1fa; font-size:12.5px; font-weight:700; border:none; cursor:pointer; color:var(--muted); font-family:inherit; transition:.15s; }
+  .step-tab .n{ display:block; font-size:15px; margin-bottom:1px; }
+  .step-tab.current{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .step-tab.done:not(.current){ background:#e9faf3; color:#1e7a53; }
+  .step-tab.locked{ opacity:.45; cursor:not-allowed; }
+
+  .step-card{ background:var(--card); border-radius:16px; padding:18px 20px 20px; border-left:6px solid var(--step1); box-shadow:0 4px 14px rgba(43,47,66,.05); position:relative; }
+  .step-card[data-step="2"]{ border-left-color:var(--step2); }
+  .step-card[data-step="3"]{ border-left-color:var(--step3); }
+  .step-card[data-step="4"]{ border-left-color:var(--step4); }
+  .step-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .step-badge{ width:28px;height:28px;border-radius:50%; background:var(--step1); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex:none; }
+  .step-card[data-step="2"] .step-badge{ background:var(--step2); }
+  .step-card[data-step="3"] .step-badge{ background:var(--step3); }
+  .step-card[data-step="4"] .step-badge{ background:var(--step4); }
+  .step-head h2{ margin:0; font-size:16.5px; }
+  .step-body p{ margin:6px 0 10px; font-size:14px; line-height:1.6; color:#3c4257; }
+  .hint{ font-size:12.5px; color:#8b93a8; margin-top:4px; }
+
+  .goal-banner{ background:linear-gradient(135deg,#eef2ff,#fff0f5); border:2px solid #c9d4fb; border-radius:14px; padding:16px 18px; text-align:center; font-size:14.5px; line-height:1.7; color:var(--primary-dark); margin-bottom:16px; }
+  .goal-banner .tag{ font-size:12px; font-weight:700; letter-spacing:.5px; color:#8b93c2; display:block; margin-bottom:4px; }
+  .goal-banner b{ font-size:16.5px; }
+
+  .recall-box{ background:#fff6e0; border:1.5px dashed #ffce6b; border-radius:12px; padding:12px 14px; font-size:13px; color:#9a6b00; margin-bottom:12px; }
+  .recall-box b{ color:#7a5400; }
+
+  .choice-list{ display:flex; flex-direction:column; gap:7px; margin:8px 0 12px; }
+  .choice-list label{ display:flex; align-items:center; gap:8px; background:#f7f8fc; border:1.5px solid var(--line); padding:9px 11px; border-radius:10px; font-size:13.5px; cursor:pointer; transition:.15s; }
+  .choice-list label:hover{ background:#eef1fb; }
+  .choice-list input{ accent-color:var(--primary); width:16px; height:16px; flex:none; }
+
+  .feedback{ margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13.5px; line-height:1.6; display:none; }
+  .feedback.success{ display:block; background:#e7f8f0; color:#1e7a53; border:1px solid #b7ead2; }
+  .feedback.error{ display:block; background:#fdeceb; color:#b3261e; border:1px solid #f6c6c2; }
+  .feedback.warn{ display:block; background:#fff6e0; color:#9a6b00; border:1px solid #ffe4a3; }
+
+  .fillsentence{ background:#f7f8fc; border:1.5px dashed #c9d4fb; border-radius:12px; padding:14px 16px; font-size:15px; line-height:2; margin:10px 0 14px; color:#2b2f42; }
+  .fillsentence select{ border:1.5px solid var(--primary); border-radius:8px; padding:4px 8px; font-size:14.5px; font-weight:700; color:var(--primary-dark); background:#fff; font-family:inherit; margin:0 3px; }
+
+  .summary-box{ margin-top:12px; padding:14px 16px; border-radius:12px; background:linear-gradient(135deg,#eef2ff,#fff5f8); border:1.5px dashed #b9c4f5; font-size:13.5px; line-height:1.7; max-height:0; opacity:0; overflow:hidden; transition:.4s ease; }
+  .summary-box.show{ max-height:400px; opacity:1; margin-top:12px; }
+  .summary-box b{ color:var(--primary-dark); }
+
+  .reveal{ max-height:0; opacity:0; overflow:hidden; transition:.45s ease; }
+  .reveal.show{ max-height:1600px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
+
+  .proof-block{ background:#fbfcff; border:1.5px solid var(--line); border-radius:14px; padding:16px 18px; margin:14px 0; font-size:14.5px; line-height:2.35; color:#2b2f42; }
+  .proof-block .given{ margin:0 0 6px; color:#4a5568; font-size:13.5px; }
+  .proof-block hr{ border:none; border-top:1px dashed var(--line); margin:10px 0; }
+  .proof-block p{ margin:4px 0; }
+  .blank{ display:inline-block; width:64px; border:none; border-bottom:2px solid var(--primary); background:transparent; text-align:center; font-weight:700; font-size:14px; font-family:inherit; padding:2px 4px; margin:0 3px; color:var(--primary-dark); }
+  .blank:focus{ outline:none; border-bottom-color:var(--primary-dark); background:#eef2ff; }
+  .blank.correct{ border-bottom-color:#3fbf91; background:#e9faf3; color:#1e7a53; }
+  .blank.wrong{ border-bottom-color:#e97a7a; background:#fdecec; color:#b3261e; }
+
+  .wordbank{ margin-top:10px; padding:10px 12px; background:#fff6e0; border:1px dashed #ffce6b; border-radius:10px; font-size:13px; display:none; }
+  .wordbank.show{ display:block; }
+  .wordbank .word{ display:inline-block; background:#fff; border:1px solid #ffce6b; border-radius:6px; padding:3px 9px; margin:3px 4px 0 0; font-weight:700; color:#9a6b00; }
+
+  .page-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:14px; border-top:1px solid var(--line); }
+  .restart-wrap{ text-align:center; margin-top:14px; }
+  .btn-check{ background:var(--primary); color:#fff; }
+  .btn-check:hover{ background:var(--primary-dark); }
+
+  /* ===== 관리자 접속 (화면을 가리는 로그인 폼 없이, 구석의 작은 버튼 + 브라우저 기본 prompt로 처리) ===== */
+  #adminTrigger{ position:fixed; right:14px; bottom:14px; z-index:50; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--muted); font-size:15px; line-height:1; cursor:pointer; opacity:.5; box-shadow:0 2px 8px rgba(43,47,66,.1); transition:.15s; }
+  #adminTrigger:hover{ opacity:1; color:var(--primary-dark); }
+  .session-bar{ background:#2b2f42; color:#fff; padding:8px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .session-bar b{ color:#c7d2fe; }
+  .session-bar button, .session-bar a{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; text-decoration:none; }
+
+  /* ===== 관리자 대시보드 ===== */
+  #adminScreen{ display:none; min-height:100vh; background:var(--bg); }
+  .admin-header{ background:#1e1b3a; color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .admin-header .title{ font-size:17px; font-weight:800; }
+  .admin-header .sub{ font-size:12px; color:#a5b4fc; margin-top:2px; }
+  .admin-logout{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:8px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .admin-body{ max-width:1000px; margin:24px auto; padding:0 20px 60px; }
+  .admin-filter-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; background:#fff; border-radius:14px; padding:12px 16px; box-shadow:0 4px 14px rgba(43,47,66,.05); }
+  .admin-filter-row label{ font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .admin-filter-row select{ border:1.5px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; font-family:inherit; color:var(--ink); background:#fff; }
+  .btn-admin-delete{ margin-left:auto; background:#fdeceb; border:1.5px solid #f6c6c2; color:#b3261e; border-radius:8px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn-admin-delete:hover{ background:#fbdcda; }
+  .btn-admin-delete:disabled{ opacity:.4; cursor:not-allowed; }
+  .admin-table-wrap{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  table.admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.admin-table th{ background:#f4f6fc; padding:10px 12px; text-align:left; color:var(--muted); font-size:11.5px; font-weight:700; }
+  table.admin-table td{ padding:10px 12px; border-top:1px solid var(--line); }
+  table.admin-table tr.away td{ background:#fdeceb; }
+
+  /* ===== 이탈 경고 오버레이 ===== */
+  #awayWarning{ position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(179,38,30,.94); text-align:center; padding:24px; }
+  #awayWarning.show{ display:flex; }
+  #awayWarning .box{ color:#fff; max-width:440px; }
+  #awayWarning .emoji{ font-size:52px; margin-bottom:14px; }
+  #awayWarning .msg{ font-size:20px; font-weight:800; line-height:1.5; margin-bottom:22px; }
+  #awayWarning button{ background:#fff; color:#b3261e; border:none; border-radius:10px; padding:12px 28px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+</style>
+</head>
+<body>
+
+<!-- ══ 게이트 없이 곧바로 관찰하기 활동으로 진입 — 학생 정보는 있으면 조용히 사용, 없어도 활동은 그대로 진행 ══ -->
+<button id="adminTrigger" title="교사용">⚙</button>
+
+<!-- ══ 관리자 대시보드 ══ -->
+<div id="adminScreen">
+  <div class="admin-header">
+    <div>
+      <div class="title">⚙ 관리자 모드 — 평행사변형이 되는 조건 (대변의 길이)</div>
+      <div class="sub" id="adminSummary">불러오는 중...</div>
+    </div>
+    <button class="admin-logout" onclick="adminLogout()">로그아웃</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-filter-row">
+      <label>학년
+        <select id="filterGrade">
+          <option value="">전체</option>
+          <option>1학년</option><option>2학년</option><option>3학년</option>
+        </select>
+      </label>
+      <label>반
+        <select id="filterCls">
+          <option value="">전체</option>
+          <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+        </select>
+      </label>
+      <button class="btn-admin-delete" id="btnAdminDelete" disabled>🗑 이 반 기록 삭제</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>학년/반/번호</th><th>이름</th><th>진행 단계</th><th>상태</th><th>이탈 횟수</th><th>마지막 활동</th></tr></thead>
+        <tbody id="adminTableBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 이탈 경고 오버레이 ══ -->
+<div id="awayWarning">
+  <div class="box">
+    <div class="emoji">🚨</div>
+    <div class="msg">경고입니다!<br>수업 외 행동을 하지 말고<br>지금 주어진 과제를 완료하세요.</div>
+    <button onclick="dismissWarning()">확인했습니다</button>
+  </div>
+</div>
+
+<div id="appRoot">
+<div class="session-bar" id="sessionBar" style="display:none">
+  <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
+  <span style="display:flex;gap:8px;"><a href="index.html" id="hubBackLink">← 학습 선택 목록으로 돌아가기</a><button onclick="location.reload()">로그아웃</button></span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<header>
+  <h1>📐 평행사변형이 되는 조건 — 대변의 길이</h1>
+  <p>두 쌍의 대변의 길이가 각각 같은 사각형은 항상 평행사변형일까요? 직접 모양을 바꿔가며 확인해봅시다.</p>
+</header>
+
+<div class="layout mobile-show-canvas" id="layoutRoot">
+  <div class="mobile-tabs">
+    <button class="mobile-tab-btn active" id="mtabCanvas" onclick="showMobileTab('canvas')">📐 그림</button>
+    <button class="mobile-tab-btn" id="mtabActivity" onclick="showMobileTab('activity')">📝 활동</button>
+  </div>
+
+  <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
+  <div class="card sticky">
+    <div class="toolbar">
+      <button class="btn btn-outline" id="btnCycleStraw">🔄 다른 길이의 막대로 다시 조립하기</button>
+    </div>
+
+    <div class="svg-wrap">
+      <svg id="canvas" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#dfe6f7" stroke-width="1"></path>
+          </pattern>
+        </defs>
+        <rect x="0" y="0" width="640" height="480" fill="url(#gridPattern)"></rect>
+
+        <polygon id="triABC" class="tri-half" points=""></polygon>
+        <polygon id="triCDA" class="tri-half" points=""></polygon>
+        <polygon id="quadABCD" class="quad" points="" style="display:none"></polygon>
+        <line id="diagAC" class="diag" x1="0" y1="0" x2="0" y2="0"></line>
+
+        <line id="extAB" class="ext-line pair1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="extDC" class="ext-line pair1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="extAD" class="ext-line pair2" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="extBC" class="ext-line pair2" x1="0" y1="0" x2="0" y2="0"></line>
+
+        <path id="tickAB" class="tick pair1" d=""></path>
+        <path id="tickCD" class="tick pair1" d=""></path>
+        <path id="tickBC" class="tick pair2" d=""></path>
+        <path id="tickDA" class="tick pair2" d=""></path>
+        <path id="chevAB" class="chev pair1" d=""></path>
+        <path id="chevCD" class="chev pair1" d=""></path>
+        <path id="chevBC1" class="chev pair2" d=""></path>
+        <path id="chevBC2" class="chev pair2" d=""></path>
+        <path id="chevDA1" class="chev pair2" d=""></path>
+        <path id="chevDA2" class="chev pair2" d=""></path>
+
+        <path id="arcBAC" class="angle-arc arc-p1" d=""></path>
+        <path id="arcDCA" class="angle-arc arc-p1" d=""></path>
+        <path id="arcBCA" class="angle-arc arc-p2" d=""></path>
+        <path id="arcDAC" class="angle-arc arc-p2" d=""></path>
+        <line id="leadBAC" class="angle-leader arc-p1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="leadDCA" class="angle-leader arc-p1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="leadBCA" class="angle-leader arc-p2" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="leadDAC" class="angle-leader arc-p2" x1="0" y1="0" x2="0" y2="0"></line>
+        <text id="numBAC" class="angle-num arc-p1"></text>
+        <text id="numDCA" class="angle-num arc-p1"></text>
+        <text id="numBCA" class="angle-num arc-p2"></text>
+        <text id="numDAC" class="angle-num arc-p2"></text>
+
+        <g id="rodsLayer"></g>
+
+        <circle id="dotA" r="4" class="vertex-dot" style="display:none"></circle>
+        <text id="nameA" class="vertex-name" style="display:none">A</text>
+        <circle id="dotC" r="4" class="vertex-dot" style="display:none"></circle>
+        <text id="nameC" class="vertex-name" style="display:none">C</text>
+        <text id="nameB" class="vertex-name" style="display:none">B</text>
+        <text id="nameD" class="vertex-name" style="display:none">D</text>
+      </svg>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#e0455a"></i> 긴 막대</span>
+      <span><i class="dot" style="background:#3b6fe0"></i> 짧은 막대</span>
+    </div>
+  </div>
+
+  <!-- ================= 영역 2: 단계별 탐구 활동지 ================= -->
+  <div class="activity">
+
+    <div class="stepper" id="stepper">
+      <button class="step-tab current" data-goto="1"><span class="n">1</span>관찰하기</button>
+      <button class="step-tab locked" data-goto="2"><span class="n">2</span>증명 설계</button>
+      <button class="step-tab locked" data-goto="3"><span class="n">3</span>결론 확인</button>
+      <button class="step-tab locked" data-goto="4"><span class="n">4</span>최종 증명</button>
+    </div>
+
+    <!-- ===== PAGE 1 : 관찰 ===== -->
+    <section class="step-card" data-step="1" id="page1">
+      <div class="step-head">
+        <div class="step-badge">1</div>
+        <h2>대변의 길이가 같은 사각형을 관찰해보자</h2>
+      </div>
+      <div class="step-body">
+        <p id="assemblyIntroText">길이가 같은 긴 막대 한 쌍(빨간색)과 짧은 막대 한 쌍(파란색)이 흩어져 있습니다. 막대의 <b>몸통을 드래그하면 이동</b>, <b>끝을 드래그하면 회전</b>해요. 끝끼리 가까워지면 자석처럼 달라붙어요 — <b>긴 막대는 짧은 막대와만</b> 연결할 수 있어요. 네 막대를 모두 연결해서 사각형을 만들어보세요!</p>
+        <div class="feedback" id="fbAssemble"></div>
+        <p class="hint" id="assemblyProgress">연결된 부분: 0 / 4</p>
+
+        <div class="reveal" id="assembledBlock">
+          <p>사각형 ABCD가 만들어졌어요! 이제 <b>꼭짓점을 드래그</b>해서 모양을 자유롭게 바꿀 수 있어요. (막대 길이는 항상 그대로예요!)</p>
+
+          <div class="fillsentence" style="text-align:center;">
+            <b>Q.</b> 두 쌍의 대변이 실제로 평행한지 확인하려면 어떻게 해야 할까요?<br>
+            <button class="btn btn-outline" id="btnMethodExt" style="margin-top:10px;">① 직선을 연장해서 만나는지 보기</button>
+            <button class="btn btn-outline" id="btnMethodAngle" style="margin-top:6px;">② 대각선을 그어 엇각의 크기 비교해보기</button>
+          </div>
+          <div class="feedback" id="fbMethod"></div>
+
+          <div class="fillsentence" style="text-align:center;">
+            <button class="btn btn-check" id="btnConfirmShape">✅ 이 모양에서 평행 확인 완료</button>
+          </div>
+          <div class="feedback" id="fbConfirmShape"></div>
+
+          <div class="reveal" id="observeMoreBlock2">
+            <p style="text-align:center;">🔄 <b>'다른 길이의 막대로 다시 조립하기'</b>를 눌러 다른 사각형에서도 평행사변형이 되는지 확인해봅시다!</p>
+          </div>
+
+          <div class="reveal" id="block4">
+            <p><b>탐구.</b> 지금까지 관찰한 것을 정리해봅시다.</p>
+            <div class="fillsentence">
+              두 쌍의 대변의 길이가 각각 같은 사각형은 평행사변형
+              <select id="concl1">
+                <option value="?">〔 선택 〕</option>
+                <option value="no">이 아니다</option>
+                <option value="yes">이다</option>
+              </select>
+              .
+            </div>
+            <button class="btn btn-check" id="checkConclude1">결론 확인</button>
+            <div class="feedback" id="feedbackConclude1"></div>
+          </div>
+        </div>
+
+        <div class="page-nav">
+          <span></span>
+          <button class="btn btn-primary" id="next1" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 2 : 증명 설계 ===== -->
+    <section class="step-card" data-step="2" id="page2" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">2</div>
+        <h2>증명을 설계해보자</h2>
+      </div>
+      <div class="step-body">
+        <div class="goal-banner">
+          <span class="tag">🎯 증명 목표</span>
+          <b><span class="seg">AB</span>=<span class="seg">CD</span>, <span class="seg">BC</span>=<span class="seg">DA</span>인 □ABCD는 평행사변형이다.</b>
+        </div>
+
+        <div class="recall-box">
+          <b>중1 배웠어요!</b> 서로 다른 두 직선이 한 직선과 만날 때 생기는 엇각의 크기가 같으면 두 직선은 평행하다.
+        </div>
+
+        <div class="fillsentence" style="text-align:center;">
+          <b>대각선 AC 긋기</b><br>
+          <button class="btn btn-check" id="btnDiagAC" style="margin-top:8px;">📐 AC 긋기</button>
+        </div>
+        <div class="feedback" id="fbDiagAC"></div>
+
+        <div class="reveal" id="sssBlock">
+          <p><b>Q1.</b> △ABC와 △CDA에서, 서로 같은 부분을 모두 골라보세요.</p>
+          <div class="choice-list">
+            <label><input type="checkbox" name="sssPart" value="ab-cd"> <span class="seg">AB</span>=<span class="seg">CD</span></label>
+            <label><input type="checkbox" name="sssPart" value="bc-da"> <span class="seg">BC</span>=<span class="seg">DA</span></label>
+            <label><input type="checkbox" name="sssPart" value="ac-common"> <span class="seg">AC</span>는 공통</label>
+            <label><input type="checkbox" name="sssPart" value="angle-b-d"> ∠B=∠D</label>
+          </div>
+          <button class="btn btn-check" id="checkSssParts">확인</button>
+          <div class="feedback" id="fbSssParts"></div>
+        </div>
+
+        <div class="reveal" id="congBlock">
+          <p><b>Q2.</b> 위 세 조건으로 합동을 보이려면 어떤 조건이 필요할까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="congType" value="SSS"> SSS 합동</label>
+            <label><input type="radio" name="congType" value="SAS"> SAS 합동</label>
+            <label><input type="radio" name="congType" value="ASA"> ASA 합동</label>
+          </div>
+          <button class="btn btn-check" id="checkCongType">확인</button>
+          <div class="feedback" id="fbCongType"></div>
+        </div>
+
+        <div class="reveal" id="angleBlock">
+          <p>✅ △ABC≡△CDA (SSS 합동)이므로, 대응각의 크기가 각각 같습니다.</p>
+          <div class="fillsentence" style="text-align:center;">
+            <button class="btn btn-check" id="btnShowAngles">대응각 표시하기</button>
+          </div>
+          <div class="fillsentence" id="angleText" style="display:none; text-align:center;">
+            ∠BAC = ∠DCA , ∠BCA = ∠DAC
+          </div>
+          <div class="feedback" id="fbAngles"></div>
+        </div>
+
+        <div class="reveal" id="altBlock">
+          <p><b>Q3.</b> ∠BAC와 ∠DCA는 대각선 AC를 가로지르는 엇각입니다. 이 두 각이 같으면 어떤 두 직선이 평행할까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="altAB" value="AB-DC"> <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span></label>
+            <label><input type="radio" name="altAB" value="BC-DA"> <span class="seg">BC</span><span class="parallel-sym"></span><span class="seg">DA</span></label>
+            <label><input type="radio" name="altAB" value="AC-BD"> <span class="seg">AC</span><span class="parallel-sym"></span><span class="seg">BD</span></label>
+          </div>
+          <p><b>Q4.</b> 마찬가지로 ∠BCA와 ∠DAC가 같으면 어떤 두 직선이 평행할까요?</p>
+          <div class="choice-list">
+            <label><input type="radio" name="altAD" value="AB-DC"> <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span></label>
+            <label><input type="radio" name="altAD" value="BC-DA"> <span class="seg">BC</span><span class="parallel-sym"></span><span class="seg">DA</span></label>
+            <label><input type="radio" name="altAD" value="AC-BD"> <span class="seg">AC</span><span class="parallel-sym"></span><span class="seg">BD</span></label>
+          </div>
+          <button class="btn btn-check" id="checkAlt">확인</button>
+          <div class="feedback" id="fbAlt"></div>
+        </div>
+
+        <div class="reveal" id="concludeBlock2">
+          <div class="fillsentence">
+            <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>, <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>이므로 □ABCD는
+            <input type="text" class="blank" id="concShape" maxlength="6" autocomplete="off">
+            이다.
+          </div>
+          <button class="btn btn-check" id="checkStep2Final">최종 확인</button>
+          <div class="feedback" id="feedbackStep2Final"></div>
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev2">← 이전 활동</button>
+          <button class="btn btn-primary" id="next2" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 3 : 결론 확인 ===== -->
+    <section class="step-card" data-step="3" id="page3" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">3</div>
+        <h2>결론을 정리하자</h2>
+      </div>
+      <div class="step-body">
+        <p>2단계에서 확인한 대로, △ABC ≡ △CDA (SSS 합동) 입니다. 빈칸을 채워 결론을 완성해보세요.</p>
+
+        <div class="fillsentence">
+          두 쌍의 대변의 길이가 각각 같은 사각형은 평행사변형
+          <select id="c_shape"><option value="?">〔 선택 〕</option><option value="no">이 아니다</option><option value="yes">이다</option></select>
+          .
+        </div>
+
+        <button class="btn btn-check" id="checkStep3">결론 확인</button>
+        <div class="feedback" id="feedback3"></div>
+
+        <div class="summary-box" id="summaryBox">
+          🎉 <b>정리</b><br>
+          두 쌍의 대변의 길이가 각각 같은 사각형은 평행사변형이다.<br>
+          👉 대각선 AC를 그어 만든 △ABC와 △CDA가 SSS 합동임을 이용해서 증명했어요.
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev3">← 이전 활동</button>
+          <button class="btn btn-primary" id="next3" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 4 : 도움 없이 다시 증명하기 ===== -->
+    <section class="step-card" data-step="4" id="page4" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">4</div>
+        <h2>이번엔 도움 없이 스스로 증명해보자</h2>
+      </div>
+      <div class="step-body">
+        <p>지금까지의 활동을 바탕으로, 이번엔 선택지 없이 <b>빈칸을 직접 채워서</b> 증명을 완성해보세요. 힌트가 필요하면 아래 단어 은행을 참고할 수 있어요.</p>
+
+        <div class="proof-block">
+          <p class="given"><b>[가정]</b> <span class="seg">AB</span>=<span class="seg">CD</span>, <span class="seg">BC</span>=<span class="seg">DA</span>인 □ABCD에서 대각선 AC를 긋는다.</p>
+          <p class="given"><b>[증명할 것]</b> □ABCD는 평행사변형이다.</p>
+          <hr>
+          <p><b>[증명]</b> △ABC와 △CDA에서</p>
+          <p>① <span class="seg">AB</span>=<span class="seg">CD</span>, <span class="seg">BC</span>=<span class="seg">DA</span>, <span class="seg">AC</span>는 <input type="text" class="blank" data-id="b1" maxlength="6" autocomplete="off"> 이다.</p>
+          <p>② 따라서 △ABC≡△CDA( <input type="text" class="blank" data-id="b2" maxlength="6" autocomplete="off"> 합동)이다.</p>
+          <p>③ 합동인 두 삼각형의 대응각은 크기가 같으므로 ∠BAC=∠<input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"> , ∠BCA=∠<input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 이다.</p>
+          <p>④ 엇각의 크기가 각각 같으므로 <span class="seg">AB</span><span class="parallel-sym"></span><input type="text" class="blank" data-id="b5" maxlength="6" autocomplete="off"> , <span class="seg">AD</span><span class="parallel-sym"></span><input type="text" class="blank" data-id="b6" maxlength="6" autocomplete="off"> 이다.</p>
+          <p>⑤ 그러므로 □ABCD는 <input type="text" class="blank" data-id="b7" maxlength="8" autocomplete="off" style="width:90px"> 이다. ∎</p>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn btn-outline btn-sm" id="toggleWordbank">🗂 단어 은행 보기</button>
+          <button class="btn btn-check" id="checkProof">채점하기</button>
+          <button class="btn btn-outline btn-sm" id="resetProof">↺ 다시 쓰기</button>
+        </div>
+        <div class="wordbank" id="wordbank">
+          <span class="word">공통</span><span class="word">SSS</span><span class="word">DCA</span><span class="word">DAC</span><span class="word">DC</span><span class="word">BC</span><span class="word">평행사변형</span>
+        </div>
+        <div class="feedback" id="feedbackProof"></div>
+
+        <div class="summary-box" id="proofDone">
+          🎉 <b>증명 완성!</b><br>
+          "두 쌍의 대변의 길이가 각각 같은 사각형은 평행사변형이다"를 이제 도움 없이 스스로 증명할 수 있습니다. 훌륭해요!
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev4">← 이전 활동</button>
+          <span></span>
+        </div>
+      </div>
+    </section>
+
+    <div class="restart-wrap">
+      <button class="btn btn-outline" id="restartAll">🔄 다른 빨대 길이에서도 관찰하기</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /#appRoot -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- 막대 길이 쌍 프리셋 (u=긴 막대, v=짧은 막대, px) ----------
+  const STRAW_PRESETS = [
+    { u:170, v:110 },
+    { u:150, v:95 },
+    { u:190, v:100 },
+    { u:160, v:120 }
+  ];
+  const SNAP_RADIUS = 45;
+  const MIN_OBSERVE = 2;
+
+  // 연결될 두 끝이 처음부터 회전만으로 닿을 수 있도록, 느슨한 사각형에서 각 변(막대)을
+  // 자기 중점 기준으로 살짝 돌리고 밀어서 "아직 안 붙었지만 손이 닿는" 시작 배치를 만든다.
+  function perturbEdge(P,Q, rotDeg, shift){
+    const mx=(P.x+Q.x)/2, my=(P.y+Q.y)/2;
+    const dx=Q.x-P.x, dy=Q.y-P.y, len=Math.hypot(dx,dy);
+    const baseAng = Math.atan2(dy,dx);
+    const ang = baseAng + rotDeg*Math.PI/180;
+    const px=-Math.sin(baseAng), py=Math.cos(baseAng);
+    const ncx = mx+px*shift, ncy = my+py*shift;
+    return [
+      { x: ncx - (len/2)*Math.cos(ang), y: ncy - (len/2)*Math.sin(ang) },
+      { x: ncx + (len/2)*Math.cos(ang), y: ncy + (len/2)*Math.sin(ang) }
+    ];
+  }
+  function makeScatteredRods(u,v){
+    const A = {x:260,y:160};
+    const B = {x:A.x+u*Math.cos(15*Math.PI/180), y:A.y+u*Math.sin(15*Math.PI/180)};
+    const D = {x:A.x+v*Math.cos(100*Math.PI/180), y:A.y+v*Math.sin(100*Math.PI/180)};
+    const C = {x:B.x+D.x-A.x, y:B.y+D.y-A.y};
+    const [p0,p1] = perturbEdge(A,B, 24, 30);
+    const [p4,p5] = perturbEdge(B,C, -20, -26);
+    const [p2,p3] = perturbEdge(C,D, 22, 28);
+    const [p6,p7] = perturbEdge(D,A, -18, -24);
+    return {
+      points: {p0,p1,p2,p3,p4,p5,p6,p7},
+      rods: [
+        { id:'r0', type:'long',  len:u, pt1:'p0', pt2:'p1' },
+        { id:'r1', type:'long',  len:u, pt1:'p2', pt2:'p3' },
+        { id:'r2', type:'short', len:v, pt1:'p4', pt2:'p5' },
+        { id:'r3', type:'short', len:v, pt1:'p6', pt2:'p7' }
+      ]
+    };
+  }
+
+  const state = Object.assign({
+    presetIdx: 0,
+    assembled: false,
+    vertexOf: null,
+    snapTargetId: null,
+    extShown: false,
+    angleCompareShown: false,
+    confirmedPresets: new Set(),
+    doneDiag:false, doneAngles:false
+  }, makeScatteredRods(STRAW_PRESETS[0].u, STRAW_PRESETS[0].v));
+
+  // ---------- DOM refs ----------
+  const svg = document.getElementById('canvas');
+  const rodsLayer = document.getElementById('rodsLayer');
+  const quadABCD = document.getElementById('quadABCD');
+  const diagAC = document.getElementById('diagAC');
+  const triABC = document.getElementById('triABC'), triCDA = document.getElementById('triCDA');
+  const extAB=document.getElementById('extAB'), extDC=document.getElementById('extDC');
+  const extAD=document.getElementById('extAD'), extBC=document.getElementById('extBC');
+  const tickAB=document.getElementById('tickAB'), tickCD=document.getElementById('tickCD');
+  const tickBC=document.getElementById('tickBC'), tickDA=document.getElementById('tickDA');
+  const chevAB=document.getElementById('chevAB'), chevCD=document.getElementById('chevCD');
+  const chevBC1=document.getElementById('chevBC1'), chevBC2=document.getElementById('chevBC2');
+  const chevDA1=document.getElementById('chevDA1'), chevDA2=document.getElementById('chevDA2');
+  const arcBAC=document.getElementById('arcBAC'), arcDCA=document.getElementById('arcDCA');
+  const arcBCA=document.getElementById('arcBCA'), arcDAC=document.getElementById('arcDAC');
+  const numBAC=document.getElementById('numBAC'), numDCA=document.getElementById('numDCA');
+  const numBCA=document.getElementById('numBCA'), numDAC=document.getElementById('numDAC');
+  const leadBAC=document.getElementById('leadBAC'), leadDCA=document.getElementById('leadDCA');
+  const leadBCA=document.getElementById('leadBCA'), leadDAC=document.getElementById('leadDAC');
+  const dotA=document.getElementById('dotA'), nameA=document.getElementById('nameA');
+  const nameB=document.getElementById('nameB');
+  const dotC=document.getElementById('dotC'), nameC=document.getElementById('nameC');
+  const nameD=document.getElementById('nameD');
+
+  // ---------- 기하 헬퍼 ----------
+  function tickPath(p1, p2, count){
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const len = Math.hypot(dx,dy) || 1;
+    const ux = dx/len, uy = dy/len;
+    const px = -uy, py = ux;
+    const mx = (p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const half = 5, gap = 5;
+    let d = '';
+    for(let i=0;i<count;i++){
+      const off = (i-(count-1)/2)*gap;
+      const cx = mx+ux*off, cy = my+uy*off;
+      d += `M ${cx-px*half} ${cy-py*half} L ${cx+px*half} ${cy+py*half} `;
+    }
+    return d.trim();
+  }
+  function chevronPath(P,Q,cx,cy,size){
+    const dx=Q.x-P.x, dy=Q.y-P.y, len=Math.hypot(dx,dy)||1;
+    const ux=dx/len, uy=dy/len, px=-uy, py=ux;
+    const back=size*0.9, wing=size*0.55;
+    const tipX=cx+ux*back*0.5, tipY=cy+uy*back*0.5;
+    const b1x=cx-ux*back*0.5+px*wing, b1y=cy-uy*back*0.5+py*wing;
+    const b2x=cx-ux*back*0.5-px*wing, b2y=cy-uy*back*0.5-py*wing;
+    return `M ${b1x} ${b1y} L ${tipX} ${tipY} L ${b2x} ${b2y}`;
+  }
+  function describeArc(cx, cy, r, a1, a2){
+    let diff = a2-a1;
+    while(diff > Math.PI) diff -= 2*Math.PI;
+    while(diff < -Math.PI) diff += 2*Math.PI;
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const x2 = cx + r*Math.cos(a1+diff), y2 = cy + r*Math.sin(a1+diff);
+    const largeArc = Math.abs(diff) > Math.PI ? 1 : 0;
+    const sweep = diff > 0 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} ${sweep} ${x2} ${y2}`;
+  }
+  function vertexArc(V, P, Q, r){
+    const a1 = Math.atan2(P.y-V.y, P.x-V.x);
+    const a2 = Math.atan2(Q.y-V.y, Q.x-V.x);
+    return describeArc(V.x, V.y, r, a1, a2);
+  }
+
+  function circleIntersect(c1, r1, c2, r2, preferPoint){
+    const dx=c2.x-c1.x, dy=c2.y-c1.y;
+    let d = Math.hypot(dx,dy);
+    if(d < 1e-6) return null;
+    d = Math.min(Math.max(d, Math.abs(r1-r2)), r1+r2);
+    const a = (r1*r1 - r2*r2 + d*d) / (2*d);
+    const h = Math.sqrt(Math.max(0, r1*r1 - a*a));
+    const xm = c1.x + a*dx/d, ym = c1.y + a*dy/d;
+    const p1 = { x: xm + h*dy/d, y: ym - h*dx/d };
+    const p2 = { x: xm - h*dy/d, y: ym + h*dx/d };
+    if(!preferPoint) return p1;
+    const d1 = Math.hypot(p1.x-preferPoint.x, p1.y-preferPoint.y);
+    const d2 = Math.hypot(p2.x-preferPoint.x, p2.y-preferPoint.y);
+    return d1<=d2 ? p1 : p2;
+  }
+
+  // ---------- 막대 그래프(점/막대) 헬퍼 ----------
+  function pointUsers(pid){
+    const users = [];
+    state.rods.forEach(r=>{
+      if(r.pt1===pid) users.push({rod:r, end:'pt1'});
+      if(r.pt2===pid) users.push({rod:r, end:'pt2'});
+    });
+    return users;
+  }
+  function otherEnd(rod, pid){ return rod.pt1===pid ? rod.pt2 : rod.pt1; }
+  function mergePoints(fromId, toId){
+    if(fromId===toId) return;
+    state.rods.forEach(r=>{
+      if(r.pt1===fromId) r.pt1=toId;
+      if(r.pt2===fromId) r.pt2=toId;
+    });
+    delete state.points[fromId];
+  }
+  function checkAssembled(){
+    const ids = Object.keys(state.points);
+    return ids.length===4 && ids.every(pid=>pointUsers(pid).length===2);
+  }
+  function deriveVertexOrder(){
+    const startId = Object.keys(state.points)[0];
+    let curPoint = startId, prevRod = null;
+    const order = [curPoint];
+    const rodsInOrder = [];
+    for(let i=0;i<4;i++){
+      const users = pointUsers(curPoint);
+      const next = users.find(u=>u.rod!==prevRod);
+      rodsInOrder.push(next.rod);
+      const nxt = otherEnd(next.rod, curPoint);
+      if(i<3) order.push(nxt);
+      curPoint = nxt; prevRod = next.rod;
+    }
+    const rotated = rodsInOrder[0].type==='long' ? 0 : 1;
+    const finalOrder = [0,1,2,3].map(i=>order[(i+rotated)%4]);
+    const labels = ['A','B','C','D'];
+    const map = {};
+    labels.forEach((L,i)=>map[L]=finalOrder[i]);
+    return map;
+  }
+  function findSnapCandidate(pos, rod, excludePid){
+    let best=null, bestD=SNAP_RADIUS;
+    Object.keys(state.points).forEach(otherId=>{
+      if(otherId===excludePid) return;
+      const users = pointUsers(otherId);
+      if(users.length!==1) return;
+      if(users[0].rod.type===rod.type) return;
+      if(users[0].rod.id===rod.id) return;
+      const q = state.points[otherId];
+      const d = Math.hypot(pos.x-q.x, pos.y-q.y);
+      if(d<bestD){ bestD=d; best=otherId; }
+    });
+    return best;
+  }
+
+  function curPoints(){
+    if(!state.assembled) return null;
+    const v = state.vertexOf;
+    return { A:state.points[v.A], B:state.points[v.B], C:state.points[v.C], D:state.points[v.D] };
+  }
+  function showDiagLineNow(){
+    if(currentPage === 1) return state.angleCompareShown;
+    if(currentPage < 2) return false;
+    if(currentPage === 2) return state.doneDiag;
+    return true;
+  }
+  function showTriShadeNow(){
+    if(currentPage < 2) return false;
+    if(currentPage === 2) return state.doneDiag;
+    return true;
+  }
+  function showAnglesNow(){
+    if(currentPage === 1) return state.angleCompareShown;
+    if(currentPage < 2) return false;
+    if(currentPage === 2) return state.doneAngles;
+    return true;
+  }
+  function angleAt(V,P,Q){
+    const v1={x:P.x-V.x,y:P.y-V.y}, v2={x:Q.x-V.x,y:Q.y-V.y};
+    const dot=v1.x*v2.x+v1.y*v2.y, cross=v1.x*v2.y-v1.y*v2.x;
+    return Math.atan2(Math.abs(cross),dot)*180/Math.PI;
+  }
+  function arcLabelPos(V,P,Q,dist){
+    const a1=Math.atan2(P.y-V.y,P.x-V.x), a2=Math.atan2(Q.y-V.y,Q.x-V.x);
+    let diff=a2-a1; while(diff>Math.PI)diff-=2*Math.PI; while(diff<-Math.PI)diff+=2*Math.PI;
+    const mid=a1+diff/2;
+    return { x:V.x+dist*Math.cos(mid), y:V.y+dist*Math.sin(mid) };
+  }
+
+  // ---------- 막대 레이어 렌더 ----------
+  const NS = 'http://www.w3.org/2000/svg';
+  function renderRods(){
+    while(rodsLayer.firstChild) rodsLayer.removeChild(rodsLayer.firstChild);
+    if(state.assembled || currentPage!==1){
+      rodsLayer.style.display = 'none';
+      return;
+    }
+    rodsLayer.style.display = 'block';
+    state.rods.forEach(rod=>{
+      const P=state.points[rod.pt1], Q=state.points[rod.pt2];
+      const deg1=pointUsers(rod.pt1).length, deg2=pointUsers(rod.pt2).length;
+      const hit=document.createElementNS(NS,'line');
+      hit.setAttribute('x1',P.x); hit.setAttribute('y1',P.y); hit.setAttribute('x2',Q.x); hit.setAttribute('y2',Q.y);
+      hit.setAttribute('class','rod-hit');
+      if(deg1===1 && deg2===1) hit.addEventListener('pointerdown', startRodBodyDrag(rod.id));
+      rodsLayer.appendChild(hit);
+      const line=document.createElementNS(NS,'line');
+      line.setAttribute('x1',P.x); line.setAttribute('y1',P.y); line.setAttribute('x2',Q.x); line.setAttribute('y2',Q.y);
+      line.setAttribute('class','rod type-'+rod.type);
+      rodsLayer.appendChild(line);
+    });
+    Object.keys(state.points).forEach(pid=>{
+      const users = pointUsers(pid);
+      const p = state.points[pid];
+      const isJoint = users.length===2;
+      const hit=document.createElementNS(NS,'circle');
+      hit.setAttribute('cx',p.x); hit.setAttribute('cy',p.y); hit.setAttribute('r',20);
+      hit.setAttribute('class','endpoint-hit');
+      hit.addEventListener('pointerdown', startEndpointDrag(pid));
+      rodsLayer.appendChild(hit);
+      const dot=document.createElementNS(NS,'circle');
+      dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r', isJoint?7:8);
+      let cls = 'endpoint-dot ' + (isJoint ? 'joint' : 'type-'+users[0].rod.type);
+      if(pid===state.snapTargetId) cls += ' snap-target';
+      dot.setAttribute('class', cls);
+      rodsLayer.appendChild(dot);
+    });
+  }
+
+  // ---------- 메인 렌더 ----------
+  function render(){
+    renderRods();
+    const pts = curPoints();
+    const showQuad = !!pts;
+    document.getElementById('assemblyIntroText').style.display = state.assembled ? 'none' : 'block';
+    document.getElementById('assemblyProgress').style.display = state.assembled ? 'none' : 'block';
+    if(!state.assembled){
+      const n = 4 - Object.keys(state.points).length;
+      document.getElementById('assemblyProgress').textContent = `연결된 부분: ${n} / 4`;
+    }
+    [quadABCD,dotA,dotC].forEach(el=>el.style.display = showQuad?'block':'none');
+    [nameA,nameB,nameC,nameD].forEach(el=>el.style.display = showQuad?'block':'none');
+    if(!showQuad){
+      [diagAC,triABC,triCDA,tickAB,tickCD,tickBC,tickDA,chevAB,chevCD,chevBC1,chevBC2,chevDA1,chevDA2,
+       arcBAC,arcDCA,arcBCA,arcDAC,numBAC,numDCA,numBCA,numDAC,leadBAC,leadDCA,leadBCA,leadDAC,extAB,extDC,extAD,extBC]
+        .forEach(el=>el.style.display='none');
+      return;
+    }
+    const {A:pA,B,C,D} = pts;
+    quadABCD.setAttribute('points', `${pA.x},${pA.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}`);
+    dotA.setAttribute('cx',pA.x); dotA.setAttribute('cy',pA.y);
+    dotC.setAttribute('cx',C.x); dotC.setAttribute('cy',C.y);
+    const centroid = { x:(pA.x+B.x+C.x+D.x)/4, y:(pA.y+B.y+C.y+D.y)/4 };
+    function outwardLabelPos(V, dist){
+      const dx=V.x-centroid.x, dy=V.y-centroid.y, len=Math.hypot(dx,dy)||1;
+      return { x:V.x+dx/len*dist, y:V.y+dy/len*dist };
+    }
+    [[nameA,pA],[nameB,B],[nameC,C],[nameD,D]].forEach(([el,V])=>{
+      const pos = outwardLabelPos(V, 20);
+      el.setAttribute('x',pos.x); el.setAttribute('y',pos.y);
+    });
+
+    diagAC.setAttribute('x1',pA.x); diagAC.setAttribute('y1',pA.y); diagAC.setAttribute('x2',C.x); diagAC.setAttribute('y2',C.y);
+    diagAC.style.display = showDiagLineNow() ? 'block' : 'none';
+    triABC.setAttribute('points', `${pA.x},${pA.y} ${B.x},${B.y} ${C.x},${C.y}`);
+    triCDA.setAttribute('points', `${C.x},${C.y} ${D.x},${D.y} ${pA.x},${pA.y}`);
+    triABC.style.display = showTriShadeNow() ? 'block' : 'none';
+    triCDA.style.display = showTriShadeNow() ? 'block' : 'none';
+
+    tickAB.setAttribute('d', tickPath(pA,B,1)); tickAB.style.display='block';
+    tickCD.setAttribute('d', tickPath(C,D,1)); tickCD.style.display='block';
+    tickBC.setAttribute('d', tickPath(B,C,2)); tickBC.style.display='block';
+    tickDA.setAttribute('d', tickPath(D,pA,2)); tickDA.style.display='block';
+
+    const showChev = (currentPage===1) ? (state.extShown || state.angleCompareShown) : true;
+    const mAB={x:(pA.x+B.x)/2,y:(pA.y+B.y)/2}, mCD={x:(C.x+D.x)/2,y:(C.y+D.y)/2};
+    chevAB.setAttribute('d', chevronPath(pA,B, mAB.x,mAB.y, 14)); chevAB.style.display = showChev?'block':'none';
+    chevCD.setAttribute('d', chevronPath(D,C, mCD.x,mCD.y, 14)); chevCD.style.display = showChev?'block':'none';
+    const dxBC=C.x-B.x, dyBC=C.y-B.y, lenBC=Math.hypot(dxBC,dyBC)||1, uxBC=dxBC/lenBC, uyBC=dyBC/lenBC;
+    const mBC={x:(B.x+C.x)/2,y:(B.y+C.y)/2};
+    chevBC1.setAttribute('d', chevronPath(B,C, mBC.x-uxBC*7,mBC.y-uyBC*7, 12)); chevBC1.style.display = showChev?'block':'none';
+    chevBC2.setAttribute('d', chevronPath(B,C, mBC.x+uxBC*7,mBC.y+uyBC*7, 12)); chevBC2.style.display = showChev?'block':'none';
+    const dxDA=pA.x-D.x, dyDA=pA.y-D.y, lenDA=Math.hypot(dxDA,dyDA)||1, uxDA=dxDA/lenDA, uyDA=dyDA/lenDA;
+    const mDA={x:(D.x+pA.x)/2,y:(D.y+pA.y)/2};
+    chevDA1.setAttribute('d', chevronPath(D,pA, mDA.x-uxDA*7,mDA.y-uyDA*7, 12)); chevDA1.style.display = showChev?'block':'none';
+    chevDA2.setAttribute('d', chevronPath(D,pA, mDA.x+uxDA*7,mDA.y+uyDA*7, 12)); chevDA2.style.display = showChev?'block':'none';
+
+    const showAng = showAnglesNow();
+    arcBAC.setAttribute('d', vertexArc(pA, B, C, 22)); arcBAC.style.display = showAng?'block':'none';
+    arcDCA.setAttribute('d', vertexArc(C, D, pA, 22)); arcDCA.style.display = showAng?'block':'none';
+    arcBCA.setAttribute('d', vertexArc(C, B, pA, 30)); arcBCA.style.display = showAng?'block':'none';
+    arcDAC.setAttribute('d', vertexArc(pA, D, C, 30)); arcDAC.style.display = showAng?'block':'none';
+
+    // 각도 숫자는 사각형 안쪽(대각선 근처)이 아니라 꼭짓점 바깥쪽에 좌우로 벌려서 배치하고,
+    // 어느 각을 가리키는지 알 수 있도록 호(arc) 근처에서 숫자까지 점선 리더선을 그어준다.
+    const showNum = (currentPage===1) && state.angleCompareShown;
+    [[numBAC,leadBAC,pA,B,C,22],[numDCA,leadDCA,C,D,pA,22],[numBCA,leadBCA,C,B,pA,30],[numDAC,leadDAC,pA,D,C,30]].forEach(([el,lead,V,P,Q,arcR])=>{
+      const ox=V.x-centroid.x, oy=V.y-centroid.y, olen=Math.hypot(ox,oy)||1;
+      const oux=ox/olen, ouy=oy/olen, px=-ouy, py=oux;
+      const tx=P.x-V.x, ty=P.y-V.y;
+      const sign = (oux*ty-ouy*tx) >= 0 ? 1 : -1;
+      const dist=40, lateral=15;
+      const pos = { x:V.x+oux*dist+px*sign*lateral, y:V.y+ouy*dist+py*sign*lateral };
+      el.setAttribute('x',pos.x); el.setAttribute('y',pos.y);
+      el.textContent = Math.round(angleAt(V,P,Q)) + '°';
+      el.style.display = showNum ? 'block' : 'none';
+      const nearArc = arcLabelPos(V,P,Q,arcR+7);
+      lead.setAttribute('x1',nearArc.x); lead.setAttribute('y1',nearArc.y);
+      lead.setAttribute('x2',pos.x); lead.setAttribute('y2',pos.y);
+      lead.style.display = showNum ? 'block' : 'none';
+    });
+
+    const showExt = (currentPage===1) && state.extShown;
+    const EXT = 90;
+    function extendLine(P,Q){
+      const dx=Q.x-P.x, dy=Q.y-P.y, len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+      return { x1:P.x-ux*EXT, y1:P.y-uy*EXT, x2:Q.x+ux*EXT, y2:Q.y+uy*EXT };
+    }
+    [[extAB,pA,B],[extDC,D,C],[extAD,pA,D],[extBC,B,C]].forEach(([el,P,Q])=>{
+      const e = extendLine(P,Q);
+      el.setAttribute('x1',e.x1); el.setAttribute('y1',e.y1); el.setAttribute('x2',e.x2); el.setAttribute('y2',e.y2);
+      el.style.display = showExt ? 'block' : 'none';
+    });
+  }
+
+  // ---------- 드래그 ----------
+  function toSvgPoint(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    return pt.matrixTransform(ctm);
+  }
+  let drag = null;
+  function startEndpointDrag(pid){
+    return function(evt){
+      if(currentPage !== 1) return;
+      evt.preventDefault();
+      if(!state.assembled){
+        const users = pointUsers(pid);
+        if(users.length!==1) return;
+        const {rod} = users[0];
+        drag = { mode:'rotate', pointId:pid, pivotId: otherEnd(rod,pid), rod };
+      }else{
+        const users = pointUsers(pid);
+        if(users.length!==2) return;
+        const [u1,u2] = users;
+        drag = { mode:'joint', pointId:pid,
+          pivotA: otherEnd(u1.rod,pid), lenA:u1.rod.len,
+          pivotB: otherEnd(u2.rod,pid), lenB:u2.rod.len };
+      }
+      svg.setPointerCapture && svg.setPointerCapture(evt.pointerId);
+    };
+  }
+  function startRodBodyDrag(rodId){
+    return function(evt){
+      if(currentPage !== 1 || state.assembled) return;
+      evt.preventDefault();
+      const p = toSvgPoint(evt);
+      drag = { mode:'translate', rodId, lastX:p.x, lastY:p.y };
+      svg.setPointerCapture && svg.setPointerCapture(evt.pointerId);
+    };
+  }
+  function onMove(evt){
+    if(!drag) return;
+    const p = toSvgPoint(evt);
+    if(drag.mode==='rotate'){
+      const pivot = state.points[drag.pivotId];
+      const ang = Math.atan2(p.y-pivot.y, p.x-pivot.x);
+      const rawPos = { x:pivot.x+drag.rod.len*Math.cos(ang), y:pivot.y+drag.rod.len*Math.sin(ang) };
+      const targetId = findSnapCandidate(rawPos, drag.rod, drag.pointId);
+      if(targetId){
+        const rodB = pointUsers(targetId)[0].rod;
+        const pivotB = state.points[otherEnd(rodB, targetId)];
+        const exact = circleIntersect(pivot, drag.rod.len, pivotB, rodB.len, rawPos) || rawPos;
+        state.points[drag.pointId] = exact;
+        state.points[targetId] = exact;
+      }else{
+        state.points[drag.pointId] = rawPos;
+      }
+      state.snapTargetId = targetId;
+    }else if(drag.mode==='translate'){
+      const dx=p.x-drag.lastX, dy=p.y-drag.lastY;
+      const rod = state.rods.find(r=>r.id===drag.rodId);
+      drag.lastX=p.x; drag.lastY=p.y;
+      let newP1 = { x: state.points[rod.pt1].x+dx, y: state.points[rod.pt1].y+dy };
+      let newP2 = { x: state.points[rod.pt2].x+dx, y: state.points[rod.pt2].y+dy };
+      const cand1 = findSnapCandidate(newP1, rod, rod.pt1);
+      const cand2 = !cand1 ? findSnapCandidate(newP2, rod, rod.pt2) : null;
+      state.snapTargetId = null;
+      drag.snapPointId = null;
+      if(cand1){
+        const tPos = state.points[cand1];
+        const adjDx = tPos.x-newP1.x, adjDy = tPos.y-newP1.y;
+        newP1 = tPos;
+        newP2 = { x:newP2.x+adjDx, y:newP2.y+adjDy };
+        state.snapTargetId = cand1; drag.snapPointId = rod.pt1;
+      }else if(cand2){
+        const tPos = state.points[cand2];
+        const adjDx = tPos.x-newP2.x, adjDy = tPos.y-newP2.y;
+        newP2 = tPos;
+        newP1 = { x:newP1.x+adjDx, y:newP1.y+adjDy };
+        state.snapTargetId = cand2; drag.snapPointId = rod.pt2;
+      }
+      state.points[rod.pt1] = newP1;
+      state.points[rod.pt2] = newP2;
+    }else if(drag.mode==='joint'){
+      const cA = state.points[drag.pivotA], cB = state.points[drag.pivotB];
+      const sol = circleIntersect(cA, drag.lenA, cB, drag.lenB, p);
+      if(sol) state.points[drag.pointId] = sol;
+    }
+    render();
+  }
+  function onUp(){
+    if(!drag) return;
+    const mergeFromId = drag.mode==='rotate' ? drag.pointId : (drag.mode==='translate' ? drag.snapPointId : null);
+    if(mergeFromId && state.snapTargetId){
+      mergePoints(mergeFromId, state.snapTargetId);
+      state.snapTargetId = null;
+      const fb = document.getElementById('fbAssemble');
+      if(checkAssembled()){
+        state.assembled = true;
+        state.vertexOf = deriveVertexOrder();
+        fb.className='feedback success';
+        fb.textContent = '🎉 네 개의 막대가 모두 연결되어 사각형 ABCD가 만들어졌어요! 이제 이 사각형을 이리저리 움직이며 대변이 평행한지 확인해봅시다.';
+        document.getElementById('assembledBlock').classList.add('show');
+      }else{
+        const n = 4 - Object.keys(state.points).length;
+        fb.className='feedback success';
+        fb.textContent = `🧲 연결됐어요! (${n} / 4)`;
+      }
+    }
+    state.snapTargetId = null;
+    drag = null;
+    render();
+  }
+  svg.addEventListener('pointermove', onMove);
+  svg.addEventListener('pointerup', onUp);
+
+  // ---------- 다른 길이의 막대로 다시 조립 ----------
+  function resetAssembly(){
+    state.presetIdx = (state.presetIdx+1) % STRAW_PRESETS.length;
+    const {u,v} = STRAW_PRESETS[state.presetIdx];
+    Object.assign(state, makeScatteredRods(u,v));
+    state.assembled = false; state.vertexOf = null; state.snapTargetId = null;
+    state.extShown = false; state.angleCompareShown = false;
+    state.doneDiag = false; state.doneAngles = false;
+    document.getElementById('assembledBlock').classList.remove('show');
+    document.getElementById('observeMoreBlock2').classList.remove('show');
+    document.getElementById('block4').classList.remove('show');
+    const fb = document.getElementById('fbAssemble');
+    fb.className='feedback'; fb.textContent='';
+    render();
+  }
+  document.getElementById('btnCycleStraw').addEventListener('click', resetAssembly);
+  document.getElementById('restartAll').addEventListener('click', ()=>{
+    resetAssembly();
+    document.getElementById('page1').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  // ---------- 1단계 ----------
+  function normalizeAns(s){
+    return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
+  }
+  document.getElementById('btnMethodExt').addEventListener('click', function(){
+    state.extShown = !state.extShown;
+    this.classList.toggle('active', state.extShown);
+    render();
+    const fb = document.getElementById('fbMethod');
+    fb.className='feedback success';
+    fb.textContent = state.extShown
+      ? '✅ 두 대변을 양쪽으로 쭉 연장해봤어요. 아무리 늘려도 서로 만나지 않네요 — 평행하다는 뜻이에요!'
+      : '연장선을 숨겼어요.';
+  });
+  document.getElementById('btnMethodAngle').addEventListener('click', function(){
+    state.angleCompareShown = !state.angleCompareShown;
+    this.classList.toggle('active', state.angleCompareShown);
+    render();
+    const fb = document.getElementById('fbMethod');
+    fb.className='feedback success';
+    fb.textContent = state.angleCompareShown
+      ? '✅ 대각선 AC가 두 대변을 가로지르는 선(횡단선) 역할을 해요. ∠BAC와 ∠DCA(엇각), ∠BCA와 ∠DAC(엇각)의 각도를 비교해보세요!'
+      : '각도 표시를 숨겼어요.';
+  });
+  document.getElementById('btnConfirmShape').addEventListener('click', function(){
+    const fb = document.getElementById('fbConfirmShape');
+    if(!state.extShown && !state.angleCompareShown){
+      fb.className='feedback warn';
+      fb.textContent='⚠️ 먼저 위의 두 방법 중 하나로 평행한지 확인해보세요.';
+      return;
+    }
+    const already = state.confirmedPresets.has(state.presetIdx);
+    state.confirmedPresets.add(state.presetIdx);
+    const n = state.confirmedPresets.size;
+    if(already){
+      fb.className = 'feedback warn';
+      fb.textContent = `🤔 이 길이 조합은 이미 확인했어요. [🔄 다른 길이의 막대로 다시 조립하기]를 눌러 다른 사각형에서도 확인해봅시다! (확인한 사각형: ${n}개)`;
+    }else{
+      fb.className = 'feedback success';
+      fb.textContent = `✅ 이번에도 두 쌍의 대변이 각각 평행하네요! (확인한 사각형: ${n}개)`;
+    }
+    if(n >= MIN_OBSERVE){
+      document.getElementById('observeMoreBlock2').classList.remove('show');
+      document.getElementById('block4').classList.add('show');
+    }else{
+      document.getElementById('observeMoreBlock2').classList.add('show');
+    }
+  });
+  document.getElementById('checkConclude1').addEventListener('click', ()=>{
+    const v1 = document.getElementById('concl1').value;
+    const fb = document.getElementById('feedbackConclude1');
+    if(v1==='?'){ fb.className='feedback warn'; fb.textContent='⚠️ 빈칸을 선택해주세요.'; return; }
+    if(v1==='yes'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 정확해요! 2단계에서 왜 그런지 직접 증명해봅시다!';
+      unlockStep(2);
+      document.getElementById('next1').disabled=false;
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요.';
+    }
+  });
+
+  // ---------- 2단계 ----------
+  document.getElementById('btnDiagAC').addEventListener('click', function(){
+    if(state.doneDiag) return;
+    state.doneDiag = true;
+    render();
+    const fb = document.getElementById('fbDiagAC');
+    fb.className='feedback success';
+    fb.textContent = '✅ 대각선 AC를 그었어요. △ABC와 △CDA로 나뉘었습니다.';
+    document.getElementById('sssBlock').classList.add('show');
+  });
+  document.getElementById('checkSssParts').addEventListener('click', ()=>{
+    const checked = Array.from(document.querySelectorAll('input[name="sssPart"]:checked')).map(el=>el.value);
+    const fb = document.getElementById('fbSssParts');
+    const correctSet = ['ab-cd','bc-da','ac-common'];
+    const ok = checked.length===3 && correctSet.every(v=>checked.includes(v));
+    if(ok){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! AB=CD, BC=DA, AC는 공통이에요.';
+      document.getElementById('congBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 골라보세요. (힌트: 가정에서 주어진 두 변과, 두 삼각형이 공유하는 변)';
+    }
+  });
+  document.getElementById('checkCongType').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="congType"]:checked');
+    const fb = document.getElementById('fbCongType');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'SSS'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! 세 변의 길이가 각각 같으므로 SSS 합동입니다.';
+      document.getElementById('angleBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 세 쌍의 변이 모두 같다는 걸 확인했어요.';
+    }
+  });
+  document.getElementById('btnShowAngles').addEventListener('click', function(){
+    state.doneAngles = true;
+    render();
+    document.getElementById('angleText').style.display = 'block';
+    const fb = document.getElementById('fbAngles');
+    fb.className='feedback success';
+    fb.textContent = '✅ 합동인 두 삼각형의 대응각은 크기가 같아요.';
+    document.getElementById('altBlock').classList.add('show');
+  });
+  document.getElementById('checkAlt').addEventListener('click', ()=>{
+    const selAB = document.querySelector('input[name="altAB"]:checked');
+    const selAD = document.querySelector('input[name="altAD"]:checked');
+    const fb = document.getElementById('fbAlt');
+    if(!selAB || !selAD){ fb.className='feedback warn'; fb.textContent='⚠️ 두 질문 모두 답해주세요.'; return; }
+    if(selAB.value==='AB-DC' && selAD.value==='BC-DA'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 정확해요! ∠BAC=∠DCA(엇각)이므로 AB∥DC, ∠BCA=∠DAC(엇각)이므로 AD∥BC 입니다.';
+      document.getElementById('concludeBlock2').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 엇각이 같은 두 직선을 찾아야 해요.';
+    }
+  });
+  document.getElementById('checkStep2Final').addEventListener('click', ()=>{
+    const el = document.getElementById('concShape');
+    const ok = normalizeAns(el.value).indexOf('평행사변형') >= 0;
+    el.classList.toggle('correct', ok); el.classList.toggle('wrong', !ok && el.value.trim()!=='');
+    const fb = document.getElementById('feedbackStep2Final');
+    if(ok){
+      fb.className='feedback success';
+      fb.textContent = '🎉 완벽해요! 두 쌍의 대변이 각각 평행하므로 □ABCD는 평행사변형입니다.';
+      unlockStep(3);
+      document.getElementById('next2').disabled=false;
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 아직 정확하지 않아요.';
+    }
+  });
+
+  // ---------- 3단계 ----------
+  document.getElementById('checkStep3').addEventListener('click', ()=>{
+    const v = document.getElementById('c_shape').value;
+    const fb = document.getElementById('feedback3');
+    if(v==='yes'){
+      fb.className='feedback success';
+      fb.textContent = '🎉 정확해요!';
+      document.getElementById('summaryBox').classList.add('show');
+      unlockStep(4);
+      document.getElementById('next3').disabled=false;
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 아직 정확하지 않아요.';
+    }
+  });
+
+  // ---------- 4단계 ----------
+  function answerEquivalent(a, b){
+    if(/^[A-Z]{2}$/.test(a) && /^[A-Z]{2}$/.test(b)){
+      return a.split('').sort().join('') === b.split('').sort().join('');
+    }
+    if(/^[A-Z]{3}$/.test(a) && /^[A-Z]{3}$/.test(b)){
+      return a[1]===b[1] && [a[0],a[2]].sort().join('') === [b[0],b[2]].sort().join('');
+    }
+    return a === b;
+  }
+  const PROOF_ANSWERS = { b1:['공통'], b2:['SSS'], b3:['DCA'], b4:['DAC'], b5:['DC'], b6:['BC'], b7:['평행사변형'] };
+  function isBlankCorrect(id, raw){
+    const v = normalizeAns(raw);
+    if(!v) return false;
+    if(id === 'b2') return v.indexOf('SSS') >= 0;
+    if(id === 'b7') return v.indexOf('평행사변형') >= 0;
+    return PROOF_ANSWERS[id].some(a => answerEquivalent(normalizeAns(a), v));
+  }
+  document.getElementById('checkProof').addEventListener('click', ()=>{
+    const inputs = document.querySelectorAll('#page4 .blank');
+    let correctCount = 0;
+    inputs.forEach(inp=>{
+      const ok = isBlankCorrect(inp.dataset.id, inp.value);
+      inp.classList.toggle('correct', ok);
+      inp.classList.toggle('wrong', !ok);
+      if(ok) correctCount++;
+    });
+    const total = inputs.length;
+    const fb = document.getElementById('feedbackProof');
+    if(correctCount === total){
+      fb.className='feedback success';
+      fb.textContent = `🎉 ${total}개 중 ${correctCount}개 정답! 증명을 완벽하게 완성했습니다.`;
+      document.getElementById('proofDone').classList.add('show');
+    }else{
+      fb.className='feedback warn';
+      fb.textContent = `${total}개 중 ${correctCount}개 정답이에요. 빨간색으로 표시된 빈칸을 다시 채워보세요.`;
+      document.getElementById('proofDone').classList.remove('show');
+    }
+  });
+  document.getElementById('resetProof').addEventListener('click', ()=>{
+    document.querySelectorAll('#page4 .blank').forEach(inp=>{ inp.value=''; inp.classList.remove('correct','wrong'); });
+    const fb = document.getElementById('feedbackProof');
+    fb.className='feedback'; fb.textContent='';
+    document.getElementById('proofDone').classList.remove('show');
+  });
+  document.getElementById('toggleWordbank').addEventListener('click', ()=>{
+    document.getElementById('wordbank').classList.toggle('show');
+  });
+
+  // ---------- 모바일 탭 전환 ----------
+  window.showMobileTab = function(tab){
+    const layoutRoot = document.getElementById('layoutRoot');
+    layoutRoot.classList.toggle('mobile-show-canvas', tab === 'canvas');
+    layoutRoot.classList.toggle('mobile-show-activity', tab === 'activity');
+    document.getElementById('mtabCanvas').classList.toggle('active', tab === 'canvas');
+    document.getElementById('mtabActivity').classList.toggle('active', tab === 'activity');
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  // ================= 활동 페이지 전환 =================
+  const unlocked = {1:true, 2:false, 3:false, 4:false};
+  let currentPage = 1;
+
+  function showPage(n){
+    currentPage = n;
+    if(typeof syncProgress === 'function') syncProgress(true);
+    [1,2,3,4].forEach(i=>{
+      document.getElementById('page'+i).style.display = (i===n) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.step-tab').forEach(tab=>{
+      const i = Number(tab.dataset.goto);
+      tab.classList.toggle('current', i===n);
+    });
+    document.getElementById('btnCycleStraw').disabled = (n !== 1);
+    render();
+    document.getElementById('page'+n).scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function unlockStep(n){
+    unlocked[n] = true;
+    const tab = document.querySelector('.step-tab[data-goto="'+n+'"]');
+    tab.classList.remove('locked');
+    tab.classList.add('done');
+  }
+  document.querySelectorAll('.step-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      const i = Number(tab.dataset.goto);
+      if(unlocked[i]) showPage(i);
+    });
+  });
+  document.getElementById('next1').addEventListener('click', ()=> showPage(2));
+  document.getElementById('prev2').addEventListener('click', ()=> showPage(1));
+  document.getElementById('next2').addEventListener('click', ()=> showPage(3));
+  document.getElementById('prev3').addEventListener('click', ()=> showPage(2));
+  document.getElementById('next3').addEventListener('click', ()=> showPage(4));
+  document.getElementById('prev4').addEventListener('click', ()=> showPage(3));
+
+  // ================= 로그인 / Firebase / 관리자 / 이탈 감지 =================
+  const LESSON_ID = 'parallelogram-cond-side';
+  const STAGE_NAMES = {1:'1.관찰하기', 2:'2.증명 설계', 3:'3.결론 확인', 4:'4.최종 증명'};
+  const PW_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyAEFxLqfhcl6RJlS3ju9InTx9AbFHQ_Yfg",
+      authDomain:"climate-lesson.firebaseapp.com",
+      projectId:"climate-lesson",
+      storageBucket:"climate-lesson.firebasestorage.app",
+      messagingSenderId:"699342489530",
+      appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('Firebase init:', e); }
+
+  let isAdmin = false;
+  let _studentInfo = null;
+  let _docId = null;
+  let _syncTimer = null;
+  let _awayCount = 0;
+  let _adminUnsub = null;
+  let _latestRows = [];
+
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  async function hashPw(pw){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  document.getElementById('adminTrigger').addEventListener('click', async ()=>{
+    const pw = prompt('교사 비밀번호를 입력하세요');
+    if(pw === null) return;
+    const hash = await hashPw(pw);
+    if(hash === PW_HASH){
+      enterAdmin();
+    }else{
+      alert('비밀번호가 틀렸어요.');
+    }
+  });
+  function enterAdmin(){
+    isAdmin = true;
+    document.getElementById('appRoot').style.display = 'none';
+    document.getElementById('adminTrigger').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    startAdminWatch();
+  }
+  function syncProgress(immediate){
+    if(!_db || !_studentInfo || isAdmin) return;
+    clearTimeout(_syncTimer);
+    const write = ()=>{
+      _db.collection('progress').doc(_docId).set({
+        lesson: LESSON_ID,
+        date: todayStr(),
+        grade: _studentInfo.grade,
+        cls: _studentInfo.cls,
+        num: parseInt(_studentInfo.num),
+        name: _studentInfo.name,
+        stage: (typeof currentPage !== 'undefined') ? currentPage : 1,
+        awayCount: _awayCount,
+        isAway: document.hidden,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true}).catch(e=>console.warn('sync:', e));
+    };
+    if(immediate){ write(); } else { _syncTimer = setTimeout(write, 1200); }
+  }
+  function setupAwayDetection(){
+    function onAway(){
+      _awayCount++;
+      document.getElementById('awayWarning').classList.add('show');
+      syncProgress(true);
+    }
+    function onBack(){ syncProgress(true); }
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) onAway(); else onBack(); });
+    window.addEventListener('blur', onAway);
+    window.addEventListener('focus', onBack);
+    setInterval(()=>syncProgress(true), 20000);
+  }
+  window.dismissWarning = function(){
+    document.getElementById('awayWarning').classList.remove('show');
+    syncProgress(true);
+  };
+  function startAdminWatch(){
+    if(!_db){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171">Firebase 연결 실패</td></tr>';
+      return;
+    }
+    const today = todayStr();
+    _adminUnsub = _db.collection('progress')
+      .where('lesson','==', LESSON_ID)
+      .where('date','==', today)
+      .onSnapshot(snap=>{
+        const rows = [];
+        snap.forEach(d=>rows.push(Object.assign({_id:d.id}, d.data())));
+        rows.sort((a,b)=> String(a.cls||'').localeCompare(String(b.cls||'')) || ((a.num||0)-(b.num||0)));
+        _latestRows = rows;
+        applyAdminFilter();
+      }, err=>{
+        document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="6" style="color:#f87171">오류: ${err.message}</td></tr>`;
+      });
+  }
+  function applyAdminFilter(){
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    const filtered = _latestRows.filter(r => (!g || r.grade===g) && (!c || r.cls===c));
+    document.getElementById('btnAdminDelete').disabled = !(g && c);
+    renderAdminTable(filtered, g, c);
+  }
+  document.getElementById('filterGrade').addEventListener('change', applyAdminFilter);
+  document.getElementById('filterCls').addEventListener('change', applyAdminFilter);
+  function renderAdminTable(rows, g, c){
+    const total = rows.length;
+    const awayNow = rows.filter(r=>r.isAway).length;
+    const scopeLabel = (g || c) ? `${g||'전체 학년'} ${c||'전체 반'} · ` : '';
+    document.getElementById('adminSummary').textContent = `${scopeLabel}접속 ${total}명 · 현재 이탈 ${awayNow}명 (실시간)`;
+    if(!rows.length){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">아직 접속한 학생이 없어요.</td></tr>';
+      return;
+    }
+    document.getElementById('adminTableBody').innerHTML = rows.map(r=>{
+      const lastMs = (r.lastUpdated && r.lastUpdated.toDate) ? r.lastUpdated.toDate().getTime() : 0;
+      const staleMin = lastMs ? Math.max(0, Math.round((Date.now()-lastMs)/60000)) : null;
+      const status = r.isAway ? '⚠️ 다른 화면' : '✅ 정상';
+      return `<tr class="${r.isAway?'away':''}">
+        <td>${r.grade||''} ${r.cls||''} ${String(r.num).padStart(2,'0')}번</td>
+        <td>${r.name||''}</td>
+        <td>${STAGE_NAMES[r.stage]||('?'+r.stage)}</td>
+        <td>${status}</td>
+        <td>${r.awayCount||0}회</td>
+        <td>${staleMin!=null ? staleMin+'분 전' : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('btnAdminDelete').addEventListener('click', async ()=>{
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    if(!g || !c) return;
+    const targets = _latestRows.filter(r => r.grade===g && r.cls===c);
+    if(!targets.length){ alert('삭제할 접속 기록이 없어요.'); return; }
+    if(!confirm(`${g} ${c} 학생 ${targets.length}명의 오늘 접속 기록을 삭제할까요?\n(이 작업은 되돌릴 수 없습니다)`)) return;
+    try{
+      await Promise.all(targets.map(r => _db.collection('progress').doc(r._id).delete()));
+    }catch(e){
+      alert('삭제 중 오류가 발생했어요: ' + e.message);
+    }
+  });
+  window.adminLogout = function(){
+    if(_adminUnsub) _adminUnsub();
+    location.reload();
+  };
+
+  // ---------- init: 게이트 없이 곧바로 1단계 관찰하기부터 시작. 허브가 학생 정보를 URL로 넘겨주면 조용히 세션바/기록만 채움 ----------
+  render();
+  (function initSession(){
+    const p = new URLSearchParams(location.search);
+    const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
+    if(grade && cls && num && name){
+      const gradeFull = grade.endsWith('학년') ? grade : grade+'학년';
+      const clsFull = cls.endsWith('반') ? cls : cls+'반';
+      _studentInfo = {grade:gradeFull, cls:clsFull, num, name};
+      _docId = `${LESSON_ID}_${todayStr()}_${clsFull}_${String(num).padStart(2,'0')}`;
+      document.getElementById('sessionBar').style.display = 'flex';
+      document.getElementById('sessionName').textContent = `${_studentInfo.grade} ${_studentInfo.cls} ${_studentInfo.num}번 ${_studentInfo.name}`;
+      setupAwayDetection();
+      syncProgress(true);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
