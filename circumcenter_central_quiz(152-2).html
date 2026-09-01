@@ -89,7 +89,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .modal-btn-yes:hover{background:#f4f4f8}
 
 .fig-wrap{display:flex;justify-content:center;margin-bottom:14px}
-.fig-stack{position:relative;width:100%;margin:0 auto;aspect-ratio:300/300;max-width:300px}
+.fig-stack{position:relative;width:100%;margin:0 auto;aspect-ratio:450/450;max-width:450px}
 .fig-stack canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .fig-draw{touch-action:none}
 
@@ -205,8 +205,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
     </div>
     <div class="fig-wrap">
       <div class="fig-stack">
-        <canvas id="figA" class="fig" width="300" height="300"></canvas>
-        <canvas id="figA_draw" class="fig-draw" width="300" height="300"></canvas>
+        <canvas id="figA" class="fig" width="450" height="450"></canvas>
+        <canvas id="figA_draw" class="fig-draw" width="450" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarA">
@@ -256,8 +256,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
     </div>
     <div class="fig-wrap">
       <div class="fig-stack">
-        <canvas id="figB" class="fig" width="300" height="300"></canvas>
-        <canvas id="figB_draw" class="fig-draw" width="300" height="300"></canvas>
+        <canvas id="figB" class="fig" width="450" height="450"></canvas>
+        <canvas id="figB_draw" class="fig-draw" width="450" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarB">
@@ -554,8 +554,10 @@ function drawBaseTriangle(ctx, O, A, B, C){
 function renderFigureA(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-300)/2,(canvas.height-300)/2);
   const raw=computeCirclePts(p.b, p.g, FIXED_R);
-  const F=fitPointsToCanvas({O:raw.O,A:raw.A,B:raw.B,C:raw.C}, canvas.width, canvas.height, 56);
+  const F=fitPointsToCanvas({O:raw.O,A:raw.A,B:raw.B,C:raw.C}, 300, 300, 56);
   const {O,A,B,C}=F;
   drawBaseTriangle(ctx,O,A,B,C);
   drawLabel(ctx,O.x,O.y-13,'O','#333',12);
@@ -575,13 +577,16 @@ function renderFigureA(canvas, p){
     angleArcAt(ctx,B,O,C,20,'#0d9488');
     const bLbl=angleMidPoint(B,O,C,36); drawLabel(ctx,bLbl.x,bLbl.y,'x','#0d9488',15);
   }
+  ctx.restore();
 }
 
 function renderFigureB(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-300)/2,(canvas.height-300)/2);
   const raw=computeCirclePts(p.b, p.g, FIXED_R);
-  const F=fitPointsToCanvas({O:raw.O,A:raw.A,B:raw.B,C:raw.C}, canvas.width, canvas.height, 56);
+  const F=fitPointsToCanvas({O:raw.O,A:raw.A,B:raw.B,C:raw.C}, 300, 300, 56);
   const {O,A,B,C}=F;
   drawBaseTriangle(ctx,O,A,B,C);
 
@@ -604,6 +609,7 @@ function renderFigureB(canvas, p){
     angleArcAt(ctx,A,O,B,18,'#0d9488');
     const aLbl=angleMidPoint(A,O,B,32); drawLabel(ctx,aLbl.x,aLbl.y,'x','#0d9488',15);
   }
+  ctx.restore();
 }
 
 /* ════════════════════════════════

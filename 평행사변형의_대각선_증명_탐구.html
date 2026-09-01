@@ -151,8 +151,6 @@
   /* ===== 관리자 접속 (화면을 가리는 로그인 폼 없이, 구석의 작은 버튼 + 브라우저 기본 prompt로 처리) ===== */
   #adminTrigger{ position:fixed; right:14px; bottom:14px; z-index:50; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--muted); font-size:15px; line-height:1; cursor:pointer; opacity:.5; box-shadow:0 2px 8px rgba(43,47,66,.1); transition:.15s; }
   #adminTrigger:hover{ opacity:1; color:var(--primary-dark); }
-  #directAccessNotice{ display:none; min-height:100vh; align-items:center; justify-content:center; text-align:center; color:var(--muted); font-size:14px; padding:24px; line-height:1.8; }
-  #directAccessNotice a{ color:var(--primary-dark); font-weight:700; }
   .session-bar{ background:#2b2f42; color:#fff; padding:8px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
   .session-bar b{ color:#c7d2fe; }
   .session-bar button, .session-bar a{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; text-decoration:none; }
@@ -187,11 +185,7 @@
 </head>
 <body>
 
-<!-- ══ 학생은 항상 허브를 거쳐 파라미터로 바로 진입 — 화면을 가리는 로그인 폼 없음 ══ -->
-<div id="directAccessNotice">
-  이 페이지는 학습 허브를 통해 접속해주세요.<br>
-  <a href="index.html">← 학습 허브로 이동</a>
-</div>
+<!-- ══ 게이트 없이 곧바로 관찰하기 활동으로 진입 — 학생 정보는 있으면 조용히 사용, 없어도 활동은 그대로 진행 ══ -->
 <button id="adminTrigger" title="교사용">⚙</button>
 
 <!-- ══ 관리자 대시보드 ══ -->
@@ -237,7 +231,7 @@
   </div>
 </div>
 
-<div id="appRoot" style="display:none">
+<div id="appRoot">
 <div class="session-bar" id="sessionBar" style="display:none">
   <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
   <span style="display:flex;gap:8px;"><a href="index.html" id="hubBackLink">← 학습 선택 목록으로 돌아가기</a><button onclick="location.reload()">로그아웃</button></span>
@@ -274,8 +268,8 @@
         <path id="arcP2a" class="angle-arc arc-p2" d=""></path>
         <path id="arcP2b" class="angle-arc arc-p2" d=""></path>
 
-        <polygon id="triOAB" class="tri-half" points=""></polygon>
         <polygon id="triOCD" class="tri-half" points=""></polygon>
+        <polygon id="triOAB" class="tri-half" points=""></polygon>
 
         <line id="segOA" class="half-seg pair1" x1="0" y1="0" x2="0" y2="0"></line>
         <line id="segOC" class="half-seg pair1" x1="0" y1="0" x2="0" y2="0"></line>
@@ -660,7 +654,11 @@
 
     triOAB.setAttribute('points', `${O.x},${O.y} ${A.x},${A.y} ${B.x},${B.y}`);
     triOCD.setAttribute('points', `${O.x},${O.y} ${C.x},${C.y} ${D.x},${D.y}`);
-    triOAB.style.transform = state.rotateOn ? `matrix(-1,0,0,-1,${2*O.x},${2*O.y})` : '';
+    // matrix(-1,0,0,-1,...)는 브라우저가 애니메이션을 "회전"이 아니라 "배율 1→-1"로 해석해 중간에 쪼그라들 수 있어
+    // translate+rotate+translate로 명시적 회전으로 표현
+    triOAB.style.transform = state.rotateOn
+      ? `translate(${O.x}px, ${O.y}px) rotate(180deg) translate(${-O.x}px, ${-O.y}px)`
+      : '';
 
     const showHalves = showO && (currentPage !== 1 || state.observedSet.size > 0 || state.doneBD);
     [ [segOA,O,A,tickOA,labelOA], [segOC,O,C,tickOC,labelOC], [segOB,O,B,tickOB,labelOB], [segOD,O,D,tickOD,labelOD] ]
@@ -1004,25 +1002,17 @@
     if(pw === null) return;
     const hash = await hashPw(pw);
     if(hash === PW_HASH){
-      enterApp(true);
+      enterAdmin();
     }else{
       alert('비밀번호가 틀렸어요.');
     }
   });
-  function enterApp(admin){
-    isAdmin = admin;
-    document.getElementById('directAccessNotice').style.display = 'none';
+  function enterAdmin(){
+    isAdmin = true;
+    document.getElementById('appRoot').style.display = 'none';
     document.getElementById('adminTrigger').style.display = 'none';
-    if(admin){
-      document.getElementById('adminScreen').style.display = 'block';
-      startAdminWatch();
-    }else{
-      document.getElementById('appRoot').style.display = 'block';
-      document.getElementById('sessionBar').style.display = 'flex';
-      document.getElementById('sessionName').textContent = `${_studentInfo.grade} ${_studentInfo.cls} ${_studentInfo.num}번 ${_studentInfo.name}`;
-      setupAwayDetection();
-      syncProgress(true);
-    }
+    document.getElementById('adminScreen').style.display = 'block';
+    startAdminWatch();
   }
   function syncProgress(immediate){
     if(!_db || !_studentInfo || isAdmin) return;
@@ -1128,11 +1118,9 @@
     location.reload();
   };
 
-  // ---------- init ----------
+  // ---------- init: 게이트 없이 곧바로 1단계 관찰하기부터 시작. 허브가 학생 정보를 URL로 넘겨주면 조용히 세션바/기록만 채움 ----------
   render();
-
-  // ---- 허브에서 학생 정보를 URL로 넘겨주면 바로 진입. 없으면 안내문 + 구석의 작은 관리자 버튼만 표시(로그인 화면 없음) ----
-  (function tryAutoLogin(){
+  (function initSession(){
     const p = new URLSearchParams(location.search);
     const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
     if(grade && cls && num && name){
@@ -1140,9 +1128,10 @@
       const clsFull = cls.endsWith('반') ? cls : cls+'반';
       _studentInfo = {grade:gradeFull, cls:clsFull, num, name};
       _docId = `${LESSON_ID}_${todayStr()}_${clsFull}_${String(num).padStart(2,'0')}`;
-      enterApp(false);
-    }else{
-      document.getElementById('directAccessNotice').style.display = 'flex';
+      document.getElementById('sessionBar').style.display = 'flex';
+      document.getElementById('sessionName').textContent = `${_studentInfo.grade} ${_studentInfo.cls} ${_studentInfo.num}번 ${_studentInfo.name}`;
+      setupAwayDetection();
+      syncProgress(true);
     }
   })();
 })();

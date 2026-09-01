@@ -48,7 +48,7 @@
 
   .quad{ fill:#eef1fb; stroke:#4a5568; stroke-width:2.5; }
   .diag{ stroke:#4a5568; stroke-width:2; display:none; }
-  .tri-half{ stroke:none; display:none; }
+  .tri-half{ stroke:none; display:none; transition:transform .8s ease; }
   #triABC{ fill:#6c8bff; opacity:.55; }
   #triCDA{ fill:#ff9db3; opacity:.55; }
   .guide-arc{ fill:none; stroke:#c3cef2; stroke-width:1.5; stroke-dasharray:3 4; }
@@ -283,9 +283,9 @@
         </defs>
         <rect x="0" y="0" width="640" height="480" fill="url(#gridPattern)"></rect>
 
-        <polygon id="triABC" class="tri-half" points=""></polygon>
-        <polygon id="triCDA" class="tri-half" points=""></polygon>
         <polygon id="quadABCD" class="quad" points="" style="display:none"></polygon>
+        <polygon id="triCDA" class="tri-half" points=""></polygon>
+        <polygon id="triABC" class="tri-half" points=""></polygon>
         <line id="diagAC" class="diag" x1="0" y1="0" x2="0" y2="0"></line>
 
         <line id="extAB" class="ext-line pair1" x1="0" y1="0" x2="0" y2="0"></line>
@@ -365,6 +365,19 @@
           </div>
           <div class="feedback" id="fbMethod"></div>
 
+          <div class="reveal" id="extLimitBlock">
+            <div class="fillsentence">
+              현재 화면에서는 두 직선이 만나지 않아요. 그런데 직선을 무한히 연장하면 화면 <b>바깥</b>에서 만날 수도 있지 않을까요?<br>
+              이 방법(직선을 연장해서 확인하기)만으로 "두 직선이 평행하다"고 확신할 수 있을까요?
+            </div>
+            <div class="choice-list">
+              <label><input type="radio" name="extLimit" value="yes"> 네, 확신할 수 있어요</label>
+              <label><input type="radio" name="extLimit" value="no"> 아니오, 확신할 수 없어요</label>
+            </div>
+            <button class="btn btn-check" id="checkExtLimit">확인</button>
+            <div class="feedback" id="fbExtLimit"></div>
+          </div>
+
           <div class="fillsentence" style="text-align:center;">
             <button class="btn btn-check" id="btnConfirmShape">✅ 이 모양에서 평행 확인 완료</button>
           </div>
@@ -421,7 +434,7 @@
 
         <div class="reveal" id="sssBlock">
           <p><b>Q1.</b> △ABC와 △CDA에서, 서로 같은 부분을 모두 골라보세요.</p>
-          <div class="choice-list">
+          <div class="choice-list" id="sssChoices">
             <label><input type="checkbox" name="sssPart" value="ab-cd"> <span class="seg">AB</span>=<span class="seg">CD</span></label>
             <label><input type="checkbox" name="sssPart" value="bc-da"> <span class="seg">BC</span>=<span class="seg">DA</span></label>
             <label><input type="checkbox" name="sssPart" value="ac-common"> <span class="seg">AC</span>는 공통</label>
@@ -433,7 +446,7 @@
 
         <div class="reveal" id="congBlock">
           <p><b>Q2.</b> 위 세 조건으로 합동을 보이려면 어떤 조건이 필요할까요?</p>
-          <div class="choice-list">
+          <div class="choice-list" id="congChoices">
             <label><input type="radio" name="congType" value="SSS"> SSS 합동</label>
             <label><input type="radio" name="congType" value="SAS"> SAS 합동</label>
             <label><input type="radio" name="congType" value="ASA"> ASA 합동</label>
@@ -445,6 +458,10 @@
         <div class="reveal" id="angleBlock">
           <p>✅ △ABC≡△CDA (SSS 합동)이므로, 대응각의 크기가 각각 같습니다.</p>
           <div class="fillsentence" style="text-align:center;">
+            <button class="btn btn-check" id="btnOverlapCheck">🔍 겹쳐서 확인하기</button>
+          </div>
+          <div class="feedback" id="fbOverlapCheck"></div>
+          <div class="fillsentence" style="text-align:center;">
             <button class="btn btn-check" id="btnShowAngles">대응각 표시하기</button>
           </div>
           <div class="fillsentence" id="angleText" style="display:none; text-align:center;">
@@ -455,13 +472,13 @@
 
         <div class="reveal" id="altBlock">
           <p><b>Q3.</b> ∠BAC와 ∠DCA는 대각선 AC를 가로지르는 엇각입니다. 이 두 각이 같으면 어떤 두 직선이 평행할까요?</p>
-          <div class="choice-list">
+          <div class="choice-list" id="altABChoices">
             <label><input type="radio" name="altAB" value="AB-DC"> <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span></label>
             <label><input type="radio" name="altAB" value="BC-DA"> <span class="seg">BC</span><span class="parallel-sym"></span><span class="seg">DA</span></label>
             <label><input type="radio" name="altAB" value="AC-BD"> <span class="seg">AC</span><span class="parallel-sym"></span><span class="seg">BD</span></label>
           </div>
           <p><b>Q4.</b> 마찬가지로 ∠BCA와 ∠DAC가 같으면 어떤 두 직선이 평행할까요?</p>
-          <div class="choice-list">
+          <div class="choice-list" id="altADChoices">
             <label><input type="radio" name="altAD" value="AB-DC"> <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span></label>
             <label><input type="radio" name="altAD" value="BC-DA"> <span class="seg">BC</span><span class="parallel-sym"></span><span class="seg">DA</span></label>
             <label><input type="radio" name="altAD" value="AC-BD"> <span class="seg">AC</span><span class="parallel-sym"></span><span class="seg">BD</span></label>
@@ -627,6 +644,7 @@
     extShown: false,
     angleCompareShown: false,
     confirmedPresets: new Set(),
+    overlapOn:false,
     doneDiag:false, doneAngles:false
   }, makeScatteredRods(STRAW_PRESETS[0].u, STRAW_PRESETS[0].v));
 
@@ -655,12 +673,14 @@
   const nameD=document.getElementById('nameD');
 
   // ---------- 기하 헬퍼 ----------
-  function tickPath(p1, p2, count){
+  function pointAt(P,Q,t){ return { x:P.x+(Q.x-P.x)*t, y:P.y+(Q.y-P.y)*t }; }
+  function tickPath(p1, p2, count, t){
+    if(t==null) t = 0.5;
     const dx = p2.x-p1.x, dy = p2.y-p1.y;
     const len = Math.hypot(dx,dy) || 1;
     const ux = dx/len, uy = dy/len;
     const px = -uy, py = ux;
-    const mx = (p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const mx = p1.x+dx*t, my = p1.y+dy*t;
     const half = 5, gap = 5;
     let d = '';
     for(let i=0;i<count;i++){
@@ -881,35 +901,45 @@
     triCDA.setAttribute('points', `${C.x},${C.y} ${D.x},${D.y} ${pA.x},${pA.y}`);
     triABC.style.display = showTriShadeNow() ? 'block' : 'none';
     triCDA.style.display = showTriShadeNow() ? 'block' : 'none';
+    const midAC = { x:(pA.x+C.x)/2, y:(pA.y+C.y)/2 };
+    // matrix(-1,0,0,-1,...)로 쓰면 브라우저가 애니메이션을 "회전"이 아니라 "배율이 1→-1로 줄어듦(0을 지나며 순간 사라짐)"으로
+    // 해석해버려 부드럽게 안 돌고 쪼그라들었다 반대편에서 나타나 보임 — translate+rotate+translate로 명시적 회전으로 표현해야 함
+    triABC.style.transform = (currentPage===2 && state.overlapOn)
+      ? `translate(${midAC.x}px, ${midAC.y}px) rotate(180deg) translate(${-midAC.x}px, ${-midAC.y}px)`
+      : '';
 
-    tickAB.setAttribute('d', tickPath(pA,B,1)); tickAB.style.display='block';
-    tickCD.setAttribute('d', tickPath(C,D,1)); tickCD.style.display='block';
-    tickBC.setAttribute('d', tickPath(B,C,2)); tickBC.style.display='block';
-    tickDA.setAttribute('d', tickPath(D,pA,2)); tickDA.style.display='block';
+    // 눈금(같은 길이)과 화살표(평행)가 같은 위치에 겹치지 않도록, 눈금은 변의 앞쪽(35%)에,
+    // 화살표는 변의 뒤쪽(70%)에 서로 떨어뜨려 배치한다.
+    const TICK_T = 0.35, CHEV_T = 0.70;
+    tickAB.setAttribute('d', tickPath(pA,B,1,TICK_T)); tickAB.style.display='block';
+    tickCD.setAttribute('d', tickPath(C,D,1,TICK_T)); tickCD.style.display='block';
+    tickBC.setAttribute('d', tickPath(B,C,2,TICK_T)); tickBC.style.display='block';
+    tickDA.setAttribute('d', tickPath(D,pA,2,TICK_T)); tickDA.style.display='block';
 
     const showChev = (currentPage===1) ? (state.extShown || state.angleCompareShown) : true;
-    const mAB={x:(pA.x+B.x)/2,y:(pA.y+B.y)/2}, mCD={x:(C.x+D.x)/2,y:(C.y+D.y)/2};
-    chevAB.setAttribute('d', chevronPath(pA,B, mAB.x,mAB.y, 14)); chevAB.style.display = showChev?'block':'none';
-    chevCD.setAttribute('d', chevronPath(D,C, mCD.x,mCD.y, 14)); chevCD.style.display = showChev?'block':'none';
+    const cAB=pointAt(pA,B,CHEV_T), cCD=pointAt(D,C,CHEV_T);
+    chevAB.setAttribute('d', chevronPath(pA,B, cAB.x,cAB.y, 14)); chevAB.style.display = showChev?'block':'none';
+    chevCD.setAttribute('d', chevronPath(D,C, cCD.x,cCD.y, 14)); chevCD.style.display = showChev?'block':'none';
     const dxBC=C.x-B.x, dyBC=C.y-B.y, lenBC=Math.hypot(dxBC,dyBC)||1, uxBC=dxBC/lenBC, uyBC=dyBC/lenBC;
-    const mBC={x:(B.x+C.x)/2,y:(B.y+C.y)/2};
+    const mBC=pointAt(B,C,CHEV_T);
     chevBC1.setAttribute('d', chevronPath(B,C, mBC.x-uxBC*7,mBC.y-uyBC*7, 12)); chevBC1.style.display = showChev?'block':'none';
     chevBC2.setAttribute('d', chevronPath(B,C, mBC.x+uxBC*7,mBC.y+uyBC*7, 12)); chevBC2.style.display = showChev?'block':'none';
     const dxDA=pA.x-D.x, dyDA=pA.y-D.y, lenDA=Math.hypot(dxDA,dyDA)||1, uxDA=dxDA/lenDA, uyDA=dyDA/lenDA;
-    const mDA={x:(D.x+pA.x)/2,y:(D.y+pA.y)/2};
+    const mDA=pointAt(D,pA,CHEV_T);
     chevDA1.setAttribute('d', chevronPath(D,pA, mDA.x-uxDA*7,mDA.y-uyDA*7, 12)); chevDA1.style.display = showChev?'block':'none';
     chevDA2.setAttribute('d', chevronPath(D,pA, mDA.x+uxDA*7,mDA.y+uyDA*7, 12)); chevDA2.style.display = showChev?'block':'none';
 
     const showAng = showAnglesNow();
     arcBAC.setAttribute('d', vertexArc(pA, B, C, 22)); arcBAC.style.display = showAng?'block':'none';
     arcDCA.setAttribute('d', vertexArc(C, D, pA, 22)); arcDCA.style.display = showAng?'block':'none';
-    arcBCA.setAttribute('d', vertexArc(C, B, pA, 30)); arcBCA.style.display = showAng?'block':'none';
-    arcDAC.setAttribute('d', vertexArc(pA, D, C, 30)); arcDAC.style.display = showAng?'block':'none';
+    arcBCA.setAttribute('d', vertexArc(C, B, pA, 22)); arcBCA.style.display = showAng?'block':'none';
+    arcDAC.setAttribute('d', vertexArc(pA, D, C, 22)); arcDAC.style.display = showAng?'block':'none';
 
     // 각도 숫자는 사각형 안쪽(대각선 근처)이 아니라 꼭짓점 바깥쪽에 좌우로 벌려서 배치하고,
     // 어느 각을 가리키는지 알 수 있도록 호(arc) 근처에서 숫자까지 점선 리더선을 그어준다.
+    // 호의 반지름은 각의 크기와 무관하게 항상 동일(22)하게 — 색으로만 구분한다.
     const showNum = (currentPage===1) && state.angleCompareShown;
-    [[numBAC,leadBAC,pA,B,C,22],[numDCA,leadDCA,C,D,pA,22],[numBCA,leadBCA,C,B,pA,30],[numDAC,leadDAC,pA,D,C,30]].forEach(([el,lead,V,P,Q,arcR])=>{
+    [[numBAC,leadBAC,pA,B,C,22],[numDCA,leadDCA,C,D,pA,22],[numBCA,leadBCA,C,B,pA,22],[numDAC,leadDAC,pA,D,C,22]].forEach(([el,lead,V,P,Q,arcR])=>{
       const ox=V.x-centroid.x, oy=V.y-centroid.y, olen=Math.hypot(ox,oy)||1;
       const oux=ox/olen, ouy=oy/olen, px=-ouy, py=oux;
       const tx=P.x-V.x, ty=P.y-V.y;
@@ -1057,11 +1087,16 @@
     const {u,v} = STRAW_PRESETS[state.presetIdx];
     Object.assign(state, makeScatteredRods(u,v));
     state.assembled = false; state.vertexOf = null; state.snapTargetId = null;
-    state.extShown = false; state.angleCompareShown = false;
+    state.extShown = false; state.angleCompareShown = false; state.overlapOn = false;
     state.doneDiag = false; state.doneAngles = false;
     document.getElementById('assembledBlock').classList.remove('show');
     document.getElementById('observeMoreBlock2').classList.remove('show');
     document.getElementById('block4').classList.remove('show');
+    document.getElementById('extLimitBlock').classList.remove('show');
+    document.querySelectorAll('input[name="extLimit"]').forEach(el=>el.checked=false);
+    document.getElementById('fbExtLimit').className='feedback'; document.getElementById('fbExtLimit').textContent='';
+    const btnOv = document.getElementById('btnOverlapCheck');
+    if(btnOv) btnOv.textContent = '🔍 겹쳐서 확인하기';
     const fb = document.getElementById('fbAssemble');
     fb.className='feedback'; fb.textContent='';
     render();
@@ -1083,8 +1118,23 @@
     const fb = document.getElementById('fbMethod');
     fb.className='feedback success';
     fb.textContent = state.extShown
-      ? '✅ 두 대변을 양쪽으로 쭉 연장해봤어요. 아무리 늘려도 서로 만나지 않네요 — 평행하다는 뜻이에요!'
+      ? '✅ 두 대변을 양쪽으로 쭉 연장해봤어요. 지금 화면 안에서는 서로 만나지 않네요.'
       : '연장선을 숨겼어요.';
+    if(state.extShown){
+      document.getElementById('extLimitBlock').classList.add('show');
+    }
+  });
+  document.getElementById('checkExtLimit').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="extLimit"]:checked');
+    const fb = document.getElementById('fbExtLimit');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'no'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! 화면은 유한하니까, 화면 안에서 안 만난다고 해서 무한히 연장해도 절대 안 만난다고 확신할 수는 없어요. 정말로 평행한지 확실히 확인하려면 ②번처럼 엇각(또는 동위각)의 크기가 같은지 비교하는 방법이 필요해요!';
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '🤔 다시 생각해보세요 — 화면은 유한한데, 직선은 끝없이 이어져요. 화면 밖에서 만날 가능성을 이 방법만으로는 완전히 배제할 수 없어요. 정말로 평행한지 확실히 확인하려면 ②번처럼 엇각(또는 동위각)의 크기가 같은지 비교하는 방법이 필요해요!';
+    }
   });
   document.getElementById('btnMethodAngle').addEventListener('click', function(){
     state.angleCompareShown = !state.angleCompareShown;
@@ -1171,6 +1221,16 @@
       fb.className='feedback error';
       fb.textContent = '❌ 다시 생각해보세요. 세 쌍의 변이 모두 같다는 걸 확인했어요.';
     }
+  });
+  document.getElementById('btnOverlapCheck').addEventListener('click', function(){
+    state.overlapOn = !state.overlapOn;
+    this.textContent = state.overlapOn ? '↩ 원래대로 보기' : '🔍 겹쳐서 확인하기';
+    render();
+    const fb = document.getElementById('fbOverlapCheck');
+    fb.className='feedback success';
+    fb.textContent = state.overlapOn
+      ? '✅ △ABC를 대각선 AC의 중점을 기준으로 180° 돌렸더니 △CDA에 정확히 겹치네요! (SSS 합동을 눈으로 확인했어요)'
+      : '원래 모양으로 돌아왔어요.';
   });
   document.getElementById('btnShowAngles').addEventListener('click', function(){
     state.doneAngles = true;
@@ -1475,6 +1535,19 @@
     if(_adminUnsub) _adminUnsub();
     location.reload();
   };
+
+  // ---------- 객관식 선택지 순서 무작위화 (정답이 항상 같은 위치에 나오지 않도록) ----------
+  function shuffleChoiceList(id){
+    const container = document.getElementById(id);
+    if(!container) return;
+    const items = Array.from(container.children);
+    for(let i=items.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [items[i],items[j]] = [items[j],items[i]];
+    }
+    items.forEach(item=>container.appendChild(item));
+  }
+  ['sssChoices','congChoices','altABChoices','altADChoices'].forEach(shuffleChoiceList);
 
   // ---------- init: 게이트 없이 곧바로 1단계 관찰하기부터 시작. 허브가 학생 정보를 URL로 넘겨주면 조용히 세션바/기록만 채움 ----------
   render();

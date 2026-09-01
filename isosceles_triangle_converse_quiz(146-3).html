@@ -92,7 +92,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 
 .fig-wrap{display:flex;justify-content:center;margin-bottom:14px}
 canvas.fig{background:#fff;border-radius:8px}
-.fig-stack{position:relative;width:100%;max-width:360px;aspect-ratio:360/300;margin:0 auto}
+.fig-stack{position:relative;width:100%;max-width:540px;aspect-ratio:540/450;margin:0 auto}
 .fig-stack canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .fig-draw{touch-action:none}
 
@@ -208,8 +208,8 @@ canvas.fig{background:#fff;border-radius:8px}
     </div>
     <div class="fig-wrap">
       <div class="fig-stack">
-        <canvas id="figA" class="fig" width="360" height="300"></canvas>
-        <canvas id="figA_draw" class="fig-draw" width="360" height="300"></canvas>
+        <canvas id="figA" class="fig" width="540" height="450"></canvas>
+        <canvas id="figA_draw" class="fig-draw" width="540" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarA">
@@ -259,8 +259,8 @@ canvas.fig{background:#fff;border-radius:8px}
     </div>
     <div class="fig-wrap">
       <div class="fig-stack">
-        <canvas id="figB" class="fig" width="360" height="300"></canvas>
-        <canvas id="figB_draw" class="fig-draw" width="360" height="300"></canvas>
+        <canvas id="figB" class="fig" width="540" height="450"></canvas>
+        <canvas id="figB_draw" class="fig-draw" width="540" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarB">
@@ -541,6 +541,8 @@ const A_A={x:180,y:55}, A_B={x:75,y:225}, A_C={x:285,y:225};
 function renderFigureA(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-360)/2,(canvas.height-300)/2);
   const A=A_A,B=A_B,C=A_C;
 
   ctx.strokeStyle='#333'; ctx.lineWidth=2;
@@ -571,6 +573,7 @@ function renderFigureA(canvas, p){
     angleArc(ctx,C,A,B,22,'#db2777');
     drawLabel(ctx,C.x-34,C.y-18,'x','#db2777',17);
   }
+  ctx.restore();
 }
 
 /* ════════════════════════════════
@@ -582,6 +585,8 @@ const B_D={x:B_B.x+0.42*(B_A.x-B_B.x), y:B_B.y+0.42*(B_A.y-B_B.y)};
 function renderFigureB(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-360)/2,(canvas.height-300)/2);
   const A=B_A,B=B_B,C=B_C,D=B_D;
 
   ctx.strokeStyle='#333'; ctx.lineWidth=2;
@@ -621,6 +626,7 @@ function renderFigureB(canvas, p){
     angleArc(ctx,A,D,C,22,'#db2777');
     drawLabel(ctx,aLabel.x,aLabel.y,'x','#db2777',17);
   }
+  ctx.restore();
 }
 
 /* ════════════════════════════════

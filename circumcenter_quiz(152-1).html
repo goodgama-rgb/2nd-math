@@ -206,9 +206,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
       <div class="formula" id="qAformula" style="display:none"></div>
     </div>
     <div class="fig-wrap">
-      <div class="fig-stack" style="aspect-ratio:300/300;max-width:300px">
-        <canvas id="figA" class="fig" width="300" height="300"></canvas>
-        <canvas id="figA_draw" class="fig-draw" width="300" height="300"></canvas>
+      <div class="fig-stack" style="aspect-ratio:450/450;max-width:450px">
+        <canvas id="figA" class="fig" width="450" height="450"></canvas>
+        <canvas id="figA_draw" class="fig-draw" width="450" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarA">
@@ -261,9 +261,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
       <div class="formula" id="qBformula" style="display:none"></div>
     </div>
     <div class="fig-wrap">
-      <div class="fig-stack" style="aspect-ratio:380/300;max-width:380px">
-        <canvas id="figB" class="fig" width="380" height="300"></canvas>
-        <canvas id="figB_draw" class="fig-draw" width="380" height="300"></canvas>
+      <div class="fig-stack" style="aspect-ratio:570/450;max-width:570px">
+        <canvas id="figB" class="fig" width="570" height="450"></canvas>
+        <canvas id="figB_draw" class="fig-draw" width="570" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarB">
@@ -563,8 +563,10 @@ function computePhaseAPoints(p){
 function renderFigureA(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-300)/2,(canvas.height-300)/2);
   const raw=computePhaseAPoints(p);
-  const F=fitPointsToCanvas({O:raw.O,A:raw.A,B:raw.B,C:raw.C}, canvas.width, canvas.height, 56);
+  const F=fitPointsToCanvas({O:raw.O,A:raw.A,B:raw.B,C:raw.C}, 300, 300, 56);
   const {O,A,B,C}=F;
 
   // 삼각형
@@ -614,6 +616,7 @@ function renderFigureA(canvas, p){
     const xLbl=angleMidPoint(A,O,C,32);
     drawLabel(ctx,xLbl.x,xLbl.y,'x','#0d9488',15);
   }
+  ctx.restore();
 }
 
 /* ════════════════════════════════
@@ -648,8 +651,10 @@ function rightAngleMark(ctx,corner,p1,p2,size,color){
 function renderFigureB(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-380)/2,(canvas.height-300)/2);
   const raw=computePhaseBPoints(p);
-  const F2=fitPointsToCanvas(raw, canvas.width, canvas.height, 40);
+  const F2=fitPointsToCanvas(raw, 380, 300, 40);
   const {A,B,C,O,D,E,F}=F2;
 
   ctx.strokeStyle='#333'; ctx.lineWidth=2;
@@ -684,6 +689,7 @@ function renderFigureB(canvas, p){
   } else {
     midDashLabel(ctx,C,F,centroid,'x cm','#0d9488',11,9);
   }
+  ctx.restore();
 }
 
 /* ════════════════════════════════

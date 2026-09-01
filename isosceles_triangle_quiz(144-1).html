@@ -91,7 +91,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 
 .fig-wrap{display:flex;justify-content:center;margin-bottom:14px}
 canvas.fig{background:#fff;border-radius:8px}
-.fig-stack{position:relative;width:100%;max-width:360px;aspect-ratio:360/300;margin:0 auto}
+.fig-stack{position:relative;width:100%;max-width:540px;aspect-ratio:540/450;margin:0 auto}
 .fig-stack canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .fig-draw{touch-action:none}
 
@@ -207,8 +207,8 @@ canvas.fig{background:#fff;border-radius:8px}
     </div>
     <div class="fig-wrap">
       <div class="fig-stack">
-        <canvas id="figA" class="fig" width="360" height="300"></canvas>
-        <canvas id="figA_draw" class="fig-draw" width="360" height="300"></canvas>
+        <canvas id="figA" class="fig" width="540" height="450"></canvas>
+        <canvas id="figA_draw" class="fig-draw" width="540" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarA">
@@ -258,8 +258,8 @@ canvas.fig{background:#fff;border-radius:8px}
     </div>
     <div class="fig-wrap">
       <div class="fig-stack">
-        <canvas id="figB" class="fig" width="360" height="300"></canvas>
-        <canvas id="figB_draw" class="fig-draw" width="360" height="300"></canvas>
+        <canvas id="figB" class="fig" width="540" height="450"></canvas>
+        <canvas id="figB_draw" class="fig-draw" width="540" height="450"></canvas>
       </div>
     </div>
     <div class="draw-toolbar" id="toolbarB">
@@ -523,6 +523,8 @@ function drawLabel(ctx,x,y,text,color,size,weight){
 function renderFigure(canvas, p){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate((canvas.width-360)/2,(canvas.height-300)/2);
   const A=PT_A,B=PT_B,C=PT_C,D=PT_D;
 
   // 밑변 (필요 시 연장선 포함)
@@ -565,6 +567,7 @@ function renderFigure(canvas, p){
     angleArc(ctx,C,D,A,22,'#db2777');
     drawLabel(ctx,C.x+36,C.y-22,'x','#db2777',17);
   }
+  ctx.restore();
 }
 
 /* ════════════════════════════════

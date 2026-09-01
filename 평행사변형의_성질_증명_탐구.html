@@ -318,8 +318,8 @@
     <div class="svg-wrap">
       <svg id="canvas" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
         <polygon id="quadABCD" class="quad" points=""></polygon>
-        <polygon id="triABC" class="tri-half" points=""></polygon>
         <polygon id="triCDA" class="tri-half" points=""></polygon>
+        <polygon id="triABC" class="tri-half" points=""></polygon>
         <line id="diagAC" class="diag" x1="0" y1="0" x2="0" y2="0"></line>
 
         <path id="arcBAC" class="angle-arc arc-pair1" d=""></path>
@@ -712,7 +712,11 @@
     const showHalves = showDiagNow();
     triABC.style.display = showHalves ? 'block' : 'none';
     triCDA.style.display = showHalves ? 'block' : 'none';
-    triABC.style.transform = state.rotateOn ? `matrix(-1,0,0,-1,${2*O.x},${2*O.y})` : '';
+    // matrix(-1,0,0,-1,...)는 브라우저가 애니메이션을 "회전"이 아니라 "배율 1→-1"로 해석해 중간에 쪼그라들 수 있어
+    // translate+rotate+translate로 명시적 회전으로 표현
+    triABC.style.transform = state.rotateOn
+      ? `translate(${O.x}px, ${O.y}px) rotate(180deg) translate(${-O.x}px, ${-O.y}px)`
+      : '';
 
     const r1 = 26, r2 = 34;
     arcBAC.setAttribute('d', vertexArc(A, B, C, r1));
