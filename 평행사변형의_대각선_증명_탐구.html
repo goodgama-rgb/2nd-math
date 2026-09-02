@@ -68,6 +68,7 @@
   .half-tick{ stroke-width:2; display:none; }
   .half-tick.pair1{ stroke:#e0455a; }
   .half-tick.pair2{ stroke:#3b6fe0; }
+  .side-tick{ stroke-width:2; stroke:#1e7a53; display:none; }
   .half-label{ font-size:13px; font-weight:800; display:none; text-anchor:middle; }
   .half-label.pair1{ fill:#c0392b; }
   .half-label.pair2{ fill:#2f52b0; }
@@ -267,6 +268,8 @@
         <path id="arcP1b" class="angle-arc arc-p1" d=""></path>
         <path id="arcP2a" class="angle-arc arc-p2" d=""></path>
         <path id="arcP2b" class="angle-arc arc-p2" d=""></path>
+        <path id="tickSide1" class="side-tick" d=""></path>
+        <path id="tickSide2" class="side-tick" d=""></path>
 
         <polygon id="triOCD" class="tri-half" points=""></polygon>
         <polygon id="triOAB" class="tri-half" points=""></polygon>
@@ -407,6 +410,7 @@
             <button class="btn btn-check" id="btnShowPathAngles">엇각 표시하기</button>
           </div>
           <div class="fillsentence" id="pathAngleText" style="display:none;"></div>
+          <div class="fillsentence" id="pathSideText" style="display:none;"></div>
           <div class="feedback" id="fbPathAngles"></div>
         </div>
 
@@ -558,6 +562,7 @@
   const triShade1 = document.getElementById('triShade1'), triShade2 = document.getElementById('triShade2');
   const arcP1a=document.getElementById('arcP1a'), arcP1b=document.getElementById('arcP1b');
   const arcP2a=document.getElementById('arcP2a'), arcP2b=document.getElementById('arcP2b');
+  const tickSide1=document.getElementById('tickSide1'), tickSide2=document.getElementById('tickSide2');
   const segOA=document.getElementById('segOA'), segOC=document.getElementById('segOC');
   const segOB=document.getElementById('segOB'), segOD=document.getElementById('segOD');
   const tickOA=document.getElementById('tickOA'), tickOC=document.getElementById('tickOC');
@@ -709,6 +714,12 @@
     arcP1a.setAttribute('d', arcA1); arcP1b.setAttribute('d', arcA2);
     arcP2a.setAttribute('d', arcB1); arcP2b.setAttribute('d', arcB2);
     [arcP1a,arcP1b,arcP2a,arcP2b].forEach(el=>{ el.style.display = angOn ? 'block' : 'none'; });
+
+    // ASA의 세 번째 조건(끼인변)인 평행사변형의 대변 길이가 같다는 사실을 눈금으로도 보여줌
+    const [sideP1, sideQ1, sideP2, sideQ2] = (pair === 'ab') ? [A,B,D,C] : [A,D,C,B];
+    tickSide1.setAttribute('d', tickPath(sideP1, sideQ1, 1));
+    tickSide2.setAttribute('d', tickPath(sideP2, sideQ2, 1));
+    [tickSide1,tickSide2].forEach(el=>{ el.style.display = angOn ? 'block' : 'none'; });
   }
 
   // ---------- 다른 평행사변형 보기 ----------
@@ -821,9 +832,14 @@
     angleEl.innerHTML = state.pathChosen==='ab'
       ? '∠OAB = ∠OCD (엇각), ∠OBA = ∠ODC (엇각)'
       : '∠OAD = ∠OCB (엇각), ∠ODA = ∠OBC (엇각)';
+    const sideEl = document.getElementById('pathSideText');
+    sideEl.style.display = 'block';
+    sideEl.innerHTML = state.pathChosen==='ab'
+      ? '또한 평행사변형에서는 두 대변의 길이가 각각 같으므로 <b>AB=DC</b>이다.'
+      : '또한 평행사변형에서는 두 대변의 길이가 각각 같으므로 <b>AD=CB</b>이다.';
     const fb = document.getElementById('fbPathAngles');
     fb.className='feedback success';
-    fb.textContent = '✅ 두 엇각 쌍을 확인했어요. 이제 합동 조건을 정해봅시다.';
+    fb.textContent = '✅ 두 엇각 쌍과, 평행사변형의 성질로 얻은 변의 길이까지 — ASA 합동의 세 조건이 모두 모였어요. 이제 합동 조건을 정해봅시다.';
     document.getElementById('pathCongBlock').classList.add('show');
   });
   document.getElementById('checkPathCong').addEventListener('click', ()=>{
