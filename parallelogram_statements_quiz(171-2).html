@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>평행사변형 판별하기</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --yellow-l:#fef9c3;--yellow:#854d0e;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration-line:overline}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-badge{background:rgba(255,255,255,.2);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:.06em}
+.hdr-title{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.timer{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.timer.warn{color:#f97316}
+.timer.danger{color:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.name-wrap{display:flex;gap:6px;align-items:center}
+.name-wrap label{font-size:12px;opacity:.7}
+.name-wrap input{border:none;border-radius:6px;padding:5px 9px;font-size:13px;width:90px;color:var(--ink);background:rgba(255,255,255,.9)}
+
+.streak-bar{background:var(--indigo-ll);border-bottom:1px solid #e0e7ff;padding:8px 24px}
+.streak-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.streak-label{font-size:12px;color:var(--ink2);font-weight:600}
+.streak-dots{display:flex;gap:6px}
+.sdot{width:14px;height:14px;border-radius:50%;background:#c7d2fe;transition:all .3s}
+.sdot.hit{background:var(--green)}
+
+.main{max-width:720px;margin:0 auto;padding:24px 16px}
+
+.level-screen{text-align:center;padding:40px 20px}
+.level-screen h2{font-size:24px;font-weight:700;margin-bottom:8px}
+.level-screen p{font-size:14px;color:var(--ink2);line-height:1.7;margin-bottom:32px}
+.level-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:480px;margin:0 auto}
+.level-card{background:#fff;border:2px solid #e0e7ff;border-radius:var(--r);padding:24px 20px;cursor:pointer;transition:all .2s;text-align:left}
+.level-card:hover{border-color:var(--indigo);box-shadow:var(--shadow)}
+.lc-icon{font-size:32px;margin-bottom:10px}
+.lc-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.lc-desc{font-size:13px;color:var(--ink2);line-height:1.6}
+.lc-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:8px;font-weight:600}
+.tag1{background:#dbeafe;color:#1d4ed8}
+.tag2{background:#fde8d8;color:#b45309}
+
+.concept{background:var(--indigo-ll);border-left:3px solid var(--indigo);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink);line-height:1.8}
+.concept strong{color:var(--indigo)}
+
+.ref-fig-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px}
+.ref-fig-box{position:relative;width:220px;aspect-ratio:220/190}
+.ref-fig-box canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.ref-fig-cap{font-size:12px;color:var(--ink3);margin-top:4px}
+
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.qtop{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.qnum{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--indigo-l);color:var(--indigo)}
+.qtext{font-size:15px;font-weight:600;line-height:1.7;margin-bottom:14px}
+
+.hint-box{margin-bottom:14px}
+.hint-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px dashed #c7d2fe;color:var(--indigo);font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit}
+.hint-toggle-btn:hover{background:var(--indigo-ll);border-color:var(--indigo)}
+.hint-used-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink3);font-weight:600}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-card{background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px 22px;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+.modal-card p{font-size:14px;line-height:1.8;color:var(--ink);margin-bottom:20px}
+.modal-btns{display:flex;gap:10px}
+.modal-btn{flex:1;padding:11px 10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid transparent}
+.modal-btn-no{background:var(--ink);color:#fff}
+.modal-btn-no:hover{background:#111122}
+.modal-btn-yes{background:#fff;border-color:#e0e0ee;color:var(--ink2)}
+.modal-btn-yes:hover{background:#f4f4f8}
+
+.formula{background:#fff8f0;border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:9px 14px;margin-bottom:14px;font-size:13px;color:var(--ink);line-height:1.9}
+.formula strong{color:var(--orange)}
+
+.stmt-row{border:1.5px solid #e0e7ff;border-radius:10px;padding:14px 16px;margin-bottom:12px;transition:all .2s}
+.stmt-row.row-correct{border-color:var(--green);background:var(--green-ll)}
+.stmt-row.row-wrong{border-color:var(--red);background:var(--red-l)}
+.stmt-head{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.stmt-num{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--indigo);padding-top:1px}
+.stmt-text{font-size:14px;line-height:1.7;color:var(--ink)}
+.tf-toggle{display:flex;gap:8px;margin-bottom:8px}
+.tf-btn{flex:1;padding:9px 8px;border-radius:8px;border:1.5px solid #d8ddfb;background:#fff;color:var(--ink2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.tf-btn:hover{border-color:var(--indigo)}
+.tf-btn.active{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.tf-btn:disabled{cursor:default;opacity:.85}
+.reason-box{margin-top:8px;padding-top:10px;border-top:1px dashed #d8ddfb}
+.reason-label{font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:8px}
+.reason-list{display:flex;flex-direction:column;gap:6px}
+.reason-btn{padding:8px 12px;border-radius:8px;border:1.5px solid #d8ddfb;background:#fff;color:var(--ink);font-size:12.5px;text-align:left;cursor:pointer;font-family:inherit;transition:all .15s}
+.reason-btn:hover{border-color:var(--indigo);background:var(--indigo-ll)}
+.reason-btn.active{background:var(--indigo-l);border-color:var(--indigo);font-weight:700}
+.reason-btn:disabled{cursor:default}
+.row-status{font-size:12px;font-weight:700;margin-top:8px}
+.row-status.ok{color:var(--green)}
+.row-status.no{color:var(--red)}
+
+.grade-btn{width:100%;padding:12px;border-radius:9px;background:var(--indigo);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px}
+.grade-btn:hover{background:#4338ca}
+.grade-btn:disabled{background:#c7d2fe;cursor:default}
+.grade-note{font-size:12px;color:var(--orange);margin-top:8px;display:none}
+.grade-note.show{display:block}
+
+.fb{border-radius:8px;padding:12px 16px;margin-top:12px;font-size:14px;line-height:1.7;display:none}
+.fb.show{display:block}
+.fb-correct{background:var(--green-ll);border-left:3px solid var(--green);color:#14532d}
+.fb-wrong{background:var(--orange-l);border-left:3px solid var(--orange);color:#7c2d12}
+.fb-hint{background:var(--yellow-l);border-left:3px solid #ca8a04;color:var(--yellow)}
+.fb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.em{font-weight:700;color:var(--indigo)}
+
+.next-btn{padding:10px 24px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;display:none;font-family:inherit;margin-top:6px}
+.next-btn:hover{background:#15803d}
+.next-btn.show{display:inline-block}
+
+.complete-wrap{text-align:center;padding:48px 20px}
+.complete-icon{font-size:56px;margin-bottom:16px}
+.complete-wrap h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.complete-wrap p{font-size:14px;color:var(--ink2);line-height:1.8}
+.score-box{display:inline-block;background:var(--green-l);border:2px solid var(--green);border-radius:12px;padding:16px 32px;margin:18px 0}
+.sc-num{font-size:42px;font-weight:700;color:var(--green)}
+.sc-label{font-size:13px;color:var(--green)}
+.restart-btn{padding:11px 28px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+
+.screen{display:none}
+.screen.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;">← 학습 선택 목록으로 돌아가기</a>
+  <script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+  <span class="hdr-badge">수학</span>
+  <span class="hdr-title">평행사변형 판별하기</span>
+  <div class="hdr-right">
+    <div class="timer" id="timerEl">10:00</div>
+    <div class="name-wrap"><label>이름</label><input id="sname" type="text" placeholder="이름 입력"></div>
+  </div>
+</div>
+
+<div class="streak-bar" id="streakBar" style="display:none">
+  <div class="streak-inner">
+    <span class="streak-label">연속 정답 (오답 없이)</span>
+    <div class="streak-dots"><span class="sdot" id="sd0"></span><span class="sdot" id="sd1"></span><span class="sdot" id="sd2"></span></div>
+    <span style="font-size:12px;color:var(--ink2)" id="streakMsg">오답 없이 3문제 연속 → 완료!</span>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="main screen active" id="scLevel">
+  <div class="level-screen">
+    <h2>나의 레벨을 선택하세요</h2>
+    <p>□ABCD에 대한 4개의 문장을 보고, 평행사변형이 되는지 아닌지, 그리고 그 이유(조건)를 판단해요.<br>3문제 연속 정답이면 완료!</p>
+    <div class="level-cards">
+      <div class="level-card" onclick="startLevel(1)">
+        <div class="lc-icon">🌱</div>
+        <div class="lc-title">레벨 1</div>
+        <div class="lc-desc">교과서 문제와 같은 4문장 구성.<br>숫자만 바뀌어요.</div>
+        <span class="lc-tag tag1">기본</span>
+      </div>
+      <div class="level-card" onclick="startLevel(2)">
+        <div class="lc-icon">🔥</div>
+        <div class="lc-title">레벨 2</div>
+        <div class="lc-desc">문장 구성이 다양해져요!<br>등장하는 조건도 더 많아져요.</div>
+        <span class="lc-tag tag2">심화</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main screen" id="scA">
+  <div class="concept">
+    <strong>평행사변형이 되는 조건:</strong> 다음 중 하나만 만족해도 □ABCD는 평행사변형이에요.<br>
+    (1) 두 쌍의 대변이 각각 평행<br>
+    (2) 두 쌍의 대변의 길이가 각각 같다<br>
+    (3) 두 쌍의 대각의 크기가 각각 같다<br>
+    (4) 두 대각선이 서로를 이등분한다<br>
+    (5) 한 쌍의 대변이 평행하고 그 길이가 같다
+  </div>
+  <div class="ref-fig-wrap">
+    <div class="ref-fig-box"><canvas id="figRef" width="220" height="190"></canvas></div>
+    <div class="ref-fig-cap">점 O는 두 대각선의 교점 (아래 문장은 모두 이 도형 □ABCD에 대한 설명이에요)</div>
+  </div>
+  <div class="qcard" id="qA">
+    <div class="qtop"><span class="qnum" id="qAnumBadge">Q1</span></div>
+    <div class="qtext">다음 4개의 문장 중, □ABCD가 평행사변형이 되는 것을 모두 찾고 그 이유를 골라보세요.</div>
+    <div class="hint-box">
+      <button class="hint-toggle-btn" id="hintBtnA" onclick="requestHint('A')">💡 힌트 보기</button>
+      <span class="hint-used-tag" id="hintTagA" style="display:none">💡 힌트를 열람했어요</span>
+      <div class="formula" id="qAformula" style="display:none">힌트: 주어진 것이 <strong>대변인지, 대각인지, 대각선인지</strong> 먼저 구분하세요. 대각선 문제에서는 같다고 한 두 선분이 <strong>같은 대각선의 두 절반</strong>인지, 아니면 <strong>서로 다른 대각선에서 한쪽씩 가져온 것</strong>인지 꼭 확인하세요.</div>
+    </div>
+    <div id="stmtWrap"></div>
+    <button class="grade-btn" id="gradeBtn" onclick="gradeAll()">채점하기</button>
+    <div class="grade-note" id="gradeNote">모든 문장에 답해주세요. ('이다'를 골랐다면 이유도 골라야 해요)</div>
+    <div class="fb fb-wrong" id="fwA"><div class="fb-label">다시 확인해보세요</div><span id="fwAtxt"></span></div>
+    <div class="fb fb-hint" id="fhA"><div class="fb-label">힌트</div><span id="fhAtxt"></span></div>
+    <div class="fb fb-correct" id="fcA"><div class="fb-label">정답!</div><span id="fcAtxt"></span></div>
+    <div style="margin-top:8px"><button class="next-btn" id="nbA" onclick="nextA()">다음 문제 →</button></div>
+  </div>
+</div>
+
+<!-- 힌트 열람 확인 모달 -->
+<div class="modal-overlay" id="hintModal">
+  <div class="modal-card">
+    <p>한 번 더 생각해보세요. 스스로 문제를 풀었을 때 더 학습 효과가 좋습니다.<br><br>
+    또한, 힌트를 열람하면 이 문제는 정답을 맞춰도 <strong>'연속 정답'</strong>에 해당하지 않습니다.<br><br>
+    그래도 힌트를 열람하시겠습니까?</p>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-no" onclick="closeHintModal(false)">아니오, 다시 풀어볼게요</button>
+      <button class="modal-btn modal-btn-yes" onclick="closeHintModal(true)">예, 힌트 볼게요</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div class="main screen" id="scComplete">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">🎉</div>
+      <h2>모든 문제 통과!</h2>
+      <div class="score-box">
+        <div class="sc-num" id="finalCorrect">0</div>
+        <div class="sc-label">/ <span id="finalTotal">0</span> 문제 정답</div>
+      </div>
+      <p id="completeMsg"></p><br>
+      <button class="restart-btn" onclick="restart()">처음부터 다시 하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMEOUT -->
+<div class="main screen" id="scTimeout">
+  <div class="qcard">
+    <div class="complete-wrap">
+      <div class="complete-icon">⏰</div>
+      <h2 style="color:var(--red)">시간이 끝났어요!</h2>
+      <div class="score-box"><div class="sc-num" id="toCorrect">0</div><div class="sc-label">문제 정답</div></div>
+      <button class="restart-btn" onclick="restart()">다시 도전하기</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id') };
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._reportQuizComplete = function(){
+    if(!s.cls || !s.num || !s.id) return;
+    firebase.firestore().collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('quiz complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   조건 텍스트 (조건1=정의 자체, 참인 문장의 근거로는 절대 쓰이지 않지만
+   보기에는 항상 포함시켜 오답 함정으로 사용)
+════════════════════════════════ */
+const COND_TEXT={
+  1:'두 쌍의 대변이 각각 평행하다',
+  2:'두 쌍의 대변의 길이가 각각 같다',
+  3:'두 쌍의 대각의 크기가 각각 같다',
+  4:'두 대각선이 서로를 이등분한다',
+  5:'한 쌍의 대변이 평행하고, 그 길이가 같다'
+};
+
+/* ════════════════════════════════
+   문장 생성기 — 참(평행사변형이다, 이유 포함) / 거짓(아니다)
+════════════════════════════════ */
+function randPick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+const sg=t=>`<span class="seg">${t}</span>`;
+
+const GEN={
+  cond2True(){
+    const {p,q}=randPick([{p:4,q:6},{p:5,q:7},{p:6,q:8},{p:3,q:5}]);
+    return {text:`${sg('AB')}=${sg('DC')}=${p}cm, ${sg('AD')}=${sg('BC')}=${q}cm`, isPara:true, reason:2};
+  },
+  cond3True(){
+    const a=randPick([70,80,60,75]); const b=180-a;
+    return {text:`∠A=∠C=${a}°, ∠B=∠D=${b}°`, isPara:true, reason:3};
+  },
+  cond4True(){
+    const {p,q}=randPick([{p:3,q:2},{p:4,q:3},{p:5,q:2},{p:3,q:4}]);
+    return {text:`${sg('AO')}=${sg('OC')}=${p}cm, ${sg('BO')}=${sg('OD')}=${q}cm`, isPara:true, reason:4};
+  },
+  cond5True(){
+    const {p,q}=randPick([{p:6,q:5},{p:7,q:6},{p:5,q:4},{p:8,q:7}]);
+    return {text:`${sg('AD')} ∥ ${sg('BC')}, ${sg('AB')}=${p}cm, ${sg('AD')}=${sg('BC')}=${q}cm`, isPara:true, reason:5};
+  },
+  kiteFalse(){
+    const {p,q}=randPick([{p:8,q:9},{p:5,q:7},{p:6,q:9},{p:4,q:6}]);
+    return {text:`${sg('AB')}=${sg('DA')}=${p}cm, ${sg('BC')}=${sg('CD')}=${q}cm`, isPara:false, reason:null};
+  },
+  wrongDiagFalse(){
+    const {p,q}=randPick([{p:4,q:5},{p:3,q:5},{p:5,q:6},{p:4,q:6}]);
+    return {text:`${sg('OA')}=${sg('OB')}=${p}cm, ${sg('OC')}=${sg('OD')}=${q}cm`, isPara:false, reason:null};
+  },
+  oneParallelFalse(){
+    const {p,q}=randPick([{p:6,q:8},{p:5,q:7},{p:7,q:9},{p:4,q:6}]);
+    return {text:`${sg('AD')} ∥ ${sg('BC')}, ${sg('AB')}=${p}cm, ${sg('DC')}=${q}cm`, isPara:false, reason:null};
+  },
+  adjAngleFalse(){
+    const {a,b}=randPick([{a:70,b:60},{a:80,b:70},{a:65,b:55},{a:75,b:65}]);
+    return {text:`∠A=${a}°, ∠B=${b}°`, isPara:false, reason:null};
+  }
+};
+
+/* 문장 배치 세트 — 참(평행사변형)인 문장의 '위치'와 '조건 종류'가 세트마다 서로 다르게
+   설계되어 있어, 같은 세트를 다시 뽑기 전에는 매 문제가 실질적으로 다른 문제가 된다.
+   (단순히 숫자만 바뀌는 게 아니라, 몇 번 문장이 참인지/어떤 조건이 근거인지가 달라짐) */
+// 레벨1: 참 2개 + 거짓 2개, 참 위치와 근거 조건이 세트마다 다름
+const SETS_L1=[
+  ['cond3True','kiteFalse','wrongDiagFalse','cond5True'],      // 참: (1)(4), 조건 3·5
+  ['kiteFalse','cond2True','cond4True','adjAngleFalse'],       // 참: (2)(3), 조건 2·4
+  ['cond5True','wrongDiagFalse','cond3True','oneParallelFalse'],// 참: (1)(3), 조건 5·3
+  ['adjAngleFalse','cond4True','oneParallelFalse','cond2True'],// 참: (2)(4), 조건 4·2
+  ['cond2True','adjAngleFalse','cond5True','wrongDiagFalse'],  // 참: (1)(3), 조건 2·5
+  ['wrongDiagFalse','cond3True','kiteFalse','cond4True'],      // 참: (2)(4), 조건 3·4
+  ['cond4True','cond5True','kiteFalse','oneParallelFalse'],    // 참: (1)(2), 조건 4·5
+  ['kiteFalse','oneParallelFalse','cond2True','cond3True']     // 참: (3)(4), 조건 2·3
+];
+// 레벨2: 레벨1 세트 전체 + 참이 1개뿐이거나 3개인 세트도 섞여 난도↑
+const SETS_L2=[
+  ...SETS_L1,
+  ['cond2True','cond3True','cond4True','kiteFalse'],           // 참: (1)(2)(3)
+  ['wrongDiagFalse','adjAngleFalse','oneParallelFalse','cond5True'] // 참: (4)뿐
+];
+function buildQuestion(level){
+  const pool = level===1 ? SETS_L1 : SETS_L2;
+  const used = st.usedIdx.A;
+  if(used.length>=pool.length) used.length=0;
+  let idx;
+  do{ idx=Math.floor(Math.random()*pool.length); }while(used.includes(idx));
+  used.push(idx);
+  return pool[idx].map(k=>GEN[k]());
+}
+
+/* ════════════════════════════════
+   상태
+════════════════════════════════ */
+const st={
+  level:1, streak:0, hadWrong:false, hintUsed:false,
+  totalCorrect:0, totalQ:0,
+  curRows:null, usedIdx:{A:[]},
+  timerSec:600, timerInt:null
+};
+let hintModalPhase=null;
+function isBlocked(){ return st.hadWrong || st.hintUsed; }
+function blockNote(){
+  if(!isBlocked()) return '';
+  if(st.hadWrong && st.hintUsed) return '<br><span style="font-size:12px;color:#888">※ 오답 및 힌트 열람 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  if(st.hadWrong) return '<br><span style="font-size:12px;color:#888">※ 오답 이력이 있어 연속 정답에 포함되지 않아요</span>';
+  return '<br><span style="font-size:12px;color:#888">※ 힌트를 열람해 연속 정답에 포함되지 않아요</span>';
+}
+function requestHint(phase){
+  hintModalPhase=phase;
+  document.getElementById('hintModal').classList.add('show');
+}
+function closeHintModal(confirmed){
+  document.getElementById('hintModal').classList.remove('show');
+  const phase=hintModalPhase;
+  hintModalPhase=null;
+  if(confirmed && phase){
+    st.hintUsed=true;
+    document.getElementById('q'+phase+'formula').style.display='block';
+    document.getElementById('hintBtn'+phase).style.display='none';
+    document.getElementById('hintTag'+phase).style.display='inline-flex';
+    updateStreak();
+  }
+}
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* ════════════════════════════════
+   타이머 / 화면 전환
+════════════════════════════════ */
+function startTimer(){
+  st.timerInt=setInterval(()=>{
+    st.timerSec--;
+    const m=Math.floor(st.timerSec/60), sec=st.timerSec%60;
+    const el=document.getElementById('timerEl');
+    el.textContent=`${m}:${sec.toString().padStart(2,'0')}`;
+    el.className='timer'+(st.timerSec<=60?' danger':st.timerSec<=180?' warn':'');
+    if(st.timerSec<=0){
+      clearInterval(st.timerInt);
+      document.getElementById('toCorrect').textContent=st.totalCorrect;
+      showScreen('scTimeout');
+    }
+  },1000);
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function restart(){clearInterval(st.timerInt);location.reload();}
+function updateStreak(){
+  ['sd0','sd1','sd2'].forEach((id,i)=>document.getElementById(id).className='sdot'+(i<st.streak?' hit':''));
+  const msg=document.getElementById('streakMsg');
+  if(st.streak>=3) msg.textContent='통과!';
+  else if(st.hadWrong && st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답+힌트 열람 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hadWrong) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답 이력 있음 — 연속 정답에 미포함</span>';
+  else if(st.hintUsed) msg.innerHTML='<span style="color:#e05a20">⚠️ 힌트 열람 — 연속 정답에 미포함</span>';
+  else if(st.streak>0) msg.textContent=`${st.streak}개 완료! ${3-st.streak}개 더!`;
+  else msg.textContent='오답 없이 3문제 연속 → 완료!';
+}
+function markCorrect(){
+  st.totalCorrect++;
+  if(!isBlocked()) st.streak++; else st.streak=0;
+  updateStreak();
+}
+function markWrong(){ st.hadWrong=true; st.streak=0; updateStreak(); }
+function startLevel(lv){
+  st.level=lv;
+  document.getElementById('streakBar').style.display='';
+  startTimer();
+  renderRefFigure(document.getElementById('figRef'));
+  loadPhaseA();
+}
+
+/* ════════════════════════════════
+   도형 그리기 헬퍼
+════════════════════════════════ */
+function drawLabel(ctx,x,y,text,color,size,weight){
+  ctx.fillStyle=color;
+  ctx.font=`${weight||700} ${size||13}px 'Noto Sans KR',sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,x,y);
+}
+function outsideLabelPos(pt, centroid, dist){
+  const dx=pt.x-centroid.x, dy=pt.y-centroid.y, len=Math.hypot(dx,dy)||1;
+  return {x:pt.x+dx/len*dist, y:pt.y+dy/len*dist};
+}
+function lineIntersect(P1,P2,P3,P4){
+  const x1=P1.x,y1=P1.y,x2=P2.x,y2=P2.y,x3=P3.x,y3=P3.y,x4=P4.x,y4=P4.y;
+  const d=(x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
+  const t=((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4))/d;
+  return {x:x1+t*(x2-x1), y:y1+t*(y2-y1)};
+}
+function computeParallelogram(AB, BC, thetaDeg){
+  const rad=thetaDeg*Math.PI/180;
+  const B={x:0,y:0}, C={x:BC,y:0};
+  const A={x:AB*Math.cos(rad), y:-AB*Math.sin(rad)};
+  const D={x:A.x+(C.x-B.x), y:A.y+(C.y-B.y)};
+  return {A,B,C,D};
+}
+function fitPointsToCanvas(pointsObj, canvasW, canvasH, pad){
+  const keys=Object.keys(pointsObj);
+  const xs=keys.map(k=>pointsObj[k].x), ys=keys.map(k=>pointsObj[k].y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const bw=(maxX-minX)||1, bh=(maxY-minY)||1;
+  const availW=canvasW-2*pad, availH=canvasH-2*pad;
+  const scale=Math.min(availW/bw, availH/bh);
+  const offX=pad-minX*scale+(availW-bw*scale)/2;
+  const offY=pad-minY*scale+(availH-bh*scale)/2;
+  const out={};
+  keys.forEach(k=>{ out[k]={x:pointsObj[k].x*scale+offX, y:pointsObj[k].y*scale+offY}; });
+  return out;
+}
+/* 참고 도형: 실제 평행사변형 모양(꼭짓점 이름표 확인용, 특정 문장의 수치와는 무관) */
+function renderRefFigure(canvas){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw=computeParallelogram(5,7,65);
+  const {A,B,C,D}=fitPointsToCanvas(raw,canvas.width,canvas.height,34);
+  const centroid={x:(A.x+B.x+C.x+D.x)/4,y:(A.y+B.y+C.y+D.y)/4};
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.lineTo(D.x,D.y); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y); ctx.lineTo(D.x,D.y); ctx.stroke();
+  const O=lineIntersect(A,C,B,D);
+  const lblA=outsideLabelPos(A,centroid,16), lblB=outsideLabelPos(B,centroid,16), lblC=outsideLabelPos(C,centroid,16), lblD=outsideLabelPos(D,centroid,16);
+  drawLabel(ctx,lblA.x,lblA.y,'A','#333',14);
+  drawLabel(ctx,lblB.x,lblB.y,'B','#333',14);
+  drawLabel(ctx,lblC.x,lblC.y,'C','#333',14);
+  drawLabel(ctx,lblD.x,lblD.y,'D','#333',14);
+  drawLabel(ctx,O.x,O.y-13,'O','#333',12);
+  ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(O.x,O.y,2.2,0,Math.PI*2); ctx.fill();
+}
+
+/* ════════════════════════════════
+   피드백 헬퍼
+════════════════════════════════ */
+function setFb(phase,type,msg){
+  hideFb(phase);
+  const map={wrong:`fw${phase}`,hint:`fh${phase}`,correct:`fc${phase}`};
+  const el=document.getElementById(map[type]);
+  if(el){const spn=el.querySelector('span'); if(spn)spn.innerHTML=msg; el.classList.add('show');}
+}
+function hideFb(phase){[`fw${phase}`,`fh${phase}`,`fc${phase}`].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('show');});}
+
+/* ════════════════════════════════
+   문제 진행
+════════════════════════════════ */
+function loadPhaseA(){
+  st.streak=0; st.hadWrong=false; st.hintUsed=false; st.usedIdx.A=[];
+  updateStreak();
+  showScreen('scA');
+  nextA_prob();
+}
+function nextA_prob(){
+  st.totalQ++;
+  document.getElementById('qAnumBadge').textContent='Q'+st.totalQ;
+  document.getElementById('qAformula').style.display='none';
+  document.getElementById('hintBtnA').style.display='';
+  document.getElementById('hintTagA').style.display='none';
+
+  const stmts=buildQuestion(st.level);
+  st.curRows=stmts.map(s=>({...s, chosenTF:null, chosenReason:null, locked:false, everWrong:false}));
+
+  const wrap=document.getElementById('stmtWrap');
+  wrap.innerHTML='';
+  st.curRows.forEach((row,i)=>{
+    const div=document.createElement('div');
+    div.className='stmt-row';
+    div.id='row'+i;
+    div.innerHTML=`
+      <div class="stmt-head"><span class="stmt-num">(${i+1})</span><span class="stmt-text">${row.text}</span></div>
+      <div class="tf-toggle">
+        <button class="tf-btn" id="tfT${i}" onclick="selectTF(${i},true)">평행사변형이다</button>
+        <button class="tf-btn" id="tfF${i}" onclick="selectTF(${i},false)">아니다</button>
+      </div>
+      <div class="reason-box" id="reasonBox${i}" style="display:none">
+        <div class="reason-label">이유(조건)를 고르세요:</div>
+        <div class="reason-list" id="reasonList${i}"></div>
+      </div>
+      <div class="row-status" id="rowStatus${i}"></div>
+    `;
+    wrap.appendChild(div);
+  });
+
+  document.getElementById('gradeBtn').disabled=false;
+  document.getElementById('gradeBtn').style.display='';
+  document.getElementById('gradeNote').classList.remove('show');
+  hideFb('A'); document.getElementById('nbA').classList.remove('show');
+}
+function selectTF(i,val){
+  const row=st.curRows[i];
+  if(row.locked) return;
+  row.chosenTF=val;
+  document.getElementById('tfT'+i).classList.toggle('active', val===true);
+  document.getElementById('tfF'+i).classList.toggle('active', val===false);
+  const rb=document.getElementById('reasonBox'+i);
+  if(val===true){
+    rb.style.display='block';
+    if(!document.getElementById('reasonList'+i).children.length) buildReasonButtons(i);
+  } else {
+    rb.style.display='none';
+    row.chosenReason=null;
+  }
+  document.getElementById('rowStatus'+i).textContent='';
+  document.getElementById('rowStatus'+i).className='row-status';
+}
+function buildReasonButtons(i){
+  const list=document.getElementById('reasonList'+i);
+  list.innerHTML='';
+  shuffle([1,2,3,4,5]).forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='reason-btn';
+    btn.textContent=COND_TEXT[c];
+    btn.onclick=()=>selectReason(i,c,btn);
+    list.appendChild(btn);
+  });
+}
+function selectReason(i,c,btn){
+  const row=st.curRows[i];
+  if(row.locked) return;
+  row.chosenReason=c;
+  document.querySelectorAll('#reasonList'+i+' .reason-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function gradeAll(){
+  const rows=st.curRows;
+  const incomplete=rows.some(r=> r.chosenTF===null || (r.chosenTF===true && r.chosenReason===null));
+  if(incomplete){
+    document.getElementById('gradeNote').classList.add('show');
+    return;
+  }
+  document.getElementById('gradeNote').classList.remove('show');
+
+  let allOk=true;
+  rows.forEach((row,i)=>{
+    const ok = row.chosenTF===row.isPara && (!row.isPara || row.chosenReason===row.reason);
+    const div=document.getElementById('row'+i);
+    const status=document.getElementById('rowStatus'+i);
+    div.classList.remove('row-correct','row-wrong');
+    if(ok){
+      div.classList.add('row-correct');
+      row.locked=true;
+      document.getElementById('tfT'+i).disabled=true;
+      document.getElementById('tfF'+i).disabled=true;
+      document.querySelectorAll('#reasonList'+i+' .reason-btn').forEach(b=>b.disabled=true);
+      status.textContent='✓ 맞았어요'; status.className='row-status ok';
+    } else {
+      div.classList.add('row-wrong');
+      row.everWrong=true;
+      status.textContent='✗ 다시 생각해보세요'; status.className='row-status no';
+      allOk=false;
+    }
+  });
+
+  if(allOk){
+    const hadAnyWrong = rows.some(r=>r.everWrong);
+    if(hadAnyWrong) st.hadWrong=true;
+    markCorrect();
+    setFb('A','correct','모두 정답이에요!'+blockNote());
+    document.getElementById('gradeBtn').style.display='none';
+    document.getElementById('nbA').classList.add('show');
+  } else {
+    st.hadWrong=true;
+    setFb('A','wrong','틀린 문장을 다시 확인하고, 고친 뒤 다시 채점해보세요.');
+  }
+}
+function nextA(){ if(st.streak>=3){ complete(); return; } nextA_prob(); }
+
+/* ════════════════════════════════
+   완료
+════════════════════════════════ */
+function complete(){
+  clearInterval(st.timerInt);
+  document.getElementById('finalCorrect').textContent=st.totalCorrect;
+  document.getElementById('finalTotal').textContent=st.totalQ;
+  const pct=Math.round(st.totalCorrect/st.totalQ*100);
+  document.getElementById('completeMsg').innerHTML=`정답률 <strong>${pct}%</strong>!<br>`+
+    (pct>=80?'훌륭해요! 평행사변형이 되는 조건을 완벽하게 이해했어요 🌟':
+     pct>=60?'잘 했어요! 조금만 더 연습하면 완벽해질 거예요 💪':
+     '다시 한 번 도전해봐요. 반복하면 꼭 잘 할 수 있어요! 🔥');
+  showScreen('scComplete');
+  if(window._reportQuizComplete) window._reportQuizComplete();
+}
+</script>
+</body>
+</html>

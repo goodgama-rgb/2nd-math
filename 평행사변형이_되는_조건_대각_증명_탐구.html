@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>평행사변형이 되는 조건 — 대각의 크기</title>
+<style>
+  :root{
+    --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+    --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --yellow:#ffce6b;
+    --line:#e3e8f4; --step1:#6c8bff; --step2:#ff8fac; --step3:#3fbf91; --step4:#9b7cff; --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--ink); -webkit-tap-highlight-color:transparent; }
+  header{ padding:22px 24px 16px; text-align:center; background:linear-gradient(135deg,#eef2ff,#fff0f5); border-bottom:1px solid var(--line); }
+  header h1{ margin:0 0 6px; font-size:22px; letter-spacing:-0.3px; }
+  header p{ margin:0; color:var(--muted); font-size:14px; }
+
+  .layout{ max-width:1280px; margin:20px auto; padding:0 16px 60px; display:grid; grid-template-columns:1.15fr 1fr; gap:22px; align-items:start; }
+  .mobile-tabs{ display:none; }
+  @media (max-width:960px){
+    .layout{ grid-template-columns:1fr; }
+    .mobile-tabs{ display:flex; gap:8px; position:sticky; top:0; z-index:80; background:var(--bg); padding:12px 16px 8px; margin:0 -16px 4px; box-shadow:0 4px 10px rgba(43,47,66,.05); }
+    .mobile-tab-btn{ flex:1; padding:11px; border-radius:12px; border:none; background:#eef1fa; color:var(--muted); font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s; }
+    .mobile-tab-btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+    .layout.mobile-show-canvas .activity{ display:none; }
+    .layout.mobile-show-activity .card.sticky{ display:none; }
+    .card.sticky{ position:static; }
+  }
+
+  .card{ background:var(--card); border-radius:var(--radius); padding:18px 18px 20px; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  .sticky{ position:sticky; top:16px; }
+
+  .toolbar{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .btn{ border:none; border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:700; cursor:pointer; background:#eef1fa; color:var(--ink); transition:.15s; font-family:inherit; }
+  .btn:hover{ background:#e2e7f8; }
+  .btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn.active{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .btn-outline{ background:transparent; border:2px solid var(--line); color:var(--muted); }
+  .btn-outline:hover{ background:#f5f7fc; }
+  .btn-sm{ padding:7px 11px; font-size:12.5px; border-radius:9px; }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:hover{ background:var(--primary-dark); }
+  .btn-primary:disabled{ background:#cdd5f5; color:#8a93c2; cursor:not-allowed; box-shadow:none; }
+
+  .svg-wrap{ background:#fbfcff; border-radius:14px; border:1px solid var(--line); padding:6px; }
+  svg{ width:100%; height:auto; display:block; touch-action:none; }
+
+  .quad{ fill:#eef1fb; stroke:#4a5568; stroke-width:2.5; display:none; }
+
+
+  .wedge-piece{ stroke-width:2.5; cursor:grab; }
+  .wedge-piece:active{ cursor:grabbing; }
+  .wedge-piece.grp1{ fill:#57c6a0; fill-opacity:.5; stroke:#1e7a53; }
+  .wedge-piece.grp2{ fill:#9b7cff; fill-opacity:.42; stroke:#6a4fc9; }
+  .wedge-piece.wedge-locked{ cursor:default; }
+  .wedge-mark{ fill:none; stroke-width:2.5; pointer-events:none; }
+  .wedge-mark.grp1{ stroke:#1e7a53; }
+  .wedge-mark.grp2{ stroke:#6a4fc9; }
+  .rotate-icon{ font-size:17px; text-anchor:middle; dominant-baseline:central; cursor:grab; display:none; paint-order:stroke; stroke:#fff; stroke-width:3; }
+  .rotate-icon:active{ cursor:grabbing; }
+
+  .handle{ cursor:grab; }
+  .handle:active{ cursor:grabbing; }
+  .vertex-dot{ fill:#4a5568; }
+  .vertex-name{ font-size:16px; font-weight:700; fill:#4a5568; text-anchor:middle; dominant-baseline:central; }
+
+  .angle-arc{ fill:none; stroke-width:2; display:none; }
+  .arc-p1{ stroke:#1e7a53; }
+  .arc-p2{ stroke:#6a4fc9; }
+  .arc-e{ stroke:#c98a00; }
+  .angle-leader{ stroke-width:1.3; stroke-dasharray:2 3; display:none; }
+  .angle-num{ font-size:12.5px; font-weight:800; display:none; text-anchor:middle; dominant-baseline:central; }
+  .angle-num.arc-p1{ fill:#1e7a53; }
+  .angle-num.arc-p2{ fill:#6a4fc9; }
+  .angle-num.arc-e{ fill:#c98a00; }
+
+  .ext-line{ stroke-width:1.6; stroke-dasharray:5 4; display:none; }
+  .ext-line.pair1{ stroke:#e0455a; }
+  .ext-line.pair2{ stroke:#3b6fe0; }
+  .e-ray{ stroke:#c98a00; stroke-width:2; display:none; }
+  .e-dot{ fill:#c98a00; display:none; }
+  .e-name{ font-size:15px; font-weight:700; fill:#c98a00; text-anchor:middle; dominant-baseline:central; display:none; }
+
+  .seg{ text-decoration-line:overline; text-decoration-thickness:1.3px; text-decoration-skip-ink:none; }
+  .parallel-sym{ display:inline-block; position:relative; width:11px; height:15px; vertical-align:-2px; margin:0 1px; }
+  .parallel-sym::before, .parallel-sym::after{ content:''; position:absolute; top:1px; width:2px; height:14px; background:currentColor; transform:skewX(-16deg); }
+  .parallel-sym::before{ left:1px; }
+  .parallel-sym::after{ left:7px; }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .dot{ width:10px;height:10px;border-radius:3px;display:inline-block; }
+
+  .stepper{ display:flex; gap:8px; margin-bottom:16px; }
+  .step-tab{ flex:1; text-align:center; padding:10px 6px; border-radius:12px; background:#eef1fa; font-size:12.5px; font-weight:700; border:none; cursor:pointer; color:var(--muted); font-family:inherit; transition:.15s; }
+  .step-tab .n{ display:block; font-size:15px; margin-bottom:1px; }
+  .step-tab.current{ background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(108,139,255,.35); }
+  .step-tab.done:not(.current){ background:#e9faf3; color:#1e7a53; }
+  .step-tab.locked{ opacity:.45; cursor:not-allowed; }
+
+  .step-card{ background:var(--card); border-radius:16px; padding:18px 20px 20px; border-left:6px solid var(--step1); box-shadow:0 4px 14px rgba(43,47,66,.05); position:relative; }
+  .step-card[data-step="2"]{ border-left-color:var(--step2); }
+  .step-card[data-step="3"]{ border-left-color:var(--step3); }
+  .step-card[data-step="4"]{ border-left-color:var(--step4); }
+  .step-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .step-badge{ width:28px;height:28px;border-radius:50%; background:var(--step1); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex:none; }
+  .step-card[data-step="2"] .step-badge{ background:var(--step2); }
+  .step-card[data-step="3"] .step-badge{ background:var(--step3); }
+  .step-card[data-step="4"] .step-badge{ background:var(--step4); }
+  .step-head h2{ margin:0; font-size:16.5px; }
+  .step-body p{ margin:6px 0 10px; font-size:14px; line-height:1.6; color:#3c4257; }
+  .hint{ font-size:12.5px; color:#8b93a8; margin-top:4px; }
+
+  .goal-banner{ background:linear-gradient(135deg,#eef2ff,#fff0f5); border:2px solid #c9d4fb; border-radius:14px; padding:16px 18px; text-align:center; font-size:14.5px; line-height:1.7; color:var(--primary-dark); margin-bottom:16px; }
+  .goal-banner .tag{ font-size:12px; font-weight:700; letter-spacing:.5px; color:#8b93c2; display:block; margin-bottom:4px; }
+  .goal-banner b{ font-size:16.5px; }
+
+  .recall-box{ background:#fff6e0; border:1.5px dashed #ffce6b; border-radius:12px; padding:12px 14px; font-size:13px; color:#9a6b00; margin-bottom:12px; }
+  .recall-box b{ color:#7a5400; }
+
+  .choice-list{ display:flex; flex-direction:column; gap:7px; margin:8px 0 12px; }
+  .choice-list label{ display:flex; align-items:center; gap:8px; background:#f7f8fc; border:1.5px solid var(--line); padding:9px 11px; border-radius:10px; font-size:13.5px; cursor:pointer; transition:.15s; }
+  .choice-list label:hover{ background:#eef1fb; }
+  .choice-list input{ accent-color:var(--primary); width:16px; height:16px; flex:none; }
+
+  .feedback{ margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13.5px; line-height:1.6; display:none; }
+  .feedback.success{ display:block; background:#e7f8f0; color:#1e7a53; border:1px solid #b7ead2; }
+  .feedback.error{ display:block; background:#fdeceb; color:#b3261e; border:1px solid #f6c6c2; }
+  .feedback.warn{ display:block; background:#fff6e0; color:#9a6b00; border:1px solid #ffe4a3; }
+
+  .fillsentence{ background:#f7f8fc; border:1.5px dashed #c9d4fb; border-radius:12px; padding:14px 16px; font-size:15px; line-height:2; margin:10px 0 14px; color:#2b2f42; }
+  .fillsentence select{ border:1.5px solid var(--primary); border-radius:8px; padding:4px 8px; font-size:14.5px; font-weight:700; color:var(--primary-dark); background:#fff; font-family:inherit; margin:0 3px; }
+
+  .summary-box{ margin-top:12px; padding:14px 16px; border-radius:12px; background:linear-gradient(135deg,#eef2ff,#fff5f8); border:1.5px dashed #b9c4f5; font-size:13.5px; line-height:1.7; max-height:0; opacity:0; overflow:hidden; transition:.4s ease; }
+  .summary-box.show{ max-height:400px; opacity:1; margin-top:12px; }
+  .summary-box b{ color:var(--primary-dark); }
+
+  .reveal{ max-height:0; opacity:0; overflow:hidden; transition:.45s ease; }
+  .reveal.show{ max-height:6000px; opacity:1; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); }
+
+  .proof-block{ background:#fbfcff; border:1.5px solid var(--line); border-radius:14px; padding:16px 18px; margin:14px 0; font-size:14.5px; line-height:2.35; color:#2b2f42; }
+  .proof-block .given{ margin:0 0 6px; color:#4a5568; font-size:13.5px; }
+  .proof-block hr{ border:none; border-top:1px dashed var(--line); margin:10px 0; }
+  .proof-block p{ margin:4px 0; }
+  .blank{ display:inline-block; width:64px; border:none; border-bottom:2px solid var(--primary); background:transparent; text-align:center; font-weight:700; font-size:14px; font-family:inherit; padding:2px 4px; margin:0 3px; color:var(--primary-dark); }
+  .blank:focus{ outline:none; border-bottom-color:var(--primary-dark); background:#eef2ff; }
+  .blank.correct{ border-bottom-color:#3fbf91; background:#e9faf3; color:#1e7a53; }
+  .blank.wrong{ border-bottom-color:#e97a7a; background:#fdecec; color:#b3261e; }
+
+  .wordbank{ margin-top:10px; padding:10px 12px; background:#fff6e0; border:1px dashed #ffce6b; border-radius:10px; font-size:13px; display:none; }
+  .wordbank.show{ display:block; }
+  .wordbank .word{ display:inline-block; background:#fff; border:1px solid #ffce6b; border-radius:6px; padding:3px 9px; margin:3px 4px 0 0; font-weight:700; color:#9a6b00; }
+
+  .page-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:14px; border-top:1px solid var(--line); }
+  .restart-wrap{ text-align:center; margin-top:14px; }
+  .btn-check{ background:var(--primary); color:#fff; }
+  .btn-check:hover{ background:var(--primary-dark); }
+
+  /* ===== 관리자 접속 (화면을 가리는 로그인 폼 없이, 구석의 작은 버튼 + 브라우저 기본 prompt로 처리) ===== */
+  #adminTrigger{ position:fixed; right:14px; bottom:14px; z-index:50; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--muted); font-size:15px; line-height:1; cursor:pointer; opacity:.5; box-shadow:0 2px 8px rgba(43,47,66,.1); transition:.15s; }
+  #adminTrigger:hover{ opacity:1; color:var(--primary-dark); }
+  .session-bar{ background:#2b2f42; color:#fff; padding:8px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .session-bar b{ color:#c7d2fe; }
+  .session-bar button, .session-bar a{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; text-decoration:none; }
+
+  /* ===== 관리자 대시보드 ===== */
+  #adminScreen{ display:none; min-height:100vh; background:var(--bg); }
+  .admin-header{ background:#1e1b3a; color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .admin-header .title{ font-size:17px; font-weight:800; }
+  .admin-header .sub{ font-size:12px; color:#a5b4fc; margin-top:2px; }
+  .admin-logout{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:8px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .admin-body{ max-width:1000px; margin:24px auto; padding:0 20px 60px; }
+  .admin-filter-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; background:#fff; border-radius:14px; padding:12px 16px; box-shadow:0 4px 14px rgba(43,47,66,.05); }
+  .admin-filter-row label{ font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .admin-filter-row select{ border:1.5px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; font-family:inherit; color:var(--ink); background:#fff; }
+  .btn-admin-delete{ margin-left:auto; background:#fdeceb; border:1.5px solid #f6c6c2; color:#b3261e; border-radius:8px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn-admin-delete:hover{ background:#fbdcda; }
+  .btn-admin-delete:disabled{ opacity:.4; cursor:not-allowed; }
+  .admin-table-wrap{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(43,47,66,.06); }
+  table.admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.admin-table th{ background:#f4f6fc; padding:10px 12px; text-align:left; color:var(--muted); font-size:11.5px; font-weight:700; }
+  table.admin-table td{ padding:10px 12px; border-top:1px solid var(--line); }
+  table.admin-table tr.away td{ background:#fdeceb; }
+
+  /* ===== 이탈 경고 오버레이 ===== */
+  #awayWarning{ position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(179,38,30,.94); text-align:center; padding:24px; }
+  #awayWarning.show{ display:flex; }
+  #awayWarning .box{ color:#fff; max-width:440px; }
+  #awayWarning .emoji{ font-size:52px; margin-bottom:14px; }
+  #awayWarning .msg{ font-size:20px; font-weight:800; line-height:1.5; margin-bottom:22px; }
+  #awayWarning button{ background:#fff; color:#b3261e; border:none; border-radius:10px; padding:12px 28px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; }
+</style>
+</head>
+<body>
+
+<!-- ══ 게이트 없이 곧바로 관찰하기 활동으로 진입 — 학생 정보는 있으면 조용히 사용, 없어도 활동은 그대로 진행 ══ -->
+<button id="adminTrigger" title="교사용">⚙</button>
+
+<!-- ══ 관리자 대시보드 ══ -->
+<div id="adminScreen">
+  <div class="admin-header">
+    <div>
+      <div class="title">⚙ 관리자 모드 — 평행사변형이 되는 조건 (대각의 크기)</div>
+      <div class="sub" id="adminSummary">불러오는 중...</div>
+    </div>
+    <button class="admin-logout" onclick="adminLogout()">로그아웃</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-filter-row">
+      <label>학년
+        <select id="filterGrade">
+          <option value="">전체</option>
+          <option>1학년</option><option>2학년</option><option>3학년</option>
+        </select>
+      </label>
+      <label>반
+        <select id="filterCls">
+          <option value="">전체</option>
+          <option>1반</option><option>2반</option><option>3반</option><option>4반</option><option>5반</option><option>6반</option><option>7반</option><option>8반</option><option>9반</option><option>10반</option><option>11반</option><option>12반</option><option>13반</option>
+        </select>
+      </label>
+      <button class="btn-admin-delete" id="btnAdminDelete" disabled>🗑 이 반 기록 삭제</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>학년/반/번호</th><th>이름</th><th>진행 단계</th><th>상태</th><th>이탈 횟수</th><th>마지막 활동</th></tr></thead>
+        <tbody id="adminTableBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 이탈 경고 오버레이 ══ -->
+<div id="awayWarning">
+  <div class="box">
+    <div class="emoji">🚨</div>
+    <div class="msg">경고입니다!<br>수업 외 행동을 하지 말고<br>지금 주어진 과제를 완료하세요.</div>
+    <button onclick="dismissWarning()">확인했습니다</button>
+  </div>
+</div>
+
+<div id="appRoot">
+<div class="session-bar" id="sessionBar" style="display:none">
+  <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
+  <span style="display:flex;gap:8px;"><a href="index.html" id="hubBackLink">← 학습 선택 목록으로 돌아가기</a><button onclick="location.reload()">로그아웃</button></span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<header>
+  <h1>📐 평행사변형이 되는 조건 — 대각의 크기</h1>
+  <p>두 쌍의 대각의 크기가 각각 같은 사각형은 항상 평행사변형일까요? 색종이 조각을 직접 맞춰보며 확인해봅시다.</p>
+</header>
+
+<div class="layout mobile-show-canvas" id="layoutRoot">
+  <div class="mobile-tabs">
+    <button class="mobile-tab-btn active" id="mtabCanvas" onclick="showMobileTab('canvas')">📐 그림</button>
+    <button class="mobile-tab-btn" id="mtabActivity" onclick="showMobileTab('activity')">📝 활동</button>
+  </div>
+
+  <!-- ================= 영역 1: 인터랙티브 SVG 캔버스 ================= -->
+  <div class="card sticky">
+    <div class="toolbar">
+      <button class="btn btn-outline" id="btnCycleAngle">🔄 다른 모양에서도 관찰하기</button>
+    </div>
+
+    <div class="svg-wrap">
+      <svg id="canvas" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#dfe6f7" stroke-width="1"></path>
+          </pattern>
+        </defs>
+        <rect x="0" y="0" width="640" height="480" fill="url(#gridPattern)"></rect>
+
+        <polygon id="quadABCD" class="quad" points=""></polygon>
+
+
+        <line id="extAB" class="ext-line pair1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="extDC" class="ext-line pair1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="extAD" class="ext-line pair2" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="extBC" class="ext-line pair2" x1="0" y1="0" x2="0" y2="0"></line>
+
+        <line id="rayBE" class="e-ray" x1="0" y1="0" x2="0" y2="0"></line>
+        <circle id="dotE" r="4" class="e-dot"></circle>
+        <text id="nameE" class="e-name">E</text>
+
+        <path id="arcA" class="angle-arc arc-p1" d=""></path>
+        <path id="arcC" class="angle-arc arc-p1" d=""></path>
+        <path id="arcB" class="angle-arc arc-p2" d=""></path>
+        <path id="arcD" class="angle-arc arc-p2" d=""></path>
+        <path id="arcEBC" class="angle-arc arc-e" d=""></path>
+        <line id="leadA" class="angle-leader arc-p1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="leadC" class="angle-leader arc-p1" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="leadB" class="angle-leader arc-p2" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="leadD" class="angle-leader arc-p2" x1="0" y1="0" x2="0" y2="0"></line>
+        <line id="leadEBC" class="angle-leader arc-e" x1="0" y1="0" x2="0" y2="0"></line>
+        <text id="numA" class="angle-num arc-p1"></text>
+        <text id="numC" class="angle-num arc-p1"></text>
+        <text id="numB" class="angle-num arc-p2"></text>
+        <text id="numD" class="angle-num arc-p2"></text>
+        <text id="numEBC" class="angle-num arc-e"></text>
+
+        <g id="wedgeLayer"></g>
+        <g id="wedgeMarkLayer"></g>
+        <g id="handleLayer"></g>
+
+        <circle id="dotA" r="4" class="vertex-dot" style="display:none"></circle>
+        <text id="nameA" class="vertex-name" style="display:none">A</text>
+        <circle id="dotC" r="4" class="vertex-dot" style="display:none"></circle>
+        <text id="nameC" class="vertex-name" style="display:none">C</text>
+        <text id="nameB" class="vertex-name" style="display:none">B</text>
+        <text id="nameD" class="vertex-name" style="display:none">D</text>
+      </svg>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#57c6a0"></i> 초록 조각 (∠A, ∠C)</span>
+      <span><i class="dot" style="background:#9b7cff"></i> 보라 조각 (∠B, ∠D)</span>
+    </div>
+  </div>
+
+  <!-- ================= 영역 2: 단계별 탐구 활동지 ================= -->
+  <div class="activity">
+
+    <div class="stepper" id="stepper">
+      <button class="step-tab current" data-goto="1"><span class="n">1</span>관찰하기</button>
+      <button class="step-tab locked" data-goto="2"><span class="n">2</span>증명 설계</button>
+      <button class="step-tab locked" data-goto="3"><span class="n">3</span>결론 확인</button>
+      <button class="step-tab locked" data-goto="4"><span class="n">4</span>최종 증명</button>
+    </div>
+
+    <!-- ===== PAGE 1 : 관찰 ===== -->
+    <section class="step-card" data-step="1" id="page1">
+      <div class="step-head">
+        <div class="step-badge">1</div>
+        <h2>대각의 크기가 같은 사각형을 관찰해보자</h2>
+      </div>
+      <div class="step-body">
+        <p id="assemblyIntroText">정사각형 색종이에 십자(X)로 두 직선을 그어, 맞꼭지각을 이루는 조각 4개(초록 2개, 보라 2개 — 같은 색끼리 크기가 같은 각)로 나눴습니다.</p>
+        <div class="fillsentence" id="separateBox" style="text-align:center;">
+          <button class="btn btn-check" id="btnSeparate">✂️ 조각 분리하기</button>
+        </div>
+        <div class="reveal" id="afterSeparateText">
+          <div class="fillsentence" style="text-align:center;">
+            맞꼭지각(서로 같은 크기의 각)이 <b>대각</b>이 되도록<br>색종이를 모아 <b>평행사변형</b> 모양의 사각형을 만들어보세요!
+          </div>
+          <p class="hint">조각의 <b>몸통을 드래그</b>하면 이동, <b>회전 아이콘(↻)이 붙은 꼭짓점을 드래그</b>하면 그 조각이 회전해요.<br>각 조각의 뾰족한 꼭짓점에 작은 호가 표시돼 있어요 — <b>같은 색·같은 호는 크기가 같은 맞꼭지각</b>이라는 뜻이에요.</p>
+          <div class="fillsentence" style="text-align:center;">
+            <button class="btn btn-check" id="btnCheckAssembly">✅ 다 맞췄어요! 확인하기</button>
+          </div>
+        </div>
+        <div class="feedback" id="fbAssemble"></div>
+
+        <div class="reveal" id="assembledBlock">
+          <p>사각형 ABCD가 만들어졌어요! 초록 조각은 A, C 자리에, 보라 조각은 B, D 자리에 놓였네요 — <b>맞꼭지각끼리 대각(마주보는 자리)</b>이 됐어요.</p>
+
+          <div class="fillsentence" style="text-align:center;">
+            <b>Q.</b> 이 사각형이 실제로 평행사변형인지(두 쌍의 대변이 평행한지) 확인하려면 어떻게 해야 할까요?<br>
+            <button class="btn btn-outline" id="btnMethodExt" style="margin-top:10px;">① 변을 연장해서 만나는지 보기</button>
+            <button class="btn btn-outline" id="btnMethodAngle" style="margin-top:6px;">② 한 변을 연장해서 동위각・엇각 비교해보기</button>
+          </div>
+          <div class="feedback" id="fbMethod"></div>
+
+          <div class="reveal" id="extLimitBlock">
+            <div class="fillsentence">
+              현재 화면에서는 변들이 만나지 않아요. 그런데 변을 무한히 연장하면 화면 <b>바깥</b>에서 만날 수도 있지 않을까요?<br>
+              이 방법(변을 연장해서 확인하기)만으로 "두 변이 평행하다"고 확신할 수 있을까요?
+            </div>
+            <div class="choice-list">
+              <label><input type="radio" name="extLimit" value="yes"> 네, 확신할 수 있어요</label>
+              <label><input type="radio" name="extLimit" value="no"> 아니오, 확신할 수 없어요</label>
+            </div>
+            <button class="btn btn-check" id="checkExtLimit">확인</button>
+            <div class="feedback" id="fbExtLimit"></div>
+          </div>
+
+          <div class="fillsentence" style="text-align:center;">
+            <button class="btn btn-check" id="btnConfirmShape">✅ 이 모양에서 평행 확인 완료</button>
+          </div>
+          <div class="feedback" id="fbConfirmShape"></div>
+
+          <div class="reveal" id="observeMoreBlock2">
+            <p style="text-align:center;">🔄 <b>'다른 각도의 색종이로 다시 조립하기'</b>를 눌러 다른 사각형에서도 평행사변형이 되는지 확인해봅시다!</p>
+          </div>
+
+          <div class="reveal" id="block4">
+            <p><b>탐구.</b> 지금까지 관찰한 것을 정리해봅시다.</p>
+            <div class="fillsentence">
+              두 쌍의 대각의 크기가 각각 같은 사각형은 평행사변형
+              <select id="concl1">
+                <option value="?">〔 선택 〕</option>
+                <option value="no">이 아니다</option>
+                <option value="yes">이다</option>
+              </select>
+              .
+            </div>
+            <button class="btn btn-check" id="checkConclude1">결론 확인</button>
+            <div class="feedback" id="feedbackConclude1"></div>
+          </div>
+        </div>
+
+        <div class="page-nav">
+          <span></span>
+          <button class="btn btn-primary" id="next1" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 2 : 증명 설계 ===== -->
+    <section class="step-card" data-step="2" id="page2" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">2</div>
+        <h2>증명을 설계해보자</h2>
+      </div>
+      <div class="step-body">
+        <div class="goal-banner">
+          <span class="tag">🎯 증명 목표</span>
+          <b>∠A=∠C, ∠B=∠D인 □ABCD는 평행사변형이다.</b>
+        </div>
+
+        <div class="recall-box">
+          <b>중1 배웠어요!</b> 서로 다른 두 직선이 한 직선과 만날 때 생기는 <b>동위각</b>(또는 <b>엇각</b>)의 크기가 같으면 두 직선은 평행하다.
+        </div>
+
+        <div class="fillsentence" style="text-align:center;">
+          사각형 ABCD의 네 내각의 크기의 합은 <input type="text" class="blank" id="sumAns" maxlength="4" autocomplete="off">° 입니다.
+          <br><button class="btn btn-check" id="checkSum" style="margin-top:8px;">확인</button>
+        </div>
+        <div class="feedback" id="fbSum"></div>
+
+        <div class="reveal" id="halfBlock">
+          <p><b>Q1.</b> ∠A=∠C, ∠B=∠D이고 ∠A+∠B+∠C+∠D=360°이므로, 2×(∠A+∠B)=360°입니다. 그러면 ∠A+∠B는 몇 도일까요?</p>
+          <div class="fillsentence" style="text-align:center;">
+            ∠A + ∠B = <input type="text" class="blank" id="halfAns" maxlength="4" autocomplete="off">°
+            <br><button class="btn btn-check" id="checkHalf" style="margin-top:8px;">확인</button>
+          </div>
+          <div class="feedback" id="fbHalf"></div>
+        </div>
+
+        <div class="reveal" id="pointEBlock">
+          <p><span class="seg">AB</span>의 연장선 위에 한 점 E를 잡아봅시다.</p>
+          <div class="fillsentence" style="text-align:center;">
+            <button class="btn btn-check" id="btnAddE">📍 점 E 추가하기</button>
+          </div>
+          <div class="feedback" id="fbAddE"></div>
+
+          <div class="reveal" id="linearPairBlock">
+            <p><b>Q2.</b> B, E는 A를 지나는 직선 위에 있으므로, ∠B(=∠ABC)와 ∠EBC는 한 직선을 이루는 두 각(일직선의 각)입니다. 두 각의 합은?</p>
+            <div class="fillsentence" style="text-align:center;">
+              ∠B + ∠EBC = <input type="text" class="blank" id="linAns" maxlength="4" autocomplete="off">°
+              <br><button class="btn btn-check" id="checkLin" style="margin-top:8px;">확인</button>
+            </div>
+            <div class="feedback" id="fbLin"></div>
+          </div>
+
+          <div class="reveal" id="compareBlock">
+            <p><b>Q3.</b> ∠A+∠B=180°, ∠B+∠EBC=180° 이므로, ∠A와 ∠EBC의 크기를 비교하면?</p>
+            <div class="choice-list" id="compareChoices">
+              <label><input type="radio" name="cmpAE" value="eq"> ∠A = ∠EBC (같다)</label>
+              <label><input type="radio" name="cmpAE" value="lt"> ∠A &lt; ∠EBC</label>
+              <label><input type="radio" name="cmpAE" value="gt"> ∠A &gt; ∠EBC</label>
+            </div>
+            <button class="btn btn-check" id="checkCompare">확인</button>
+            <div class="feedback" id="fbCompare"></div>
+          </div>
+
+          <div class="reveal" id="showEBCBlock">
+            <div class="fillsentence" style="text-align:center;">
+              <button class="btn btn-check" id="btnShowAngE">👀 ∠A, ∠EBC 각도 표시하기</button>
+            </div>
+            <div class="feedback" id="fbShowAngE"></div>
+          </div>
+
+          <div class="reveal" id="typeAEBlock">
+            <p><b>Q4.</b> 직선 <span class="seg">AD</span>, <span class="seg">BC</span>가 직선 <span class="seg">AE</span>(=<span class="seg">AB</span>의 연장선)와 만날 때, ∠A와 ∠EBC는 무슨 관계의 각인가요?</p>
+            <div class="choice-list" id="typeAEChoices">
+              <label><input type="radio" name="typeAE" value="corr"> 동위각</label>
+              <label><input type="radio" name="typeAE" value="alt"> 엇각</label>
+              <label><input type="radio" name="typeAE" value="vert"> 맞꼭지각</label>
+            </div>
+            <button class="btn btn-check" id="checkTypeAE">확인</button>
+            <div class="feedback" id="fbTypeAE"></div>
+          </div>
+
+          <div class="reveal" id="concADBlock">
+            <div class="fillsentence" style="text-align:center;">
+              동위각의 크기가 같으므로 <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>
+            </div>
+          </div>
+
+          <div class="reveal" id="stepCBlock">
+            <p><b>Q5.</b> 그런데 가정에서 ∠A=∠C이고, 방금 ∠A=∠EBC임을 보였습니다. 그러면 ∠EBC와 ∠C의 크기를 비교하면?</p>
+            <div class="choice-list" id="compareCChoices">
+              <label><input type="radio" name="cmpEC" value="eq"> ∠EBC = ∠C (같다)</label>
+              <label><input type="radio" name="cmpEC" value="lt"> ∠EBC &lt; ∠C</label>
+              <label><input type="radio" name="cmpEC" value="gt"> ∠EBC &gt; ∠C</label>
+            </div>
+            <button class="btn btn-check" id="checkCompareC">확인</button>
+            <div class="feedback" id="fbCompareC"></div>
+          </div>
+
+          <div class="reveal" id="typeECBlock">
+            <p><b>Q6.</b> 직선 <span class="seg">AE</span>, <span class="seg">DC</span>가 직선 <span class="seg">BC</span>와 만날 때, ∠EBC와 ∠C는 무슨 관계의 각인가요?</p>
+            <div class="choice-list" id="typeECChoices">
+              <label><input type="radio" name="typeEC" value="corr"> 동위각</label>
+              <label><input type="radio" name="typeEC" value="alt"> 엇각</label>
+              <label><input type="radio" name="typeEC" value="vert"> 맞꼭지각</label>
+            </div>
+            <button class="btn btn-check" id="checkTypeEC">확인</button>
+            <div class="feedback" id="fbTypeEC"></div>
+          </div>
+        </div>
+
+        <div class="reveal" id="concludeBlock2">
+          <div class="fillsentence">
+            <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>, <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>이므로 □ABCD는
+            <input type="text" class="blank" id="concShape" maxlength="6" autocomplete="off">
+            이다.
+          </div>
+          <button class="btn btn-check" id="checkStep2Final">최종 확인</button>
+          <div class="feedback" id="feedbackStep2Final"></div>
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev2">← 이전 활동</button>
+          <button class="btn btn-primary" id="next2" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 3 : 결론 확인 ===== -->
+    <section class="step-card" data-step="3" id="page3" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">3</div>
+        <h2>결론을 정리하자</h2>
+      </div>
+      <div class="step-body">
+        <p>2단계에서 확인한 대로, ∠A=∠C, ∠B=∠D인 □ABCD에서 AB의 연장선 위에 점 E를 잡아 동위각・엇각을 비교했습니다. 빈칸을 채워 결론을 완성해보세요.</p>
+
+        <div class="fillsentence">
+          두 쌍의 대각의 크기가 각각 같은 사각형은 평행사변형
+          <select id="c_shape"><option value="?">〔 선택 〕</option><option value="no">이 아니다</option><option value="yes">이다</option></select>
+          .
+        </div>
+
+        <button class="btn btn-check" id="checkStep3">결론 확인</button>
+        <div class="feedback" id="feedback3"></div>
+
+        <div class="summary-box" id="summaryBox">
+          🎉 <b>정리</b><br>
+          두 쌍의 대각의 크기가 각각 같은 사각형은 평행사변형이다.<br>
+          👉 <span class="seg">AB</span>의 연장선 위에 점 E를 잡아, ∠A=∠EBC(동위각)이므로 <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>, ∠EBC=∠C(엇각)이므로 <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>임을 보여서 증명했어요.
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev3">← 이전 활동</button>
+          <button class="btn btn-primary" id="next3" disabled>다음 활동 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE 4 : 도움 없이 다시 증명하기 ===== -->
+    <section class="step-card" data-step="4" id="page4" style="display:none">
+      <div class="step-head">
+        <div class="step-badge">4</div>
+        <h2>이번엔 도움 없이 스스로 증명해보자</h2>
+      </div>
+      <div class="step-body">
+        <p>지금까지의 활동을 바탕으로, 이번엔 선택지 없이 <b>빈칸을 직접 채워서</b> 증명을 완성해보세요. 힌트가 필요하면 아래 단어 은행을 참고할 수 있어요.</p>
+
+        <div class="proof-block">
+          <p class="given"><b>[가정]</b> □ABCD에서 ∠A=∠C, ∠B=∠D 이다.</p>
+          <p class="given"><b>[증명할 것]</b> □ABCD는 평행사변형이다.</p>
+          <hr>
+          <p><b>[증명]</b></p>
+          <p>① ∠A+∠B+∠C+∠D=<input type="text" class="blank" data-id="b1" maxlength="5" autocomplete="off">°이므로 ∠A+∠B=<input type="text" class="blank" data-id="b2" maxlength="5" autocomplete="off">° ……ⓐ</p>
+          <p>② <span class="seg">AB</span>의 연장선 위에 한 점 E를 잡으면 ∠B+∠EBC=<input type="text" class="blank" data-id="b3" maxlength="5" autocomplete="off">° ……ⓑ</p>
+          <p>③ ⓐ, ⓑ에 의해 ∠A=∠<input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off">이다. <input type="text" class="blank" data-id="b5" maxlength="6" autocomplete="off">의 크기가 같으므로 <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span></p>
+          <p>④ 또 ∠A=∠C이므로 ∠EBC=∠C이다. <input type="text" class="blank" data-id="b6" maxlength="6" autocomplete="off">의 크기가 같으므로 <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span></p>
+          <p>⑤ 따라서 <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>, <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>이므로 □ABCD는 <input type="text" class="blank" data-id="b7" maxlength="8" autocomplete="off" style="width:90px"> 이다. ∎</p>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn btn-outline btn-sm" id="toggleWordbank">🗂 단어 은행 보기</button>
+          <button class="btn btn-check" id="checkProof">채점하기</button>
+          <button class="btn btn-outline btn-sm" id="resetProof">↺ 다시 쓰기</button>
+        </div>
+        <div class="wordbank" id="wordbank">
+          <span class="word">360</span><span class="word">180</span><span class="word">EBC</span><span class="word">동위각</span><span class="word">엇각</span><span class="word">평행사변형</span>
+        </div>
+        <div class="feedback" id="feedbackProof"></div>
+
+        <div class="summary-box" id="proofDone">
+          🎉 <b>증명 완성!</b><br>
+          "두 쌍의 대각의 크기가 각각 같은 사각형은 평행사변형이다"를 이제 도움 없이 스스로 증명할 수 있습니다. 훌륭해요!
+        </div>
+
+        <div class="page-nav">
+          <button class="btn btn-outline" id="prev4">← 이전 활동</button>
+          <span></span>
+        </div>
+      </div>
+    </section>
+
+    <div class="restart-wrap">
+      <button class="btn btn-outline" id="restartAll">🔄 다른 모양에서도 관찰하기</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /#appRoot -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- 정사각형 색종이 + 십자(X) 절단각 프리셋 ----------
+  const THETA1_PRESETS = [65, 55, 72, 48];
+  const SQUARE = { center:{x:150,y:120}, h:85 };
+  const RAY_N_DEG = 100; // 십자의 기준 방향(고정) — theta1만 바뀌면서 X자의 벌어진 정도가 달라짐
+  const TIP_HIT_RADIUS = 24;
+  const POP_DIST = 55;
+  const MIN_OBSERVE = 2;
+  const D2R = Math.PI/180;
+
+  // 정사각형 중심에서 각도 phiDeg 방향으로 쏜 반직선이 정사각형 변에 닿는 거리(반지름 h)
+  function squareRayLen(h, phiDeg){
+    const phi = phiDeg*D2R;
+    return h / Math.max(Math.abs(Math.cos(phi)), Math.abs(Math.sin(phi)));
+  }
+
+  // 사각형 ABCD(목표 모양)를 계산: 맞꼭지각을 이루는 네 조각(초록 2, 보라 2)을
+  // 이웃 조각과 변의 길이가 같은 변끼리 맞닿도록 이어붙이면 반드시 닫힌 사각형이 되고
+  // (정사각형의 중심을 지나는 십자로 잘랐으므로 마주보는 조각의 변 길이가 저절로 같아지기 때문),
+  // 초록 조각은 A・C, 보라 조각은 B・D 자리에 온다.
+  function computeGeom(theta1, p, q){
+    const theta2 = 180 - theta1;
+    const A = {x:270, y:175};
+    const baseAng = 12;
+    const B = {x:A.x+q*Math.cos(baseAng*D2R), y:A.y+q*Math.sin(baseAng*D2R)};
+    const D = {x:A.x+p*Math.cos((baseAng+theta1)*D2R), y:A.y+p*Math.sin((baseAng+theta1)*D2R)};
+    const C = {x:B.x+D.x-A.x, y:B.y+D.y-A.y};
+    const E = {x:B.x+70*Math.cos(baseAng*D2R), y:B.y+70*Math.sin(baseAng*D2R)};
+    function dirDeg(P,Q){ return Math.atan2(Q.y-P.y, Q.x-P.x)/D2R; }
+    const sockets = {
+      A: {pt:A, rot:dirDeg(A,D), wedgeAngle:theta1, len1:p, len2:q, grp:'grp1'},
+      B: {pt:B, rot:dirDeg(B,A), wedgeAngle:theta2, len1:q, len2:p, grp:'grp2'},
+      C: {pt:C, rot:dirDeg(C,B), wedgeAngle:theta1, len1:p, len2:q, grp:'grp1'},
+      D: {pt:D, rot:dirDeg(D,C), wedgeAngle:theta2, len1:q, len2:p, grp:'grp2'}
+    };
+    return {A,B,C,D,E,sockets,theta1,theta2,p,q};
+  }
+
+  // theta1(초록 조각의 각) 하나로부터: 정사각형 절단 결과(p,q)와 목표 사각형(geom), 네 조각의
+  // "잘린 직후(아직 붙어있는) 원래 방향"까지 한 번에 계산
+  function buildAll(theta1){
+    const rE = RAY_N_DEG - theta1, rS = RAY_N_DEG+180, rW = rE+180;
+    const p = squareRayLen(SQUARE.h, RAY_N_DEG);
+    const q = squareRayLen(SQUARE.h, rE);
+    const geom = computeGeom(theta1, p, q);
+    const wedgeDefs = [
+      { id:'w_NE', grp:'grp1', origRot:RAY_N_DEG, wedgeAngle:theta1,       len1:p, len2:q },
+      { id:'w_ES', grp:'grp2', origRot:rE,        wedgeAngle:180-theta1,  len1:q, len2:p },
+      { id:'w_SW', grp:'grp1', origRot:rS,        wedgeAngle:theta1,      len1:p, len2:q },
+      { id:'w_WN', grp:'grp2', origRot:rW,        wedgeAngle:180-theta1,  len1:q, len2:p }
+    ];
+    const wedges = wedgeDefs.map(w=>Object.assign({
+      O:{x:SQUARE.center.x,y:SQUARE.center.y}, rot:w.origRot, placed:false, socket:null,
+      localPts: wedgeLocalShape(w.origRot, w.wedgeAngle, w.len1, w.len2)
+    }, w));
+    return { geom, wedges };
+  }
+
+  // 조각의 실제(색종이에서 잘려나온) 바깥 윤곽: 뾰족한 꼭짓점(O)에서 tip1 방향으로 나갔다가,
+  // 그 사이에 정사각형의 실제 모서리(꼭짓점)를 지나면(예각이 아니어서 정사각형 모서리를 넘어가면)
+  // 그 모서리 점(들)까지 거쳐서 tip2로 이어지도록 — 즉 "잘리기 전 정사각형 그대로의 테두리"를 따른다.
+  // origRot 기준 로컬 각(offset)과 중심으로부터의 거리로 저장해두면, 이후 조각이 이동・회전해도
+  // (O, rot)만 갱신하면 항상 같은 모양을 유지한다.
+  function wedgeLocalShape(origRot, wedgeAngle, len1, len2){
+    const hi = origRot, lo = origRot - wedgeAngle;
+    const cornerDist = SQUARE.h * Math.SQRT2;
+    const found = [];
+    [45,135,225,315].forEach(cb=>{
+      [-360,0,360].forEach(k=>{
+        const a = cb+k;
+        if(a > lo && a < hi) found.push(a);
+      });
+    });
+    found.sort((a,b)=>b-a); // tip1(hi) 방향에서 tip2(lo) 방향 순서
+    const pts = [{offset:0, dist:len1}];
+    found.forEach(a=> pts.push({offset:a-origRot, dist:cornerDist}));
+    pts.push({offset:-wedgeAngle, dist:len2});
+    return pts;
+  }
+  function wedgeWorldPoints(w){
+    return w.localPts.map(pt=>{
+      const a = (w.rot+pt.offset)*D2R;
+      return { x:w.O.x+pt.dist*Math.cos(a), y:w.O.y+pt.dist*Math.sin(a) };
+    });
+  }
+
+  const initBuild = buildAll(THETA1_PRESETS[0]);
+  const state = {
+    presetIdx: 0,
+    geom: initBuild.geom,
+    wedges: initBuild.wedges,
+    filled: {},
+    assembled: false,
+    separated: false,
+    extShown: false,
+    angleCompareShown: false,
+    confirmedPresets: new Set(),
+    eAdded: false,
+    angEShown: false
+  };
+
+  // ---------- DOM refs ----------
+  const svg = document.getElementById('canvas');
+  const wedgeLayer = document.getElementById('wedgeLayer');
+  const quadABCD = document.getElementById('quadABCD');
+  const wedgeMarkLayer = document.getElementById('wedgeMarkLayer');
+  const handleLayer = document.getElementById('handleLayer');
+  const extAB=document.getElementById('extAB'), extDC=document.getElementById('extDC');
+  const extAD=document.getElementById('extAD'), extBC=document.getElementById('extBC');
+  const rayBE=document.getElementById('rayBE'), dotE=document.getElementById('dotE'), nameE=document.getElementById('nameE');
+  const arcA=document.getElementById('arcA'), arcC=document.getElementById('arcC');
+  const arcB=document.getElementById('arcB'), arcD=document.getElementById('arcD');
+  const arcEBC=document.getElementById('arcEBC');
+  const numA=document.getElementById('numA'), numC=document.getElementById('numC');
+  const numB=document.getElementById('numB'), numD=document.getElementById('numD');
+  const numEBC=document.getElementById('numEBC');
+  const leadA=document.getElementById('leadA'), leadC=document.getElementById('leadC');
+  const leadB=document.getElementById('leadB'), leadD=document.getElementById('leadD');
+  const leadEBC=document.getElementById('leadEBC');
+  const dotA=document.getElementById('dotA'), nameA=document.getElementById('nameA');
+  const nameB=document.getElementById('nameB');
+  const dotC=document.getElementById('dotC'), nameC=document.getElementById('nameC');
+  const nameD=document.getElementById('nameD');
+
+  // ---------- 기하 헬퍼 ----------
+  function describeArc(cx, cy, r, a1, a2){
+    let diff = a2-a1;
+    while(diff > Math.PI) diff -= 2*Math.PI;
+    while(diff < -Math.PI) diff += 2*Math.PI;
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const x2 = cx + r*Math.cos(a1+diff), y2 = cy + r*Math.sin(a1+diff);
+    const largeArc = Math.abs(diff) > Math.PI ? 1 : 0;
+    const sweep = diff > 0 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} ${sweep} ${x2} ${y2}`;
+  }
+  function vertexArc(V, P, Q, r){
+    const a1 = Math.atan2(P.y-V.y, P.x-V.x);
+    const a2 = Math.atan2(Q.y-V.y, Q.x-V.x);
+    return describeArc(V.x, V.y, r, a1, a2);
+  }
+  function angleAt(V,P,Q){
+    const v1={x:P.x-V.x,y:P.y-V.y}, v2={x:Q.x-V.x,y:Q.y-V.y};
+    const dot=v1.x*v2.x+v1.y*v2.y, cross=v1.x*v2.y-v1.y*v2.x;
+    return Math.atan2(Math.abs(cross),dot)*180/Math.PI;
+  }
+  function arcLabelPos(V,P,Q,dist){
+    const a1=Math.atan2(P.y-V.y,P.x-V.x), a2=Math.atan2(Q.y-V.y,Q.x-V.x);
+    let diff=a2-a1; while(diff>Math.PI)diff-=2*Math.PI; while(diff<-Math.PI)diff+=2*Math.PI;
+    const mid=a1+diff/2;
+    return { x:V.x+dist*Math.cos(mid), y:V.y+dist*Math.sin(mid) };
+  }
+  function showDiagStuffNow(){
+    // 2단계 이후에만 clean outline + 각 표시를 사용
+    return currentPage >= 2;
+  }
+  function showExtNow(){
+    if(currentPage === 1) return state.extShown;
+    return false;
+  }
+  function showAngleCompareNow(){
+    if(currentPage === 1) return state.angleCompareShown;
+    return false;
+  }
+
+  // ---------- 조각 레이어 렌더 ----------
+  const NS = 'http://www.w3.org/2000/svg';
+  const wedgeEls = {};
+  const wedgeMarkEls = {};
+  const handleEls = {};
+  function ensureWedgeEls(){
+    if(Object.keys(wedgeEls).length) return;
+    state.wedges.forEach(w=>{
+      const poly = document.createElementNS(NS,'polygon');
+      poly.setAttribute('class','wedge-piece '+w.grp);
+      poly.addEventListener('pointerdown', startWedgeDrag(w.id));
+      wedgeLayer.appendChild(poly);
+      wedgeEls[w.id] = poly;
+      const mark = document.createElementNS(NS,'path');
+      mark.setAttribute('class','wedge-mark '+w.grp);
+      wedgeMarkLayer.appendChild(mark);
+      wedgeMarkEls[w.id] = mark;
+      const h1 = document.createElementNS(NS,'text');
+      const h2 = document.createElementNS(NS,'text');
+      [h1,h2].forEach(h=>{
+        h.setAttribute('class','rotate-icon '+w.grp);
+        h.textContent = '↻';
+        h.addEventListener('pointerdown', startWedgeDrag(w.id));
+        handleLayer.appendChild(h);
+      });
+      handleEls[w.id] = {h1,h2};
+    });
+  }
+  function renderWedges(){
+    ensureWedgeEls();
+    // 조립이 끝나면(state.assembled) 겹쳐진 조각 대신 깔끔한 사각형(quadABCD)만 보여준다 —
+    // 조각을 그대로 두면 절반씩 겹쳐 보여서(위에서 아래로 다 덮음) 완성된 모양이 오히려 헷갈리기 때문.
+    const show = (currentPage===1 && !state.assembled);
+    wedgeLayer.style.display = show ? 'block' : 'none';
+    wedgeMarkLayer.style.display = show ? 'block' : 'none';
+    handleLayer.style.display = show ? 'block' : 'none';
+    if(!show) return;
+    state.wedges.forEach(w=>{
+      const outer = wedgeWorldPoints(w); // [tip1, ...(정사각형 모서리), tip2] — 잘려나온 실제 윤곽 그대로
+      const t1 = outer[0], t2 = outer[outer.length-1];
+      const poly = wedgeEls[w.id];
+      poly.setAttribute('points', `${w.O.x},${w.O.y} ` + outer.map(p=>`${p.x},${p.y}`).join(' '));
+      poly.classList.toggle('wedge-locked', w.placed || !state.separated);
+      // 맞꼭지각 표시: 조각의 뾰족한 꼭짓점(O)에 작은 호 — 같은 색 조각끼리 크기가 같은 각(맞꼭지각)임을 나타냄
+      const markR = Math.min(w.len1, w.len2) * 0.28;
+      wedgeMarkEls[w.id].setAttribute('d', vertexArc(w.O, t1, t2, markR));
+      // 회전 손잡이: 뾰족한 두 꼭짓점(t1, t2)을 드래그하면 회전, 몸통/O점을 드래그하면 이동 —
+      // 어느 꼭짓점이 회전용인지 한눈에 보이도록 그 꼭짓점 바로 바깥쪽에 회전 아이콘(↻)을 붙인다.
+      const canDrag = state.separated && !w.placed;
+      [handleEls[w.id].h1, handleEls[w.id].h2].forEach((h,idx)=>{
+        const pt = idx===0 ? t1 : t2;
+        const dx=pt.x-w.O.x, dy=pt.y-w.O.y, len=Math.hypot(dx,dy)||1;
+        h.setAttribute('x', pt.x+dx/len*16);
+        h.setAttribute('y', pt.y+dy/len*16);
+        h.style.display = canDrag ? 'block' : 'none';
+      });
+    });
+  }
+
+  // ---------- 메인 렌더 ----------
+  function render(){
+    renderWedges();
+    const g = state.geom;
+
+    const showClean = showDiagStuffNow() || state.assembled;
+    quadABCD.style.display = showClean ? 'block' : 'none';
+    if(showClean){
+      quadABCD.setAttribute('points', `${g.A.x},${g.A.y} ${g.B.x},${g.B.y} ${g.C.x},${g.C.y} ${g.D.x},${g.D.y}`);
+    }
+
+    [dotA,dotC].forEach(el=>el.style.display = showClean?'block':'none');
+    [nameA,nameB,nameC,nameD].forEach(el=>el.style.display = showClean?'block':'none');
+    if(showClean){
+      dotA.setAttribute('cx',g.A.x); dotA.setAttribute('cy',g.A.y);
+      dotC.setAttribute('cx',g.C.x); dotC.setAttribute('cy',g.C.y);
+      const centroid = { x:(g.A.x+g.B.x+g.C.x+g.D.x)/4, y:(g.A.y+g.B.y+g.C.y+g.D.y)/4 };
+      function outwardLabelPos(V, dist){
+        const dx=V.x-centroid.x, dy=V.y-centroid.y, len=Math.hypot(dx,dy)||1;
+        return { x:V.x+dx/len*dist, y:V.y+dy/len*dist };
+      }
+      [[nameA,g.A],[nameB,g.B],[nameC,g.C],[nameD,g.D]].forEach(([el,V])=>{
+        const pos = outwardLabelPos(V,20);
+        el.setAttribute('x',pos.x); el.setAttribute('y',pos.y);
+      });
+
+      const showExt = showExtNow();
+      const EXT = 90;
+      function extendLine(P,Q){
+        const dx=Q.x-P.x, dy=Q.y-P.y, len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+        return { x1:P.x-ux*EXT, y1:P.y-uy*EXT, x2:Q.x+ux*EXT, y2:Q.y+uy*EXT };
+      }
+      [[extAB,g.A,g.B],[extDC,g.D,g.C],[extAD,g.A,g.D],[extBC,g.B,g.C]].forEach(([el,P,Q])=>{
+        const e = extendLine(P,Q);
+        el.setAttribute('x1',e.x1); el.setAttribute('y1',e.y1); el.setAttribute('x2',e.x2); el.setAttribute('y2',e.y2);
+        el.style.display = showExt ? 'block' : 'none';
+      });
+
+      // 점 E, 반직선 BE
+      const showE = state.eAdded && currentPage>=2;
+      [rayBE,dotE,nameE].forEach(el=>el.style.display = showE?'block':'none');
+      if(showE){
+        rayBE.setAttribute('x1', g.B.x); rayBE.setAttribute('y1', g.B.y);
+        rayBE.setAttribute('x2', g.E.x); rayBE.setAttribute('y2', g.E.y);
+        dotE.setAttribute('cx', g.E.x); dotE.setAttribute('cy', g.E.y);
+        const eLabelPos = outwardLabelPos(g.E, 16);
+        nameE.setAttribute('x', g.E.x+14); nameE.setAttribute('y', g.E.y-10);
+      }
+
+      // 각 표시: A,C(초록)와 B,D(보라)는 페이지1(비교보기 켰을 때) 또는 필요한 단계에서, ∠EBC는 전용 플래그로
+      const showAC = (currentPage===1 && showAngleCompareNow());
+      const showBD = showAC;
+      const arcR = 22;
+      arcA.setAttribute('d', vertexArc(g.A, g.D, g.B, arcR)); arcA.style.display = showAC?'block':'none';
+      arcC.setAttribute('d', vertexArc(g.C, g.B, g.D, arcR)); arcC.style.display = showAC?'block':'none';
+      arcB.setAttribute('d', vertexArc(g.B, g.A, g.C, arcR)); arcB.style.display = showBD?'block':'none';
+      arcD.setAttribute('d', vertexArc(g.D, g.C, g.A, arcR)); arcD.style.display = showBD?'block':'none';
+      const showEBCarc = showE && state.angEShown;
+      arcEBC.setAttribute('d', vertexArc(g.B, g.E, g.C, arcR)); arcEBC.style.display = showEBCarc?'block':'none';
+
+      const showNumAC = showAC, showNumBD = showBD;
+      [[numA,leadA,g.A,g.D,g.B,arcR,showNumAC],[numC,leadC,g.C,g.B,g.D,arcR,showNumAC],
+       [numB,leadB,g.B,g.A,g.C,arcR,showNumBD],[numD,leadD,g.D,g.C,g.A,arcR,showNumBD],
+       [numEBC,leadEBC,g.B,g.E,g.C,arcR,showEBCarc]].forEach(([el,lead,V,P,Q,r,vis])=>{
+        el.style.display = vis?'block':'none';
+        lead.style.display = vis?'block':'none';
+        if(!vis) return;
+        const ox=V.x-centroid.x, oy=V.y-centroid.y, olen=Math.hypot(ox,oy)||1;
+        const oux=ox/olen, ouy=oy/olen, px=-ouy, py=oux;
+        const tx=P.x-V.x, ty=P.y-V.y;
+        const sign = (oux*ty-ouy*tx) >= 0 ? 1 : -1;
+        const dist=40, lateral=15;
+        const pos = { x:V.x+oux*dist+px*sign*lateral, y:V.y+ouy*dist+py*sign*lateral };
+        el.setAttribute('x',pos.x); el.setAttribute('y',pos.y);
+        el.textContent = Math.round(angleAt(V,P,Q)) + '°';
+        const nearArc = arcLabelPos(V,P,Q,r+7);
+        lead.setAttribute('x1',nearArc.x); lead.setAttribute('y1',nearArc.y);
+        lead.setAttribute('x2',pos.x); lead.setAttribute('y2',pos.y);
+      });
+    } else {
+      [dotA,dotC,nameA,nameB,nameC,nameD,extAB,extDC,extAD,extBC,rayBE,dotE,nameE,
+       arcA,arcC,arcB,arcD,arcEBC,numA,numC,numB,numD,numEBC,leadA,leadC,leadB,leadD,leadEBC]
+        .forEach(el=>el.style.display='none');
+    }
+  }
+
+  // ---------- 드래그 (몸통=이동, 꼭짓점=회전) — 자동으로 달라붙지 않음, 학생이 직접 맞춘 뒤 버튼으로 확인 ----------
+  function toSvgPoint(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    return pt.matrixTransform(ctm);
+  }
+  let drag = null;
+  function startWedgeDrag(id){
+    return function(evt){
+      if(currentPage !== 1 || !state.separated) return;
+      const w = state.wedges.find(x=>x.id===id);
+      if(!w || w.placed) return;
+      evt.preventDefault();
+      const p = toSvgPoint(evt);
+      const outer = wedgeWorldPoints(w);
+      const t1 = outer[0], t2 = outer[outer.length-1];
+      const d1=Math.hypot(p.x-t1.x,p.y-t1.y), d2=Math.hypot(p.x-t2.x,p.y-t2.y);
+      if(d1<TIP_HIT_RADIUS && d1<=d2){
+        drag = { id, mode:'rotate', which:'t1' };
+      }else if(d2<TIP_HIT_RADIUS && d2<d1){
+        drag = { id, mode:'rotate', which:'t2' };
+      }else{
+        drag = { id, mode:'translate', offX: p.x-w.O.x, offY: p.y-w.O.y };
+      }
+      svg.setPointerCapture && svg.setPointerCapture(evt.pointerId);
+    };
+  }
+  function onMove(evt){
+    if(!drag) return;
+    const p = toSvgPoint(evt);
+    const w = state.wedges.find(x=>x.id===drag.id);
+    if(drag.mode==='translate'){
+      w.O = { x:p.x-drag.offX, y:p.y-drag.offY };
+    }else{
+      const ang = Math.atan2(p.y-w.O.y, p.x-w.O.x)/D2R;
+      w.rot = (drag.which==='t1') ? ang : ang + w.wedgeAngle;
+    }
+    render();
+  }
+  function onUp(){
+    drag = null;
+  }
+  svg.addEventListener('pointermove', onMove);
+  svg.addEventListener('pointerup', onUp);
+
+  // ---------- 다 맞췄어요 버튼: 정답 판정 없이, 누르면 그대로 다음 단계로 진행 ----------
+  const WEDGE_SOCKET_MAP = { w_NE:'A', w_ES:'B', w_SW:'C', w_WN:'D' };
+  function checkAssembly(){
+    const fb = document.getElementById('fbAssemble');
+    state.wedges.forEach(w=>{
+      const sockKey = WEDGE_SOCKET_MAP[w.id];
+      const sock = state.geom.sockets[sockKey];
+      w.O = { x:sock.pt.x, y:sock.pt.y };
+      w.rot = sock.rot;
+      w.placed = true;
+      w.socket = sockKey;
+      state.filled[sockKey] = w.id;
+    });
+    state.assembled = true;
+    fb.className='feedback success';
+    fb.textContent = '🎉 사각형 ABCD가 완성됐어요! 맞꼭지각끼리 대각(마주보는 자리)에 놓이도록 정리했습니다.';
+    document.getElementById('assembledBlock').classList.add('show');
+    render();
+  }
+  document.getElementById('btnCheckAssembly').addEventListener('click', checkAssembly);
+
+  // ---------- 조각 분리 애니메이션 ----------
+  function animateSeparate(){
+    if(state.separated) return;
+    state.separated = true;
+    document.getElementById('separateBox').style.display = 'none';
+    document.getElementById('afterSeparateText').classList.add('show');
+    const startO = state.wedges.map(w=>({x:w.O.x,y:w.O.y}));
+    const endO = state.wedges.map(w=>{
+      const bis = (w.rot - w.wedgeAngle/2)*D2R;
+      return { x:SQUARE.center.x+POP_DIST*Math.cos(bis), y:SQUARE.center.y+POP_DIST*Math.sin(bis) };
+    });
+    const dur = 550;
+    const t0 = performance.now();
+    function step(now){
+      const t = Math.min(1, (now-t0)/dur);
+      const e = 1 - Math.pow(1-t, 3); // ease-out
+      state.wedges.forEach((w,i)=>{
+        w.O = { x:startO[i].x+(endO[i].x-startO[i].x)*e, y:startO[i].y+(endO[i].y-startO[i].y)*e };
+      });
+      render();
+      if(t<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  document.getElementById('btnSeparate').addEventListener('click', animateSeparate);
+
+  // ---------- 다른 모양으로 다시 관찰 ----------
+  function resetAssembly(){
+    state.presetIdx = (state.presetIdx+1) % THETA1_PRESETS.length;
+    const built = buildAll(THETA1_PRESETS[state.presetIdx]);
+    state.geom = built.geom;
+    state.wedges = built.wedges;
+    Object.keys(wedgeEls).forEach(k=>{ wedgeLayer.removeChild(wedgeEls[k]); delete wedgeEls[k]; });
+    Object.keys(wedgeMarkEls).forEach(k=>{ wedgeMarkLayer.removeChild(wedgeMarkEls[k]); delete wedgeMarkEls[k]; });
+    Object.keys(handleEls).forEach(k=>{ handleLayer.removeChild(handleEls[k].h1); handleLayer.removeChild(handleEls[k].h2); delete handleEls[k]; });
+    state.filled = {}; state.assembled = false; state.separated = false;
+    state.extShown = false; state.angleCompareShown = false; state.eAdded = false; state.angEShown = false;
+    document.getElementById('assembledBlock').classList.remove('show');
+    document.getElementById('observeMoreBlock2').classList.remove('show');
+    document.getElementById('block4').classList.remove('show');
+    document.getElementById('extLimitBlock').classList.remove('show');
+    document.getElementById('afterSeparateText').classList.remove('show');
+    document.getElementById('separateBox').style.display = 'block';
+    document.querySelectorAll('input[name="extLimit"]').forEach(el=>el.checked=false);
+    document.getElementById('fbExtLimit').className='feedback'; document.getElementById('fbExtLimit').textContent='';
+    const fb = document.getElementById('fbAssemble');
+    fb.className='feedback'; fb.textContent='';
+    render();
+  }
+  document.getElementById('btnCycleAngle').addEventListener('click', resetAssembly);
+  document.getElementById('restartAll').addEventListener('click', ()=>{
+    resetAssembly();
+    document.getElementById('page1').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  // ---------- 1단계 ----------
+  function normalizeAns(s){
+    return (s || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[∠°.]/g,'');
+  }
+  document.getElementById('btnMethodExt').addEventListener('click', function(){
+    state.extShown = !state.extShown;
+    this.classList.toggle('active', state.extShown);
+    render();
+    const fb = document.getElementById('fbMethod');
+    fb.className='feedback success';
+    fb.textContent = state.extShown
+      ? '✅ 네 변을 양쪽으로 쭉 연장해봤어요. 지금 화면 안에서는 서로 만나지 않네요.'
+      : '연장선을 숨겼어요.';
+    if(state.extShown){
+      document.getElementById('extLimitBlock').classList.add('show');
+    }
+  });
+  document.getElementById('checkExtLimit').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="extLimit"]:checked');
+    const fb = document.getElementById('fbExtLimit');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'no'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! 화면은 유한하니까, 화면 안에서 안 만난다고 해서 무한히 연장해도 절대 안 만난다고 확신할 수는 없어요. 정말로 평행한지 확실히 확인하려면 ②번처럼 동위각(또는 엇각)의 크기가 같은지 비교하는 방법이 필요해요!';
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '🤔 다시 생각해보세요 — 화면은 유한한데, 직선은 끝없이 이어져요. 화면 밖에서 만날 가능성을 이 방법만으로는 완전히 배제할 수 없어요. 정말로 평행한지 확실히 확인하려면 ②번처럼 동위각(또는 엇각)의 크기가 같은지 비교하는 방법이 필요해요!';
+    }
+  });
+  document.getElementById('btnMethodAngle').addEventListener('click', function(){
+    state.angleCompareShown = !state.angleCompareShown;
+    this.classList.toggle('active', state.angleCompareShown);
+    render();
+    const fb = document.getElementById('fbMethod');
+    fb.className='feedback success';
+    fb.textContent = state.angleCompareShown
+      ? '✅ ∠A와 ∠C(초록), ∠B와 ∠D(보라)의 각도를 표시했어요. 색이 같은 두 각은 이미 맞꼭지각으로 만들었으니 크기가 같아요 — 2단계에서 이 사실로 평행함을 증명해볼 거예요!'
+      : '각도 표시를 숨겼어요.';
+  });
+  document.getElementById('btnConfirmShape').addEventListener('click', function(){
+    const fb = document.getElementById('fbConfirmShape');
+    if(!state.extShown && !state.angleCompareShown){
+      fb.className='feedback warn';
+      fb.textContent='⚠️ 먼저 위의 두 방법 중 하나로 확인해보세요.';
+      return;
+    }
+    const already = state.confirmedPresets.has(state.presetIdx);
+    state.confirmedPresets.add(state.presetIdx);
+    const n = state.confirmedPresets.size;
+    if(already){
+      fb.className = 'feedback warn';
+      fb.textContent = `🤔 이 각도 조합은 이미 확인했어요. [🔄 다른 각도의 색종이로 다시 조립하기]를 눌러 다른 사각형에서도 확인해봅시다! (확인한 사각형: ${n}개)`;
+    }else{
+      fb.className = 'feedback success';
+      fb.textContent = `✅ 이번에도 평행사변형처럼 보이네요! (확인한 사각형: ${n}개)`;
+    }
+    if(n >= MIN_OBSERVE){
+      document.getElementById('observeMoreBlock2').classList.remove('show');
+      document.getElementById('block4').classList.add('show');
+    }else{
+      document.getElementById('observeMoreBlock2').classList.add('show');
+    }
+  });
+  document.getElementById('checkConclude1').addEventListener('click', ()=>{
+    const v1 = document.getElementById('concl1').value;
+    const fb = document.getElementById('feedbackConclude1');
+    if(v1==='?'){ fb.className='feedback warn'; fb.textContent='⚠️ 빈칸을 선택해주세요.'; return; }
+    if(v1==='yes'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 정확해요! 2단계에서 왜 그런지 직접 증명해봅시다!';
+      unlockStep(2);
+      document.getElementById('next1').disabled=false;
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요.';
+    }
+  });
+
+  // ---------- 2단계 ----------
+  document.getElementById('checkSum').addEventListener('click', ()=>{
+    const v = normalizeAns(document.getElementById('sumAns').value);
+    const fb = document.getElementById('fbSum');
+    if(v === '360'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! 사각형의 네 내각의 크기의 합은 항상 360°입니다.';
+      document.getElementById('halfBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. (힌트: 삼각형 두 개로 나눠보면?)';
+    }
+  });
+  document.getElementById('checkHalf').addEventListener('click', ()=>{
+    const v = normalizeAns(document.getElementById('halfAns').value);
+    const fb = document.getElementById('fbHalf');
+    if(v === '180'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! ∠A+∠B=180°입니다. (2×(∠A+∠B)=360° 이므로)';
+      document.getElementById('pointEBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 360°의 절반이에요.';
+    }
+  });
+  document.getElementById('btnAddE').addEventListener('click', function(){
+    if(state.eAdded) return;
+    state.eAdded = true;
+    render();
+    const fb = document.getElementById('fbAddE');
+    fb.className='feedback success';
+    fb.textContent = '✅ AB의 연장선 위에 점 E를 잡았어요.';
+    document.getElementById('linearPairBlock').classList.add('show');
+  });
+  document.getElementById('checkLin').addEventListener('click', ()=>{
+    const v = normalizeAns(document.getElementById('linAns').value);
+    const fb = document.getElementById('fbLin');
+    if(v === '180'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! ∠B와 ∠EBC는 한 직선(일직선)을 이루는 각이므로 합이 180°입니다.';
+      document.getElementById('compareBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 일직선의 각은 180°예요.';
+    }
+  });
+  document.getElementById('checkCompare').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="cmpAE"]:checked');
+    const fb = document.getElementById('fbCompare');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'eq'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! ∠A와 ∠EBC는 둘 다 "180°-∠B" 이므로 서로 같아요.';
+      document.getElementById('showEBCBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. ∠A+∠B=180°이고 ∠B+∠EBC=180°라면?';
+    }
+  });
+  document.getElementById('btnShowAngE').addEventListener('click', function(){
+    state.angEShown = true;
+    render();
+    const fb = document.getElementById('fbShowAngE');
+    fb.className='feedback success';
+    fb.textContent = `✅ ∠A=${Math.round(angleAt(state.geom.A,state.geom.D,state.geom.B))}°, ∠EBC=${Math.round(angleAt(state.geom.B,state.geom.E,state.geom.C))}° — 정말 같네요!`;
+    document.getElementById('typeAEBlock').classList.add('show');
+  });
+  document.getElementById('checkTypeAE').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="typeAE"]:checked');
+    const fb = document.getElementById('fbTypeAE');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'corr'){
+      fb.className='feedback success';
+      fb.innerHTML = '✅ 맞아요! ∠A와 ∠EBC는 직선 <span class="seg">AD</span>, <span class="seg">BC</span>가 직선 <span class="seg">AE</span>와 만나서 생기는 동위각입니다. 동위각의 크기가 같으므로 <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>!';
+      document.getElementById('concADBlock').classList.add('show');
+      document.getElementById('stepCBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.innerHTML = '❌ 다시 생각해보세요. 두 각은 직선 <span class="seg">AE</span>를 기준으로 같은 쪽, 같은 위치에 있어요.';
+    }
+  });
+  document.getElementById('checkCompareC').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="cmpEC"]:checked');
+    const fb = document.getElementById('fbCompareC');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'eq'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! ∠A=∠EBC이고 ∠A=∠C(가정)이므로 ∠EBC=∠C입니다.';
+      document.getElementById('typeECBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. ∠A=∠EBC, ∠A=∠C라면?';
+    }
+  });
+  document.getElementById('checkTypeEC').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="typeEC"]:checked');
+    const fb = document.getElementById('fbTypeEC');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'alt'){
+      fb.className='feedback success';
+      fb.innerHTML = '✅ 맞아요! ∠EBC와 ∠C는 직선 <span class="seg">AE</span>, <span class="seg">DC</span>가 직선 <span class="seg">BC</span>와 만나서 생기는 엇각입니다. 엇각의 크기가 같으므로 <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>!';
+      document.getElementById('concludeBlock2').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 두 각은 직선 BC를 사이에 두고 서로 반대쪽에 있어요.';
+    }
+  });
+  document.getElementById('checkStep2Final').addEventListener('click', ()=>{
+    const el = document.getElementById('concShape');
+    const ok = normalizeAns(el.value).indexOf('평행사변형') >= 0;
+    el.classList.toggle('correct', ok); el.classList.toggle('wrong', !ok && el.value.trim()!=='');
+    const fb = document.getElementById('feedbackStep2Final');
+    if(ok){
+      fb.className='feedback success';
+      fb.innerHTML = '🎉 완벽해요! <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>, <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>이므로 □ABCD는 평행사변형입니다.';
+      unlockStep(3);
+      document.getElementById('next2').disabled=false;
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 아직 정확하지 않아요.';
+    }
+  });
+
+  // ---------- 3단계 ----------
+  document.getElementById('checkStep3').addEventListener('click', ()=>{
+    const v = document.getElementById('c_shape').value;
+    const fb = document.getElementById('feedback3');
+    if(v==='yes'){
+      fb.className='feedback success';
+      fb.textContent = '🎉 정확해요!';
+      document.getElementById('summaryBox').classList.add('show');
+      unlockStep(4);
+      document.getElementById('next3').disabled=false;
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 아직 정확하지 않아요.';
+    }
+  });
+
+  // ---------- 4단계 ----------
+  const PROOF_ANSWERS = { b1:['360'], b2:['180'], b3:['180'], b4:['EBC'], b5:['동위각'], b6:['엇각'], b7:['평행사변형'] };
+  function isBlankCorrect(id, raw){
+    const v = normalizeAns(raw);
+    if(!v) return false;
+    if(id === 'b7') return v.indexOf('평행사변형') >= 0;
+    return PROOF_ANSWERS[id].some(a => normalizeAns(a) === v);
+  }
+  document.getElementById('checkProof').addEventListener('click', ()=>{
+    const inputs = document.querySelectorAll('#page4 .blank');
+    let correctCount = 0;
+    inputs.forEach(inp=>{
+      const ok = isBlankCorrect(inp.dataset.id, inp.value);
+      inp.classList.toggle('correct', ok);
+      inp.classList.toggle('wrong', !ok);
+      if(ok) correctCount++;
+    });
+    const total = inputs.length;
+    const fb = document.getElementById('feedbackProof');
+    if(correctCount === total){
+      fb.className='feedback success';
+      fb.textContent = `🎉 ${total}개 중 ${correctCount}개 정답! 증명을 완벽하게 완성했습니다.`;
+      document.getElementById('proofDone').classList.add('show');
+    }else{
+      fb.className='feedback warn';
+      fb.textContent = `${total}개 중 ${correctCount}개 정답이에요. 빨간색으로 표시된 빈칸을 다시 채워보세요.`;
+      document.getElementById('proofDone').classList.remove('show');
+    }
+  });
+  document.getElementById('resetProof').addEventListener('click', ()=>{
+    document.querySelectorAll('#page4 .blank').forEach(inp=>{ inp.value=''; inp.classList.remove('correct','wrong'); });
+    const fb = document.getElementById('feedbackProof');
+    fb.className='feedback'; fb.textContent='';
+    document.getElementById('proofDone').classList.remove('show');
+  });
+  document.getElementById('toggleWordbank').addEventListener('click', ()=>{
+    document.getElementById('wordbank').classList.toggle('show');
+  });
+
+  // ---------- 모바일 탭 전환 ----------
+  window.showMobileTab = function(tab){
+    const layoutRoot = document.getElementById('layoutRoot');
+    layoutRoot.classList.toggle('mobile-show-canvas', tab === 'canvas');
+    layoutRoot.classList.toggle('mobile-show-activity', tab === 'activity');
+    document.getElementById('mtabCanvas').classList.toggle('active', tab === 'canvas');
+    document.getElementById('mtabActivity').classList.toggle('active', tab === 'activity');
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  // ================= 활동 페이지 전환 =================
+  const unlocked = {1:true, 2:false, 3:false, 4:false};
+  let currentPage = 1;
+
+  function showPage(n){
+    currentPage = n;
+    if(typeof syncProgress === 'function') syncProgress(true);
+    [1,2,3,4].forEach(i=>{
+      document.getElementById('page'+i).style.display = (i===n) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.step-tab').forEach(tab=>{
+      const i = Number(tab.dataset.goto);
+      tab.classList.toggle('current', i===n);
+    });
+    document.getElementById('btnCycleAngle').disabled = (n !== 1);
+    render();
+    document.getElementById('page'+n).scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function unlockStep(n){
+    unlocked[n] = true;
+    const tab = document.querySelector('.step-tab[data-goto="'+n+'"]');
+    tab.classList.remove('locked');
+    tab.classList.add('done');
+  }
+  document.querySelectorAll('.step-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      const i = Number(tab.dataset.goto);
+      if(unlocked[i]) showPage(i);
+    });
+  });
+  document.getElementById('next1').addEventListener('click', ()=> showPage(2));
+  document.getElementById('prev2').addEventListener('click', ()=> showPage(1));
+  document.getElementById('next2').addEventListener('click', ()=> showPage(3));
+  document.getElementById('prev3').addEventListener('click', ()=> showPage(2));
+  document.getElementById('next3').addEventListener('click', ()=> showPage(4));
+  document.getElementById('prev4').addEventListener('click', ()=> showPage(3));
+
+  // ================= 로그인 / Firebase / 관리자 / 이탈 감지 =================
+  const LESSON_ID = 'parallelogram-cond-angle';
+  const STAGE_NAMES = {1:'1.관찰하기', 2:'2.증명 설계', 3:'3.결론 확인', 4:'4.최종 증명'};
+  const PW_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyAEFxLqfhcl6RJlS3ju9InTx9AbFHQ_Yfg",
+      authDomain:"climate-lesson.firebaseapp.com",
+      projectId:"climate-lesson",
+      storageBucket:"climate-lesson.firebasestorage.app",
+      messagingSenderId:"699342489530",
+      appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('Firebase init:', e); }
+
+  let isAdmin = false;
+  let _studentInfo = null;
+  let _docId = null;
+  let _syncTimer = null;
+  let _awayCount = 0;
+  let _adminUnsub = null;
+  let _latestRows = [];
+
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  async function hashPw(pw){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  document.getElementById('adminTrigger').addEventListener('click', async ()=>{
+    const pw = prompt('교사 비밀번호를 입력하세요');
+    if(pw === null) return;
+    const hash = await hashPw(pw);
+    if(hash === PW_HASH){
+      enterAdmin();
+    }else{
+      alert('비밀번호가 틀렸어요.');
+    }
+  });
+  function enterAdmin(){
+    isAdmin = true;
+    document.getElementById('appRoot').style.display = 'none';
+    document.getElementById('adminTrigger').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    startAdminWatch();
+  }
+  function syncProgress(immediate){
+    if(!_db || !_studentInfo || isAdmin) return;
+    clearTimeout(_syncTimer);
+    const write = ()=>{
+      _db.collection('progress').doc(_docId).set({
+        lesson: LESSON_ID,
+        date: todayStr(),
+        grade: _studentInfo.grade,
+        cls: _studentInfo.cls,
+        num: parseInt(_studentInfo.num),
+        name: _studentInfo.name,
+        stage: (typeof currentPage !== 'undefined') ? currentPage : 1,
+        awayCount: _awayCount,
+        isAway: document.hidden,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true}).catch(e=>console.warn('sync:', e));
+    };
+    if(immediate){ write(); } else { _syncTimer = setTimeout(write, 1200); }
+  }
+  function setupAwayDetection(){
+    function onAway(){
+      _awayCount++;
+      document.getElementById('awayWarning').classList.add('show');
+      syncProgress(true);
+    }
+    function onBack(){ syncProgress(true); }
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) onAway(); else onBack(); });
+    window.addEventListener('blur', onAway);
+    window.addEventListener('focus', onBack);
+    setInterval(()=>syncProgress(true), 20000);
+  }
+  window.dismissWarning = function(){
+    document.getElementById('awayWarning').classList.remove('show');
+    syncProgress(true);
+  };
+  function startAdminWatch(){
+    if(!_db){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171">Firebase 연결 실패</td></tr>';
+      return;
+    }
+    const today = todayStr();
+    _adminUnsub = _db.collection('progress')
+      .where('lesson','==', LESSON_ID)
+      .where('date','==', today)
+      .onSnapshot(snap=>{
+        const rows = [];
+        snap.forEach(d=>rows.push(Object.assign({_id:d.id}, d.data())));
+        rows.sort((a,b)=> String(a.cls||'').localeCompare(String(b.cls||'')) || ((a.num||0)-(b.num||0)));
+        _latestRows = rows;
+        applyAdminFilter();
+      }, err=>{
+        document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="6" style="color:#f87171">오류: ${err.message}</td></tr>`;
+      });
+  }
+  function applyAdminFilter(){
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    const filtered = _latestRows.filter(r => (!g || r.grade===g) && (!c || r.cls===c));
+    document.getElementById('btnAdminDelete').disabled = !(g && c);
+    renderAdminTable(filtered, g, c);
+  }
+  document.getElementById('filterGrade').addEventListener('change', applyAdminFilter);
+  document.getElementById('filterCls').addEventListener('change', applyAdminFilter);
+  function renderAdminTable(rows, g, c){
+    const total = rows.length;
+    const awayNow = rows.filter(r=>r.isAway).length;
+    const scopeLabel = (g || c) ? `${g||'전체 학년'} ${c||'전체 반'} · ` : '';
+    document.getElementById('adminSummary').textContent = `${scopeLabel}접속 ${total}명 · 현재 이탈 ${awayNow}명 (실시간)`;
+    if(!rows.length){
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">아직 접속한 학생이 없어요.</td></tr>';
+      return;
+    }
+    document.getElementById('adminTableBody').innerHTML = rows.map(r=>{
+      const lastMs = (r.lastUpdated && r.lastUpdated.toDate) ? r.lastUpdated.toDate().getTime() : 0;
+      const staleMin = lastMs ? Math.max(0, Math.round((Date.now()-lastMs)/60000)) : null;
+      const status = r.isAway ? '⚠️ 다른 화면' : '✅ 정상';
+      return `<tr class="${r.isAway?'away':''}">
+        <td>${r.grade||''} ${r.cls||''} ${String(r.num).padStart(2,'0')}번</td>
+        <td>${r.name||''}</td>
+        <td>${STAGE_NAMES[r.stage]||('?'+r.stage)}</td>
+        <td>${status}</td>
+        <td>${r.awayCount||0}회</td>
+        <td>${staleMin!=null ? staleMin+'분 전' : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('btnAdminDelete').addEventListener('click', async ()=>{
+    const g = document.getElementById('filterGrade').value;
+    const c = document.getElementById('filterCls').value;
+    if(!g || !c) return;
+    const targets = _latestRows.filter(r => r.grade===g && r.cls===c);
+    if(!targets.length){ alert('삭제할 접속 기록이 없어요.'); return; }
+    if(!confirm(`${g} ${c} 학생 ${targets.length}명의 오늘 접속 기록을 삭제할까요?\n(이 작업은 되돌릴 수 없습니다)`)) return;
+    try{
+      await Promise.all(targets.map(r => _db.collection('progress').doc(r._id).delete()));
+    }catch(e){
+      alert('삭제 중 오류가 발생했어요: ' + e.message);
+    }
+  });
+  window.adminLogout = function(){
+    if(_adminUnsub) _adminUnsub();
+    location.reload();
+  };
+
+  // ---------- 객관식 선택지 순서 무작위화 (정답이 항상 같은 위치에 나오지 않도록) ----------
+  function shuffleChoiceList(id){
+    const container = document.getElementById(id);
+    if(!container) return;
+    const items = Array.from(container.children);
+    for(let i=items.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [items[i],items[j]] = [items[j],items[i]];
+    }
+    items.forEach(item=>container.appendChild(item));
+  }
+  ['compareChoices','typeAEChoices','compareCChoices','typeECChoices'].forEach(shuffleChoiceList);
+
+  // ---------- init: 게이트 없이 곧바로 1단계 관찰하기부터 시작. 허브가 학생 정보를 URL로 넘겨주면 조용히 세션바/기록만 채움 ----------
+  render();
+  (function initSession(){
+    const p = new URLSearchParams(location.search);
+    const grade = p.get('grade'), cls = p.get('cls'), num = p.get('num'), name = p.get('name');
+    if(grade && cls && num && name){
+      const gradeFull = grade.endsWith('학년') ? grade : grade+'학년';
+      const clsFull = cls.endsWith('반') ? cls : cls+'반';
+      _studentInfo = {grade:gradeFull, cls:clsFull, num, name};
+      _docId = `${LESSON_ID}_${todayStr()}_${clsFull}_${String(num).padStart(2,'0')}`;
+      document.getElementById('sessionBar').style.display = 'flex';
+      document.getElementById('sessionName').textContent = `${_studentInfo.grade} ${_studentInfo.cls} ${_studentInfo.num}번 ${_studentInfo.name}`;
+      setupAwayDetection();
+      syncProgress(true);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
