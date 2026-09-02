@@ -547,7 +547,7 @@
   const state = {
     doneAC:false, doneBD:false, rotateOn:false,
     observedSet: new Set(),
-    pathChosen:null, doneAngles:false
+    pathChosen:null, doneAngles:false, doneCong:false
   };
 
   // ---------- DOM refs ----------
@@ -624,6 +624,13 @@
     if(currentPage === 2) return state.doneAngles;
     return true;
   }
+  // 대각선이 서로를 이등분한다는 것(OA=OC, OB=OD)은 증명해서 얻는 결론이므로,
+  // 2단계(증명 설계)에서는 ASA 합동을 확인하기 전까지 빗금・길이 표시를 보여주면 안 됨(순환논리 방지)
+  function showEqualLenNow(){
+    if(currentPage === 1) return state.observedSet.size > 0 || state.doneBD;
+    if(currentPage === 2) return state.doneCong;
+    return true;
+  }
 
   // ---------- 메인 렌더 ----------
   function render(){
@@ -654,13 +661,17 @@
 
     triOAB.setAttribute('points', `${O.x},${O.y} ${A.x},${A.y} ${B.x},${B.y}`);
     triOCD.setAttribute('points', `${O.x},${O.y} ${C.x},${C.y} ${D.x},${D.y}`);
+    // .tri-half는 CSS 기본값이 display:none이라, 겹쳐보기 버튼을 눌러도 애초에 화면에 뜬 적이 없었음 —
+    // O(두 대각선의 교점)가 보이는 동안에는 두 삼각형도 함께 보이도록 표시를 켜줘야 함
+    triOAB.style.display = showO ? 'block' : 'none';
+    triOCD.style.display = showO ? 'block' : 'none';
     // matrix(-1,0,0,-1,...)는 브라우저가 애니메이션을 "회전"이 아니라 "배율 1→-1"로 해석해 중간에 쪼그라들 수 있어
     // translate+rotate+translate로 명시적 회전으로 표현
     triOAB.style.transform = state.rotateOn
       ? `translate(${O.x}px, ${O.y}px) rotate(180deg) translate(${-O.x}px, ${-O.y}px)`
       : '';
 
-    const showHalves = showO && (currentPage !== 1 || state.observedSet.size > 0 || state.doneBD);
+    const showHalves = showO && showEqualLenNow();
     [ [segOA,O,A,tickOA,labelOA], [segOC,O,C,tickOC,labelOC], [segOB,O,B,tickOB,labelOB], [segOD,O,D,tickOD,labelOD] ]
     .forEach(([seg,P,Q,tick,label])=>{
       seg.setAttribute('x1',P.x); seg.setAttribute('y1',P.y); seg.setAttribute('x2',Q.x); seg.setAttribute('y2',Q.y);
@@ -820,6 +831,8 @@
     const fb = document.getElementById('fbPathCong');
     if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
     if(sel.value === 'ASA'){
+      state.doneCong = true;
+      render();
       fb.className='feedback success';
       const pairText = state.pathChosen==='ab' ? '△OAB ≡ △OCD' : '△OAD ≡ △OCB';
       fb.innerHTML = `✅ 맞아요! 두 대각선이 만드는 각과, 평행사변형의 성질(대변의 길이가 같음)을 이용하면 ASA 합동에 의해 ${pairText} 입니다.`;
