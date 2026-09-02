@@ -384,6 +384,31 @@
             <div class="feedback" id="fbExtLimit"></div>
           </div>
 
+          <div class="reveal" id="angleCheckBlock">
+            <div class="fillsentence">
+              그림에 나타난 엇각들의 크기를 비교해봅시다. 크기가 같은가요, 다른가요?
+            </div>
+            <div class="choice-list">
+              <label><input type="radio" name="angleCheck" value="same"> 크기가 같아요</label>
+              <label><input type="radio" name="angleCheck" value="diff"> 크기가 달라요</label>
+            </div>
+            <button class="btn btn-check" id="checkAngleSame">확인</button>
+            <div class="feedback" id="fbAngleSame"></div>
+
+            <div class="reveal" id="angleMeaningBlock">
+              <div class="fillsentence">
+                엇각의 크기가 같으면 무엇을 알 수 있을까요?
+              </div>
+              <div class="choice-list">
+                <label><input type="radio" name="angleMeaning" value="parallel"> 엇각이 있는 두 직선이 평행하다</label>
+                <label><input type="radio" name="angleMeaning" value="equal"> 두 직선의 길이가 같다</label>
+                <label><input type="radio" name="angleMeaning" value="perp"> 두 직선이 서로 수직이다</label>
+              </div>
+              <button class="btn btn-check" id="checkAngleMeaning">확인</button>
+              <div class="feedback" id="fbAngleMeaning"></div>
+            </div>
+          </div>
+
           <div class="fillsentence" style="text-align:center;">
             <button class="btn btn-check" id="btnConfirmShape">✅ 이 모양에서 평행 확인 완료</button>
           </div>
@@ -914,6 +939,13 @@
     document.getElementById('extLimitBlock').classList.remove('show');
     document.querySelectorAll('input[name="extLimit"]').forEach(el=>el.checked=false);
     document.getElementById('fbExtLimit').className='feedback'; document.getElementById('fbExtLimit').textContent='';
+    document.getElementById('fbMethod').className='feedback'; document.getElementById('fbMethod').textContent='';
+    document.getElementById('angleCheckBlock').classList.remove('show');
+    document.getElementById('angleMeaningBlock').classList.remove('show');
+    document.querySelectorAll('input[name="angleCheck"]').forEach(el=>el.checked=false);
+    document.querySelectorAll('input[name="angleMeaning"]').forEach(el=>el.checked=false);
+    document.getElementById('fbAngleSame').className='feedback'; document.getElementById('fbAngleSame').textContent='';
+    document.getElementById('fbAngleMeaning').className='feedback'; document.getElementById('fbAngleMeaning').textContent='';
     const fb = document.getElementById('fbBuild');
     fb.className='feedback'; fb.textContent='';
     render();
@@ -962,6 +994,34 @@
     fb.innerHTML = state.angleCompareShown
       ? '✅ 대각선 <span class="seg">AC</span>, <span class="seg">BD</span>가 두 대변을 가로지르는 선(횡단선) 역할을 해요. ∠BAC와 ∠DCA(엇각), ∠ADB와 ∠CBD(엇각)의 각도를 비교해보세요! 이 각들이 각각 같으면 진짜 평행하다고 확신할 수 있어요.'
       : '각도 표시를 숨겼어요.';
+    if(state.angleCompareShown){
+      document.getElementById('angleCheckBlock').classList.add('show');
+    }
+  });
+  document.getElementById('checkAngleSame').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="angleCheck"]:checked');
+    const fb = document.getElementById('fbAngleSame');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'same'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 맞아요! 두 엇각의 크기가 각각 같네요.';
+      document.getElementById('angleMeaningBlock').classList.add('show');
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 한번 각도를 비교해보세요.';
+    }
+  });
+  document.getElementById('checkAngleMeaning').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="angleMeaning"]:checked');
+    const fb = document.getElementById('fbAngleMeaning');
+    if(!sel){ fb.className='feedback warn'; fb.textContent='⚠️ 답을 하나 선택해주세요.'; return; }
+    if(sel.value === 'parallel'){
+      fb.className='feedback success';
+      fb.textContent = '✅ 정확해요! 엇각의 크기가 같으면 두 직선은 평행해요. 그래서 이 사각형의 두 쌍의 대변이 각각 평행하다고 확신할 수 있어요.';
+    }else{
+      fb.className='feedback error';
+      fb.textContent = '❌ 다시 생각해보세요. 중1 때 배운 평행선의 성질을 떠올려봐요.';
+    }
   });
   document.getElementById('btnConfirmShape').addEventListener('click', function(){
     const fb = document.getElementById('fbConfirmShape');

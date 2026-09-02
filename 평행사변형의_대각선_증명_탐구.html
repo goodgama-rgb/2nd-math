@@ -301,8 +301,8 @@
     </div>
 
     <div class="legend">
-      <span><i class="dot" style="background:#e0455a"></i> OA, OC</span>
-      <span><i class="dot" style="background:#3b6fe0"></i> OB, OD</span>
+      <span><i class="dot" style="background:#e0455a"></i> <span class="seg">OA</span>, <span class="seg">OC</span></span>
+      <span><i class="dot" style="background:#3b6fe0"></i> <span class="seg">OB</span>, <span class="seg">OD</span></span>
     </div>
   </div>
 
@@ -326,15 +326,15 @@
         <p>평행사변형 ABCD에 두 대각선을 그어 교점 O를 만들어봅시다.</p>
 
         <div class="fillsentence" style="text-align:center;">
-          <b>① 대각선 AC 긋기</b><br>
-          <button class="btn btn-check" id="btnDiagAC" style="margin-top:8px;">📐 AC 긋기</button>
+          <b>① 대각선 <span class="seg">AC</span> 긋기</b><br>
+          <button class="btn btn-check" id="btnDiagAC" style="margin-top:8px;">📐 <span class="seg">AC</span> 긋기</button>
         </div>
         <div class="feedback" id="fbDiagAC"></div>
 
         <div class="reveal" id="block2">
           <div class="fillsentence" style="text-align:center;">
-            <b>② 대각선 BD 긋기</b><br>
-            <button class="btn btn-check" id="btnDiagBD" style="margin-top:8px;">📐 BD 긋기</button>
+            <b>② 대각선 <span class="seg">BD</span> 긋기</b><br>
+            <button class="btn btn-check" id="btnDiagBD" style="margin-top:8px;">📐 <span class="seg">BD</span> 긋기</button>
           </div>
           <div class="feedback" id="fbDiagBD"></div>
         </div>
@@ -387,11 +387,11 @@
       <div class="step-body">
         <div class="goal-banner">
           <span class="tag">🎯 증명 목표</span>
-          <b>평행사변형 ABCD에서 두 대각선의 교점을 O라 하면, OA=OC, OB=OD이다.</b>
+          <b>평행사변형 ABCD에서 두 대각선의 교점을 O라 하면, <span class="seg">OA</span>=<span class="seg">OC</span>, <span class="seg">OB</span>=<span class="seg">OD</span>이다.</b>
         </div>
 
         <div class="recall-box">
-          <b>증명 실마리</b> — △OAB와 합동인 삼각형을 찾기 → OA=OC, OB=OD임을 설명하기
+          <b>증명 실마리</b> — △OAB와 합동인 삼각형을 찾기 → <span class="seg">OA</span>=<span class="seg">OC</span>, <span class="seg">OB</span>=<span class="seg">OD</span>임을 설명하기
         </div>
 
         <div class="reveal show" id="pathChoiceBlock">
@@ -463,7 +463,7 @@
         <div class="summary-box" id="summaryBox">
           🎉 <b>정리</b><br>
           평행사변형에서 두 대각선은 서로를 이등분한다.<br>
-          👉 대각선 AC, BD를 그어 만든 △OAB와 △OCD가 ASA 합동임을 이용해서 증명했어요.
+          👉 대각선 <span class="seg">AC</span>, <span class="seg">BD</span>를 그어 만든 △OAB와 △OCD가 ASA 합동임을 이용해서 증명했어요.
         </div>
 
         <div class="page-nav">
@@ -761,7 +761,7 @@
     render();
     const fb = document.getElementById('fbDiagBD');
     fb.className='feedback success';
-    fb.textContent = '✅ 두 대각선이 만나는 점이 나타났어요. 이 점을 O라고 합니다. OA, OC는 빨간색, OB, OD는 파란색 눈금과 길이로 표시돼요.';
+    fb.innerHTML = '✅ 두 대각선이 만나는 점이 나타났어요. 이 점을 O라고 합니다. <span class="seg">OA</span>, <span class="seg">OC</span>는 빨간색, <span class="seg">OB</span>, <span class="seg">OD</span>는 파란색 눈금과 길이로 표시돼요.';
     document.getElementById('block3').classList.add('show');
   });
   document.getElementById('btnOverlay').addEventListener('click', function(){
@@ -777,10 +777,10 @@
       const countMsg = ` (지금까지 확인한 평행사변형: ${n}개)`;
       if(sel.value === 'yes'){
         fb.className='feedback success';
-        fb.textContent = '✅ 예상대로 △OAB가 점 O를 중심으로 180° 돌아가서 △OCD에 정확히 겹쳐요! OA=OC, OB=OD 입니다.' + countMsg;
+        fb.innerHTML = '✅ 예상대로 △OAB가 점 O를 중심으로 180° 돌아가서 △OCD에 정확히 겹쳐요! <span class="seg">OA</span>=<span class="seg">OC</span>, <span class="seg">OB</span>=<span class="seg">OD</span> 입니다.' + countMsg;
       }else{
         fb.className='feedback error';
-        fb.textContent = '🤔 예상과 다르게, △OAB가 점 O를 중심으로 180° 돌아가서 △OCD에 정확히 겹치네요! OA=OC, OB=OD 입니다.' + countMsg;
+        fb.innerHTML = '🤔 예상과 다르게, △OAB가 점 O를 중심으로 180° 돌아가서 △OCD에 정확히 겹치네요! <span class="seg">OA</span>=<span class="seg">OC</span>, <span class="seg">OB</span>=<span class="seg">OD</span> 입니다.' + countMsg;
       }
       if(n >= MIN_OBSERVE){
         document.getElementById('observeMoreBlock').classList.remove('show');
@@ -817,9 +817,9 @@
       : '✅ △OAD와 △OCB로 증명해봅시다! (다른 방법으로도 똑같이 증명할 수 있어요)';
     const introEl = document.getElementById('pathIntroText');
     if(state.pathChosen==='ab'){
-      introEl.innerHTML = '<b>AB</b><span class="parallel-sym"></span><b>DC</b>이므로, 두 대각선을 가로지르는 엇각을 찾아봅시다.';
+      introEl.innerHTML = '<span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>이므로, 두 대각선을 가로지르는 엇각을 찾아봅시다.';
     }else{
-      introEl.innerHTML = '<b>AD</b><span class="parallel-sym"></span><b>BC</b>이므로, 두 대각선을 가로지르는 엇각을 찾아봅시다.';
+      introEl.innerHTML = '<span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>이므로, 두 대각선을 가로지르는 엇각을 찾아봅시다.';
     }
     render();
     document.getElementById('pathBlock').classList.add('show');
@@ -835,8 +835,8 @@
     const sideEl = document.getElementById('pathSideText');
     sideEl.style.display = 'block';
     sideEl.innerHTML = state.pathChosen==='ab'
-      ? '또한 평행사변형에서는 두 대변의 길이가 각각 같으므로 <b>AB=DC</b>이다.'
-      : '또한 평행사변형에서는 두 대변의 길이가 각각 같으므로 <b>AD=CB</b>이다.';
+      ? '또한 평행사변형에서는 두 대변의 길이가 각각 같으므로 <span class="seg">AB</span>=<span class="seg">DC</span>이다.'
+      : '또한 평행사변형에서는 두 대변의 길이가 각각 같으므로 <span class="seg">AD</span>=<span class="seg">CB</span>이다.';
     const fb = document.getElementById('fbPathAngles');
     fb.className='feedback success';
     fb.textContent = '✅ 두 엇각 쌍과, 평행사변형의 성질로 얻은 변의 길이까지 — ASA 합동의 세 조건이 모두 모였어요. 이제 합동 조건을 정해봅시다.';

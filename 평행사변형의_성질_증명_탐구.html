@@ -381,7 +381,7 @@
         <div class="reveal" id="block2">
           <p><b>평행사변형 ABCD에 대각선 AC를 그어, 두 삼각형 ABC와 CDA를 만들어봅시다.</b></p>
           <div class="fillsentence" style="text-align:center;">
-            <button class="btn btn-check" id="btnDrawDiag">📐 대각선 AC 긋기</button>
+            <button class="btn btn-check" id="btnDrawDiag">📐 대각선 <span class="seg">AC</span> 긋기</button>
           </div>
           <div class="feedback" id="fbDiag"></div>
         </div>
@@ -571,7 +571,7 @@
           <p class="given"><b>[가정]</b> □ABCD는 평행사변형이다.</p>
           <p class="given"><b>[증명할 것]</b> 두 쌍의 대변의 길이는 각각 같고, 두 쌍의 대각의 크기는 각각 같다.</p>
           <hr>
-          <p><b>[증명]</b> 대각선 AC를 긋자.</p>
+          <p><b>[증명]</b> 대각선 <span class="seg">AC</span>를 긋자.</p>
           <p>① △ABC와 △CDA에서 <span class="seg">AC</span>는 <input type="text" class="blank" data-id="b1" maxlength="6" autocomplete="off"> , <span class="seg">AB</span><span class="parallel-sym"></span><span class="seg">DC</span>이므로 ∠BAC=∠DCA(엇각), <span class="seg">AD</span><span class="parallel-sym"></span><span class="seg">BC</span>이므로 ∠ACB=∠CAD(엇각)이다. 따라서 △ABC≡△CDA( <input type="text" class="blank" data-id="b2" maxlength="6" autocomplete="off"> 합동)이므로 <span class="seg">AB</span>= <input type="text" class="blank" data-id="b3" maxlength="6" autocomplete="off"> , <span class="seg">BC</span>= <input type="text" class="blank" data-id="b4" maxlength="6" autocomplete="off"> 이다. ······(1)</p>
           <p>② 즉, 평행사변형에서 두 쌍의 <input type="text" class="blank" data-id="b5" maxlength="4" autocomplete="off">의 길이는 각각 같다.</p>
           <p>③ 한편 (1)에 의해 ∠B= <input type="text" class="blank" data-id="b6" maxlength="6" autocomplete="off"> 이고, ∠A=∠BAC+∠CAD=∠DCA+∠ACB= <input type="text" class="blank" data-id="b7" maxlength="6" autocomplete="off"> 이다.</p>
@@ -898,7 +898,7 @@
     const fb = document.getElementById('feedbackStep2Final');
     if(ab==='cd' && bc==='da' && angleC==='c' && sideOk && angleOk){
       fb.className='feedback success';
-      fb.innerHTML = '🎉 완벽해요! △ABC≡△CDA 이므로 AB=CD, BC=DA(두 쌍의 대변)이고, ∠A=∠C, ∠B=∠D(두 쌍의 대각)입니다.';
+      fb.innerHTML = '🎉 완벽해요! △ABC≡△CDA 이므로 <span class="seg">AB</span>=<span class="seg">CD</span>, <span class="seg">BC</span>=<span class="seg">DA</span>(두 쌍의 대변)이고, ∠A=∠C, ∠B=∠D(두 쌍의 대각)입니다.';
       unlockStep(3);
       document.getElementById('next2').disabled=false;
     }else{
