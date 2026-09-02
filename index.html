@@ -657,8 +657,7 @@ function subscribeLeaderboard(cls){
 
 function renderLeaderboard(students){
   const wrap = document.getElementById('leader-boxes');
-  const quizIds = new Set(allRealItems().filter(it=>it.type==='문제').map(it=>it.id));
-  const quizCount = s => (s.itemsOpened||[]).filter(id=> quizIds.has(id)).length;
+  const quizCount = s => s.quizSolveCount||0;
   const byCount = students.slice().sort((a,b)=> quizCount(b) - quizCount(a)).slice(0,10);
   const byVisit = students.slice().sort((a,b)=> (b.visitCount||0) - (a.visitCount||0)).slice(0,10);
   const renderList = (list, valFn, valSuffix)=>{
@@ -669,7 +668,7 @@ function renderLeaderboard(students){
     ).join('');
   };
   wrap.innerHTML = `
-    <div class="leader-box"><h3 class="leader-title">🏆 문제 많이 푼 TOP 10</h3>${renderList(byCount,quizCount,'개')}</div>
+    <div class="leader-box"><h3 class="leader-title">🏆 문제 많이 푼 TOP 10</h3>${renderList(byCount,quizCount,'번')}</div>
     <div class="leader-box"><h3 class="leader-title">🔥 가장 많이 접속한 TOP 10</h3>${renderList(byVisit, s=>s.visitCount||0,'회')}</div>
   `;
 }
@@ -771,7 +770,7 @@ function renderAdminStudents(students){
     const row = document.createElement('div');
     row.className = 'student-row';
     row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'}</span>
-      <span class="student-stat">접속 ${s.visitCount||0} · 문제 ${s.itemsOpened?.length||0}</span>
+      <span class="student-stat">접속 ${s.visitCount||0} · 문제풀이 ${s.quizSolveCount||0}</span>
       <button class="student-del" type="button">삭제</button>`;
     row.querySelector('.student-del').onclick = ()=>{
       if(confirm(`${s.id}번 ${s.name||'?'} 학생의 접속·랭킹 기록을 삭제할까요?`)){

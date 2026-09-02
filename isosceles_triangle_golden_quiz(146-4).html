@@ -365,7 +365,7 @@ canvas.fig{background:#fff;border-radius:8px}
   window._reportQuizComplete = function(){
     if(!s.cls || !s.num || !s.id) return;
     window._pendingQuizComplete = firebase.firestore().collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
-      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
       .catch(err=> console.warn('quiz complete log failed', err));
   };
 })();
