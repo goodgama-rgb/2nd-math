@@ -144,7 +144,19 @@ canvas.fig{background:#fff;border-radius:8px}
 
 <div class="hdr">
   <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;">← 학습 선택 목록으로 돌아가기</a>
-  <script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+  <script>
+(function(){
+  const _hb = document.getElementById('hubBackLink');
+  const _hbHref = 'index.html' + location.search;
+  _hb.href = _hbHref;
+  _hb.addEventListener('click', function(e){
+    if(window._pendingQuizComplete){
+      e.preventDefault();
+      Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(res=>setTimeout(res,800))]).then(()=>{ location.href = _hbHref; });
+    }
+  });
+})();
+</script>
   <span class="hdr-badge">수학</span>
   <span class="hdr-title">이등변삼각형의 성질 — 밑각과 꼭지각</span>
   <div class="hdr-right">
@@ -351,7 +363,7 @@ canvas.fig{background:#fff;border-radius:8px}
   }catch(e){ console.warn('hub firebase init:', e); }
   window._reportQuizComplete = function(){
     if(!s.cls || !s.num || !s.id) return;
-    firebase.firestore().collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+    window._pendingQuizComplete = firebase.firestore().collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
       .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
       .catch(err=> console.warn('quiz complete log failed', err));
   };
