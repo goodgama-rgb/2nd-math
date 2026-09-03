@@ -61,6 +61,7 @@
   .today-box{background:var(--lav);border-radius:18px;padding:18px 20px;margin-bottom:26px;box-shadow:0 4px 0 var(--lav-dark);}
   .today-box .today-label{font-family:var(--disp);font-size:23px;color:var(--lav-ink);margin-bottom:10px;display:block;}
   .today-item{display:flex;align-items:center;gap:9px;padding:9px 0;text-decoration:none;color:var(--ink);font-size:16.5px;font-weight:700;}
+  .today-item.done{opacity:.65;}
   .today-empty{color:var(--lav-ink);opacity:.75;font-size:14.5px;}
   .notice-box{background:var(--coral);border-radius:16px;padding:14px 18px;margin-bottom:18px;}
   .notice-box .notice-box-label{font-family:var(--disp);font-size:15px;color:var(--coral-ink);display:block;margin-bottom:4px;}
@@ -96,6 +97,8 @@
   .card:nth-child(odd){transform:rotate(-0.6deg);}
   .card:nth-child(even){transform:rotate(0.6deg);}
   .card.locked{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .card.done{opacity:.7;}
+  .done-badge{margin-left:auto;font-size:16px;flex-shrink:0;padding-left:6px;}
   .icon{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
   .icon.explore{background:var(--mint);}
   .icon.quiz{background:var(--coral);}
@@ -413,6 +416,7 @@ let unlockedAt = {};    // { itemId: '2026-08-20' } - 진도 캘린더용
 let noticeText = '';
 let unsubStudentToday = null;
 let unsubLeaderboard = null;
+let myItemsOpened = new Set(); // 이 학생이 열어본/완료한 항목 id들 (카드 완료 체크 표시용)
 
 let currentTeacher = null;
 let selectedAdminClass = null;
@@ -566,8 +570,9 @@ function openUnit(unitId){
     }
     su.items.forEach(it=>{
       const locked = unlockedIds !== null && !unlockedIds.includes(it.id);
+      const done = myItemsOpened.has(it.id);
       const el = document.createElement(locked ? 'div' : 'a');
-      el.className = 'card' + (locked ? ' locked' : '');
+      el.className = 'card' + (locked ? ' locked' : '') + (done ? ' done' : '');
       if(!locked){
         const href = withStudentParams(it.file, it.id);
         el.href = href;
@@ -576,7 +581,8 @@ function openUnit(unitId){
       const iconClass = it.type==='문제' ? 'quiz' : 'explore';
       const emoji = locked ? '🔒' : (it.type==='문제' ? '✏️' : '🔍');
       el.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
-        <span><span class="card-title">${it.title}</span><span class="card-meta">${locked ? '아직 잠겨있어요' : it.meta}</span></span>`;
+        <span><span class="card-title">${it.title}</span><span class="card-meta">${locked ? '아직 잠겨있어요' : it.meta}</span></span>
+        ${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
       items.appendChild(el);
     });
     wrap.appendChild(sec);
@@ -597,11 +603,12 @@ function renderToday(){
   }
   wrap.innerHTML = '';
   items.forEach(it=>{
+    const done = myItemsOpened.has(it.id);
     const href = withStudentParams(it.file, it.id);
     const a = document.createElement('a');
-    a.className = 'today-item'; a.href = href;
+    a.className = 'today-item' + (done ? ' done' : ''); a.href = href;
     a.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
-    a.innerHTML = `<span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span>`;
+    a.innerHTML = `<span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span>${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
     wrap.appendChild(a);
   });
 }
@@ -618,11 +625,12 @@ function renderRecommend(){
   const picked = seededShuffle(pool, `${todayStr()}_${studentInfo.cls}`).slice(0, 5);
   wrap.innerHTML = '';
   picked.forEach(it=>{
+    const done = myItemsOpened.has(it.id);
     const href = withStudentParams(it.file, it.id);
     const a = document.createElement('a');
-    a.className = 'today-item'; a.href = href;
+    a.className = 'today-item' + (done ? ' done' : ''); a.href = href;
     a.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
-    a.innerHTML = `<span>✏️</span><span>${it.title} <span class="card-meta">(${it.meta})</span></span>`;
+    a.innerHTML = `<span>✏️</span><span>${it.title} <span class="card-meta">(${it.meta})</span></span>${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
     wrap.appendChild(a);
   });
 }
@@ -659,6 +667,15 @@ function subscribeLeaderboard(cls){
     const students = [];
     snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
     renderLeaderboard(students);
+
+    // 이 학생 본인이 열어본/완료한 항목 — 카드에 완료 체크 표시하는 용도
+    const me = studentInfo ? students.find(s=> s.id === String(studentInfo.num)) : null;
+    myItemsOpened = new Set(me?.itemsOpened || []);
+    renderToday();
+    renderRecommend();
+    if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
+      openUnit(currentUnitId);
+    }
   });
 }
 
