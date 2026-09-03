@@ -600,6 +600,7 @@
           <button class="btn btn-outline" id="prev4">← 이전 활동</button>
           <span></span>
         </div>
+        <button class="btn" id="finishActivityBtn" style="display:none;background:var(--green);color:#fff;margin-top:10px;width:100%;font-weight:700;" onclick="finishActivityAndReturn()">🏁 활동 마치고 학습 목록으로 돌아가기</button>
       </div>
     </section>
 
@@ -1382,10 +1383,12 @@
       fb.className='feedback success';
       fb.textContent = `🎉 ${total}개 중 ${correctCount}개 정답! 증명을 완벽하게 완성했습니다.`;
       document.getElementById('proofDone').classList.add('show');
+      document.getElementById('finishActivityBtn').style.display = 'block';
     }else{
       fb.className='feedback warn';
       fb.textContent = `${total}개 중 ${correctCount}개 정답이에요. 빨간색으로 표시된 빈칸을 다시 채워보세요.`;
       document.getElementById('proofDone').classList.remove('show');
+      document.getElementById('finishActivityBtn').style.display = 'none';
     }
   });
   document.getElementById('resetProof').addEventListener('click', ()=>{
@@ -1393,6 +1396,7 @@
     const fb = document.getElementById('feedbackProof');
     fb.className='feedback'; fb.textContent='';
     document.getElementById('proofDone').classList.remove('show');
+    document.getElementById('finishActivityBtn').style.display = 'none';
   });
   document.getElementById('toggleWordbank').addEventListener('click', ()=>{
     document.getElementById('wordbank').classList.toggle('show');
@@ -1462,6 +1466,33 @@
     });
     _db = firebase.firestore();
   }catch(e){ console.warn('Firebase init:', e); }
+
+  // 활동 완료 기록용 - 허브(nd-deogi-math-hub) 프로젝트에 별도 이름으로 두 번째 연결
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    }, 'hub');
+  }catch(e){ console.warn('hub firebase init:', e); }
+
+  window.finishActivityAndReturn = function(){
+    const p = new URLSearchParams(location.search);
+    const cls = p.get('cls'), num = p.get('num'), id = p.get('id'), name = p.get('name');
+    const goHome = ()=>{ location.href = 'index.html' + location.search; };
+    let write = Promise.resolve();
+    if(cls && num && id){
+      try{
+        write = firebase.app('hub').firestore().collection('classStudents').doc(String(cls)).collection('students').doc(String(num))
+          .set({ name: name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(id), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+          .catch(err=> console.warn('activity finish log failed', err));
+      }catch(e){ console.warn('activity finish log failed', e); }
+    }
+    Promise.race([write, new Promise(res=>setTimeout(res,800))]).then(goHome);
+  };
 
   let isAdmin = false;
   let _studentInfo = null;
