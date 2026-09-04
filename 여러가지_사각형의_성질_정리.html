@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여러 가지 사각형의 성질 — 정리</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --blue:#2563eb;--blue-l:#dbeafe;--blue-ll:#eff6ff;
+  --green:#16a34a;--green-l:#dcfce7;
+  --orange:#ea580c;--orange-l:#ffedd5;
+  --violet:#7c3aed;--violet-l:#ede9fe;--violet-ll:#f5f3ff;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:#f7f7fb;color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--ink);color:#fff;padding:16px 24px}
+.hdr-title{font-size:18px;font-weight:700}
+.hdr-sub{font-size:12px;opacity:.7;margin-top:2px}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px}
+.seg{ text-decoration-line:overline; text-decoration-thickness:1.2px; text-decoration-skip-ink:none; }
+
+.sec{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.sec-title{padding:12px 18px;font-size:15px;font-weight:700;background:var(--accent-l);color:var(--accent);border-bottom:1px solid #e5e5ee}
+.sub-h{font-size:12.5px;font-weight:700;color:var(--ink2);margin:16px 18px 6px}
+
+.gallery{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 18px 2px}
+.gal-tile{cursor:pointer;border:2.5px solid #e5e5ee;border-radius:10px;padding:6px;background:#fff;transition:.15s}
+.gal-tile:hover{border-color:#c8c8dd}
+.gal-tile.selected{border-color:var(--accent);background:var(--accent-l)}
+.gal-tile.correct{border-color:var(--green)!important;background:var(--green-l)!important}
+.gal-tile.wrong{border-color:var(--red)!important;background:var(--red-l)!important}
+.gal-check-msg{text-align:center;font-size:13px;font-weight:700;margin:6px 18px 4px;min-height:18px}
+.gal-check-msg.ok{color:var(--green)}
+.gal-check-msg.no{color:var(--red)}
+.gal-row-btn{text-align:center;margin:8px 18px 4px}
+
+.sentence{font-size:14px;line-height:2.3;color:var(--ink2);padding:0 18px}
+.blank-wrap{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;vertical-align:middle;margin:0 2px}
+.blank-input{text-align:center;padding:3px 8px;border-radius:6px;background:#fbfbfe;color:var(--ink);font-weight:700;border:1.5px solid #ccc;font-family:inherit;font-size:14px}
+.blank-input:focus{outline:none;border-color:var(--accent)}
+.blank-input.correct{background:var(--green-l);color:#14532d;border:1.5px solid var(--green)}
+.blank-input.wrong{background:var(--red-l);color:var(--red);border:1.5px solid var(--red)}
+.ans-btn{font-size:11px;padding:3px 10px;border-radius:20px;border:1.5px solid #d8d8e8;background:#fff;color:var(--ink3);cursor:pointer;font-family:inherit;font-weight:600;margin-left:4px}
+.ans-btn:not(:disabled):hover{border-color:var(--accent);color:var(--accent)}
+.ans-btn:disabled{opacity:.35;cursor:not-allowed}
+
+.sec-grade{padding:12px 18px;text-align:right;border-top:1px solid #eee;background:#fafafd}
+.grade-btn{font-size:13px;font-weight:700;padding:8px 18px;border-radius:8px;border:none;background:var(--ink);color:#fff;cursor:pointer;font-family:inherit}
+.grade-btn:hover{background:#333}
+
+.app-block{padding:16px 18px;border-top:1px solid #eee}
+.app-flex{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.app-fig{flex:0 0 auto;width:200px;max-width:100%}
+.app-fig canvas{width:100%;height:auto}
+.app-main{flex:1;min-width:220px}
+.app-toggle{font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;border:1.5px solid var(--accent);background:#fff;color:var(--accent);cursor:pointer;font-family:inherit}
+.app-toggle:hover{background:var(--accent-l)}
+.ex-area{display:none;margin-top:14px;padding:14px;background:var(--accent-ll,#f9f8ff);border-radius:10px;border:1px solid var(--accent-l)}
+.ex-area.show{display:block}
+.ex-q{font-size:13px;color:var(--ink2);margin-bottom:10px;line-height:1.6}
+.ex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ex-input{border:1.5px solid #d0d0e0;border-radius:8px;padding:7px 10px;font-size:15px;font-weight:600;width:75px;text-align:center;font-family:inherit}
+.ex-btn{padding:7px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.ex-btn.sec{background:#fff;color:var(--ink2);border:1.5px solid #d8d8e8}
+.ex-fb{font-size:13px;margin-top:8px;font-weight:600;min-height:18px}
+.ex-fb.ok{color:var(--green)}
+.ex-fb.no{color:var(--red)}
+</style>
+</head>
+<body>
+
+<div class="hdr" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+  <div>
+    <div class="hdr-title">여러 가지 사각형의 성질 — 정리</div>
+    <div class="hdr-sub">평행사변형 · 직사각형 · 마름모 · 정사각형의 성질을 그림으로 고르고, 빈칸을 채우며 복습해봐요</div>
+  </div>
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.02em;white-space:nowrap;flex-shrink:0;">← 학습 선택 목록으로 돌아가기</a>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="wrap">
+
+<!-- ══════════ 1. 평행사변형 ══════════ -->
+<div class="sec" style="--accent:var(--blue);--accent-l:var(--blue-l);--accent-ll:var(--blue-ll)">
+  <div class="sec-title">① 평행사변형의 성질</div>
+
+  <div class="sub-h">STEP 1 · 평행사변형 '모양'인 것을 모두 골라보세요! (수학적으로 엄밀하게 말고, 모양만으로 판단해보세요!)</div>
+  <div class="gallery" id="gal-1"></div>
+  <div class="gal-row-btn"><button class="grade-btn" onclick="gradeGallery(1)">✅ 확인</button></div>
+  <div class="gal-check-msg" id="gal-msg-1"></div>
+
+  <div class="sub-h">STEP 2 · 빈칸을 채워 성질을 완성해보세요</div>
+  <div class="sentence" id="s-para-1"></div>
+  <div class="sentence" id="s-para-2" style="margin-top:6px"></div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-para')">✅ 채점하기</button></div>
+
+  <div class="sub-h">STEP 3 · 예제 문제 (선택)</div>
+  <div class="app-block" style="border-top:none;padding-top:4px">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="exParaFig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <button class="app-toggle" onclick="toggleEx('exPara')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="exPara-area">
+          <div class="ex-q" id="exPara-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--blue)">x =</span>
+            <input type="number" class="ex-input" id="exPara-val">
+            <button class="ex-btn" onclick="checkEx('exPara')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('exPara')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="exPara-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 2. 직사각형 ══════════ -->
+<div class="sec" style="--accent:var(--green);--accent-l:var(--green-l);--accent-ll:#f0fdf4">
+  <div class="sec-title">② 직사각형의 성질</div>
+
+  <div class="sub-h">STEP 1 · 직사각형 '모양'인 것을 모두 골라보세요! (수학적으로 엄밀하게 말고, 모양만으로 판단해보세요!)</div>
+  <div class="gallery" id="gal-2"></div>
+  <div class="gal-row-btn"><button class="grade-btn" onclick="gradeGallery(2)">✅ 확인</button></div>
+  <div class="gal-check-msg" id="gal-msg-2"></div>
+
+  <div class="sub-h">STEP 2 · 빈칸을 채워 성질을 완성해보세요</div>
+  <div class="sentence" id="s-rect-1"></div>
+  <div class="sentence" id="s-rect-2" style="margin-top:6px"></div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-rect')">✅ 채점하기</button></div>
+
+  <div class="sub-h">STEP 3 · 예제 문제 (선택)</div>
+  <div class="app-block" style="border-top:none;padding-top:4px">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="exRectFig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <button class="app-toggle" onclick="toggleEx('exRect')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="exRect-area">
+          <div class="ex-q" id="exRect-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--green)">x =</span>
+            <input type="number" class="ex-input" id="exRect-val">
+            <button class="ex-btn" onclick="checkEx('exRect')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('exRect')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="exRect-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 3. 마름모 ══════════ -->
+<div class="sec" style="--accent:var(--orange);--accent-l:var(--orange-l);--accent-ll:#fff7ed">
+  <div class="sec-title">③ 마름모의 성질</div>
+
+  <div class="sub-h">STEP 1 · 마름모 '모양'인 것을 모두 골라보세요! (수학적으로 엄밀하게 말고, 모양만으로 판단해보세요!)</div>
+  <div class="gallery" id="gal-3"></div>
+  <div class="gal-row-btn"><button class="grade-btn" onclick="gradeGallery(3)">✅ 확인</button></div>
+  <div class="gal-check-msg" id="gal-msg-3"></div>
+
+  <div class="sub-h">STEP 2 · 빈칸을 채워 성질을 완성해보세요</div>
+  <div class="sentence" id="s-rhom-1"></div>
+  <div class="sentence" id="s-rhom-2" style="margin-top:6px"></div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-rhom')">✅ 채점하기</button></div>
+
+  <div class="sub-h">STEP 3 · 예제 문제 (선택)</div>
+  <div class="app-block" style="border-top:none;padding-top:4px">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="exRhomFig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <button class="app-toggle" onclick="toggleEx('exRhom')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="exRhom-area">
+          <div class="ex-q" id="exRhom-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--orange)">x =</span>
+            <input type="number" class="ex-input" id="exRhom-val">
+            <button class="ex-btn" onclick="checkEx('exRhom')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('exRhom')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="exRhom-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 4. 정사각형 ══════════ -->
+<div class="sec" style="--accent:var(--violet);--accent-l:var(--violet-l);--accent-ll:var(--violet-ll)">
+  <div class="sec-title">④ 정사각형의 성질</div>
+
+  <div class="sub-h">STEP 1 · 정사각형 '모양'인 것을 모두 골라보세요! (수학적으로 엄밀하게 말고, 모양만으로 판단해보세요!)</div>
+  <div class="gallery" id="gal-4"></div>
+  <div class="gal-row-btn"><button class="grade-btn" onclick="gradeGallery(4)">✅ 확인</button></div>
+  <div class="gal-check-msg" id="gal-msg-4"></div>
+
+  <div class="sub-h">STEP 2 · 빈칸을 채워 성질을 완성해보세요</div>
+  <div class="sentence" id="s-sq-1"></div>
+  <div class="sentence" id="s-sq-2" style="margin-top:6px"></div>
+  <div class="sec-grade"><button class="grade-btn" onclick="gradeSection('sec-sq')">✅ 채점하기</button></div>
+
+  <div class="sub-h">STEP 3 · 예제 문제 (선택)</div>
+  <div class="app-block" style="border-top:none;padding-top:4px">
+    <div class="app-flex">
+      <div class="app-fig"><canvas id="exSqFig" width="220" height="190"></canvas></div>
+      <div class="app-main">
+        <button class="app-toggle" onclick="toggleEx('exSq')">📝 예제 문제 풀어보기</button>
+        <div class="ex-area" id="exSq-area">
+          <div class="ex-q" id="exSq-q"></div>
+          <div class="ex-row">
+            <span style="font-weight:700;color:var(--violet)">x =</span>
+            <input type="number" class="ex-input" id="exSq-val">
+            <button class="ex-btn" onclick="checkEx('exSq')">확인</button>
+            <button class="ex-btn sec" onclick="nextEx('exSq')">🔄 다른 문제도 풀어보기</button>
+          </div>
+          <div class="ex-fb" id="exSq-fb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* ════════════════════════════════
+   공통 도형 헬퍼 (내심/외심 정리 파일과 동일)
+════════════════════════════════ */
+function drawLabel(ctx,x,y,text,color,size,weight){
+  ctx.fillStyle=color;
+  ctx.font=`${weight||700} ${size||13}px 'Noto Sans KR',sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,x,y);
+}
+function outsideLabelPos(pt, centroid, dist){
+  const dx=pt.x-centroid.x, dy=pt.y-centroid.y, len=Math.hypot(dx,dy)||1;
+  return {x:pt.x+dx/len*dist, y:pt.y+dy/len*dist};
+}
+function fitPointsToCanvas(pointsObj, canvasW, canvasH, pad){
+  const keys=Object.keys(pointsObj);
+  const xs=keys.map(k=>pointsObj[k].x), ys=keys.map(k=>pointsObj[k].y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const bw=(maxX-minX)||1, bh=(maxY-minY)||1;
+  const availW=canvasW-2*pad, availH=canvasH-2*pad;
+  const scale=Math.min(availW/bw, availH/bh);
+  const offX=pad-minX*scale+(availW-bw*scale)/2;
+  const offY=pad-minY*scale+(availH-bh*scale)/2;
+  const out={};
+  keys.forEach(k=>{ out[k]={x:pointsObj[k].x*scale+offX, y:pointsObj[k].y*scale+offY}; });
+  return out;
+}
+function rightAngleMark(ctx,corner,p1,p2,size,color){
+  const u0={x:p1.x-corner.x,y:p1.y-corner.y}, ulen=Math.hypot(u0.x,u0.y)||1, u={x:u0.x/ulen,y:u0.y/ulen};
+  const v0={x:p2.x-corner.x,y:p2.y-corner.y}, vlen=Math.hypot(v0.x,v0.y)||1, v={x:v0.x/vlen,y:v0.y/vlen};
+  ctx.strokeStyle=color; ctx.lineWidth=1.4;
+  ctx.beginPath();
+  ctx.moveTo(corner.x+u.x*size, corner.y+u.y*size);
+  ctx.lineTo(corner.x+u.x*size+v.x*size, corner.y+u.y*size+v.y*size);
+  ctx.lineTo(corner.x+v.x*size, corner.y+v.y*size);
+  ctx.stroke();
+}
+// 길이 표시용 바깥쪽 점선 곡선(항상 점선) — bulgeSide(+1/-1)로 어느 쪽으로 부풀릴지 직접 지정
+function diagDashLabel(ctx,p1,p2,text,color,bulgeSide,size,bow){
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy)||1;
+  const ux=dx/len, uy=dy/len;
+  const px=-uy*bulgeSide, py=ux*bulgeSide;
+  const b=bow||10;
+  const cx=mx+px*b, cy=my+py*b;
+  ctx.save();
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.2; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.quadraticCurveTo(cx,cy,p2.x,p2.y); ctx.stroke();
+  ctx.restore();
+  const lx=cx+px*11, ly=cy+py*11;
+  drawLabel(ctx,lx,ly,text,color,size||12,800);
+}
+function angleArcAt(ctx,v,p1,p2,r,color){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x);
+  const a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1;
+  while(diff<=-Math.PI)diff+=2*Math.PI;
+  while(diff>Math.PI)diff-=2*Math.PI;
+  ctx.strokeStyle=color; ctx.lineWidth=1.7;
+  ctx.beginPath();
+  ctx.arc(v.x,v.y,r,a1,a1+diff,diff<0);
+  ctx.stroke();
+}
+function angleMidPoint(v,p1,p2,r){
+  const a1=Math.atan2(p1.y-v.y,p1.x-v.x), a2=Math.atan2(p2.y-v.y,p2.x-v.x);
+  let diff=a2-a1; while(diff<=-Math.PI)diff+=2*Math.PI; while(diff>Math.PI)diff-=2*Math.PI;
+  const mid=a1+diff/2;
+  return {x:v.x+r*Math.cos(mid), y:v.y+r*Math.sin(mid)};
+}
+
+/* ════════════════════════════════
+   ① 그림 고르기 갤러리 (4개 섹션 공용 도형 세트)
+════════════════════════════════ */
+const SHAPE_DEFS = {
+  trapezoid:     [{x:0,y:60},{x:100,y:60},{x:70,y:10},{x:20,y:10}],
+  quad:          [{x:10,y:60},{x:95,y:50},{x:70,y:8},{x:20,y:20}],
+  parallelogram: [{x:15,y:60},{x:95,y:60},{x:80,y:10},{x:0,y:10}],
+  rectangle:     [{x:10,y:60},{x:90,y:60},{x:90,y:10},{x:10,y:10}],
+  rhombus:       [{x:50,y:5},{x:15,y:45},{x:50,y:85},{x:85,y:45}],
+  square:        [{x:20,y:15},{x:80,y:15},{x:80,y:75},{x:20,y:75}]
+};
+const GALLERY_ORDER = ['trapezoid','quad','parallelogram','rectangle','rhombus','square'];
+const GALLERY_CORRECT = {
+  1: ['parallelogram','rectangle','rhombus','square'],
+  2: ['rectangle','square'],
+  3: ['rhombus','square'],
+  4: ['square']
+};
+function drawShapeThumb(canvas, key){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const pts=SHAPE_DEFS[key];
+  const obj={}; pts.forEach((p,i)=>{ obj[i]=p; });
+  const F=fitPointsToCanvas(obj, canvas.width, canvas.height, 9);
+  ctx.fillStyle='#eef2ff';
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath();
+  Object.keys(F).forEach((k,i)=>{ const p=F[k]; if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+}
+const GAL_SELECTED = {1:new Set(),2:new Set(),3:new Set(),4:new Set()};
+function toggleGalTile(secNum, i){
+  const tile=document.getElementById(`gal-${secNum}-${i}`);
+  tile.classList.remove('correct','wrong');
+  const sel=GAL_SELECTED[secNum];
+  if(sel.has(i)){ sel.delete(i); tile.classList.remove('selected'); }
+  else{ sel.add(i); tile.classList.add('selected'); }
+}
+function gradeGallery(secNum){
+  const correctKeys=new Set(GALLERY_CORRECT[secNum]);
+  let allOk=true, okCount=0;
+  GALLERY_ORDER.forEach((key,i)=>{
+    const tile=document.getElementById(`gal-${secNum}-${i}`);
+    const shouldBe=correctKeys.has(key);
+    const isSel=GAL_SELECTED[secNum].has(i);
+    tile.classList.remove('correct','wrong');
+    if(shouldBe===isSel){ if(shouldBe) tile.classList.add('correct'); okCount++; }
+    else{ tile.classList.add('wrong'); allOk=false; }
+  });
+  const msg=document.getElementById('gal-msg-'+secNum);
+  msg.textContent = allOk ? '🎉 정확해요! 모두 맞혔어요.' : `${okCount}/${GALLERY_ORDER.length}개 맞았어요. 빨간 테두리를 다시 확인해보세요.`;
+  msg.className = 'gal-check-msg ' + (allOk?'ok':'no');
+}
+function buildGallery(secNum){
+  const wrap=document.getElementById('gal-'+secNum);
+  wrap.innerHTML = GALLERY_ORDER.map((key,i)=>
+    `<div class="gal-tile" id="gal-${secNum}-${i}" onclick="toggleGalTile(${secNum},${i})"><canvas width="80" height="70"></canvas></div>`
+  ).join('');
+  GALLERY_ORDER.forEach((key,i)=>{
+    drawShapeThumb(document.querySelector(`#gal-${secNum}-${i} canvas`), key);
+  });
+}
+[1,2,3,4].forEach(buildGallery);
+
+/* ════════════════════════════════
+   ② 성질 빈칸 (직접 타이핑) + 채점하기/정답보기
+════════════════════════════════ */
+const PROBLEMS={
+  p_para1:{section:'sec-para', blanks:['para1','para2']}, p_para2:{section:'sec-para', blanks:['para3','para4']},
+  p_rect1:{section:'sec-rect', blanks:['rect1']}, p_rect2:{section:'sec-rect', blanks:['rect2','rect3']},
+  p_rhom1:{section:'sec-rhom', blanks:['rhom1']}, p_rhom2:{section:'sec-rhom', blanks:['rhom2','rhom3']},
+  p_sq1:{section:'sec-sq', blanks:['sq1']}, p_sq2:{section:'sec-sq', blanks:['sq2','sq3']}
+};
+function blank(id, correct){
+  const w=Math.max(46, correct.length*13+18);
+  return `<input type="text" class="blank-input" style="width:${w}px" id="${id}-inp" data-answer="${correct}">`;
+}
+function ansBtn(pid){
+  return `<button class="ans-btn" id="ans-${pid}" disabled onclick="showAnswer('${pid}')">정답 보기</button>`;
+}
+function gradeSection(sectionId){
+  Object.entries(PROBLEMS).forEach(([pid,info])=>{
+    if(info.section!==sectionId) return;
+    info.blanks.forEach(bid=>{
+      const inp=document.getElementById(bid+'-inp');
+      const val=inp.value.trim();
+      inp.classList.remove('correct','wrong');
+      if(val && val===inp.dataset.answer) inp.classList.add('correct');
+      else inp.classList.add('wrong');
+    });
+    const btn=document.getElementById('ans-'+pid);
+    if(btn) btn.disabled=false;
+  });
+}
+function showAnswer(pid){
+  PROBLEMS[pid].blanks.forEach(bid=>{
+    const inp=document.getElementById(bid+'-inp');
+    inp.value=inp.dataset.answer;
+    inp.classList.remove('wrong'); inp.classList.add('correct');
+  });
+}
+
+document.getElementById('s-para-1').innerHTML =
+  `평행사변형은 두 쌍의 대변이 각각 ${blank('para1','평행')}하고, 그 ${blank('para2','길이')}도 각각 같다. ${ansBtn('p_para1')}`;
+document.getElementById('s-para-2').innerHTML =
+  `평행사변형의 두 쌍의 대각은 그 ${blank('para3','크기')}가 각각 같고, 두 대각선은 서로를 ${blank('para4','이등분')}한다. ${ansBtn('p_para2')}`;
+
+document.getElementById('s-rect-1').innerHTML =
+  `직사각형은 네 내각의 크기가 모두 ${blank('rect1','직각')}인 사각형이다. ${ansBtn('p_rect1')}`;
+document.getElementById('s-rect-2').innerHTML =
+  `직사각형은 평행사변형이므로 두 대각선이 서로를 ${blank('rect2','이등분')}하고, 추가로 두 대각선의 ${blank('rect3','길이')}가 같다. ${ansBtn('p_rect2')}`;
+
+document.getElementById('s-rhom-1').innerHTML =
+  `마름모는 네 변의 ${blank('rhom1','길이')}가 모두 같은 사각형이다. ${ansBtn('p_rhom1')}`;
+document.getElementById('s-rhom-2').innerHTML =
+  `마름모는 평행사변형이므로 두 대각선이 서로를 ${blank('rhom2','이등분')}하고, 추가로 두 대각선은 서로 ${blank('rhom3','수직')}이다. ${ansBtn('p_rhom2')}`;
+
+document.getElementById('s-sq-1').innerHTML =
+  `정사각형은 직사각형이면서 동시에 ${blank('sq1','마름모')}인 사각형이다. ${ansBtn('p_sq1')}`;
+document.getElementById('s-sq-2').innerHTML =
+  `그러므로 정사각형의 두 대각선은 길이가 ${blank('sq2','같다')}. 또한 서로를 ${blank('sq3','수직이등분')}한다. ${ansBtn('p_sq2')}`;
+
+/* ════════════════════════════════
+   ③ 예제 문제 참고 그림
+════════════════════════════════ */
+function drawParaFig(canvas, given){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw={A:{x:30,y:140},B:{x:190,y:140},C:{x:160,y:30},D:{x:0,y:30}};
+  const F=fitPointsToCanvas(raw, canvas.width, canvas.height, 30);
+  const {A,B,C,D}=F;
+  const O={x:(A.x+C.x)/2,y:(A.y+C.y)/2};
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.lineTo(D.x,D.y);ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y);ctx.lineTo(D.x,D.y); ctx.stroke();
+  const centroid={x:(A.x+B.x+C.x+D.x)/4,y:(A.y+B.y+C.y+D.y)/4};
+  [[A,'A'],[B,'B'],[C,'C'],[D,'D']].forEach(([p,t])=>{ const lp=outsideLabelPos(p,centroid,14); drawLabel(ctx,lp.x,lp.y,t,'#333',12); });
+  ctx.fillStyle='#2563eb'; ctx.beginPath(); ctx.arc(O.x,O.y,2.2,0,Math.PI*2); ctx.fill();
+  drawLabel(ctx,O.x+13,O.y-9,'O','#333',11);
+  diagDashLabel(ctx,O,A,`${given}`,'#2563eb',-1,12,10);
+  diagDashLabel(ctx,O,C,'?','#dc2626',-1,13,10);
+}
+function drawRectFig(canvas, given){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw={A:{x:20,y:150},B:{x:200,y:150},C:{x:200,y:30},D:{x:20,y:30}};
+  const F=fitPointsToCanvas(raw, canvas.width, canvas.height, 30);
+  const {A,B,C,D}=F;
+  const O={x:(A.x+C.x)/2,y:(A.y+C.y)/2};
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.lineTo(D.x,D.y);ctx.closePath(); ctx.stroke();
+  rightAngleMark(ctx,A,D,B,7,'#666');
+  rightAngleMark(ctx,B,A,C,7,'#666');
+  rightAngleMark(ctx,C,B,D,7,'#666');
+  rightAngleMark(ctx,D,C,A,7,'#666');
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y);ctx.lineTo(D.x,D.y); ctx.stroke();
+  const centroid={x:(A.x+B.x+C.x+D.x)/4,y:(A.y+B.y+C.y+D.y)/4};
+  [[A,'A'],[B,'B'],[C,'C'],[D,'D']].forEach(([p,t])=>{ const lp=outsideLabelPos(p,centroid,14); drawLabel(ctx,lp.x,lp.y,t,'#333',12); });
+  ctx.fillStyle='#16a34a'; ctx.beginPath(); ctx.arc(O.x,O.y,2.2,0,Math.PI*2); ctx.fill();
+  drawLabel(ctx,O.x+13,O.y-9,'O','#333',11);
+  diagDashLabel(ctx,A,C,`${given}`,'#16a34a',1,12,14);
+  diagDashLabel(ctx,B,D,'?','#dc2626',1,13,14);
+}
+function drawRhomFig(canvas, given){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw={A:{x:110,y:20},B:{x:30,y:90},C:{x:110,y:160},D:{x:190,y:90}};
+  const F=fitPointsToCanvas(raw, canvas.width, canvas.height, 34);
+  const {A,B,C,D}=F;
+  const O={x:(A.x+C.x)/2,y:(A.y+C.y)/2};
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.lineTo(D.x,D.y);ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y);ctx.lineTo(D.x,D.y); ctx.stroke();
+  rightAngleMark(ctx,O,A,B,7,'#666');
+  const centroid={x:(A.x+B.x+C.x+D.x)/4,y:(A.y+B.y+C.y+D.y)/4};
+  [[A,'A'],[B,'B'],[C,'C'],[D,'D']].forEach(([p,t])=>{ const lp=outsideLabelPos(p,centroid,14); drawLabel(ctx,lp.x,lp.y,t,'#333',12); });
+  drawLabel(ctx,O.x+13,O.y-9,'O','#333',11);
+  // 주어진 각: ∠ACD (꼭짓점 C, 대각선 CA와 변 CD 사이)
+  angleArcAt(ctx,C,A,D,18,'#ea580c');
+  const l1=angleMidPoint(C,A,D,32); drawLabel(ctx,l1.x,l1.y,`${given}°`,'#ea580c',12,800);
+  // 구할 각: ∠DBC (꼭짓점 B, 대각선 BD와 변 BC 사이)
+  angleArcAt(ctx,B,D,C,18,'#dc2626');
+  const l2=angleMidPoint(B,D,C,32); drawLabel(ctx,l2.x,l2.y,'?','#dc2626',13,800);
+}
+function drawSqFig(canvas, given){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const raw={A:{x:50,y:30},B:{x:170,y:30},C:{x:170,y:150},D:{x:50,y:150}};
+  const F=fitPointsToCanvas(raw, canvas.width, canvas.height, 30);
+  const {A,B,C,D}=F;
+  const O={x:(A.x+C.x)/2,y:(A.y+C.y)/2};
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.lineTo(D.x,D.y);ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(C.x,C.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x,B.y);ctx.lineTo(D.x,D.y); ctx.stroke();
+  rightAngleMark(ctx,O,A,B,7,'#666');
+  const centroid={x:(A.x+B.x+C.x+D.x)/4,y:(A.y+B.y+C.y+D.y)/4};
+  [[A,'A'],[B,'B'],[C,'C'],[D,'D']].forEach(([p,t])=>{ const lp=outsideLabelPos(p,centroid,14); drawLabel(ctx,lp.x,lp.y,t,'#333',12); });
+  ctx.fillStyle='#7c3aed'; ctx.beginPath(); ctx.arc(O.x,O.y,2.2,0,Math.PI*2); ctx.fill();
+  drawLabel(ctx,O.x+13,O.y-9,'O','#333',11);
+  diagDashLabel(ctx,O,A,`${given}`,'#7c3aed',1,12,10);
+  diagDashLabel(ctx,B,D,'?','#dc2626',1,13,14);
+}
+
+/* ════════════════════════════════
+   ③ 예제 문제 pool + 진행 로직
+════════════════════════════════ */
+const EX_POOLS={
+  exPara:[4,5,6,7,8,9].map(n=>({oa:n, x:n})),
+  exRect:[6,8,9,10,12,14].map(n=>({ac:n, x:n})),
+  exRhom:[20,30,35,40,50,60].map(n=>({acd:n, x:90-n})),
+  exSq:  [3,4,5,6,7,8].map(n=>({oa:n, x:2*n}))
+};
+const EX_STATE={ exPara:{used:[],cur:null}, exRect:{used:[],cur:null}, exRhom:{used:[],cur:null}, exSq:{used:[],cur:null} };
+function pickEx(id){
+  const pool=EX_POOLS[id], st=EX_STATE[id];
+  if(st.used.length>=pool.length) st.used.length=0;
+  let idx; do{ idx=Math.floor(Math.random()*pool.length); }while(st.used.includes(idx));
+  st.used.push(idx); st.cur=pool[idx]; return st.cur;
+}
+function renderExPara(){
+  const e=EX_STATE.exPara.cur;
+  document.getElementById('exPara-q').innerHTML =
+    `평행사변형 <span class="seg">ABCD</span>에서 두 대각선의 교점을 O라고 하면, <span class="seg">OA</span>=${e.oa}cm일 때 <span class="seg">OC</span>의 길이는?`;
+  drawParaFig(document.getElementById('exParaFig'), e.oa);
+}
+function renderExRect(){
+  const e=EX_STATE.exRect.cur;
+  document.getElementById('exRect-q').innerHTML =
+    `직사각형 <span class="seg">ABCD</span>에서 대각선 <span class="seg">AC</span>=${e.ac}cm일 때, 대각선 <span class="seg">BD</span>의 길이는?`;
+  drawRectFig(document.getElementById('exRectFig'), e.ac);
+}
+function renderExRhom(){
+  const e=EX_STATE.exRhom.cur;
+  document.getElementById('exRhom-q').innerHTML =
+    `마름모 <span class="seg">ABCD</span>에서 두 대각선의 교점을 O라고 할 때, ∠ACD=${e.acd}°이면 ∠DBC의 크기는?`;
+  drawRhomFig(document.getElementById('exRhomFig'), e.acd);
+}
+function renderExSq(){
+  const e=EX_STATE.exSq.cur;
+  document.getElementById('exSq-q').innerHTML =
+    `정사각형 <span class="seg">ABCD</span>에서 두 대각선의 교점을 O라고 하면 <span class="seg">OA</span>=${e.oa}cm입니다. 대각선 <span class="seg">BD</span>의 전체 길이는?`;
+  drawSqFig(document.getElementById('exSqFig'), e.oa);
+}
+const EX_RENDER={ exPara:renderExPara, exRect:renderExRect, exRhom:renderExRhom, exSq:renderExSq };
+
+function toggleEx(id){
+  const area=document.getElementById(id+'-area');
+  const opening=!area.classList.contains('show');
+  area.classList.toggle('show');
+  if(opening && !EX_STATE[id].cur){ pickEx(id); EX_RENDER[id](); }
+}
+function nextEx(id){
+  pickEx(id); EX_RENDER[id]();
+  document.getElementById(id+'-val').value='';
+  document.getElementById(id+'-fb').textContent='';
+  document.getElementById(id+'-fb').className='ex-fb';
+}
+function checkEx(id){
+  const v=parseFloat(document.getElementById(id+'-val').value);
+  const cur=EX_STATE[id].cur;
+  const fb=document.getElementById(id+'-fb');
+  if(isNaN(v)){ alert('숫자를 입력해주세요!'); return; }
+  if(Math.abs(v-cur.x)<0.4){
+    fb.textContent='정답이에요! 🎉'; fb.className='ex-fb ok';
+  }else{
+    fb.textContent=`아쉬워요. 정답은 ${cur.x}이에요. 다시 도전해보고 싶으면 숫자를 바꿔보세요!`; fb.className='ex-fb no';
+  }
+}
+
+// 초기 참고 그림(예제 열기 전 기본 모습)을 미리 그려둠
+drawParaFig(document.getElementById('exParaFig'), 6);
+drawRectFig(document.getElementById('exRectFig'), 10);
+drawRhomFig(document.getElementById('exRhomFig'), 35);
+drawSqFig(document.getElementById('exSqFig'), 4);
+</script>
+</body>
+</html>
