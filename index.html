@@ -277,7 +277,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, collection, arrayUnion, increment }
+import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, collection, increment }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 // ---- Firebase 설정 ----
@@ -493,15 +493,6 @@ function logVisit(cls, num, name){
     .catch(err=> console.warn('visit log failed', err));
 }
 
-// 항목 클릭 시 기록하고 나서 이동 (기록이 끊기지 않도록 이동을 살짝 늦춤)
-function logItemOpenThenGo(itemId, href){
-  const p = studentInfo
-    ? setDoc(studentDocRef(studentInfo.cls, studentInfo.num), { name: studentInfo.name, itemsOpened: arrayUnion(itemId), lastActive: serverTimestamp() }, { merge:true })
-    : Promise.resolve();
-  const timeout = new Promise(res=> setTimeout(res, 800));
-  Promise.race([p.catch(()=>{}), timeout]).finally(()=>{ location.href = href; });
-}
-
 function subscribeStudentToday(cls){
   if(unsubStudentToday) unsubStudentToday();
   unsubStudentToday = onSnapshot(doc(db,'todayByClass', String(cls)), (snap)=>{
@@ -533,10 +524,9 @@ function withStudentParams(file, itemId){
   return file + '?' + q.toString();
 }
 
-// 탐구는 열람 시점에 기록(기존 방식), 문제는 완료 시점에 그 파일이 직접 기록하므로 그냥 이동만
+// 완료 기록은 각 콘텐츠 파일이 스스로 남긴다(탐구=활동 마치기 버튼, 문제=채점 통과 시) - 허브는 그냥 이동만
 function goToItem(it, href){
-  if(it.type === '탐구'){ logItemOpenThenGo(it.id, href); }
-  else{ location.href = href; }
+  location.href = href;
 }
 
 // ---- 단원 목록 렌더 ----
