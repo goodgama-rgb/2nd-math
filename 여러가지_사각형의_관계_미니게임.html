@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여러 가지 사각형의 관계 — 미니게임</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --yellow:#ca8a04;--yellow-l:#fef9c3;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:640px;margin:0 auto;padding:24px 16px}
+.screen{display:none}
+.screen.active{display:block}
+
+.back-btn{background:#fff;border:1.5px solid #d8ddfb;color:var(--indigo);font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;font-family:inherit;margin-bottom:14px}
+.back-btn:hover{background:var(--indigo-ll)}
+
+/* 메뉴 */
+.menu-head{text-align:center;margin-bottom:22px}
+.menu-head h2{font-size:21px;margin-bottom:6px}
+.menu-head p{font-size:13.5px;color:var(--ink2)}
+.game-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.game-card{background:#fff;border:2px solid #e0e7ff;border-radius:14px;padding:20px 16px;cursor:pointer;text-align:center;transition:.15s;font-family:inherit}
+.game-card:hover{border-color:var(--indigo);box-shadow:var(--shadow)}
+.gc-icon{font-size:34px;margin-bottom:8px}
+.gc-title{font-size:14.5px;font-weight:800;margin-bottom:5px;color:var(--ink)}
+.gc-desc{font-size:12px;color:var(--ink2);line-height:1.55}
+
+.game-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.game-desc{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.6}
+.progress{font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:10px;text-align:center}
+
+/* 공용 카드/버튼 */
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:20px;margin-bottom:14px;box-shadow:var(--shadow);text-align:center}
+.confirm-btn{display:block;margin:14px auto 0;padding:11px 26px;border-radius:10px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit}
+.confirm-btn:disabled{opacity:.4;cursor:not-allowed}
+.next-btn{display:block;margin:12px auto 0;padding:10px 22px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.restart-btn{display:block;margin:14px auto 0;padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.fb-line{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px}
+.fb-line.ok{color:var(--green)}
+.fb-line.no{color:var(--red)}
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.done-score{font-size:36px;font-weight:800;color:var(--indigo);margin:8px 0}
+
+/* Game1: 그림 분류 */
+.g1-canvas-wrap{display:flex;justify-content:center;margin-bottom:14px}
+.g1-canvas-wrap canvas{border-radius:10px;background:#fbfbff;border:1px solid #eee}
+.toggle-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px}
+.toggle-btn{padding:10px 16px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;color:var(--ink);font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.12s}
+.toggle-btn.sel{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.toggle-btn.correct{background:var(--green-ll);border-color:var(--green);color:#14532d}
+.toggle-btn.wrong{background:var(--red-l);border-color:var(--red);color:var(--red)}
+.toggle-btn.missed{background:var(--yellow-l);border-color:var(--yellow);color:#7a5400}
+
+/* Game2: OX */
+.ox-qtext{font-size:16px;font-weight:700;line-height:1.7;margin-bottom:4px}
+.ox-row{display:flex;gap:14px;justify-content:center;margin-top:16px}
+.ox-btn{width:110px;height:110px;border-radius:20px;border:none;font-size:40px;font-weight:900;cursor:pointer;font-family:inherit;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15);transition:.12s}
+.ox-btn:active{transform:translateY(3px);box-shadow:none}
+.ox-btn.o{background:var(--indigo)}
+.ox-btn.x{background:var(--red)}
+.ox-btn.correct{background:var(--green)!important}
+.ox-btn.wrong{background:#9ca3af!important}
+.ox-btn:disabled{cursor:default}
+.ox-explain{font-size:12.5px;color:var(--ink2);text-align:center;margin-top:12px;min-height:18px}
+.ox-fig-row{display:flex;gap:18px;justify-content:center;margin-top:12px}
+.ox-fig-box{display:flex;flex-direction:column;align-items:center;gap:4px}
+.ox-fig-box canvas{background:#fbfbff;border-radius:8px;border:1px solid #eee}
+.ox-fig-label{font-size:11px;font-weight:700;color:var(--ink2)}
+
+/* Game3: 계보 조립 (이름·그림·화살표는 주어지고, 조건만 채워넣기) */
+.g3-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px;margin-bottom:16px}
+.g3-shapebox{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;width:100px}
+.g3-shapebox canvas{background:#fbfbff;border-radius:6px}
+.g3-name{font-size:11px;font-weight:800;color:var(--ink);text-align:center}
+.g3-edge{display:flex;flex-direction:column;align-items:center;gap:2px;padding:0 3px;flex-shrink:0}
+.g3-blanks{display:flex;flex-direction:column;align-items:center;gap:2px}
+.g3-blank{min-width:82px;max-width:100px;padding:5px 7px;border:2px dashed #c7d2fe;border-radius:8px;font-size:10.5px;font-weight:700;color:var(--ink3);cursor:pointer;background:#fff;text-align:center;line-height:1.35;transition:.12s}
+.g3-blank.active{border-color:var(--indigo);background:var(--indigo-ll);color:var(--indigo)}
+.g3-blank.correct{border-style:solid;border-color:var(--green);background:var(--green-ll);color:#14532d;cursor:default}
+.g3-blank.wrong{border-style:solid;border-color:var(--red);background:var(--red-l);color:var(--red)}
+.g3-or{font-size:9.5px;color:var(--ink3);font-weight:700}
+.g3-arrow{font-size:18px;color:var(--indigo);line-height:1}
+.option-bank-label{font-size:12.5px;font-weight:700;color:var(--ink2);text-align:center;margin-bottom:8px}
+.option-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px}
+.opt-tile{padding:9px 14px;border-radius:9px;border:2px solid var(--indigo);background:#fff;color:var(--indigo);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.opt-tile:hover{background:var(--indigo-ll)}
+
+/* Game4: 카드 짝맞추기 (관계/조건 두 열, 항상 앞면 공개) */
+.mem-info{text-align:center;font-size:12.5px;color:var(--ink2);margin-bottom:10px;font-weight:700}
+.g4-columns{display:flex;gap:14px;margin-bottom:16px}
+.g4-col{flex:1;min-width:0}
+.g4-col-title{font-size:12.5px;font-weight:800;color:var(--ink2);text-align:center;margin-bottom:8px}
+.g4-list{display:flex;flex-direction:column;gap:8px}
+.g4-card{padding:11px 10px;border-radius:10px;border:2px solid #d8ddfb;background:#fff;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;text-align:center;line-height:1.4;transition:.12s}
+.g4-card:hover{border-color:var(--indigo)}
+.g4-card.sel{border-color:var(--indigo);background:var(--indigo-ll);box-shadow:0 0 0 3px var(--indigo-l)}
+.g4-card.wrong{border-color:var(--red);background:var(--red-l)}
+.g4-card.done{display:none}
+.g4-card.partial{border-color:#eab308;background:var(--yellow-l)}
+.g4-rel-label{display:block}
+.g4-rel-progress{display:block;font-size:10px;color:var(--ink3);font-weight:600;margin-top:3px}
+.g4-card.partial .g4-rel-progress{color:#7a5400}
+.g4-done-panel{background:#fff;border-radius:12px;border:1px solid #e0e7ff;padding:12px 14px;margin-bottom:10px}
+.g4-done-title{font-size:12.5px;font-weight:800;color:var(--green);margin-bottom:8px;text-align:center}
+.g4-done-row{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:8px;background:var(--green-ll);font-size:11.5px;color:#14532d;margin-bottom:6px}
+.g4-done-row b{font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">여러 가지 사각형의 관계 — 미니게임</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <!-- 메뉴 -->
+  <div class="screen active" id="scMenu">
+    <div class="menu-head">
+      <h2>🎲 미니게임 4종</h2>
+      <p>사각형 사이의 관계를 여러 방식으로 가볍게 연습해봐요</p>
+    </div>
+    <div class="game-grid">
+      <button class="game-card" onclick="openGame('g1')">
+        <div class="gc-icon">🖼</div>
+        <div class="gc-title">그림 분류 게임</div>
+        <div class="gc-desc">그림을 보고 해당하는 이름을 모두 골라요</div>
+      </button>
+      <button class="game-card" onclick="openGame('g2')">
+        <div class="gc-icon">⚠️</div>
+        <div class="gc-title">오개념 함정 OX</div>
+        <div class="gc-desc">헷갈리기 쉬운 포함관계 문장, 참일까 거짓일까?</div>
+      </button>
+      <button class="game-card" onclick="openGame('g3')">
+        <div class="gc-icon">🧩</div>
+        <div class="gc-title">계보 조립 게임</div>
+        <div class="gc-desc">이름 카드를 관계도의 알맞은 자리에 놓아요</div>
+      </button>
+      <button class="game-card" onclick="openGame('g4')">
+        <div class="gc-icon">🃏</div>
+        <div class="gc-title">짝맞추기 카드</div>
+        <div class="gc-desc">관계와 조건이 적힌 카드의 짝을 찾아요</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- GAME 1: 그림 분류 -->
+  <div class="screen" id="scG1">
+    <button class="back-btn" onclick="showMenu()">← 게임 목록</button>
+    <div class="game-title">🖼 그림 분류 게임</div>
+    <div class="game-desc">그림을 보고, 해당하는 사각형 이름을 <b>모두</b> 골라보세요! (수학적으로 엄밀하게 말고, 모양만으로 판단해보세요)</div>
+    <div class="progress" id="g1Progress"></div>
+    <div class="qcard">
+      <div class="g1-canvas-wrap"><canvas id="g1Canvas" width="220" height="190"></canvas></div>
+      <div class="toggle-grid" id="g1Toggles"></div>
+      <button class="confirm-btn" id="g1ConfirmBtn" onclick="g1Check()">✅ 확인</button>
+      <div class="fb-line" id="g1Fb"></div>
+      <button class="next-btn" id="g1NextBtn" style="display:none" onclick="g1Next()">다음 그림 →</button>
+    </div>
+    <div id="g1Done" style="display:none"></div>
+  </div>
+
+  <!-- GAME 2: 오개념 함정 OX -->
+  <div class="screen" id="scG2">
+    <button class="back-btn" onclick="showMenu()">← 게임 목록</button>
+    <div class="game-title">⚠️ 오개념 함정 OX</div>
+    <div class="game-desc">사각형 사이의 포함관계에 대한 문장이에요. 참(O)인지 거짓(X)인지 빠르게 판단해보세요!</div>
+    <div class="progress" id="g2Progress"></div>
+    <div class="qcard">
+      <div class="ox-qtext" id="g2Qtext"></div>
+      <div class="ox-row">
+        <button class="ox-btn o" id="g2O" onclick="g2Answer(true)">O</button>
+        <button class="ox-btn x" id="g2X" onclick="g2Answer(false)">X</button>
+      </div>
+      <div class="ox-explain" id="g2Explain"></div>
+      <div class="ox-fig-row" id="g2FigRow" style="display:none">
+        <div class="ox-fig-box"><canvas id="g2FigA" width="100" height="84"></canvas><div class="ox-fig-label" id="g2FigALabel"></div></div>
+        <div class="ox-fig-box"><canvas id="g2FigB" width="100" height="84"></canvas><div class="ox-fig-label" id="g2FigBLabel"></div></div>
+      </div>
+      <button class="next-btn" id="g2NextBtn" style="display:none" onclick="g2Next()">다음 문제 →</button>
+    </div>
+    <div id="g2Done" style="display:none"></div>
+  </div>
+
+  <!-- GAME 3: 계보 조립 -->
+  <div class="screen" id="scG3">
+    <button class="back-btn" onclick="showMenu()">← 게임 목록</button>
+    <div class="game-title">🧩 계보 조립 게임</div>
+    <div class="game-desc">사각형의 이름과 그림, 화살표는 모두 주어져 있어요. 빈칸을 탭한 다음, 아래 보기에서 알맞은 조건을 골라 채워보세요. 같은 보기가 두 곳의 정답이 될 수도 있어요!</div>
+    <div class="qcard" id="g3Board">
+      <div class="g3-row" id="g3Row1"></div>
+      <div class="g3-row" id="g3Row2"></div>
+      <div class="g3-row" id="g3Row3"></div>
+    </div>
+    <div class="option-bank-label" id="g3BankLabel">👇 빈칸을 먼저 탭한 후, 알맞은 조건을 골라보세요</div>
+    <div class="option-bank" id="g3OptionBank"></div>
+    <div class="fb-line" id="g3Fb"></div>
+    <div id="g3Done" style="display:none"></div>
+  </div>
+
+  <!-- GAME 4: 짝맞추기 카드 -->
+  <div class="screen" id="scG4">
+    <button class="back-btn" onclick="showMenu()">← 게임 목록</button>
+    <div class="game-title">🃏 짝맞추기 카드</div>
+    <div class="game-desc">"관계" 카드 하나와 "조건" 카드 하나를 골라 짝을 맞춰보세요. 조건 카드는 한 번 맞혀도 사라지지 않으니, 다른 관계에도 다시 쓸 수 있어요!</div>
+    <div class="mem-info" id="g4Info"></div>
+    <div class="g4-columns">
+      <div class="g4-col">
+        <div class="g4-col-title">관계</div>
+        <div class="g4-list" id="g4RelList"></div>
+      </div>
+      <div class="g4-col">
+        <div class="g4-col-title">조건</div>
+        <div class="g4-list" id="g4CondList"></div>
+      </div>
+    </div>
+    <div class="g4-done-panel" id="g4DonePanel">
+      <div class="g4-done-title">✅ 완성된 짝</div>
+      <div id="g4DoneList"></div>
+    </div>
+    <div id="g4Done" style="display:none"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'quad-relation-minigames' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._db = _db;
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 데이터
+════════════════════════════════ */
+const SHAPES = ['사다리꼴','평행사변형','직사각형','마름모','정사각형'];
+const ANCESTORS = {
+  사다리꼴:   ['사다리꼴'],
+  평행사변형: ['평행사변형','사다리꼴'],
+  직사각형:   ['직사각형','평행사변형','사다리꼴'],
+  마름모:     ['마름모','평행사변형','사다리꼴'],
+  정사각형:   ['정사각형','직사각형','마름모','평행사변형','사다리꼴']
+};
+function isA(A,B){ return ANCESTORS[A].includes(B); } // "모든 A는 B이다"의 참/거짓
+
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function setsEqual(a,b){
+  if(a.size!==b.size) return false;
+  for(const x of a) if(!b.has(x)) return false;
+  return true;
+}
+// 한글 조사(은/는, 이/가) 받침 여부에 따라 자동 선택
+function hasBatchim(word){
+  const ch = word[word.length-1];
+  const code = ch.charCodeAt(0) - 0xAC00;
+  if(code<0 || code>11171) return false;
+  return (code % 28) !== 0;
+}
+function eunNeun(word){ return hasBatchim(word) ? '은' : '는'; }
+function iGa(word){ return hasBatchim(word) ? '이' : '가'; }
+
+/* ════════════════════════════════
+   화면 전환
+════════════════════════════════ */
+function showMenu(){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('scMenu').classList.add('active');
+}
+function openGame(id){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sc'+id.toUpperCase()).classList.add('active');
+  if(id==='g1') g1Init();
+  if(id==='g2') g2Init();
+  if(id==='g3') g3Init();
+  if(id==='g4') g4Init();
+}
+
+/* ════════════════════════════════
+   GAME 1: 그림 분류 게임
+════════════════════════════════ */
+const SHAPE_DEFS = {
+  trapezoid:     [{x:0,y:60},{x:100,y:60},{x:70,y:10},{x:20,y:10}],
+  isoTrapezoid:  [{x:10,y:60},{x:90,y:60},{x:70,y:10},{x:30,y:10}],
+  quad:          [{x:10,y:60},{x:95,y:50},{x:70,y:8},{x:20,y:20}],
+  parallelogram: [{x:15,y:60},{x:95,y:60},{x:80,y:10},{x:0,y:10}],
+  rectangle:     [{x:10,y:60},{x:90,y:60},{x:90,y:10},{x:10,y:10}],
+  tallRectangle: [{x:35,y:10},{x:65,y:10},{x:65,y:110},{x:35,y:110}],
+  rhombus:       [{x:50,y:5},{x:15,y:45},{x:50,y:85},{x:85,y:45}],
+  thinRhombus:   [{x:50,y:5},{x:35,y:60},{x:50,y:115},{x:65,y:60}],
+  square:        [{x:20,y:15},{x:80,y:15},{x:80,y:75},{x:20,y:75}]
+};
+const SHAPE_ANSWER = {
+  trapezoid: ['사다리꼴'],
+  isoTrapezoid: ['사다리꼴'],
+  quad: [],
+  parallelogram: ['사다리꼴','평행사변형'],
+  rectangle: ['사다리꼴','평행사변형','직사각형'],
+  tallRectangle: ['사다리꼴','평행사변형','직사각형'],
+  rhombus: ['사다리꼴','평행사변형','마름모'],
+  thinRhombus: ['사다리꼴','평행사변형','마름모'],
+  square: ['사다리꼴','평행사변형','직사각형','마름모','정사각형']
+};
+const SHAPE_KEYS = Object.keys(SHAPE_DEFS);
+function fitPointsToCanvas(pointsObj, canvasW, canvasH, pad){
+  const keys=Object.keys(pointsObj);
+  const xs=keys.map(k=>pointsObj[k].x), ys=keys.map(k=>pointsObj[k].y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const bw=(maxX-minX)||1, bh=(maxY-minY)||1;
+  const availW=canvasW-2*pad, availH=canvasH-2*pad;
+  const scale=Math.min(availW/bw, availH/bh);
+  const offX=pad-minX*scale+(availW-bw*scale)/2;
+  const offY=pad-minY*scale+(availH-bh*scale)/2;
+  const out={};
+  keys.forEach(k=>{ out[k]={x:pointsObj[k].x*scale+offX, y:pointsObj[k].y*scale+offY}; });
+  return out;
+}
+function drawShapeThumb(canvas, key, pad){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const pts=SHAPE_DEFS[key];
+  const obj={}; pts.forEach((pt,i)=>{ obj[i]=pt; });
+  const F=fitPointsToCanvas(obj, canvas.width, canvas.height, pad==null?24:pad);
+  ctx.fillStyle='#eef2ff'; ctx.strokeStyle='#333'; ctx.lineWidth=2.2;
+  ctx.beginPath();
+  Object.keys(F).forEach((k,i)=>{ const pt=F[k]; if(i===0) ctx.moveTo(pt.x,pt.y); else ctx.lineTo(pt.x,pt.y); });
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+}
+
+const g1 = { round:0, total:8, correct:0, curKey:null, selected:new Set() };
+function g1Init(){
+  g1.round=0; g1.correct=0;
+  document.getElementById('g1Done').style.display='none';
+  document.getElementById('g1Done').innerHTML='';
+  document.querySelector('#scG1 .qcard').style.display='block';
+  g1Next();
+}
+function g1Next(){
+  g1.round++;
+  if(g1.round>g1.total){ g1End(); return; }
+  g1.curKey = pickRandom(SHAPE_KEYS);
+  g1.selected = new Set();
+  document.getElementById('g1Progress').textContent = `${g1.round} / ${g1.total}`;
+  drawShapeThumb(document.getElementById('g1Canvas'), g1.curKey);
+  const wrap = document.getElementById('g1Toggles');
+  wrap.innerHTML = SHAPES.map(name=>`<button class="toggle-btn" data-name="${name}" onclick="g1Toggle('${name}')">${name}</button>`).join('');
+  document.getElementById('g1ConfirmBtn').style.display='inline-block';
+  document.getElementById('g1ConfirmBtn').disabled=false;
+  document.getElementById('g1Fb').textContent='';
+  document.getElementById('g1NextBtn').style.display='none';
+}
+function g1Toggle(name){
+  if(document.getElementById('g1ConfirmBtn').disabled) return;
+  const btn = document.querySelector(`#g1Toggles [data-name="${name}"]`);
+  if(g1.selected.has(name)){ g1.selected.delete(name); btn.classList.remove('sel'); }
+  else{ g1.selected.add(name); btn.classList.add('sel'); }
+}
+function g1Check(){
+  const correctSet = new Set(SHAPE_ANSWER[g1.curKey]);
+  const ok = setsEqual(g1.selected, correctSet);
+  if(ok) g1.correct++;
+  document.querySelectorAll('#g1Toggles .toggle-btn').forEach(btn=>{
+    const name = btn.dataset.name;
+    const shouldBe = correctSet.has(name);
+    const isSel = g1.selected.has(name);
+    btn.classList.remove('sel');
+    if(shouldBe && isSel) btn.classList.add('correct');
+    else if(!shouldBe && isSel) btn.classList.add('wrong');
+    else if(shouldBe && !isSel) btn.classList.add('missed');
+  });
+  const fb = document.getElementById('g1Fb');
+  fb.textContent = ok ? '🎉 정확해요!' : '아쉬워요 — 노란색이 놓친 정답, 빨간색이 잘못 고른 답이에요.';
+  fb.className = 'fb-line ' + (ok?'ok':'no');
+  document.getElementById('g1ConfirmBtn').disabled=true;
+  document.getElementById('g1NextBtn').style.display='inline-block';
+}
+function g1End(){
+  document.querySelector('#scG1 .qcard').style.display='none';
+  const el = document.getElementById('g1Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div>${g1.total}판 중</div><div class="done-score">${g1.correct} / ${g1.total}</div><div>완벽하게 맞혔어요!</div><button class="restart-btn" onclick="g1Init()">🔄 다시 하기</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   GAME 2: 오개념 함정 OX
+════════════════════════════════ */
+const g2 = { round:0, total:10, correct:0, cur:null };
+function g2Gen(){
+  let A,B;
+  do{ A=pickRandom(SHAPES); B=pickRandom(SHAPES); }while(A===B);
+  const useAll = Math.random()<0.5;
+  if(useAll){
+    return { A, B, qhtml:`모든 <b>${A}</b>${eunNeun(A)} <b>${B}</b>이다.`, answer: isA(A,B), explain: isA(A,B) ? `${A}${eunNeun(A)} ${B}에 포함되는 특수한 경우예요.` : `모든 ${A}${iGa(A)} ${B}인 것은 아니에요. (아래 그림처럼 ${B}가 아닌 ${A}도 있어요)` };
+  }else{
+    return { A, B, qhtml:`어떤 <b>${A}</b>${eunNeun(A)} <b>${B}</b>${iGa(B)} 아니다.`, answer: !isA(A,B), explain: !isA(A,B) ? `${A}이면서 ${B}${eunNeun(B)} 아닌 경우가 있어요. (아래 그림 참고)` : `${A}${eunNeun(A)} 항상 ${B}이기도 해요.` };
+  }
+}
+function g2Init(){
+  g2.round=0; g2.correct=0;
+  document.getElementById('g2Done').style.display='none';
+  document.getElementById('g2Done').innerHTML='';
+  document.querySelector('#scG2 .qcard').style.display='block';
+  g2Next();
+}
+function g2Next(){
+  g2.round++;
+  if(g2.round>g2.total){ g2End(); return; }
+  g2.cur = g2Gen();
+  document.getElementById('g2Progress').textContent = `${g2.round} / ${g2.total}`;
+  document.getElementById('g2Qtext').innerHTML = g2.cur.qhtml;
+  document.getElementById('g2Explain').textContent='';
+  document.getElementById('g2FigRow').style.display='none';
+  document.getElementById('g2O').className='ox-btn o'; document.getElementById('g2O').disabled=false;
+  document.getElementById('g2X').className='ox-btn x'; document.getElementById('g2X').disabled=false;
+  document.getElementById('g2NextBtn').style.display='none';
+}
+function g2Answer(chosen){
+  if(document.getElementById('g2O').disabled) return;
+  const isCorrect = chosen===g2.cur.answer;
+  if(isCorrect) g2.correct++;
+  document.getElementById(chosen?'g2O':'g2X').classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) document.getElementById(g2.cur.answer?'g2O':'g2X').classList.add('correct');
+  document.getElementById('g2O').disabled=true; document.getElementById('g2X').disabled=true;
+  document.getElementById('g2Explain').textContent = g2.cur.explain;
+  drawShapeThumb(document.getElementById('g2FigA'), G3_KEY[g2.cur.A], 10);
+  drawShapeThumb(document.getElementById('g2FigB'), G3_KEY[g2.cur.B], 10);
+  document.getElementById('g2FigALabel').textContent = g2.cur.A;
+  document.getElementById('g2FigBLabel').textContent = g2.cur.B;
+  document.getElementById('g2FigRow').style.display='flex';
+  document.getElementById('g2NextBtn').style.display='inline-block';
+}
+function g2End(){
+  document.querySelector('#scG2 .qcard').style.display='none';
+  const el = document.getElementById('g2Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div>${g2.total}문제 중</div><div class="done-score">${g2.correct} / ${g2.total}</div><div>정답!</div><button class="restart-btn" onclick="g2Init()">🔄 다시 하기</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   GAME 3: 계보 조립 게임 — 이름·그림·화살표는 주어지고, 조건만 채워넣기
+════════════════════════════════ */
+const G3_EDGES = [
+  {from:'사각형',     to:'사다리꼴',   conds:['한 쌍의 대변이 평행하다']},
+  {from:'사다리꼴',   to:'평행사변형', conds:['다른 한 쌍의 대변이 평행하다']},
+  {from:'평행사변형', to:'직사각형',   conds:['한 내각이 직각이다','두 대각선의 길이가 같다']},
+  {from:'평행사변형', to:'마름모',     conds:['이웃하는 두 변의 길이가 같다','두 대각선이 서로 수직이다']},
+  {from:'직사각형',   to:'정사각형',   conds:['이웃하는 두 변의 길이가 같다','두 대각선이 서로 수직이다']},
+  {from:'마름모',     to:'정사각형',   conds:['한 내각이 직각이다','두 대각선의 길이가 같다']}
+];
+const G3_OPTIONS = ['한 쌍의 대변이 평행하다','다른 한 쌍의 대변이 평행하다','한 내각이 직각이다','두 대각선의 길이가 같다','이웃하는 두 변의 길이가 같다','두 대각선이 서로 수직이다'];
+const G3_KEY = { 사각형:'quad', 사다리꼴:'trapezoid', 평행사변형:'parallelogram', 직사각형:'rectangle', 마름모:'rhombus', 정사각형:'square' };
+const G3_TOTAL_BLANKS = G3_EDGES.reduce((s,e)=>s+e.conds.length,0);
+
+const g3 = { activeBlank:null, filledCorrect:{} };
+let g3FigCounter = 0, g3PendingFigs = [];
+
+function g3ShapeBoxHtml(name){
+  const cid = 'g3fig_'+(g3FigCounter++);
+  g3PendingFigs.push({id:cid, key:G3_KEY[name]});
+  return `<div class="g3-shapebox"><canvas id="${cid}" width="92" height="78"></canvas><div class="g3-name">${name}</div></div>`;
+}
+function g3EdgeHtml(edgeIdx){
+  const edge = G3_EDGES[edgeIdx];
+  const blanksHtml = edge.conds.map((c,ci)=>`<div class="g3-blank" data-edge="${edgeIdx}" data-cond="${ci}" onclick="g3BlankClick(${edgeIdx},${ci})">?</div>`).join(edge.conds.length>1 ? '<div class="g3-or">또는</div>' : '');
+  return `<div class="g3-edge"><div class="g3-blanks">${blanksHtml}</div><div class="g3-arrow">→</div></div>`;
+}
+function g3BuildRow(rowElId, shapeNames, edgeIdxs){
+  let html = '';
+  shapeNames.forEach((name,i)=>{
+    html += g3ShapeBoxHtml(name);
+    if(i<edgeIdxs.length) html += g3EdgeHtml(edgeIdxs[i]);
+  });
+  document.getElementById(rowElId).innerHTML = html;
+}
+function g3Init(){
+  g3.activeBlank = null; g3.filledCorrect = {};
+  g3FigCounter = 0; g3PendingFigs = [];
+  g3BuildRow('g3Row1', ['사각형','사다리꼴','평행사변형'], [0,1]);
+  g3BuildRow('g3Row2', ['평행사변형','직사각형','정사각형'], [2,4]);
+  g3BuildRow('g3Row3', ['평행사변형','마름모','정사각형'], [3,5]);
+  g3PendingFigs.forEach(f=>drawShapeThumb(document.getElementById(f.id), f.key, 6));
+  document.getElementById('g3OptionBank').innerHTML = G3_OPTIONS.map((text,i)=>`<button class="opt-tile" onclick="g3OptionClick(${i})">${text}</button>`).join('');
+  document.getElementById('g3Fb').textContent='';
+  document.getElementById('g3Board').style.display='block';
+  document.getElementById('g3BankLabel').style.display='block';
+  document.getElementById('g3OptionBank').style.display='flex';
+  document.getElementById('g3Done').style.display='none';
+  document.getElementById('g3Done').innerHTML='';
+}
+function g3BlankClick(edgeIdx, condIdx){
+  const el = document.querySelector(`.g3-blank[data-edge="${edgeIdx}"][data-cond="${condIdx}"]`);
+  if(el.classList.contains('correct')) return;
+  document.querySelectorAll('.g3-blank').forEach(b=>b.classList.remove('active'));
+  g3.activeBlank = {edgeIdx, condIdx};
+  el.classList.add('active');
+}
+function g3OptionClick(optIdx){
+  if(!g3.activeBlank) return;
+  const {edgeIdx, condIdx} = g3.activeBlank;
+  const text = G3_OPTIONS[optIdx];
+  const edge = G3_EDGES[edgeIdx];
+  const el = document.querySelector(`.g3-blank[data-edge="${edgeIdx}"][data-cond="${condIdx}"]`);
+  const otherCondIdx = condIdx===0 ? 1 : 0;
+  const otherText = g3.filledCorrect[edgeIdx+'_'+otherCondIdx];
+  const isCorrect = edge.conds.includes(text) && text!==otherText;
+  el.textContent = text;
+  el.classList.remove('active');
+  g3.activeBlank = null;
+  if(isCorrect){
+    el.classList.add('correct');
+    g3.filledCorrect[edgeIdx+'_'+condIdx] = text;
+    g3CheckDone();
+  }else{
+    el.classList.add('wrong');
+    setTimeout(()=>{ el.textContent='?'; el.classList.remove('wrong'); }, 900);
+  }
+}
+function g3CheckDone(){
+  if(Object.keys(g3.filledCorrect).length < G3_TOTAL_BLANKS) return;
+  document.getElementById('g3Board').style.display='none';
+  document.getElementById('g3BankLabel').style.display='none';
+  document.getElementById('g3OptionBank').style.display='none';
+  document.getElementById('g3Fb').textContent='';
+  const el = document.getElementById('g3Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div>사각형 관계도를</div><div class="done-score">완성!</div><button class="restart-btn" onclick="g3Init()">🔄 다시 하기</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   GAME 4: 짝맞추기 카드 — 관계/조건 두 열, 항상 앞면 공개
+   (조건 카드 하나가 여러 관계의 정답일 수 있어 소모되지 않고 계속 남음)
+════════════════════════════════ */
+const g4 = { selRel:null, selCond:null, matchedCount:0, foundConds:{} };
+function g4Init(){
+  g4.selRel = null; g4.selCond = null; g4.matchedCount = 0; g4.foundConds = {};
+  const relOrder = shuffle(G3_EDGES.map((_,i)=>i));
+  document.getElementById('g4RelList').innerHTML = relOrder.map(i=>{
+    const needsBoth = G3_EDGES[i].conds.length>1;
+    return `<div class="g4-card" data-rel="${i}" onclick="g4RelClick(${i})">
+      <span class="g4-rel-label">${G3_EDGES[i].from} → ${G3_EDGES[i].to}</span>
+      ${needsBoth ? `<span class="g4-rel-progress" id="g4prog${i}">0 / 2개 조건 찾음</span>` : ''}
+    </div>`;
+  }).join('');
+  const condOrder = shuffle(G3_OPTIONS.map((_,i)=>i));
+  document.getElementById('g4CondList').innerHTML = condOrder.map(i=>
+    `<div class="g4-card" data-cond="${i}" onclick="g4CondClick(${i})">${G3_OPTIONS[i]}</div>`
+  ).join('');
+  document.getElementById('g4DoneList').innerHTML = '';
+  document.getElementById('g4Info').textContent = `완성 0 / ${G3_EDGES.length}`;
+  document.getElementById('g4Done').style.display='none';
+  document.getElementById('g4Done').innerHTML='';
+  document.querySelector('#scG4 .g4-columns').style.display='flex';
+  document.getElementById('g4DonePanel').style.display='block';
+}
+function g4RelClick(i){
+  const el = document.querySelector(`.g4-card[data-rel="${i}"]`);
+  if(el.classList.contains('done')) return;
+  document.querySelectorAll('.g4-card[data-rel]').forEach(c=>c.classList.remove('sel'));
+  g4.selRel = (g4.selRel===i) ? null : i;
+  if(g4.selRel!==null) el.classList.add('sel');
+  g4TryMatch();
+}
+function g4CondClick(i){
+  document.querySelectorAll('.g4-card[data-cond]').forEach(c=>c.classList.remove('sel'));
+  g4.selCond = (g4.selCond===i) ? null : i;
+  if(g4.selCond!==null) document.querySelector(`.g4-card[data-cond="${i}"]`).classList.add('sel');
+  g4TryMatch();
+}
+function g4TryMatch(){
+  if(g4.selRel===null || g4.selCond===null) return;
+  const relIdx = g4.selRel;
+  const edge = G3_EDGES[relIdx];
+  const text = G3_OPTIONS[g4.selCond];
+  const relEl = document.querySelector(`.g4-card[data-rel="${relIdx}"]`);
+  const condEl = document.querySelector(`.g4-card[data-cond="${g4.selCond}"]`);
+  const found = g4.foundConds[relIdx] || (g4.foundConds[relIdx] = new Set());
+  const isNewValidCond = edge.conds.includes(text) && !found.has(text);
+  if(isNewValidCond){
+    found.add(text);
+    relEl.classList.remove('sel'); condEl.classList.remove('sel');
+    g4.selRel=null; g4.selCond=null;
+    if(found.size >= edge.conds.length){
+      relEl.classList.add('done');
+      document.getElementById('g4DoneList').insertAdjacentHTML('beforeend',
+        `<div class="g4-done-row"><b>${edge.from} → ${edge.to}</b><span>${[...found].join(' , ')}</span></div>`);
+      g4.matchedCount++;
+      document.getElementById('g4Info').textContent = `완성 ${g4.matchedCount} / ${G3_EDGES.length}`;
+      if(g4.matchedCount===G3_EDGES.length) g4End();
+    }else{
+      relEl.classList.add('partial');
+      const prog = document.getElementById('g4prog'+relIdx);
+      if(prog) prog.textContent = `${found.size} / ${edge.conds.length}개 조건 찾음`;
+    }
+  }else{
+    relEl.classList.add('wrong'); condEl.classList.add('wrong');
+    const r=relIdx, c=g4.selCond;
+    g4.selRel=null; g4.selCond=null;
+    setTimeout(()=>{
+      const rEl=document.querySelector(`.g4-card[data-rel="${r}"]`), cEl=document.querySelector(`.g4-card[data-cond="${c}"]`);
+      if(rEl) rEl.classList.remove('wrong','sel');
+      if(cEl) cEl.classList.remove('wrong','sel');
+    }, 700);
+  }
+}
+function g4End(){
+  document.querySelector('#scG4 .g4-columns').style.display='none';
+  document.getElementById('g4DonePanel').style.display='none';
+  const el = document.getElementById('g4Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div>${G3_EDGES.length}개 관계를</div><div class="done-score">모두</div><div>완성했어요!</div><button class="restart-btn" onclick="g4Init()">🔄 다시 하기</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+</script>
+</body>
+</html>
