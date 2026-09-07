@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>평행선과 넓이의 관계</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hdr-title{font-size:16px;font-weight:700}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:18px}
+.timer{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.timer.warn{color:#fdba74}
+.timer.danger{color:#fca5a5;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.score-wrap{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700}
+.score-wrap b{font-size:20px}
+.streak-wrap{font-size:13px;font-weight:700;color:#fde68a}
+
+.main{max-width:640px;margin:0 auto;padding:24px 16px}
+.screen{display:none}
+.screen.active{display:block}
+
+.intro{text-align:center;margin-bottom:14px}
+.intro h2{font-size:19px;margin-bottom:6px}
+.intro p{font-size:13.5px;color:var(--ink2);line-height:1.7}
+
+.obs-card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.par-line{stroke:#333;stroke-width:2.2}
+.tri-fill{fill:#4f46e5;fill-opacity:.28;stroke:#4f46e5;stroke-width:2.2}
+.height-dash{stroke:#e05a20;stroke-width:1.8;stroke-dasharray:5 4}
+.ra-mark{fill:none;stroke:#e05a20;stroke-width:1.4}
+.pt-dot{fill:#333}
+.pt-dot-small{fill:#e05a20}
+.pt-dot-a{fill:#4f46e5;cursor:grab}
+.drag-hit{fill:rgba(79,70,229,.12);cursor:grab}
+.pt-label{font-size:15px;font-weight:800;fill:#1a1a2e;text-anchor:middle;dominant-baseline:central}
+.line-label{font-size:12px;font-weight:700;fill:var(--ink3)}
+.dim-label{font-size:12px;font-weight:700}
+
+.stat-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.stat-box{flex:1;min-width:120px;background:var(--indigo-ll);border-radius:10px;padding:10px 12px;text-align:center}
+.stat-box .lbl{font-size:11px;color:var(--ink2);font-weight:700;margin-bottom:2px}
+.stat-box .val{font-size:19px;font-weight:800;color:var(--indigo)}
+.stat-box.area{background:var(--green-ll)}
+.stat-box.area .val{color:var(--green)}
+
+.obs-btns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.big-btn{padding:12px 22px;border-radius:12px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 0 #3730a3}
+.big-btn:active{transform:translateY(3px);box-shadow:none}
+.big-btn.outline{background:#fff;color:var(--indigo);border:2px solid var(--indigo);box-shadow:none}
+
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);text-align:center}
+.qnum{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--indigo-l);color:var(--indigo);display:inline-block;margin-bottom:10px}
+.qfig-wrap{display:flex;justify-content:center;margin-bottom:10px}
+.qfig-wrap svg{background:#fbfbff;border-radius:8px;width:100%;max-width:280px;height:auto}
+.qtext{font-size:15.5px;font-weight:700;line-height:1.7}
+
+.why-box{background:#fff;border-radius:var(--r);border:1.5px dashed var(--orange);padding:16px;box-shadow:var(--shadow)}
+.why-q{font-size:14.5px;font-weight:700;color:#7c2d12;text-align:center;margin-bottom:12px}
+.why-fb{text-align:center;font-size:13.5px;font-weight:700;margin-top:10px;min-height:18px}
+.why-fb.ok{color:var(--green)}
+.why-fb.no{color:var(--red)}
+
+.opt-list{display:flex;flex-direction:column;gap:10px}
+.opt-card{display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;text-align:left;color:var(--ink);transition:.12s}
+.opt-card:hover{border-color:var(--indigo);background:var(--indigo-ll)}
+.opt-card.correct{border-color:var(--green);background:var(--green-ll);color:#14532d}
+.opt-card.wrong{border-color:var(--red);background:var(--red-l);color:var(--red)}
+.opt-card:disabled{cursor:default}
+.opt-badge{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#f0f0f8;color:var(--ink3);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+.ox-row{display:flex;gap:14px;justify-content:center;margin-top:6px}
+.ox-btn{width:108px;height:108px;border-radius:20px;border:none;font-size:40px;font-weight:900;cursor:pointer;font-family:inherit;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15);transition:.12s}
+.ox-btn:active{transform:translateY(3px);box-shadow:none}
+.ox-btn.o{background:var(--indigo)}
+.ox-btn.x{background:var(--red)}
+.ox-btn.correct{background:var(--green)!important}
+.ox-btn.wrong{background:#9ca3af!important}
+.ox-btn:disabled{cursor:default}
+
+.combo-popup{position:fixed;top:70px;left:50%;transform:translateX(-50%) scale(.7);z-index:50;font-size:20px;font-weight:900;padding:10px 22px;border-radius:30px;opacity:0;pointer-events:none}
+.combo-popup.show{animation:comboPop .75s ease forwards}
+.combo-popup.ok{background:var(--green);color:#fff}
+.combo-popup.no{background:var(--red);color:#fff}
+@keyframes comboPop{
+  0%{opacity:0;transform:translateX(-50%) scale(.6);}
+  25%{opacity:1;transform:translateX(-50%) scale(1.15);}
+  40%{transform:translateX(-50%) scale(1);}
+  80%{opacity:1;}
+  100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-8px);}
+}
+
+.complete-wrap{text-align:center;padding:36px 20px}
+.complete-icon{font-size:56px;margin-bottom:14px}
+.complete-wrap h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.complete-wrap p{font-size:14px;color:var(--ink2);line-height:1.7}
+.score-box{display:inline-block;background:var(--green-l);border:2px solid var(--green);border-radius:12px;padding:16px 32px;margin:16px 0}
+.sc-num{font-size:44px;font-weight:800;color:var(--green)}
+.sc-label{font-size:13px;color:var(--green);font-weight:700}
+.sc-sub{font-size:12.5px;color:var(--ink2);margin-top:2px}
+.restart-btn{padding:11px 28px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;margin-right:8px}
+
+.lb-box{background:#fff;border-radius:14px;border:1px solid #e0e7ff;padding:16px 18px;margin:18px auto 0;max-width:420px;text-align:left;box-shadow:var(--shadow)}
+.lb-title{font-size:14px;font-weight:800;color:var(--indigo);margin-bottom:10px;text-align:center}
+.lb-row{display:flex;align-items:center;gap:10px;padding:6px 4px;font-size:13.5px;border-bottom:1px solid #f0f0f8}
+.lb-row:last-child{border-bottom:none}
+.lb-row.me{background:var(--indigo-ll);border-radius:8px}
+.lb-rank{width:22px;font-weight:800;color:var(--ink3);flex-shrink:0;text-align:center}
+.lb-rank.top1{color:#eab308}
+.lb-rank.top2{color:#94a3b8}
+.lb-rank.top3{color:#c2703d}
+.lb-name{flex:1;font-weight:600}
+.lb-score{font-weight:800;color:var(--indigo)}
+.lb-empty{font-size:13px;color:var(--ink3);text-align:center;padding:10px 0}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">평행선과 넓이의 관계</span>
+  <div class="hdr-right" id="hdrGameInfo" style="display:none">
+    <span class="streak-wrap" id="streakEl">🔥 0</span>
+    <span class="score-wrap">점수 <b id="scoreEl">0</b></span>
+    <span class="timer" id="timerEl">3:00</span>
+  </div>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <!-- 관찰판 -->
+  <div class="screen active" id="scObserve">
+    <div class="intro">
+      <h2>📐 평행선과 도형의 넓이 사이에는 어떤 관계가 있을까?</h2>
+      <p>점 <b>A</b>를 직선 <span class="seg">l</span> 위에서 좌우로 마음껏 끌어보세요. 삼각형의 모양은 계속 바뀌지만, 높이와 넓이는 어떻게 될까요?</p>
+    </div>
+    <div class="obs-card">
+      <div class="svg-wrap">
+        <svg id="obsSvg" viewBox="0 0 640 420" xmlns="http://www.w3.org/2000/svg">
+          <line id="lineL" class="par-line" x1="20" y1="0" x2="620" y2="0"></line>
+          <line id="lineM" class="par-line" x1="20" y1="0" x2="620" y2="0"></line>
+          <polygon id="triFill" class="tri-fill" points=""></polygon>
+          <line id="heightLine" class="height-dash" x1="0" y1="0" x2="0" y2="0"></line>
+          <path id="raMark" class="ra-mark" d=""></path>
+          <circle id="dotB" class="pt-dot" r="4"></circle>
+          <circle id="dotC" class="pt-dot" r="4"></circle>
+          <circle id="footDot" class="pt-dot-small" r="3"></circle>
+          <text id="labelB" class="pt-label">B</text>
+          <text id="labelC" class="pt-label">C</text>
+          <text id="labelL" class="line-label" x="30" y="0">l</text>
+          <text id="labelM" class="line-label" x="30" y="0">m</text>
+          <circle id="dragHit" r="24" class="drag-hit"></circle>
+          <circle id="dotA" class="pt-dot-a" r="8"></circle>
+          <text id="labelA" class="pt-label">A</text>
+        </svg>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">밑변 BC</div><div class="val"><span id="statBase">8</span>cm</div></div>
+        <div class="stat-box"><div class="lbl">높이 (l~m 사이 거리)</div><div class="val"><span id="statHeight">6</span>cm</div></div>
+        <div class="stat-box area"><div class="lbl">△ABC의 넓이</div><div class="val"><span id="statArea">24.0</span>cm²</div></div>
+      </div>
+      <div class="obs-btns">
+        <button class="big-btn outline" onclick="obsCycle()">🔄 새로운 모양으로</button>
+        <button class="big-btn" onclick="startQuiz()">🎮 반복 퀴즈 시작하기</button>
+      </div>
+    </div>
+    <div class="lb-box" id="lbPreviewBox">
+      <div class="lb-title">🏆 오늘의 퀴즈 랭킹 TOP 5</div>
+      <div id="lbPreviewList"><div class="lb-empty">불러오는 중...</div></div>
+    </div>
+  </div>
+
+  <!-- 퀴즈 게임 -->
+  <div class="screen" id="scQuiz">
+    <div class="combo-popup" id="comboPopup"></div>
+    <div class="qcard">
+      <span class="qnum" id="qnumBadge">Q1</span>
+      <div class="qfig-wrap"><svg id="qFig" viewBox="0 0 300 210" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="qtext" id="qtext"></div>
+    </div>
+    <div id="answerArea"></div>
+  </div>
+
+  <!-- 퀴즈 종료 -->
+  <div class="screen" id="scEnd">
+    <div class="complete-wrap">
+      <div class="complete-icon">⏰</div>
+      <h2>시간 종료!</h2>
+      <div class="score-box">
+        <div class="sc-num" id="finalScore">0</div>
+        <div class="sc-label">문제 정답</div>
+      </div>
+      <div class="sc-sub" id="endStreakMsg"></div>
+      <p id="endComment"></p>
+      <br>
+      <button class="restart-btn" onclick="restartQuiz()">🔄 다시 도전하기</button>
+      <button class="restart-btn" style="background:var(--indigo)" onclick="backToObserve()">📐 관찰판으로</button>
+      <div class="lb-box" id="lbEndBox">
+        <div class="lb-title">🏆 오늘의 퀴즈 랭킹 TOP 10</div>
+        <div id="lbEndList"><div class="lb-empty">불러오는 중...</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'parallel-area-relation' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._db = _db;
+  window._reportHubComplete = function(){
+    if(!s.cls || !s.num) return;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function randInt(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function toSvgPoint(svg, evt){
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const ctm = svg.getScreenCTM().inverse();
+  return pt.matrixTransform(ctm);
+}
+
+/* ════════════════════════════════
+   관찰판 (자유 드래그)
+════════════════════════════════ */
+const SCALE = 20; // px per cm
+const obs = { baseLenCm:8, gapCm:6, Bx:0, Cx:0, yM:320, yL:0, Ax:0 };
+const obsSvg = document.getElementById('obsSvg');
+
+function obsRandomize(){
+  obs.baseLenCm = randInt(5,10);
+  obs.gapCm = randInt(4,8);
+  obs.yL = obs.yM - obs.gapCm*SCALE;
+  const centerX = 320;
+  obs.Bx = centerX - obs.baseLenCm*SCALE/2;
+  obs.Cx = obs.Bx + obs.baseLenCm*SCALE;
+  obs.Ax = centerX;
+}
+function obsRender(){
+  document.getElementById('lineL').setAttribute('y1', obs.yL);
+  document.getElementById('lineL').setAttribute('y2', obs.yL);
+  document.getElementById('lineM').setAttribute('y1', obs.yM);
+  document.getElementById('lineM').setAttribute('y2', obs.yM);
+  document.getElementById('labelL').setAttribute('y', obs.yL-8);
+  document.getElementById('labelM').setAttribute('y', obs.yM+18);
+
+  const A = {x:obs.Ax, y:obs.yL}, B = {x:obs.Bx, y:obs.yM}, C = {x:obs.Cx, y:obs.yM};
+  document.getElementById('triFill').setAttribute('points', `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`);
+  document.getElementById('heightLine').setAttribute('x1', A.x); document.getElementById('heightLine').setAttribute('y1', A.y);
+  document.getElementById('heightLine').setAttribute('x2', A.x); document.getElementById('heightLine').setAttribute('y2', obs.yM);
+  const raSize = 12;
+  document.getElementById('raMark').setAttribute('d', `M ${A.x-raSize} ${obs.yM} L ${A.x-raSize} ${obs.yM-raSize} L ${A.x} ${obs.yM-raSize}`);
+  document.getElementById('dotB').setAttribute('cx', B.x); document.getElementById('dotB').setAttribute('cy', B.y);
+  document.getElementById('dotC').setAttribute('cx', C.x); document.getElementById('dotC').setAttribute('cy', C.y);
+  document.getElementById('footDot').setAttribute('cx', A.x); document.getElementById('footDot').setAttribute('cy', obs.yM);
+  document.getElementById('dragHit').setAttribute('cx', A.x); document.getElementById('dragHit').setAttribute('cy', A.y);
+  document.getElementById('dotA').setAttribute('cx', A.x); document.getElementById('dotA').setAttribute('cy', A.y);
+  document.getElementById('labelA').setAttribute('x', A.x); document.getElementById('labelA').setAttribute('y', A.y-16);
+  document.getElementById('labelB').setAttribute('x', B.x-14); document.getElementById('labelB').setAttribute('y', B.y+14);
+  document.getElementById('labelC').setAttribute('x', C.x+14); document.getElementById('labelC').setAttribute('y', C.y+14);
+
+  const areaPx2 = Math.abs((B.x-A.x)*(C.y-A.y) - (C.x-A.x)*(B.y-A.y)) / 2;
+  const areaCm2 = areaPx2 / (SCALE*SCALE);
+  document.getElementById('statBase').textContent = obs.baseLenCm;
+  document.getElementById('statHeight').textContent = obs.gapCm;
+  document.getElementById('statArea').textContent = areaCm2.toFixed(1);
+}
+function obsCycle(){
+  obsRandomize();
+  obsRender();
+}
+let obsDragging = false;
+document.getElementById('dragHit').addEventListener('pointerdown', function(evt){
+  obsDragging = true;
+  obsSvg.setPointerCapture && obsSvg.setPointerCapture(evt.pointerId);
+  evt.preventDefault();
+});
+obsSvg.addEventListener('pointermove', function(evt){
+  if(!obsDragging) return;
+  const pt = toSvgPoint(obsSvg, evt);
+  obs.Ax = Math.max(30, Math.min(610, pt.x));
+  obsRender();
+});
+obsSvg.addEventListener('pointerup', function(){ obsDragging = false; });
+obsSvg.addEventListener('pointerleave', function(){ obsDragging = false; });
+
+obsRandomize();
+obsRender();
+
+/* ════════════════════════════════
+   퀴즈 문제 그림 (비상호작용 SVG)
+════════════════════════════════ */
+// 평행 표시(화살촉 두 개) — 같은 위치에 같은 모양으로 찍어서 "이 직선들은 서로 평행"임을 나타냄
+function parallelTick(x,y,color){
+  return `<path d="M ${x-5} ${y-5} L ${x+4} ${y} L ${x-5} ${y+5}" fill="none" stroke="${color||'#9090b0'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M ${x+2} ${y-5} L ${x+11} ${y} L ${x+2} ${y+5}" fill="none" stroke="${color||'#9090b0'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>`;
+}
+function drawFigInto(svg, points){
+  const yM = 170, Bx = 55, Cx = 215, tickX = 255;
+  const B = {x:Bx,y:yM}, C = {x:Cx,y:yM};
+  let html = `<line x1="10" y1="${yM}" x2="290" y2="${yM}" stroke="#333" stroke-width="2.2"></line>`;
+  html += `<text x="18" y="${yM-8}" font-size="12" font-weight="700" fill="#9090b0" text-anchor="middle">m</text>`;
+  html += parallelTick(tickX, yM, '#333');
+  points.forEach(p=>{
+    const yL = yM - p.gapPx;
+    html += `<line x1="10" y1="${yL}" x2="290" y2="${yL}" stroke="${p.color}" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.45"></line>`;
+    html += parallelTick(tickX, yL, p.color);
+    if(points.length===1){
+      html += `<text x="18" y="${yL-8}" font-size="12" font-weight="700" fill="${p.color}" text-anchor="middle">l</text>`;
+    }
+    html += `<polygon points="${p.x},${yL} ${B.x},${B.y} ${C.x},${C.y}" fill="${p.color}" fill-opacity="0.32" stroke="${p.color}" stroke-width="2"></polygon>`;
+    html += `<line x1="${p.x}" y1="${yL}" x2="${p.x}" y2="${yM}" stroke="${p.color}" stroke-width="1.6" stroke-dasharray="3 3"></line>`;
+    html += `<circle cx="${p.x}" cy="${yL}" r="4.5" fill="${p.color}"></circle>`;
+    html += `<text x="${p.x}" y="${yL-9}" font-size="13" font-weight="800" fill="${p.color}" text-anchor="middle">${p.label}</text>`;
+  });
+  html += `<circle cx="${B.x}" cy="${B.y}" r="4" fill="#333"></circle><circle cx="${C.x}" cy="${C.y}" r="4" fill="#333"></circle>`;
+  html += `<text x="${B.x-12}" y="${B.y+16}" font-size="13" font-weight="800" fill="#333" text-anchor="middle">B</text>`;
+  html += `<text x="${C.x+12}" y="${C.y+16}" font-size="13" font-weight="800" fill="#333" text-anchor="middle">C</text>`;
+  svg.innerHTML = html;
+}
+// 삼각형 없이, 두 평행선과 거리 측정선만 보여주는 그림(순수 개념 질문용)
+function drawLinesOnlyFig(svg, gapPx, measureX){
+  const yM = 170, yL = yM - gapPx, tickX = 255;
+  let html = `<line x1="10" y1="${yM}" x2="290" y2="${yM}" stroke="#333" stroke-width="2.2"></line>`;
+  html += `<line x1="10" y1="${yL}" x2="290" y2="${yL}" stroke="#333" stroke-width="2.2"></line>`;
+  html += `<text x="18" y="${yM-8}" font-size="12" font-weight="700" fill="#9090b0" text-anchor="middle">m</text>`;
+  html += `<text x="18" y="${yL-8}" font-size="12" font-weight="700" fill="#9090b0" text-anchor="middle">l</text>`;
+  html += parallelTick(tickX, yM, '#333');
+  html += parallelTick(tickX, yL, '#333');
+  html += `<line x1="${measureX}" y1="${yL}" x2="${measureX}" y2="${yM}" stroke="#e05a20" stroke-width="1.8" stroke-dasharray="3 3"></line>`;
+  html += `<line x1="${measureX-6}" y1="${yL}" x2="${measureX+6}" y2="${yL}" stroke="#e05a20" stroke-width="1.8"></line>`;
+  html += `<line x1="${measureX-6}" y1="${yM}" x2="${measureX+6}" y2="${yM}" stroke="#e05a20" stroke-width="1.8"></line>`;
+  svg.innerHTML = html;
+}
+
+/* ════════════════════════════════
+   퀴즈 문제 생성기
+════════════════════════════════ */
+const MC_POOL = [
+  { q:'△ABC와 △A′BC의 넓이가 같은 이유로 알맞은 것은?', needsTwo:true, options:['밑변 BC가 공통이고, 높이가 같기 때문에','두 삼각형이 합동이기 때문에','모든 변의 길이가 같기 때문에','밑변의 길이만 같으면 항상 넓이도 같기 때문에'], answer:0 },
+  { q:'두 직선 l, m이 평행할 때, 이 두 직선 사이의 거리는 거리를 재는 위치에 따라 변하는 것일까요, 변하지 않는 것일까요?', mode:'lines', options:['어디서 재도 항상 같다(변하지 않는다)','재는 위치에 따라 점점 넓어진다','재는 위치에 따라 점점 좁아진다','알 수 없다'], answer:0 },
+  { q:'밑변 BC가 공통인 두 삼각형의 넓이가 같으려면, 두 꼭짓점 A, A′은 어떤 조건을 만족해야 할까요?', needsTwo:true, options:['직선 BC와 평행한 같은 직선 위에 있어야 한다','두 삼각형의 세 변의 길이가 모두 같아야 한다','아무 조건도 필요 없다, 항상 같다','A, A′을 잇는 선분이 BC와 평행해야 한다'], answer:0 }
+];
+function genOX(){
+  const sameLine = Math.random()<0.6;
+  const gap1 = randInt(55,140);
+  let gap2;
+  if(sameLine){ gap2 = gap1; }
+  else{ do{ gap2 = randInt(55,140); }while(Math.abs(gap2-gap1)<35); }
+  const x1 = randInt(20,280), x2 = randInt(20,280);
+  const points = [
+    {x:x1, gapPx:gap1, color:'#4f46e5', label:'A'},
+    {x:x2, gapPx:gap2, color:'#e05a20', label:'A′'}
+  ];
+  return { type:'OX', mode:'triangle2', points, answer: sameLine, qhtml:'△ABC와 △A′BC의 넓이가 같을까요?', key:`OX|${sameLine}|${gap1}|${gap2}` };
+}
+function genMC(){
+  const item = pickRandom(MC_POOL);
+  const gap = randInt(55,140);
+  const mode = item.mode || (item.needsTwo ? 'triangle2' : 'triangle1');
+  let points = [], measureX = randInt(40,260);
+  if(mode==='triangle2'){
+    const x1 = randInt(20,280), x2 = randInt(20,280);
+    points = [
+      {x:x1, gapPx:gap, color:'#4f46e5', label:'A'},
+      {x:x2, gapPx:gap, color:'#e05a20', label:'A′'}
+    ];
+  }else if(mode==='triangle1'){
+    points = [{x:randInt(20,280), gapPx:gap, color:'#4f46e5', label:'A'}];
+  }
+  const idxOrder = shuffle(item.options.map((_,i)=>i));
+  const options = idxOrder.map(i=>item.options[i]);
+  const answer = item.options[item.answer];
+  return { type:'MC', mode, points, gapPx:gap, measureX, qhtml:item.q, options, answer, key:'MC|'+item.q };
+}
+let lastKey = null;
+function generateQuestion(){
+  let q, tries=0;
+  do{
+    q = Math.random()<0.65 ? genOX() : genMC();
+    tries++;
+  }while(q.key===lastKey && tries<5);
+  lastKey = q.key;
+  return q;
+}
+
+/* ════════════════════════════════
+   퀴즈 게임 진행
+════════════════════════════════ */
+const st = { score:0, streak:0, bestStreak:0, timeLeft:180, timerInt:null, answered:false, cur:null, qnum:0 };
+
+function startQuiz(){
+  st.score=0; st.streak=0; st.bestStreak=0; st.timeLeft=180; st.answered=false; st.qnum=0;
+  document.getElementById('scoreEl').textContent='0';
+  document.getElementById('streakEl').textContent='🔥 0';
+  document.getElementById('hdrGameInfo').style.display='flex';
+  showScreen('scQuiz');
+  startTimer();
+  loadNextQuestion();
+}
+function startTimer(){
+  updateTimerDisplay();
+  st.timerInt = setInterval(()=>{
+    st.timeLeft--;
+    updateTimerDisplay();
+    if(st.timeLeft<=0){ clearInterval(st.timerInt); endQuiz(); }
+  }, 1000);
+}
+function updateTimerDisplay(){
+  const m=Math.floor(st.timeLeft/60), sec=st.timeLeft%60;
+  const el=document.getElementById('timerEl');
+  el.textContent = `${m}:${sec.toString().padStart(2,'0')}`;
+  el.className = 'timer' + (st.timeLeft<=20?' danger':st.timeLeft<=45?' warn':'');
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function loadNextQuestion(){
+  st.answered=false; st.qnum++;
+  st.cur = generateQuestion();
+  document.getElementById('qnumBadge').textContent = 'Q'+st.qnum;
+  document.getElementById('qtext').innerHTML = st.cur.qhtml;
+  if(st.cur.mode==='lines'){
+    drawLinesOnlyFig(document.getElementById('qFig'), st.cur.gapPx, st.cur.measureX);
+  }else{
+    drawFigInto(document.getElementById('qFig'), st.cur.points);
+  }
+  const area = document.getElementById('answerArea');
+  if(st.cur.type==='OX'){
+    area.innerHTML = `<div class="ox-row">
+      <button class="ox-btn o" id="oxO" onclick="answerOX(true)">O</button>
+      <button class="ox-btn x" id="oxX" onclick="answerOX(false)">X</button>
+    </div>`;
+  }else{
+    st.cur.shownOptions = st.cur.options;
+    area.innerHTML = `<div class="opt-list" id="optList">` +
+      st.cur.options.map((txt,i)=>`<button class="opt-card" data-idx="${i}" onclick="answerMC(this,${i})"><span class="opt-badge">${String.fromCharCode(65+i)}</span><span>${txt}</span></button>`).join('') +
+      `</div>`;
+  }
+}
+function lockButtons(){
+  document.querySelectorAll('#optList .opt-card').forEach(b=>b.disabled=true);
+  const oxO=document.getElementById('oxO'), oxX=document.getElementById('oxX');
+  if(oxO) oxO.disabled=true; if(oxX) oxX.disabled=true;
+}
+function showComboPopup(isCorrect){
+  const el = document.getElementById('comboPopup');
+  el.classList.remove('show','ok','no');
+  void el.offsetWidth;
+  if(isCorrect){
+    el.textContent = st.streak>=2 ? `🔥 ${st.streak} 콤보!` : '✅ 정답!';
+    el.classList.add('show','ok');
+  }else{
+    el.textContent = '❌ 오답 (-1점)';
+    el.classList.add('show','no');
+  }
+}
+function applyScoreChange(isCorrect){
+  if(isCorrect){
+    st.score++; st.streak++; if(st.streak>st.bestStreak) st.bestStreak=st.streak;
+  }else{
+    st.score = Math.max(0, st.score-1); st.streak=0;
+  }
+  document.getElementById('scoreEl').textContent = st.score;
+  document.getElementById('streakEl').textContent = '🔥 '+st.streak;
+  showComboPopup(isCorrect);
+}
+function registerAnswer(isCorrect){
+  st.answered=true;
+  applyScoreChange(isCorrect);
+  lockButtons();
+  setTimeout(()=>{ if(st.timeLeft>0) loadNextQuestion(); }, 650);
+}
+function answerOX(chosen){
+  if(st.answered) return;
+  const isCorrect = chosen===st.cur.answer;
+  document.getElementById(chosen?'oxO':'oxX').classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) document.getElementById(st.cur.answer?'oxO':'oxX').classList.add('correct');
+  st.answered = true;
+  applyScoreChange(isCorrect);
+  lockButtons();
+  if(st.cur.answer===false){
+    setTimeout(()=>{ showWhyPanel(); }, 650);
+  }else{
+    setTimeout(()=>{ if(st.timeLeft>0) loadNextQuestion(); }, 650);
+  }
+}
+function showWhyPanel(){
+  if(st.timeLeft<=0) return;
+  const opts = shuffle([{text:'밑변',correct:false},{text:'높이',correct:true}]);
+  st.whyOpts = opts;
+  document.getElementById('answerArea').innerHTML = `<div class="why-box">
+    <div class="why-q">🤔 두 삼각형의 넓이가 다른 건, 무엇이 다르기 때문일까요?</div>
+    <div class="opt-list" id="whyOptList">
+      ${opts.map((o,i)=>`<button class="opt-card" data-idx="${i}" onclick="answerWhy(this,${i})"><span class="opt-badge">${String.fromCharCode(65+i)}</span><span>${o.text}</span></button>`).join('')}
+    </div>
+    <div class="why-fb" id="whyFb"></div>
+  </div>`;
+}
+function answerWhy(btn, idx){
+  if(btn.disabled) return;
+  const opt = st.whyOpts[idx];
+  btn.classList.add(opt.correct?'correct':'wrong');
+  document.querySelectorAll('#whyOptList .opt-card').forEach((b,i)=>{
+    b.disabled = true;
+    if(st.whyOpts[i].correct) b.classList.add('correct');
+  });
+  const fb = document.getElementById('whyFb');
+  fb.className = 'why-fb ' + (opt.correct?'ok':'no');
+  fb.textContent = opt.correct ? '✅ 정답입니다!' : '❌ 틀렸어요! 밑변은 같고 높이가 다릅니다.';
+  setTimeout(()=>{ if(st.timeLeft>0) loadNextQuestion(); }, 1300);
+}
+function answerMC(btn, idx){
+  if(st.answered) return;
+  const chosen = st.cur.shownOptions[idx];
+  const isCorrect = chosen===st.cur.answer;
+  btn.classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect){
+    document.querySelectorAll('#optList .opt-card').forEach(b=>{
+      const i = Number(b.dataset.idx);
+      if(st.cur.shownOptions[i]===st.cur.answer) b.classList.add('correct');
+    });
+  }
+  registerAnswer(isCorrect);
+}
+function endQuiz(){
+  clearInterval(st.timerInt);
+  document.getElementById('finalScore').textContent = st.score;
+  document.getElementById('endStreakMsg').textContent = `최고 연속 정답: ${st.bestStreak}개`;
+  const msg = st.score>=25 ? '완벽해요! 평행선 사이의 넓이 관계를 확실히 익혔네요 🌟' :
+              st.score>=12 ? '훌륭해요! 조금만 더 연습하면 완벽해질 거예요 💪' :
+              '좋은 시작이에요! 관찰판에서 한 번 더 확인하고 다시 도전해봐요 🔥';
+  document.getElementById('endComment').textContent = msg;
+  showScreen('scEnd');
+  submitScore();
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+function restartQuiz(){ startQuiz(); }
+function backToObserve(){
+  document.getElementById('hdrGameInfo').style.display='none';
+  showScreen('scObserve');
+  loadLeaderboard('lbPreviewList', 5);
+}
+
+/* ════════════════════════════════
+   리더보드 (Firestore) — where+orderBy 복합 색인 문제를 피하기 위해
+   date만 필터링해서 받아온 뒤 정렬은 JS에서 처리
+════════════════════════════════ */
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+async function submitScore(){
+  const s = window._student, db = window._db;
+  if(!db || !s.cls || !s.num) return;
+  const docId = `${todayStr()}_${s.cls}_${s.num}`;
+  const ref = db.collection('parallelAreaSpeedQuiz').doc(docId);
+  try{
+    const snap = await ref.get();
+    const prevScore = snap.exists ? (snap.data().score||0) : -1;
+    if(st.score > prevScore){
+      await ref.set({
+        date: todayStr(), cls:String(s.cls), num:parseInt(s.num), name:s.name||'',
+        score: st.score, bestStreak: st.bestStreak,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  }catch(e){ console.warn('score submit failed', e); }
+  loadLeaderboard('lbEndList', 10);
+}
+async function loadLeaderboard(targetId, limit){
+  const db = window._db;
+  const el = document.getElementById(targetId);
+  if(!db){ el.innerHTML = '<div class="lb-empty">랭킹을 불러올 수 없어요</div>'; return; }
+  try{
+    const snap = await db.collection('parallelAreaSpeedQuiz')
+      .where('date','==',todayStr())
+      .limit(300)
+      .get();
+    if(snap.empty){ el.innerHTML = '<div class="lb-empty">오늘의 기록이 아직 없어요. 첫 도전자가 되어보세요!</div>'; return; }
+    let rows = [];
+    snap.forEach(doc=>rows.push(doc.data()));
+    rows.sort((a,b)=>(b.score||0)-(a.score||0));
+    rows = rows.slice(0, limit);
+    const s = window._student;
+    const html = rows.map((d,idx)=>{
+      const rank = idx+1;
+      const isMe = s.cls && s.num && String(d.cls)===String(s.cls) && String(d.num)===String(s.num);
+      const rankClass = rank===1?'top1':rank===2?'top2':rank===3?'top3':'';
+      return `<div class="lb-row${isMe?' me':''}"><span class="lb-rank ${rankClass}">${rank}</span><span class="lb-name">${d.cls}반 ${d.name||('#'+d.num)}</span><span class="lb-score">${d.score}</span></div>`;
+    });
+    el.innerHTML = html.join('');
+  }catch(e){
+    console.warn('leaderboard load failed', e);
+    el.innerHTML = '<div class="lb-empty">랭킹을 불러오지 못했어요</div>';
+  }
+}
+
+loadLeaderboard('lbPreviewList', 5);
+</script>
+</body>
+</html>
