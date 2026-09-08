@@ -188,6 +188,7 @@
     </div>
     <button class="calendar-btn" onclick="go('calendar')">📅 우리 반 진도 캘린더 보기</button>
     <div id="unit-list"></div>
+    <button class="calendar-btn" onclick="refreshLeaderboard()">🔄 랭킹 새로고침</button>
     <div id="leader-boxes"></div>
   </section>
 
@@ -266,6 +267,7 @@
 
     <div class="admin-group-title">🧹 학생 기록 관리</div>
     <p class="admin-hint">테스트로 접속한 기록 삭제 등</p>
+    <button class="calendar-btn" onclick="refreshAdminStudents()">🔄 새로고침</button>
     <div id="admin-students"></div>
   </section>
 
@@ -278,7 +280,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, collection, increment }
+import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, getDoc, getDocs, serverTimestamp, collection, increment }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 // ---- Firebase 설정 ----
@@ -420,7 +422,6 @@ let unlockedIds = null; // null = 아직 설정 안 됨(전체 열림), 배열�
 let unlockedAt = {};    // { itemId: '2026-08-20' } - 진도 캘린더용
 let noticeText = '';
 let unsubStudentToday = null;
-let unsubLeaderboard = null;
 let myItemsOpened = new Set(); // 이 학생이 열어본/완료한 항목 id들 (카드 완료 체크 표시용)
 
 let currentTeacher = null;
@@ -429,7 +430,6 @@ let adminTodayIds = [];
 let adminUnlockedIds = [];
 let adminUnlockedAt = {};
 let unsubAdminToday = null;
-let unsubAdminStudents = null;
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -466,8 +466,14 @@ function enterAsStudent(grade, cls, num, name, countAsVisit){
   document.getElementById('units-greeting').textContent = `${grade}학년 ${cls}반 ${name} 학생, 안녕하세요!`;
   applyClassTheme(cls);
   subscribeStudentToday(cls);
-  subscribeLeaderboard(cls);
-  if(countAsVisit) logVisit(cls, num, name);
+  // 처음 로그인할 때만 반 전체 랭킹을 불러오고(무거운 읽기), 문제 풀고 허브로 돌아올 때는
+  // 완료 체크 표시에 필요한 내 기록 1개만 가볍게 불러옴 — 랭킹 자체는 새로고침 버튼으로만 갱신
+  if(countAsVisit){
+    loadLeaderboard(cls);
+    logVisit(cls, num, name);
+  }else{
+    loadMyProgress(cls, num);
+  }
   renderUnitList();
   go('units');
 }
@@ -682,9 +688,13 @@ function renderCalendar(){
 }
 
 // ---- 반별 Top10 랭킹 ----
-function subscribeLeaderboard(cls){
-  if(unsubLeaderboard) unsubLeaderboard();
-  unsubLeaderboard = onSnapshot(collection(db, 'classStudents', String(cls), 'students'), (snap)=>{
+// 예전엔 onSnapshot(실시간 구독)이라 반 안의 누군가가 뭘 풀 때마다 그 반 전원 화면에 즉시 다시
+// 뿌려지는 구조였음 — 학생이 많고 활발할수록 Firestore 읽기 사용량이 (쓰기 수 × 동시 접속자 수)로
+// 폭증해서 무료 할당량을 순식간에 다 써버리는 원인이 됨(2026-09-08 실제 장애).
+// 랭킹은 실시간일 필요가 없는 정보라, 화면 진입 시 한 번만 불러오고 새로고침 버튼으로만 갱신하도록 변경.
+async function loadLeaderboard(cls){
+  try{
+    const snap = await getDocs(collection(db, 'classStudents', String(cls), 'students'));
     const students = [];
     snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
     renderLeaderboard(students);
@@ -697,7 +707,28 @@ function subscribeLeaderboard(cls){
     if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
       openUnit(currentUnitId);
     }
-  });
+  }catch(err){
+    console.warn('leaderboard load failed', err);
+  }
+}
+window.refreshLeaderboard = function(){
+  if(studentInfo) loadLeaderboard(studentInfo.cls);
+};
+
+// 문제/탐구 풀고 허브로 돌아왔을 때 완료 체크(✅) 표시만 갱신하는 가벼운 버전 —
+// 반 전체를 다시 읽지 않고 내 문서 1개만 읽음 (하루에 여러 번 반복되는 동선이라 비용 차이가 큼)
+async function loadMyProgress(cls, num){
+  try{
+    const snap = await getDoc(studentDocRef(cls, num));
+    myItemsOpened = new Set(snap.exists() ? (snap.data().itemsOpened || []) : []);
+    renderToday();
+    renderRecommend();
+    if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
+      openUnit(currentUnitId);
+    }
+  }catch(err){
+    console.warn('progress load failed', err);
+  }
 }
 
 function renderLeaderboard(students){
@@ -730,7 +761,6 @@ window.teacherLogin = function(){
 
 window.teacherLogout = function(){
   if(unsubAdminToday) unsubAdminToday();
-  if(unsubAdminStudents) unsubAdminStudents();
   signOut(auth).then(()=> go('role'));
 };
 
@@ -795,13 +825,26 @@ function selectAdminClass(cls){
     renderAdminList();
   });
 
-  if(unsubAdminStudents) unsubAdminStudents();
-  unsubAdminStudents = onSnapshot(collection(db, 'classStudents', String(cls), 'students'), (snap)=>{
+  loadAdminStudents(cls);
+}
+
+// 예전엔 onSnapshot(실시간 구독)이라 이 반 학생들 활동이 있을 때마다 관리자 화면도 계속
+// 다시 읽어와서 Firestore 사용량을 키우는 원인 중 하나였음 — 탭 선택 시 한 번만 불러오고,
+// 새로고침 버튼 또는 학생 삭제 후에만 다시 불러오도록 변경(2026-09-08).
+async function loadAdminStudents(cls){
+  try{
+    const snap = await getDocs(collection(db, 'classStudents', String(cls), 'students'));
     const students = [];
     snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
     renderAdminStudents(students);
-  });
+  }catch(err){
+    console.warn('admin students load failed', err);
+    document.getElementById('admin-students').innerHTML = '<p class="student-empty">불러오기 실패 — 새로고침을 눌러주세요</p>';
+  }
 }
+window.refreshAdminStudents = function(){
+  if(selectedAdminClass) loadAdminStudents(selectedAdminClass);
+};
 
 function renderAdminStudents(students){
   const wrap = document.getElementById('admin-students');
@@ -819,7 +862,9 @@ function renderAdminStudents(students){
       <button class="student-del" type="button">삭제</button>`;
     row.querySelector('.student-del').onclick = ()=>{
       if(confirm(`${s.id}번 ${s.name||'?'} 학생의 접속·랭킹 기록을 삭제할까요?`)){
-        deleteDoc(studentDocRef(selectedAdminClass, s.id)).catch(err=> alert('삭제 실패: '+err.message));
+        deleteDoc(studentDocRef(selectedAdminClass, s.id))
+          .then(()=> loadAdminStudents(selectedAdminClass))
+          .catch(err=> alert('삭제 실패: '+err.message));
       }
     };
     wrap.appendChild(row);
@@ -932,7 +977,9 @@ window.saveToday = function(){
       .catch(err=>{
         clearTimeout(timeoutId);
         console.error('saveToday failed', err);
-        msg.textContent = '저장 실패: ' + err.message;
+        msg.textContent = err.code === 'resource-exhausted'
+          ? '오늘 하루 사용량 한도를 다 썼어요. 내일 다시 시도해주세요.'
+          : '저장 실패: ' + err.message;
         msg.className = 'msg error';
       });
   }catch(err){
