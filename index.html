@@ -38,6 +38,7 @@
     display:block;width:100%;border:none;border-radius:16px;padding:16px 18px;
     font-family:var(--disp);font-size:19px;cursor:pointer;text-align:left;
     box-shadow:0 3px 0 rgba(46,42,34,.15);margin-bottom:12px;color:var(--ink);
+    touch-action:manipulation;
   }
   .btn.mint{background:var(--mint);}
   .btn.lav{background:var(--lav);}
@@ -881,15 +882,38 @@ function renderAdminPreview(){
 document.getElementById('admin-notice').addEventListener('input', renderAdminPreview);
 
 window.saveToday = function(){
-  const unlockChecked = Array.from(document.querySelectorAll('.chk-unlock:checked')).map(cb=>cb.dataset.id);
-  const todayChecked = Array.from(document.querySelectorAll('.chk-today:checked')).map(cb=>cb.dataset.id);
-  const finalUnlocked = Array.from(new Set([...unlockChecked, ...todayChecked]));
-  const finalUnlockedAt = {...adminUnlockedAt};
-  finalUnlocked.forEach(id=>{ if(!finalUnlockedAt[id]) finalUnlockedAt[id] = todayStr(); });
-  const notice = document.getElementById('admin-notice').value.trim();
-  setDoc(doc(db,'todayByClass', String(selectedAdminClass)), { todayIds: todayChecked, unlockedIds: finalUnlocked, unlockedAt: finalUnlockedAt, notice, updatedAt: serverTimestamp() })
-    .then(()=>{ document.getElementById('admin-msg').textContent = `저장했어요! ${selectedAdminClass}반 학생 화면에 바로 반영돼요.`; document.getElementById('admin-msg').className='msg ok'; })
-    .catch(err=>{ document.getElementById('admin-msg').textContent = '저장 실패: ' + err.message; document.getElementById('admin-msg').className='msg error'; });
+  const msg = document.getElementById('admin-msg');
+  msg.textContent = '저장 중...';
+  msg.className = 'msg';
+  try{
+    const unlockChecked = Array.from(document.querySelectorAll('.chk-unlock:checked')).map(cb=>cb.dataset.id);
+    const todayChecked = Array.from(document.querySelectorAll('.chk-today:checked')).map(cb=>cb.dataset.id);
+    const finalUnlocked = Array.from(new Set([...unlockChecked, ...todayChecked]));
+    const finalUnlockedAt = {...adminUnlockedAt};
+    finalUnlocked.forEach(id=>{ if(!finalUnlockedAt[id]) finalUnlockedAt[id] = todayStr(); });
+    const notice = document.getElementById('admin-notice').value.trim();
+    const cls = selectedAdminClass;
+    const timeoutId = setTimeout(()=>{
+      msg.textContent = '저장이 오래 걸리고 있어요. 인터넷 연결을 확인하고 다시 시도해주세요.';
+      msg.className = 'msg error';
+    }, 8000);
+    setDoc(doc(db,'todayByClass', String(cls)), { todayIds: todayChecked, unlockedIds: finalUnlocked, unlockedAt: finalUnlockedAt, notice, updatedAt: serverTimestamp() })
+      .then(()=>{
+        clearTimeout(timeoutId);
+        msg.textContent = `저장했어요! ${cls}반 학생 화면에 바로 반영돼요.`;
+        msg.className = 'msg ok';
+      })
+      .catch(err=>{
+        clearTimeout(timeoutId);
+        console.error('saveToday failed', err);
+        msg.textContent = '저장 실패: ' + err.message;
+        msg.className = 'msg error';
+      });
+  }catch(err){
+    console.error('saveToday sync error', err);
+    msg.textContent = '저장 중 오류가 났어요: ' + err.message;
+    msg.className = 'msg error';
+  }
 };
 </script>
 </body>
