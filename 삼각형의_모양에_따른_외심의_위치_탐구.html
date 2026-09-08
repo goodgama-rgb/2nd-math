@@ -987,6 +987,7 @@
       appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
     });
     _db = firebase.firestore();
+    _db.settings({ experimentalAutoDetectLongPolling: true });
   }catch(e){ console.warn('Firebase init:', e); }
 
   let isAdmin = false;

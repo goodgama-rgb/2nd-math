@@ -280,6 +280,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
       messagingSenderId: "414096731864",
       appId: "1:414096731864:web:a799f9450859c498b6b1ad"
     });
+    firebase.firestore().settings({ experimentalAutoDetectLongPolling: true });
   }catch(e){ console.warn('hub firebase init:', e); }
   window._reportQuizComplete = function(){
     if(!s.cls || !s.num || !s.id) return;

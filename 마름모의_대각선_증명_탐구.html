@@ -87,6 +87,10 @@
   }
   .angle-num.flash{ animation: numFlash 5s ease-in-out; }
 
+  @keyframes toolPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+  #toolHit{ animation: toolPulse 1.3s ease-in-out infinite; }
+  #rightTool.snapped #toolHit{ animation: none; opacity:1; }
+
   .seg{ text-decoration-line:overline; text-decoration-thickness:1.3px; text-decoration-skip-ink:none; }
 
   .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
@@ -311,6 +315,14 @@
         <text id="nameC" class="vertex-name">C</text>
         <text id="nameD" class="vertex-name">D</text>
         <text id="nameO" class="o-name">O</text>
+
+        <g id="rightTool" style="display:none; cursor:grab;">
+          <circle id="toolHit" r="24" fill="rgba(255,138,0,.18)"></circle>
+          <path d="M 0 0 L 48 0" stroke="#ff8a00" stroke-width="5" stroke-linecap="round"></path>
+          <path d="M 0 0 L 0 -48" stroke="#ff8a00" stroke-width="5" stroke-linecap="round"></path>
+          <path d="M 16 0 L 16 -16 L 0 -16" fill="none" stroke="#ff8a00" stroke-width="2.5"></path>
+          <text x="26" y="-22" font-size="12" font-weight="800" fill="#c25a00" text-anchor="middle">90°</text>
+        </g>
       </svg>
     </div>
     <p class="live-hint" id="liveHint"></p>
@@ -349,9 +361,11 @@
               <rect x="110" y="15" width="40" height="130" fill="#ffd9e3" stroke="#4a5568" stroke-width="2"></rect>
             </g>
             <g id="foldF2" style="display:none">
-              <rect x="110" y="15" width="40" height="130" fill="#ffd9e3" stroke="#4a5568" stroke-width="2"></rect>
-              <path d="M 110 15 L 150 145" fill="none" stroke="#b3261e" stroke-width="2" stroke-dasharray="5 4"></path>
-              <text x="150" y="90" font-size="20" text-anchor="middle">✂️</text>
+              <rect x="110" y="15" width="40" height="130" fill="#ffd9e3" stroke="#c9d4e8" stroke-width="1" opacity="0.4"></rect>
+              <path d="M 170 130 Q 198 90 163 58" fill="none" stroke="#6c8bff" stroke-width="2.5" marker-end="url(#foldArrow)"></path>
+              <rect x="110" y="15" width="40" height="65" fill="#ffd9e3" stroke="#4a5568" stroke-width="2"></rect>
+              <path d="M 110 15 L 150 80" fill="none" stroke="#b3261e" stroke-width="2" stroke-dasharray="5 4"></path>
+              <text x="168" y="55" font-size="20" text-anchor="middle">✂️</text>
             </g>
             <g id="foldF3" style="display:none">
               <polygon points="150,20 90,85 150,150 210,85" fill="#ffd9e3" stroke="#4a5568" stroke-width="2.5"></polygon>
@@ -405,7 +419,10 @@
 
         <div class="reveal" id="angleBlock1">
           <div class="fillsentence" style="text-align:center;">
-            <button class="btn btn-check" id="btnShowAngleAOB">📐 ∠AOB 측정하기</button>
+            <button class="btn btn-check" id="btnShowAngleAOB">📐 직각자로 ∠AOB 재보기</button>
+          </div>
+          <div class="reveal" id="toolHintBlock">
+            <p style="text-align:center;">🔶 그림에 나타난 <b>주황색 직각자</b>를 손가락(마우스)으로 끌어서, 대각선의 교점 <b>O</b>에 모서리를 맞춰보세요!</p>
           </div>
           <div class="feedback" id="fbAngleAOB"></div>
 
@@ -643,11 +660,16 @@
 
   function dist(P,Q){ return Math.hypot(P.x-Q.x,P.y-Q.y); }
 
+  const TOOL_TRAY = { x:555, y:410 };
+  const SNAP_RADIUS = 40;
+
   const state = {
     presetIdx: 0,
     foldFrame: 0,
     ticksShown: false,
-    angleShown: false,
+    toolShown: false,
+    toolSnapped: false,
+    toolPos: { x:TOOL_TRAY.x, y:TOOL_TRAY.y },
     confirmedPresets: new Set(),
     doneSss: false, doneCong: false, triOverlapOn: false, doneAngles: false, doneRightAngle: false
   };
@@ -664,6 +686,14 @@
   const numAOB=document.getElementById('numAOB'), numAOD=document.getElementById('numAOD');
   const dotA=document.getElementById('dotA'), dotB=document.getElementById('dotB'), dotC=document.getElementById('dotC'), dotD=document.getElementById('dotD'), dotO=document.getElementById('dotO');
   const nameA=document.getElementById('nameA'), nameB=document.getElementById('nameB'), nameC=document.getElementById('nameC'), nameD=document.getElementById('nameD'), nameO=document.getElementById('nameO');
+  const rightTool = document.getElementById('rightTool'), toolHit = document.getElementById('toolHit');
+
+  function toSvgPoint(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    return pt.matrixTransform(ctm);
+  }
 
   // ---------- 기하 헬퍼 ----------
   function pointAt(P,Q,t){ return { x:P.x+(Q.x-P.x)*t, y:P.y+(Q.y-P.y)*t }; }
@@ -746,8 +776,18 @@
     tickCD.setAttribute('d', tickPath(C,D,1,0.5)); tickCD.style.display = showTicks?'block':'none';
     tickDA.setAttribute('d', tickPath(D,A,1,0.5)); tickDA.style.display = showTicks?'block':'none';
 
-    // 각 표시: 1단계 관찰용(∠AOB) + 2단계 증명용(∠AOB, ∠AOD)
-    const showAngObs = (currentPage===1 && state.angleShown);
+    // 직각자 도구: 보여지는 동안은 트레이/드래그 위치, 스냅되면 O에 고정 + OA 방향으로 회전
+    rightTool.style.display = (currentPage===1 && state.toolShown) ? 'block' : 'none';
+    rightTool.classList.toggle('snapped', state.toolSnapped);
+    if(state.toolSnapped){
+      const angADeg = Math.atan2(A.y-O.y, A.x-O.x) * 180/Math.PI;
+      rightTool.setAttribute('transform', `translate(${O.x},${O.y}) rotate(${angADeg})`);
+    }else{
+      rightTool.setAttribute('transform', `translate(${state.toolPos.x},${state.toolPos.y})`);
+    }
+
+    // 각 표시: 1단계 관찰용(∠AOB, 직각자가 O에 맞춰졌을 때) + 2단계 증명용(∠AOB, ∠AOD)
+    const showAngObs = (currentPage===1 && state.toolSnapped);
     const showAngProof = (currentPage===2 && state.doneAngles);
     const arcR = 26;
     arcAOB.setAttribute('d', vertexArc(O, A, B, arcR)); arcAOB.style.display = (showAngObs||showAngProof)?'block':'none';
@@ -805,10 +845,12 @@
   // ---------- 다른 모양으로 다시 관찰 ----------
   function resetObserve(){
     state.presetIdx = (state.presetIdx+1) % RHOMBUS_PRESETS.length;
-    state.ticksShown = false; state.angleShown = false;
+    state.ticksShown = false;
+    state.toolShown = false; state.toolSnapped = false; state.toolPos = { x:TOOL_TRAY.x, y:TOOL_TRAY.y };
     state.doneSss=false; state.doneCong=false; state.triOverlapOn=false; state.doneAngles=false; state.doneRightAngle=false;
     document.getElementById('quiz1Block').classList.remove('show');
     document.getElementById('angleBlock1').classList.remove('show');
+    document.getElementById('toolHintBlock').classList.remove('show');
     document.getElementById('quiz2Block').classList.remove('show');
     document.getElementById('confirmBlock1').classList.remove('show');
     document.getElementById('observeMoreBlock1').classList.remove('show');
@@ -868,14 +910,46 @@
     }
   });
   document.getElementById('btnShowAngleAOB').addEventListener('click', function(){
-    state.angleShown = true;
+    if(state.toolShown) return;
+    state.toolShown = true;
     render();
     nudgeToCanvas();
-    flashEls([arcAOB, numAOB]);
+    document.getElementById('toolHintBlock').classList.add('show');
+  });
+  let toolDrag = null;
+  toolHit.addEventListener('pointerdown', function(evt){
+    if(currentPage!==1 || !state.toolShown || state.toolSnapped) return;
+    evt.preventDefault();
+    const p = toSvgPoint(evt);
+    toolDrag = { offX: p.x - state.toolPos.x, offY: p.y - state.toolPos.y };
+    rightTool.style.cursor = 'grabbing';
+    svg.setPointerCapture && svg.setPointerCapture(evt.pointerId);
+  });
+  svg.addEventListener('pointermove', function(evt){
+    if(!toolDrag) return;
+    const p = toSvgPoint(evt);
+    state.toolPos = { x: p.x - toolDrag.offX, y: p.y - toolDrag.offY };
+    render();
+  });
+  svg.addEventListener('pointerup', function(){
+    if(!toolDrag) return;
+    toolDrag = null;
+    rightTool.style.cursor = 'grab';
+    const {A,O} = rhombusPoints(curRhombus());
     const fb = document.getElementById('fbAngleAOB');
-    fb.className='feedback success';
-    fb.textContent = '✅ ∠AOB=90°네요! (그림에 반짝이는 각도 표시를 확인해보세요)';
-    document.getElementById('quiz2Block').classList.add('show');
+    if(dist(state.toolPos, O) < SNAP_RADIUS){
+      state.toolSnapped = true;
+      render();
+      nudgeToCanvas();
+      flashEls([arcAOB, numAOB]);
+      fb.className='feedback success';
+      fb.innerHTML = '✅ 직각자의 두 변이 정확히 대각선 <span class="seg">OA</span>, <span class="seg">OB</span> 위에 겹치네요! ∠AOB=90°가 맞습니다.';
+      document.getElementById('quiz2Block').classList.add('show');
+    }else{
+      render();
+      fb.className='feedback warn';
+      fb.textContent = '🤔 아직이에요. 직각자의 모서리를 대각선의 교점 O에 조금 더 가깝게 끌어다 놓아보세요.';
+    }
   });
   document.getElementById('checkQ2').addEventListener('click', ()=>{
     const v = document.getElementById('q2Select').value;
@@ -1127,6 +1201,7 @@
       appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
     });
     _db = firebase.firestore();
+    _db.settings({ experimentalAutoDetectLongPolling: true });
   }catch(e){ console.warn('Firebase init:', e); }
 
   // 활동 완료 기록용 - 허브(nd-deogi-math-hub) 프로젝트에 별도 이름으로 두 번째 연결
@@ -1140,6 +1215,7 @@
       appId: "1:414096731864:web:a799f9450859c498b6b1ad"
     }, 'hub');
   }catch(e){ console.warn('hub firebase init:', e); }
+  try{ firebase.app('hub').firestore().settings({ experimentalAutoDetectLongPolling: true }); }catch(e){}
 
   window.finishActivityAndReturn = function(){
     const p = new URLSearchParams(location.search);
