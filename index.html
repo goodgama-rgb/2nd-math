@@ -500,7 +500,29 @@ function logVisit(cls, num, name){
 
 function subscribeStudentToday(cls){
   if(unsubStudentToday) unsubStudentToday();
+  let settled = false;
+  const rerender = ()=>{
+    renderToday();
+    renderRecommend();
+    renderCalendar();
+    if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
+      openUnit(currentUnitId);
+    }
+  };
+  // Firestore 연결이 안 되거나(할당량 초과 등) 응답이 느리면, 학생이 잠긴 화면에 갇히지 않도록
+  // 4초 안에 응답이 없으면 "전체 열림"으로 안전하게 넘어감 (수업 진행이 서버 상태보다 우선)
+  const failOpenTimer = setTimeout(()=>{
+    if(settled) return;
+    settled = true;
+    todayIds = [];
+    unlockedIds = null;
+    unlockedAt = {};
+    noticeText = '';
+    rerender();
+  }, 4000);
   unsubStudentToday = onSnapshot(doc(db,'todayByClass', String(cls)), (snap)=>{
+    settled = true;
+    clearTimeout(failOpenTimer);
     if(snap.exists()){
       const data = snap.data();
       todayIds = data.todayIds || [];
@@ -513,12 +535,16 @@ function subscribeStudentToday(cls){
       unlockedAt = {};
       noticeText = '';
     }
-    renderToday();
-    renderRecommend();
-    renderCalendar();
-    if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
-      openUnit(currentUnitId);
-    }
+    rerender();
+  }, (err)=>{
+    console.warn('todayByClass snapshot error, failing open', err);
+    settled = true;
+    clearTimeout(failOpenTimer);
+    todayIds = [];
+    unlockedIds = null;
+    unlockedAt = {};
+    noticeText = '';
+    rerender();
   });
 }
 
