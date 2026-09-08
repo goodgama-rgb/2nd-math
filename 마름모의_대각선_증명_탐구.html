@@ -1201,7 +1201,6 @@
       appId:"1:699342489530:web:f1efb39829c9b39ea8ff83"
     });
     _db = firebase.firestore();
-    _db.settings({ experimentalForceLongPolling: true });
   }catch(e){ console.warn('Firebase init:', e); }
 
   // 활동 완료 기록용 - 허브(nd-deogi-math-hub) 프로젝트에 별도 이름으로 두 번째 연결
@@ -1215,7 +1214,6 @@
       appId: "1:414096731864:web:a799f9450859c498b6b1ad"
     }, 'hub');
   }catch(e){ console.warn('hub firebase init:', e); }
-  try{ firebase.app('hub').firestore().settings({ experimentalForceLongPolling: true }); }catch(e){}
 
   window.finishActivityAndReturn = function(){
     const p = new URLSearchParams(location.search);

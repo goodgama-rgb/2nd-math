@@ -257,7 +257,6 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
       appId: "1:414096731864:web:a799f9450859c498b6b1ad"
     });
     _db = firebase.firestore();
-    _db.settings({ experimentalForceLongPolling: true });
   }catch(e){ console.warn('hub firebase init:', e); }
   window._db = _db;
   let _reported = false;
