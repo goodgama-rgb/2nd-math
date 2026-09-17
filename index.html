@@ -403,7 +403,14 @@ const CONTENT = [
       ] }
     ]
   },
-  { id:"similarity",  name:"도형의 닮음",       ready:false, subunits:[] },
+  { id:"similarity",  name:"도형의 닮음",       ready:true, subunits:[
+      { name: "닮음의 뜻과 성질", items: [
+        { id:"shape-similarity", title:"도형의 닮음", type:"탐구", meta:"개념 탐구", file:"도형의_닮음.html" },
+        { id:"shape-similarity-assessment", title:"형성평가(도형의 닮음)", type:"문제", meta:"형성평가", file:"형성평가_도형의_닮음.html" },
+        { id:"similarity-properties", title:"닮음의 성질", type:"탐구", meta:"증명 활동", file:"닮음의_성질_증명_탐구.html" }
+      ] }
+    ]
+  },
   { id:"pythagoras",  name:"피타고라스 정리",   ready:false, subunits:[] },
   { id:"probability", name:"경우의 수와 확률",  ready:false, subunits:[] }
 ];

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>도형의 닮음</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:660px;margin:0 auto;padding:24px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.back-btn{background:#fff;border:1.5px solid #d8ddfb;color:var(--indigo);font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;font-family:inherit;margin-bottom:14px}
+.back-btn:hover{background:var(--indigo-ll)}
+
+/* 메뉴 */
+.menu-head{text-align:center;margin-bottom:22px}
+.menu-head h2{font-size:21px;margin-bottom:6px}
+.menu-head p{font-size:13.5px;color:var(--ink2)}
+.game-grid{display:flex;flex-direction:column;gap:12px}
+.game-card{background:#fff;border:2px solid #e0e7ff;border-radius:14px;padding:18px 18px;cursor:pointer;text-align:left;transition:.15s;font-family:inherit;display:flex;gap:14px;align-items:center}
+.game-card:hover{border-color:var(--indigo);box-shadow:var(--shadow)}
+.gc-icon{font-size:30px;flex-shrink:0}
+.gc-title{font-size:15px;font-weight:800;margin-bottom:4px;color:var(--ink)}
+.gc-desc{font-size:12.5px;color:var(--ink2);line-height:1.55}
+
+.game-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.game-desc{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.6}
+
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+
+.target-shape{fill:#c7d2fe;fill-opacity:.55;stroke:#818cf8;stroke-width:2;stroke-dasharray:6 4}
+.manip-shape{fill:#4f46e5;fill-opacity:.45;stroke:#4f46e5;stroke-width:2.5;cursor:grab}
+.manip-shape:active{cursor:grabbing}
+.tag-label{font-size:12px;font-weight:700;fill:var(--ink3);text-anchor:middle}
+
+.scale-btn-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px}
+.scale-btn{padding:10px 18px;border-radius:10px;border:2px solid var(--indigo);background:#fff;color:var(--indigo);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+.scale-btn:hover{background:var(--indigo-ll)}
+.scale-btn:active{transform:translateY(2px)}
+.scale-readout{font-size:16px;font-weight:800;color:var(--ink);min-width:56px;text-align:center}
+
+.pinch-btns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.big-btn{padding:11px 20px;border-radius:12px;background:var(--indigo);color:#fff;border:none;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 0 #3730a3}
+.big-btn:active{transform:translateY(3px);box-shadow:none}
+.big-btn.outline{background:#fff;color:var(--indigo);border:2px solid var(--indigo);box-shadow:none}
+.match-msg{text-align:center;font-size:14px;font-weight:800;margin-top:10px;min-height:20px}
+.match-msg.ok{color:var(--green)}
+
+/* 대응점 개념 */
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:20px;margin-bottom:14px;box-shadow:var(--shadow);text-align:center}
+.qtext{font-size:15px;font-weight:700;line-height:1.7;margin-bottom:12px}
+.opt-list{display:flex;flex-direction:column;gap:10px}
+.opt-card{display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;text-align:left;color:var(--ink);transition:.12s}
+.opt-card:hover{border-color:var(--indigo);background:var(--indigo-ll)}
+.opt-card.correct{border-color:var(--green);background:var(--green-ll);color:#14532d}
+.opt-card.wrong{border-color:var(--red);background:var(--red-l);color:var(--red)}
+.opt-card:disabled{cursor:default}
+.opt-badge{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#f0f0f8;color:var(--ink3);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.progress{font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:10px;text-align:center}
+
+.ox-row{display:flex;gap:14px;justify-content:center;margin-top:6px}
+.ox-btn{width:100px;height:100px;border-radius:20px;border:none;font-size:38px;font-weight:900;cursor:pointer;font-family:inherit;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15);transition:.12s}
+.ox-btn:active{transform:translateY(3px);box-shadow:none}
+.ox-btn.o{background:var(--indigo)}
+.ox-btn.x{background:var(--red)}
+.ox-btn.correct{background:var(--green)!important}
+.ox-btn.wrong{background:#9ca3af!important}
+.ox-btn:disabled{cursor:default}
+.fb-line{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:10px}
+.fb-line.ok{color:var(--green)}
+.fb-line.no{color:var(--red)}
+.next-btn{display:block;margin:12px auto 0;padding:10px 22px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+
+.ref-shape{fill:#4f46e5;fill-opacity:.45;stroke:#4f46e5;stroke-width:2.5}
+.cmp-shape{fill:#e05a20;fill-opacity:.45;stroke:#e05a20;stroke-width:2.5}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.done-score{font-size:36px;font-weight:800;color:var(--indigo);margin:8px 0}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">도형의 닮음</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <!-- 메뉴 -->
+  <div class="screen active" id="scMenu">
+    <div class="menu-head">
+      <h2>🔍 도형의 닮음</h2>
+      <p>확대·축소해도 모양이 같은 도형, "닮음"이 무엇인지 활동으로 익혀봐요</p>
+    </div>
+    <div class="game-grid">
+      <button class="game-card" onclick="openSection('Pinch')">
+        <div class="gc-icon">🤏</div>
+        <div><div class="gc-title">① 확대·축소 체험</div><div class="gc-desc">손가락으로 오므리고 펴서(핀치) 도형을 목표 도형에 맞춰보세요</div></div>
+      </button>
+      <button class="game-card" onclick="openSection('Corres')">
+        <div class="gc-icon">🔗</div>
+        <div><div class="gc-title">② 대응점·대응변·대응각</div><div class="gc-desc">닮은 두 삼각형에서 대응 관계와 기호 ∽ 표기법을 익혀요</div></div>
+      </button>
+      <button class="game-card" onclick="openSection('OX')">
+        <div class="gc-icon">⭕</div>
+        <div><div class="gc-title">③ 닮음 판별 OX 퀴즈</div><div class="gc-desc">두 도형을 보고 닮음인지 눈으로 빠르게 판단해요 (15문제)</div></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ① 핀치 확대·축소 -->
+  <div class="screen" id="scPinch">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">🤏 확대·축소 체험</div>
+    <div class="game-desc">반투명한 <b>목표 도형</b>에 파란 <b>조작 도형</b>을 겹쳐보세요. 가로·세로가 항상 같은 비율로 커지고 작아져요(닮음은 가로·세로가 다른 비율로 늘어나면 안 돼요!). 손가락 두 개로 오므리거나 펴도 되고, 아래 버튼으로도 조절할 수 있어요.</div>
+    <div class="progress" id="pinchProgress">완성한 도형: 0 / 4</div>
+    <div class="card" id="pinchCard">
+      <div class="svg-wrap">
+        <svg id="pinchSvg" viewBox="0 0 640 420" xmlns="http://www.w3.org/2000/svg">
+          <polygon id="targetPoly" class="target-shape" points=""></polygon>
+          <text id="targetLabel" class="tag-label">목표 도형</text>
+          <g id="manipG" transform="translate(200,210) scale(0.5,0.5)">
+            <polygon id="manipPoly" class="manip-shape" points=""></polygon>
+          </g>
+          <text id="manipLabel" class="tag-label">조작 도형 (끌기 + 핀치)</text>
+        </svg>
+      </div>
+      <div class="scale-btn-row">
+        <button class="scale-btn" onclick="pinchStep(-1)">➖ 축소</button>
+        <span class="scale-readout" id="scaleReadout">50%</span>
+        <button class="scale-btn" onclick="pinchStep(1)">➕ 확대</button>
+      </div>
+      <div class="match-msg" id="matchMsg"></div>
+      <div class="pinch-btns">
+        <button class="big-btn outline" onclick="pinchResetManip()">↺ 다시 시작</button>
+      </div>
+    </div>
+    <div id="pinchDone" style="display:none"></div>
+  </div>
+
+  <!-- ② 대응점 개념 -->
+  <div class="screen" id="scCorres">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">🔗 대응점 · 대응변 · 대응각</div>
+    <div class="game-desc" id="corresDesc">작은 도형을 확대한 것이 큰 도형이에요. 대응점을 생각하며 물음에 답해보세요.</div>
+    <div class="progress" id="corresProgress2">완성한 도형: 0 / 4</div>
+    <div class="card" id="corresCard">
+      <div class="svg-wrap">
+        <svg id="corresSvg" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+    <div class="progress" id="corresProgress">1 / 4</div>
+    <div class="qcard" id="corresQcard">
+      <div class="qtext" id="corresQtext"></div>
+      <div class="opt-list" id="corresOptList"></div>
+      <div class="fb-line" id="corresFb"></div>
+    </div>
+    <div id="corresDone" style="display:none"></div>
+  </div>
+
+  <!-- ③ OX 퀴즈 -->
+  <div class="screen" id="scOX">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">⭕ 닮음 판별 OX 퀴즈</div>
+    <div class="game-desc">수학적으로 정확히 재지 말고, 눈으로 봤을 때 두 도형이 닮은 것 같은지 판단해보세요!</div>
+    <div class="progress" id="oxProgress">1 / 15</div>
+    <div class="card">
+      <div class="svg-wrap">
+        <svg id="oxSvg" viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="ox-row">
+        <button class="ox-btn o" id="oxO" onclick="oxAnswer(true)">O</button>
+        <button class="ox-btn x" id="oxX" onclick="oxAnswer(false)">X</button>
+      </div>
+      <div class="fb-line" id="oxFb"></div>
+    </div>
+    <div id="oxDone" style="display:none"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'shape-similarity' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function randInt(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+function randFloat(a,b){ return a + Math.random()*(b-a); }
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function toSvgPoint(svg, evt){
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const ctm = svg.getScreenCTM().inverse();
+  return pt.matrixTransform(ctm);
+}
+function ptsToStr(pts){ return pts.map(p=>`${p[0]},${p[1]}`).join(' '); }
+
+/* ════════════════════════════════
+   도형 템플릿 (로컬 좌표, 중심이 원점 근처)
+════════════════════════════════ */
+function starPts(outerR, innerR, n){
+  const pts=[];
+  for(let i=0;i<n*2;i++){
+    const r = i%2===0?outerR:innerR;
+    const angle = -Math.PI/2 + i*Math.PI/n;
+    pts.push([Math.round((r*Math.cos(angle))*10)/10, Math.round((r*Math.sin(angle))*10)/10]);
+  }
+  return pts;
+}
+const TEMPLATES = [
+  { name:'부등변삼각형', pts:[[-50,40],[50,20],[-10,-50]] },
+  { name:'ㄱ자모양', pts:[[-50,-50],[10,-50],[10,-10],[50,-10],[50,50],[-50,50]] },
+  { name:'화살표', pts:[[-50,-15],[10,-15],[10,-35],[50,0],[10,35],[10,15],[-50,15]] },
+  { name:'집모양', pts:[[-40,50],[-40,0],[0,-50],[40,0],[40,50]] },
+  { name:'사다리꼴', pts:[[-50,40],[50,40],[25,-40],[-15,-40]] },
+  { name:'별모양', pts:starPts(55,22,5) },
+  { name:'십자가', pts:[[-18,-55],[18,-55],[18,-18],[55,-18],[55,18],[18,18],[18,55],[-18,55],[-18,18],[-55,18],[-55,-18],[-18,-18]] },
+  { name:'T자모양', pts:[[-50,-50],[50,-50],[50,-15],[15,-15],[15,55],[-15,55],[-15,-15],[-50,-15]] },
+  { name:'계단모양', pts:[[-50,50],[-50,10],[-10,10],[-10,-30],[30,-30],[30,-50],[55,-50],[55,50]] },
+  { name:'번개모양', pts:[[-10,-60],[35,-60],[0,-5],[30,-5],[-30,60],[-5,0],[-40,0]] },
+  { name:'비정형육각형', pts:[[-20,-55],[35,-40],[50,15],[10,55],[-45,35],[-55,-15]] }
+];
+
+/* ════════════════════════════════
+   화면 전환
+════════════════════════════════ */
+function showMenu(){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('scMenu').classList.add('active');
+}
+function openSection(name){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sc'+name).classList.add('active');
+  if(name==='Pinch') pinchInit();
+  if(name==='Corres') corresInit();
+  if(name==='OX') oxInit();
+}
+
+/* ════════════════════════════════
+   ① 핀치 확대·축소 체험
+════════════════════════════════ */
+const TARGET_ANCHOR = { x:440, y:210 };
+const PINCH_TOTAL = 4;
+const pinch = { templateIdx:0, scale:0.5, tx:200, ty:210, matched:false, completedCount:0 };
+const pinchSvg = document.getElementById('pinchSvg');
+
+function pinchNewRound(){
+  pinch.templateIdx = randInt(0, TEMPLATES.length-1);
+  pinch.matched = false;
+  pinch.scale = pickRandom([0.4,0.5,0.6,1.5,1.7,1.9]);
+  pinch.tx = randInt(120,260); pinch.ty = randInt(120,300);
+  document.getElementById('matchMsg').textContent = '';
+  document.getElementById('matchMsg').className = 'match-msg';
+  pinchRender();
+}
+function updatePinchProgress(){
+  document.getElementById('pinchProgress').textContent = `완성한 도형: ${pinch.completedCount} / ${PINCH_TOTAL}`;
+}
+function pinchInit(){
+  pinch.completedCount = 0;
+  updatePinchProgress();
+  document.getElementById('pinchCard').style.display='block';
+  document.getElementById('pinchDone').style.display='none';
+  document.getElementById('pinchDone').innerHTML='';
+  pinchNewRound();
+}
+function pinchStep(dir){
+  if(pinch.matched) return;
+  pinch.scale = clamp(pinch.scale + dir*0.1, 0.2, 3.5);
+  pinchRender();
+  pinchCheckMatch();
+}
+function pinchResetManip(){
+  pinch.scale = pickRandom([0.4,0.5,0.6,1.5,1.7,1.9]);
+  pinch.tx = randInt(120,260); pinch.ty = randInt(120,300);
+  pinch.matched = false;
+  document.getElementById('matchMsg').textContent = '';
+  document.getElementById('matchMsg').className = 'match-msg';
+  pinchRender();
+}
+function pinchRender(){
+  const t = TEMPLATES[pinch.templateIdx];
+  const targetPts = t.pts.map(([x,y])=>[x+TARGET_ANCHOR.x, y+TARGET_ANCHOR.y]);
+  document.getElementById('targetPoly').setAttribute('points', ptsToStr(targetPts));
+  document.getElementById('targetLabel').setAttribute('x', TARGET_ANCHOR.x);
+  document.getElementById('targetLabel').setAttribute('y', TARGET_ANCHOR.y+70);
+  document.getElementById('manipPoly').setAttribute('points', ptsToStr(t.pts));
+  document.getElementById('manipG').setAttribute('transform', `translate(${pinch.tx},${pinch.ty}) scale(${pinch.scale},${pinch.scale})`);
+  document.getElementById('manipLabel').setAttribute('x', pinch.tx);
+  document.getElementById('manipLabel').setAttribute('y', pinch.ty+70);
+  document.getElementById('scaleReadout').textContent = Math.round(pinch.scale*100)+'%';
+}
+function pinchCheckMatch(){
+  if(pinch.matched) return;
+  const closeScale = Math.abs(pinch.scale-1)<0.05;
+  const closePos = Math.abs(pinch.tx-TARGET_ANCHOR.x)<12 && Math.abs(pinch.ty-TARGET_ANCHOR.y)<12;
+  if(closeScale && closePos){
+    pinch.matched = true;
+    pinch.scale=1; pinch.tx=TARGET_ANCHOR.x; pinch.ty=TARGET_ANCHOR.y;
+    pinchRender();
+    pinch.completedCount++;
+    updatePinchProgress();
+    const msg = document.getElementById('matchMsg');
+    msg.textContent = `🎉 딱 맞췄어요! 두 도형은 서로 닮음이에요. (${pinch.completedCount}/${PINCH_TOTAL})`;
+    msg.className = 'match-msg ok';
+    if(pinch.completedCount>=PINCH_TOTAL){ setTimeout(pinchEnd, 1300); }
+    else{ setTimeout(pinchNewRound, 1300); }
+  }
+}
+function pinchEnd(){
+  document.getElementById('pinchCard').style.display='none';
+  const el = document.getElementById('pinchDone');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div>도형 ${PINCH_TOTAL}개를</div><div class="done-score">모두</div><div>완성했어요!</div><button class="restart-btn" onclick="pinchInit()">🔄 다시 하기</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+// 포인터(마우스/터치) 추적 — 손가락 1개는 이동, 2개는 핀치(배율+이동)
+const activePointers = new Map();
+let dragStart = null, pinchStart = null;
+function pinchPointerDown(evt){
+  if(pinch.matched) return;
+  evt.preventDefault();
+  const pt = toSvgPoint(pinchSvg, evt);
+  activePointers.set(evt.pointerId, pt);
+  pinchSvg.setPointerCapture && pinchSvg.setPointerCapture(evt.pointerId);
+  restartGesture();
+}
+function restartGesture(){
+  const pts = [...activePointers.values()];
+  if(pts.length===1){
+    pinchStart = null;
+    dragStart = { startPt: pts[0], tx0: pinch.tx, ty0: pinch.ty };
+  }else if(pts.length===2){
+    dragStart = null;
+    const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y) || 1;
+    const mid = { x:(pts[0].x+pts[1].x)/2, y:(pts[0].y+pts[1].y)/2 };
+    pinchStart = { dist, scale0:pinch.scale, tx0:pinch.tx, ty0:pinch.ty, mid0:mid };
+  }
+}
+function computePinchUpdate(ps, pt1, pt2){
+  const dist = Math.hypot(pt1.x-pt2.x, pt1.y-pt2.y) || 1;
+  const scaleFactor = dist / ps.dist;
+  const mid = { x:(pt1.x+pt2.x)/2, y:(pt1.y+pt2.y)/2 };
+  return {
+    scale: clamp(ps.scale0*scaleFactor, 0.2, 3.5),
+    tx: ps.tx0 + (mid.x - ps.mid0.x),
+    ty: ps.ty0 + (mid.y - ps.mid0.y)
+  };
+}
+document.getElementById('manipPoly').addEventListener('pointerdown', pinchPointerDown);
+pinchSvg.addEventListener('pointermove', function(evt){
+  if(!activePointers.has(evt.pointerId)) return;
+  const pt = toSvgPoint(pinchSvg, evt);
+  activePointers.set(evt.pointerId, pt);
+  if(pinch.matched) return;
+  const pts = [...activePointers.values()];
+  if(pts.length===1 && dragStart){
+    pinch.tx = dragStart.tx0 + (pts[0].x - dragStart.startPt.x);
+    pinch.ty = dragStart.ty0 + (pts[0].y - dragStart.startPt.y);
+    pinchRender();
+    pinchCheckMatch();
+  }else if(pts.length===2 && pinchStart){
+    const r = computePinchUpdate(pinchStart, pts[0], pts[1]);
+    pinch.scale = r.scale; pinch.tx = r.tx; pinch.ty = r.ty;
+    pinchRender();
+    pinchCheckMatch();
+  }
+});
+function pinchPointerUp(evt){
+  activePointers.delete(evt.pointerId);
+  if(activePointers.size===0){ dragStart=null; pinchStart=null; }
+  else{ restartGesture(); }
+}
+pinchSvg.addEventListener('pointerup', pinchPointerUp);
+pinchSvg.addEventListener('pointercancel', pinchPointerUp);
+pinchSvg.addEventListener('pointerleave', function(evt){
+  if(activePointers.has(evt.pointerId)) pinchPointerUp(evt);
+});
+
+/* ════════════════════════════════
+   ② 대응점 · 대응변 · 대응각
+════════════════════════════════ */
+// 도형 종류(삼각형/사각형/오각형) — 로컬 좌표(위쪽이 음수 y), 삼각형만 ∽ 표기법 문제 포함
+const CORRES_SHAPES = [
+  { name:'삼각형',  smallLabels:['A','B','C'],         bigLabels:['D','E','F'],         localPts:[[40,-90],[0,0],[140,0]], hasNotation:true },
+  { name:'사각형',  smallLabels:['A','B','C','D'],      bigLabels:['E','F','G','H'],      localPts:[[10,-70],[130,-70],[140,10],[0,10]], hasNotation:false },
+  { name:'오각형',  smallLabels:['A','B','C','D','E'],  bigLabels:['F','G','H','I','J'],  localPts:[[60,-100],[120,-40],[100,40],[20,40],[0,-40]], hasNotation:false }
+];
+const CORRES_TOTAL = 4;
+const corres = { shapeIdx:0, scale:1.8, step:0, questions:[], completedCount:0 };
+
+function buildCorresQuestions(shape){
+  const n = shape.smallLabels.length, S = shape.smallLabels, B = shape.bigLabels;
+  const qs = [];
+  const i1 = randInt(0,n-1);
+  qs.push({ q:`점 ${S[i1]}의 대응점은?`, opts:B.slice(), answer:B[i1], seg:false });
+  const i2 = randInt(0,n-1);
+  const edgeOpts = []; for(let j=0;j<n;j++) edgeOpts.push(B[j]+B[(j+1)%n]);
+  qs.push({ q:`변 <span class="seg">${S[i2]}${S[(i2+1)%n]}</span>의 대응변은?`, opts:edgeOpts, answer:B[i2]+B[(i2+1)%n], seg:true });
+  const i3 = randInt(0,n-1);
+  qs.push({ q:`∠${S[i3]}의 대응각은?`, opts:B.map(b=>'∠'+b), answer:'∠'+B[i3], seg:false });
+  if(shape.hasNotation){
+    const correct = `△${S.join('')}∽△${B.join('')}`;
+    const wrong = [
+      `△${S.join('')}∽△${[B[1],B[0],B[2]].join('')}`,
+      `△${S.join('')}∽△${[B[2],B[1],B[0]].join('')}`,
+      `△${S.join('')}∽△${[B[0],B[2],B[1]].join('')}`
+    ];
+    qs.push({ q:'이 닮음 관계를 기호로 바르게 나타낸 것은?', opts:[correct,...wrong], answer:correct, seg:false });
+  }
+  return qs;
+}
+function updateCorresProgress2(){
+  document.getElementById('corresProgress2').textContent = `완성한 도형: ${corres.completedCount} / ${CORRES_TOTAL}`;
+}
+function corresNewRound(){
+  corres.shapeIdx = randInt(0, CORRES_SHAPES.length-1);
+  corres.scale = randFloat(1.5,2.0);
+  corres.step = 0;
+  corres.questions = buildCorresQuestions(CORRES_SHAPES[corres.shapeIdx]);
+  document.getElementById('corresDesc').textContent = `작은 ${CORRES_SHAPES[corres.shapeIdx].name}을(를) 확대한 것이 큰 ${CORRES_SHAPES[corres.shapeIdx].name}이에요. 대응점을 생각하며 물음에 답해보세요.`;
+  corresDraw();
+  corresRenderStep();
+}
+function corresInit(){
+  corres.completedCount = 0;
+  updateCorresProgress2();
+  document.getElementById('corresCard').style.display='block';
+  document.getElementById('corresQcard').style.display='block';
+  document.getElementById('corresProgress').style.display='block';
+  document.getElementById('corresDone').style.display='none';
+  document.getElementById('corresDone').innerHTML='';
+  corresNewRound();
+}
+function localBBox(pts){
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  return { minX:Math.min(...xs), maxX:Math.max(...xs), minY:Math.min(...ys), maxY:Math.max(...ys) };
+}
+function anchorForRegion(bbox, scale, regionX, regionW, regionY, regionH){
+  const cx = regionX + regionW/2, cy = regionY + regionH/2;
+  const localCx = (bbox.minX+bbox.maxX)/2*scale, localCy = (bbox.minY+bbox.maxY)/2*scale;
+  return { x: cx - localCx, y: cy - localCy };
+}
+function corresDraw(){
+  const shape = CORRES_SHAPES[corres.shapeIdx];
+  const k = corres.scale;
+  const bbox = localBBox(shape.localPts);
+  const smallAnchor = anchorForRegion(bbox, 1, 20, 300, 20, 340);
+  const bigAnchor = anchorForRegion(bbox, k, 380, 300, 20, 340);
+  const smallPts = shape.localPts.map(([x,y])=>[x+smallAnchor.x, y+smallAnchor.y]);
+  const bigPts = shape.localPts.map(([x,y])=>[x*k+bigAnchor.x, y*k+bigAnchor.y]);
+  let html = `<polygon points="${ptsToStr(smallPts)}" class="ref-shape"></polygon>`;
+  html += `<polygon points="${ptsToStr(bigPts)}" class="cmp-shape"></polygon>`;
+  function centroidOf(pts){
+    const cx = pts.reduce((s,p)=>s+p[0],0)/pts.length;
+    const cy = pts.reduce((s,p)=>s+p[1],0)/pts.length;
+    return {x:cx,y:cy};
+  }
+  function outwardLabel(p, centroid, dist){
+    const dx = p[0]-centroid.x, dy = p[1]-centroid.y, len = Math.hypot(dx,dy)||1;
+    return { x: p[0]+dx/len*dist, y: p[1]+dy/len*dist };
+  }
+  const smallC = centroidOf(smallPts), bigC = centroidOf(bigPts);
+  smallPts.forEach((p,i)=>{
+    const lp = outwardLabel(p, smallC, 18);
+    html += `<text x="${lp.x}" y="${lp.y}" font-size="15" font-weight="800" fill="#4f46e5" text-anchor="middle">${shape.smallLabels[i]}</text>`;
+  });
+  bigPts.forEach((p,i)=>{
+    const lp = outwardLabel(p, bigC, 18);
+    html += `<text x="${lp.x}" y="${lp.y}" font-size="15" font-weight="800" fill="#e05a20" text-anchor="middle">${shape.bigLabels[i]}</text>`;
+  });
+  document.getElementById('corresSvg').innerHTML = html;
+}
+function corresRenderStep(){
+  const total = corres.questions.length;
+  document.getElementById('corresProgress').textContent = `${corres.step+1} / ${total}`;
+  const item = corres.questions[corres.step];
+  document.getElementById('corresQtext').innerHTML = item.q;
+  const shuffled = shuffle(item.opts);
+  document.getElementById('corresOptList').innerHTML = shuffled.map((o,i)=>{
+    const display = item.seg ? `<span class="seg">${o}</span>` : o;
+    return `<button class="opt-card" data-idx="${i}" onclick="corresAnswer(this,${i})"><span class="opt-badge">${String.fromCharCode(65+i)}</span><span>${display}</span></button>`;
+  }).join('');
+  corres._shown = shuffled;
+  document.getElementById('corresFb').textContent='';
+}
+function corresAnswer(btn, idx){
+  if(btn.disabled) return;
+  const item = corres.questions[corres.step];
+  const chosen = corres._shown[idx];
+  const isCorrect = chosen === item.answer;
+  btn.classList.add(isCorrect?'correct':'wrong');
+  document.querySelectorAll('#corresOptList .opt-card').forEach((b,i)=>{
+    b.disabled = true;
+    if(corres._shown[i]===item.answer) b.classList.add('correct');
+  });
+  const fb = document.getElementById('corresFb');
+  fb.className = 'fb-line ' + (isCorrect?'ok':'no');
+  const answerDisplay = item.seg ? `<span class="seg">${item.answer}</span>` : item.answer;
+  fb.innerHTML = isCorrect ? '✅ 정답이에요!' : `❌ 정답은 "${answerDisplay}"예요.`;
+  setTimeout(()=>{
+    corres.step++;
+    if(corres.step>=corres.questions.length){
+      corres.completedCount++;
+      updateCorresProgress2();
+      if(corres.completedCount>=CORRES_TOTAL){ corresEnd(); }
+      else{ corresNewRound(); }
+    }else{ corresRenderStep(); }
+  }, 1100);
+}
+function corresEnd(){
+  document.getElementById('corresCard').style.display='none';
+  document.getElementById('corresQcard').style.display='none';
+  document.getElementById('corresProgress').style.display='none';
+  const el = document.getElementById('corresDone');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div>도형 ${CORRES_TOTAL}개에서</div><div class="done-score">대응 관계</div><div>확인을 모두 마쳤어요!</div><button class="restart-btn" onclick="corresInit()">🔄 다시 하기</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   ③ 닮음 판별 OX 퀴즈 (15문제, 타이머·점수 없음)
+════════════════════════════════ */
+const ox = { round:0, total:15, correct:0, cur:null };
+function genOXRound(){
+  const t = pickRandom(TEMPLATES);
+  const isSimilar = Math.random()<0.5;
+  const base = randFloat(0.55,1.7);
+  let sx = base, sy = base;
+  if(!isSimilar){
+    const skew = randFloat(1.4,2.0);
+    if(Math.random()<0.5) sx *= skew; else sy *= skew;
+  }
+  const rot = randInt(0,359);
+  return { template:t, sx, sy, rot, answer:isSimilar };
+}
+function oxInit(){
+  ox.round=0; ox.correct=0;
+  document.getElementById('oxDone').style.display='none';
+  document.getElementById('oxDone').innerHTML='';
+  document.querySelector('#scOX .card').style.display='block';
+  document.querySelector('#scOX .progress').style.display='block';
+  oxNext();
+}
+function oxNext(){
+  ox.round++;
+  if(ox.round>ox.total){ oxEnd(); return; }
+  ox.cur = genOXRound();
+  document.getElementById('oxProgress').textContent = `${ox.round} / ${ox.total}`;
+  oxDraw();
+  document.getElementById('oxO').className='ox-btn o'; document.getElementById('oxO').disabled=false;
+  document.getElementById('oxX').className='ox-btn x'; document.getElementById('oxX').disabled=false;
+  document.getElementById('oxFb').textContent='';
+}
+function oxDraw(){
+  const refAnchor = { x:170, y:130 };
+  const cmpAnchor = { x:470, y:130 };
+  const t = ox.cur.template;
+  const refPts = t.pts.map(([x,y])=>[x+refAnchor.x, y+refAnchor.y]);
+  const th = ox.cur.rot*Math.PI/180;
+  const cmpPts = t.pts.map(([x,y])=>{
+    const sx2 = x*ox.cur.sx, sy2 = y*ox.cur.sy;
+    const rx = sx2*Math.cos(th) - sy2*Math.sin(th);
+    const ry = sx2*Math.sin(th) + sy2*Math.cos(th);
+    return [rx+cmpAnchor.x, ry+cmpAnchor.y];
+  });
+  let html = `<polygon points="${ptsToStr(refPts)}" class="ref-shape"></polygon>`;
+  html += `<polygon points="${ptsToStr(cmpPts)}" class="cmp-shape"></polygon>`;
+  document.getElementById('oxSvg').innerHTML = html;
+}
+function oxAnswer(chosen){
+  if(document.getElementById('oxO').disabled) return;
+  const isCorrect = chosen===ox.cur.answer;
+  if(isCorrect) ox.correct++;
+  document.getElementById(chosen?'oxO':'oxX').classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) document.getElementById(ox.cur.answer?'oxO':'oxX').classList.add('correct');
+  document.getElementById('oxO').disabled=true; document.getElementById('oxX').disabled=true;
+  const fb = document.getElementById('oxFb');
+  fb.className = 'fb-line ' + (isCorrect?'ok':'no');
+  fb.textContent = isCorrect ? '✅ 정답이에요!' : (ox.cur.answer ? '❌ 오답이에요. 사실 두 도형은 닮음이에요(비율이 같아요).' : '❌ 오답이에요. 사실 가로·세로 비율이 달라서 닮음이 아니에요.');
+  setTimeout(()=>{ oxNext(); }, 1100);
+}
+function oxEnd(){
+  document.querySelector('#scOX .card').style.display='none';
+  document.querySelector('#scOX .progress').style.display='none';
+  const el = document.getElementById('oxDone');
+  el.style.display='block';
+  const msg = ox.correct>=8 ? '완벽해요! 닮음을 보는 눈이 정확하네요 🌟' : ox.correct>=5 ? '잘했어요! 조금만 더 연습해봐요 💪' : '다시 도전해서 감을 익혀봐요 🔥';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div>${ox.total}문제 중</div><div class="done-score">${ox.correct} / ${ox.total}</div><div>${msg}</div><button class="restart-btn" onclick="oxInit()">🔄 다시 하기</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+</script>
+</body>
+</html>

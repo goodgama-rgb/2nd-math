@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>닮음의 성질 탐구</title>
+<style>
+:root{
+  --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+  --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --orange:#e05a20;
+  --line:#e3e8f4; --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--ink)}
+.hdr{background:var(--primary);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:760px;margin:0 auto;padding:20px 16px 70px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.goal-banner{background:linear-gradient(135deg,#eef2ff,#fff0f5);border:2px solid #c9d4fb;border-radius:14px;padding:16px 18px;text-align:center;font-size:14.5px;line-height:1.7;color:var(--primary-dark);margin-bottom:18px}
+.goal-banner b{font-size:16.5px}
+
+.reveal{max-height:0;opacity:0;overflow:hidden;transition:.45s ease}
+.reveal.show{max-height:8000px;opacity:1;margin-top:16px}
+
+.step-card{background:var(--card);border-radius:16px;padding:18px 20px 20px;border-left:6px solid var(--primary);box-shadow:0 4px 14px rgba(43,47,66,.05);margin-bottom:18px}
+.step-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.step-badge{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex:none}
+.step-head h2{margin:0;font-size:16.5px}
+.step-body p{margin:6px 0 10px;font-size:14px;line-height:1.6;color:#3c4257}
+
+.svg-wrap{background:#fbfcff;border-radius:14px;border:1px solid var(--line);padding:6px;margin-bottom:12px}
+svg{width:100%;height:auto;display:block}
+.small-shape{fill:#6c8bff;fill-opacity:.35;stroke:#4f6fe0;stroke-width:2.5}
+.big-shape{fill:#ff9db3;fill-opacity:.35;stroke:#e05a20;stroke-width:2.5}
+.vlabel{font-size:15px;font-weight:800;text-anchor:middle}
+.sidelen{font-size:12.5px;font-weight:700;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.angle-num{font-size:13px;font-weight:800;text-anchor:middle}
+
+.proof-block{background:#fbfcff;border:1.5px solid var(--line);border-radius:14px;padding:14px 18px;margin:10px 0;font-size:14.5px;line-height:2.3;color:#2b2f42}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--primary);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 3px;color:var(--primary-dark)}
+.blank:focus{outline:none;border-bottom-color:var(--primary-dark);background:#eef2ff}
+.blank.correct{border-bottom-color:#3fbf91;background:#e9faf3;color:#1e7a53}
+.blank.wrong{border-bottom-color:#e97a7a;background:#fdecec;color:#b3261e}
+
+.btn{border:none;border-radius:12px;padding:10px 16px;font-size:13.5px;font-weight:700;cursor:pointer;background:#eef1fa;color:var(--ink);font-family:inherit;transition:.15s}
+.btn:hover{background:#e2e7f8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-check{background:var(--primary);color:#fff}
+.btn.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(79,111,224,.35)}
+.btn-check:hover{background:var(--primary-dark)}
+.btn-primary{background:var(--primary);color:#fff;padding:11px 22px}
+.btn-primary:hover{background:var(--primary-dark)}
+.angle-btn-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.angle-btn{border:1.5px solid var(--primary);background:#fff;color:var(--primary-dark);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.angle-btn:hover{background:#eef2ff}
+.angle-btn.viewed{background:#eef2ff}
+
+.feedback{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13.5px;line-height:1.6;display:none}
+.feedback.success{display:block;background:#e7f8f0;color:#1e7a53;border:1px solid #b7ead2}
+.feedback.error{display:block;background:#fdeceb;color:#b3261e;border:1px solid #f6c6c2}
+
+.summary-box{margin-top:8px;padding:14px 16px;border-radius:12px;background:linear-gradient(135deg,#eef2ff,#fff5f8);border:1.5px dashed #b9c4f5;font-size:13.5px;line-height:1.7}
+.summary-box b{color:var(--primary-dark)}
+
+.property-box{background:#eef2ff;border:2px solid #c9d4fb;border-radius:14px;padding:18px 20px;margin:18px 0}
+.property-box .tag{font-size:12px;font-weight:800;color:var(--primary-dark);letter-spacing:.3px;margin-bottom:8px}
+.property-box ol{margin:8px 0 0;padding-left:20px;font-size:14.5px;line-height:1.9}
+.footnote{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.6}
+
+.example-title{font-size:20px;font-weight:800;margin:26px 0 6px;text-align:center}
+.example-sub{font-size:13.5px;color:var(--muted);text-align:center;margin-bottom:16px}
+.ex-num{background:var(--pink);color:#fff}
+
+.done-wrap{text-align:center;padding:30px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">닮음의 성질</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+  <div id="tanguPage">
+    <div class="goal-banner">
+      <span class="tag" style="display:block;font-size:12px;font-weight:700;color:#8b93c2;margin-bottom:4px">함께 탐구</span>
+      <b>닮은 두 도형에는 어떤 성질이 있을까?</b><br>
+      대응변의 길이의 비와 대응각의 크기를 삼각형, 사각형에서 각각 확인해 봅시다.
+    </div>
+
+    <div id="sectionsRoot"></div>
+    <div id="propertyRoot"></div>
+  </div>
+
+  <div id="examplePage" style="display:none">
+    <div id="exampleRoot"></div>
+    <div id="doneRoot"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'similarity-properties' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function ptsToStr(pts){ return pts.map(p=>`${p[0]},${p[1]}`).join(' '); }
+function centroidOf(pts){
+  const cx = pts.reduce((s,p)=>s+p[0],0)/pts.length, cy = pts.reduce((s,p)=>s+p[1],0)/pts.length;
+  return {x:cx,y:cy};
+}
+function outwardLabel(p, centroid, dist){
+  const dx = p[0]-centroid.x, dy = p[1]-centroid.y, len = Math.hypot(dx,dy)||1;
+  return { x: p[0]+dx/len*dist, y: p[1]+dy/len*dist };
+}
+function vertexDirs(pts, i){
+  const n = pts.length, cur=pts[i], prev=pts[(i-1+n)%n], next=pts[(i+1)%n];
+  const dA=[prev[0]-cur[0],prev[1]-cur[1]], dB=[next[0]-cur[0],next[1]-cur[1]];
+  const lenA=Math.hypot(dA[0],dA[1])||1, lenB=Math.hypot(dB[0],dB[1])||1;
+  return [[dA[0]/lenA,dA[1]/lenA],[dB[0]/lenB,dB[1]/lenB]];
+}
+function angleArcPath(dirA, dirB, r){
+  const a1 = Math.atan2(dirA[1],dirA[0]), a2 = Math.atan2(dirB[1],dirB[0]);
+  let diff = a2-a1;
+  while(diff<=-Math.PI) diff+=2*Math.PI;
+  while(diff>Math.PI) diff-=2*Math.PI;
+  const sweep = diff>0 ? 1:0;
+  const x1=r*Math.cos(a1), y1=r*Math.sin(a1), x2=r*Math.cos(a2), y2=r*Math.sin(a2);
+  return `M ${x1} ${y1} A ${r} ${r} 0 0 ${sweep} ${x2} ${y2}`;
+}
+function angleMarkerSVG(dirA, dirB, rayLen, arcR, color, cls){
+  const p1=[dirA[0]*rayLen,dirA[1]*rayLen], p2=[dirB[0]*rayLen,dirB[1]*rayLen];
+  const bisect = [dirA[0]+dirB[0], dirA[1]+dirB[1]];
+  const bLen = Math.hypot(bisect[0],bisect[1])||1;
+  const labelPos = [bisect[0]/bLen*(arcR+16), bisect[1]/bLen*(arcR+16)];
+  return `<g class="${cls}">`+
+    `<line x1="0" y1="0" x2="${p1[0].toFixed(1)}" y2="${p1[1].toFixed(1)}" stroke="${color}" stroke-width="2"></line>`+
+    `<line x1="0" y1="0" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${color}" stroke-width="2"></line>`+
+    `<path d="${angleArcPath(dirA,dirB,arcR)}" fill="none" stroke="${color}" stroke-width="2.4"></path>`+
+    `<text class="angle-num" x="${labelPos[0].toFixed(1)}" y="${labelPos[1].toFixed(1)}" fill="${color}"></text>`+
+  `</g>`;
+}
+function ratioMatches(a,b,ra,rb){
+  if(!isFinite(a)||!isFinite(b)||a<=0||b<=0) return false;
+  const lhs = a*rb, rhs = b*ra;
+  return Math.abs(lhs-rhs) < 0.02*Math.max(Math.abs(lhs),Math.abs(rhs),1);
+}
+function numMatches(v, expected, tol){
+  return isFinite(v) && Math.abs(v-expected) < (tol||0.05);
+}
+function sideLabelSVG(p1, p2, centroid, value){
+  const mid = [(p1[0]+p2[0])/2, (p1[1]+p2[1])/2];
+  let dx = mid[0]-centroid.x, dy = mid[1]-centroid.y, len = Math.hypot(dx,dy)||1;
+  dx/=len; dy/=len;
+  const bulge = 14;
+  const ctrl = [mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt = [mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" d="M ${p1[0]} ${p1[1]} Q ${ctrl[0]} ${ctrl[1]} ${p2[0]} ${p2[1]}"></path>`+
+    `<text class="sidelen" x="${labelPt[0]}" y="${labelPt[1]}" fill="#4a5568">${value}cm</text>`;
+}
+
+/* ════════════════════════════════
+   도형 데이터 (탐구용): 작은/큰 도형 같은 방향, 크기만 2배
+════════════════════════════════ */
+const SHAPES = [
+  { key:'tri', name:'삼각형', symbol:'△', // 변 길이는 실제 도형의 짧고 김에 맞춰 배정(AB가 가장 길고, BC가 가장 짧음)
+    smallLabels:['A','B','C'], bigLabels:['D','E','F'],
+    localPts:[[-75.8,-25.6],[60,-25.6],[15.7,51.2]],
+    smallSides:[7,5,6], bigSides:[14,10,12],
+    smallAngles:[40,60,80], ratio:[1,2] },
+  { key:'quad', name:'사각형', symbol:'□', // AB가 가장 길고 CD가 가장 짧음
+    smallLabels:['A','B','C','D'], bigLabels:['E','F','G','H'],
+    localPts:[[-69.6,-39.4],[50,-39.4],[37.8,29.2],[-18.2,49.6]],
+    smallSides:[15,9,6,12], bigSides:[20,12,8,16],
+    smallAngles:[60,80,120,100], ratio:[3,4] }
+];
+const SMALL_ANCHOR = {x:140,y:190}, BIG_ANCHOR = {x:500,y:190};
+const state = {};
+
+function buildFigureSVG(cfg){
+  const n = cfg.localPts.length;
+  const smallPts = cfg.localPts.map(([x,y])=>[x+SMALL_ANCHOR.x, y+SMALL_ANCHOR.y]);
+  const bigPts = cfg.localPts.map(([x,y])=>[x*2+BIG_ANCHOR.x, y*2+BIG_ANCHOR.y]);
+  const smallC = centroidOf(smallPts), bigC = centroidOf(bigPts);
+  let html = `<polygon class="small-shape" points="${ptsToStr(smallPts)}"></polygon>`;
+  html += `<polygon class="big-shape" points="${ptsToStr(bigPts)}"></polygon>`;
+  // 변의 길이
+  for(let i=0;i<n;i++){
+    html += sideLabelSVG(smallPts[i], smallPts[(i+1)%n], smallC, cfg.smallSides[i]);
+    html += sideLabelSVG(bigPts[i], bigPts[(i+1)%n], bigC, cfg.bigSides[i]);
+  }
+  // 꼭짓점 라벨
+  smallPts.forEach((p,i)=>{ const lp = outwardLabel(p, smallC, 20); html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="#4f6fe0">${cfg.smallLabels[i]}</text>`; });
+  bigPts.forEach((p,i)=>{ const lp = outwardLabel(p, bigC, 22); html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="#e05a20">${cfg.bigLabels[i]}</text>`; });
+  // 작은 도형 각 표시(주어짐)
+  for(let i=0;i<n;i++){
+    const [dA,dB] = vertexDirs(cfg.localPts, i);
+    html += `<g transform="translate(${smallPts[i][0]},${smallPts[i][1]})">${angleMarkerSVG(dA,dB,20,14,'#4f6fe0',`am-${cfg.key}-small-${i}`)}</g>`;
+  }
+  return { html, smallPts, bigPts };
+}
+
+function buildSection(cfg, isFirst, nextKey){
+  const n = cfg.localPts.length;
+  const ratioRows = cfg.smallSides.map((sv,i)=>{
+    const a = cfg.smallLabels[i], b = cfg.smallLabels[(i+1)%n], c = cfg.bigLabels[i], d = cfg.bigLabels[(i+1)%n];
+    return `<p>변 <span class="seg">${a}${b}</span> : 변 (`+
+      `<input class="blank corrblank" data-role="corr" data-key="${cfg.key}" data-idx="${i}" data-answer="${c}${d}" maxlength="4">`+
+      `) = `+
+      `<input class="blank" data-role="ratio" data-key="${cfg.key}" data-idx="${i}" data-part="a" inputmode="decimal"> : `+
+      `<input class="blank" data-role="ratio" data-key="${cfg.key}" data-idx="${i}" data-part="b" inputmode="decimal"></p>`;
+  }).join('');
+  const angleBtns = cfg.smallAngles.map((a,i)=>`<button class="angle-btn" id="anglebtn-${cfg.key}-${i}" onclick="overlapAngle('${cfg.key}',${i})">∠${cfg.smallLabels[i]} 겹쳐보기</button>`).join('');
+  const doneRows = cfg.smallLabels.map((l,i)=>{
+    if(i < n-1){
+      return `∠${l} = ∠(<input class="blank" id="done-${cfg.key}-${i}-big" data-answer="${cfg.bigLabels[i]}" maxlength="2">)`;
+    }
+    return `∠(<input class="blank" id="done-${cfg.key}-${i}-small" data-answer="${cfg.smallLabels[i]}" maxlength="2">) = ∠(<input class="blank" id="done-${cfg.key}-${i}-big" data-answer="${cfg.bigLabels[i]}" maxlength="2">)`;
+  }).join(', ');
+
+  return `
+  <div class="reveal${isFirst?' show':''}" id="sec-${cfg.key}">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">${cfg.symbol||cfg.name[0]}</div><h2>${cfg.name}에서 닮음의 성질 확인하기</h2></div>
+      <div class="step-body">
+        <div class="svg-wrap"><svg id="svg-${cfg.key}" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+        <div class="summary-box" id="t1summary-${cfg.key}" style="display:none">
+          ✅ <b>탐구1 완료</b> — 대응변의 길이의 비 = 닮음비 <span id="t1summaryRatio-${cfg.key}"></span>
+          <a href="javascript:void(0)" onclick="toggleT1('${cfg.key}')" style="margin-left:8px">다시 보기</a>
+        </div>
+
+        <div id="t1wrap-${cfg.key}">
+          <p><b>탐구1</b> ${cfg.name} ${cfg.smallLabels.join('')}와(과) ${cfg.bigLabels.join('')}는 서로 닮은 도형이다. 각 변의 대응변을 찾고, 대응변의 길이의 비를 각각 구해 보자. (그림에 표시된 길이를 참고, 기약분수 형태가 아니어도 괜찮아요)</p>
+          <div class="proof-block">${ratioRows}</div>
+          <button class="btn btn-check" onclick="checkRatios('${cfg.key}')">확인</button>
+          <div class="feedback" id="ratioFb-${cfg.key}"></div>
+
+          <div class="reveal" id="discBlock-${cfg.key}">
+            <div class="proof-block">대응변의 길이의 비는 모두
+              <button class="btn btn-sm" onclick="chooseDisc('${cfg.key}',true,this)">같다</button>
+              <button class="btn btn-sm" onclick="chooseDisc('${cfg.key}',false,this)">다르다</button>
+            </div>
+            <div class="feedback" id="discFb-${cfg.key}"></div>
+          </div>
+
+          <div class="reveal" id="termBlock-${cfg.key}">
+            <div class="proof-block">🎉 맞아요! 모든 대응변의 길이의 비가 같아요! 이 일정한 비를 두 도형의 (<input class="blank" id="term-${cfg.key}" style="width:80px">)라고 한다.</div>
+            <button class="btn btn-check" onclick="checkTerm('${cfg.key}')">확인</button>
+            <div class="feedback" id="termFb-${cfg.key}"></div>
+          </div>
+
+          <div class="reveal" id="simBlock-${cfg.key}">
+            <div class="proof-block">${cfg.name} ${cfg.smallLabels.join('')}와(과) ${cfg.bigLabels.join('')}의 닮음비는 <input class="blank" id="simA-${cfg.key}"> : <input class="blank" id="simB-${cfg.key}"> 이다.</div>
+            <button class="btn btn-check" onclick="checkSimRatio('${cfg.key}')">확인</button>
+            <div class="feedback" id="simFb-${cfg.key}"></div>
+          </div>
+        </div>
+
+        <div class="reveal" id="angleBlock-${cfg.key}">
+          <p><b>탐구2</b> 이번엔 대응각의 크기를 비교해 보자. 아래 버튼을 누르면 작은 도형의 각이 큰 도형의 대응각 위로 이동해서 겹쳐져요.</p>
+          <div class="angle-btn-row">${angleBtns}</div>
+          <div class="feedback" id="angleFb-${cfg.key}"></div>
+
+          <div class="reveal" id="angleDiscBlock-${cfg.key}">
+            <div class="proof-block">대응각의 크기는 모두
+              <button class="btn btn-sm" onclick="chooseAngleDisc('${cfg.key}',true,this)">같다</button>
+              <button class="btn btn-sm" onclick="chooseAngleDisc('${cfg.key}',false,this)">다르다</button>
+            </div>
+            <div class="feedback" id="angleDiscFb-${cfg.key}"></div>
+          </div>
+        </div>
+
+        <div class="reveal" id="doneBlock-${cfg.key}">
+          <p>겹쳐보기로 확인한 것처럼, 대응각의 크기는 각각 같아요. 빈칸을 채워 정리해 보자.</p>
+          <div class="proof-block">${doneRows}</div>
+          <button class="btn btn-check" onclick="checkDone('${cfg.key}')">확인</button>
+          <div class="feedback" id="doneFb-${cfg.key}"></div>
+          <div class="reveal" id="doneNextBlock-${cfg.key}">
+            ${nextKey ? `<button class="btn btn-primary" onclick="unlock('sec-${nextKey}')">다음 도형으로 →</button>` : `<button class="btn btn-primary" onclick="unlock('propertySec')">성질 정리 보기 →</button>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function initSections(){
+  let html = '';
+  SHAPES.forEach((cfg,i)=>{
+    const nextKey = SHAPES[i+1] ? SHAPES[i+1].key : null;
+    html += buildSection(cfg, i===0, nextKey);
+    state[cfg.key] = { angleConfirmed: new Array(cfg.localPts.length).fill(false) };
+  });
+  document.getElementById('sectionsRoot').innerHTML = html;
+  SHAPES.forEach(cfg=>{
+    const { html: svgHtml } = buildFigureSVG(cfg);
+    document.getElementById('svg-'+cfg.key).innerHTML = svgHtml;
+  });
+}
+function unlock(id){
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(()=>{ el.scrollIntoView({behavior:'smooth', block:'start'}); }, 150);
+}
+function goToExamples(){
+  document.getElementById('tanguPage').style.display = 'none';
+  document.getElementById('examplePage').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function normName(v){ return String(v||'').trim().toUpperCase().replace(/\s+/g,''); }
+function nameMatches(v, answer){
+  const n = normName(v);
+  if(n.length!==2) return false;
+  return n.split('').sort().join('') === answer.split('').sort().join('');
+}
+function checkRatios(key){
+  const cfg = SHAPES.find(c=>c.key===key);
+  const ratioInputs = document.querySelectorAll(`input[data-role="ratio"][data-key="${key}"]`);
+  const corrInputs = document.querySelectorAll(`input[data-role="corr"][data-key="${key}"]`);
+  let allOk = true;
+  const byIdx = {};
+  ratioInputs.forEach(inp=>{ const idx=inp.dataset.idx; byIdx[idx]=byIdx[idx]||{}; byIdx[idx][inp.dataset.part]=inp; });
+  corrInputs.forEach(inp=>{
+    const ok = nameMatches(inp.value, inp.dataset.answer);
+    inp.classList.toggle('correct',ok); inp.classList.toggle('wrong',!ok);
+    if(!ok) allOk = false;
+  });
+  Object.keys(byIdx).forEach(idx=>{
+    const aInp = byIdx[idx].a, bInp = byIdx[idx].b;
+    const a = parseFloat(aInp.value), b = parseFloat(bInp.value);
+    const target = cfg.ratio;
+    const ok = ratioMatches(a,b,target[0],target[1]);
+    aInp.classList.toggle('correct',ok); aInp.classList.toggle('wrong',!ok);
+    bInp.classList.toggle('correct',ok); bInp.classList.toggle('wrong',!ok);
+    if(!ok) allOk = false;
+  });
+  const fb = document.getElementById('ratioFb-'+key);
+  if(allOk){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 대응변을 잘 찾았고, 비도 모두 같네요.';
+    unlock('discBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 아직 정확하지 않아요. 빨간색 빈칸을 다시 확인해보세요.';
+  }
+}
+function chooseDisc(key, isEqual, btnEl){
+  if(btnEl){
+    btnEl.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  const fb = document.getElementById('discFb-'+key);
+  if(isEqual){
+    fb.className='feedback success';
+    fb.textContent='🎉 맞아요!';
+    unlock('termBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 생각해보아요. 탐구1에서 구한 비를 다시 살펴보세요.';
+  }
+}
+function checkTerm(key){
+  const inp = document.getElementById('term-'+key);
+  const v = String(inp.value||'').trim().replace(/\s+/g,'');
+  const ok = v==='닮음비' || v==='닮음비이다' || v==='닮음비다';
+  inp.classList.toggle('correct',ok); inp.classList.toggle('wrong',!ok);
+  const fb = document.getElementById('termFb-'+key);
+  if(ok){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! "닮음비"가 맞아요.';
+    unlock('simBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 힌트: 이 활동의 제목을 다시 살펴보세요.';
+  }
+}
+function checkSimRatio(key){
+  const cfg = SHAPES.find(c=>c.key===key);
+  const aInp = document.getElementById('simA-'+key), bInp = document.getElementById('simB-'+key);
+  const a = parseFloat(aInp.value), b = parseFloat(bInp.value);
+  const ok = ratioMatches(a,b,cfg.ratio[0],cfg.ratio[1]);
+  aInp.classList.toggle('correct',ok); aInp.classList.toggle('wrong',!ok);
+  bInp.classList.toggle('correct',ok); bInp.classList.toggle('wrong',!ok);
+  const fb = document.getElementById('simFb-'+key);
+  if(ok){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 닮음비를 잘 찾았어요.';
+    collapseT1(key, `${a}:${b}`);
+    unlock('angleBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 확인해보세요.';
+  }
+}
+function collapseT1(key, ratioText){
+  document.getElementById('t1wrap-'+key).style.display = 'none';
+  const summary = document.getElementById('t1summary-'+key);
+  document.getElementById('t1summaryRatio-'+key).textContent = ratioText;
+  summary.style.display = 'block';
+}
+function toggleT1(key){
+  const wrap = document.getElementById('t1wrap-'+key);
+  wrap.style.display = (wrap.style.display==='none') ? '' : 'none';
+}
+function checkDone(key){
+  const inputs = document.querySelectorAll(`input[id^="done-${key}-"]`);
+  let allOk = true;
+  inputs.forEach(inp=>{
+    const v = String(inp.value||'').trim().toUpperCase();
+    const ok = v === inp.dataset.answer;
+    inp.classList.toggle('correct', ok); inp.classList.toggle('wrong', !ok);
+    if(!ok) allOk = false;
+  });
+  const fb = document.getElementById('doneFb-'+key);
+  if(allOk){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요!';
+    unlock('doneNextBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 확인해보세요. 겹쳐본 각들을 다시 살펴봐도 좋아요.';
+  }
+}
+function chooseAngleDisc(key, isEqual, btnEl){
+  if(btnEl){
+    btnEl.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  const fb = document.getElementById('angleDiscFb-'+key);
+  if(isEqual){
+    fb.className='feedback success';
+    fb.textContent='🎉 맞아요!';
+    unlock('doneBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 생각해보아요. 위에서 겹쳐본 각들을 다시 살펴보세요.';
+  }
+}
+function overlapAngle(key, i){
+  const cfg = SHAPES.find(c=>c.key===key);
+  const btn = document.getElementById(`anglebtn-${key}-${i}`);
+  const svg = document.getElementById('svg-'+key);
+  const original = svg.querySelector(`.am-${key}-small-${i}`);
+  const smallPts = cfg.localPts.map(([x,y])=>[x+SMALL_ANCHOR.x, y+SMALL_ANCHOR.y]);
+  const bigPts = cfg.localPts.map(([x,y])=>[x*2+BIG_ANCHOR.x, y*2+BIG_ANCHOR.y]);
+  const sp = smallPts[i], bp = bigPts[i];
+
+  // 여러 번 눌러도 매번 처음부터 다시 이동하는 것처럼 보이도록, 이전에 도착해 있던 조각은 지우고 새로 시작
+  svg.querySelectorAll(`.am-fly-${key}-${i}`).forEach(el=>el.remove());
+
+  const clone = original.cloneNode(true);
+  clone.classList.add(`am-fly-${key}-${i}`);
+  clone.querySelectorAll('line,path').forEach(el=>el.setAttribute('stroke', '#e05a20'));
+  const txt = clone.querySelector('text');
+  if(txt) txt.remove(); // 숫자는 보여주지 않는다 — 두 각이 같은지는 겹쳐지는 모양을 눈으로 보고 직접 판단하게 한다
+  clone.style.transform = `translate(${sp[0]}px, ${sp[1]}px)`;
+  svg.appendChild(clone);
+  // 강제 리플로우 후 트랜지션 시작 (translate 시작 위치가 먼저 적용되도록)
+  void clone.getBoundingClientRect();
+  clone.style.transition = 'transform .7s ease';
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      clone.style.transform = `translate(${bp[0]}px, ${bp[1]}px)`;
+    });
+  });
+
+  if(!state[key].angleConfirmed[i]){
+    state[key].angleConfirmed[i] = true;
+    btn.classList.add('viewed');
+    setTimeout(()=>{
+      if(state[key].angleConfirmed.every(Boolean) && !state[key].angleAllSeen){
+        state[key].angleAllSeen = true;
+        const fb = document.getElementById('angleFb-'+key);
+        fb.className='feedback success';
+        fb.textContent = '🎉 모든 각을 겹쳐서 비교해봤어요! 버튼은 계속 눌러서 다시 확인할 수 있어요.';
+        unlock('angleDiscBlock-'+key);
+      }
+    }, 750);
+  }
+}
+
+/* ════════════════════════════════
+   닮음의 성질 정리 박스
+════════════════════════════════ */
+function initProperty(){
+  document.getElementById('propertyRoot').innerHTML = `
+  <div class="reveal" id="propertySec">
+    <div class="property-box">
+      <div class="tag">평면도형에서 닮음의 성질</div>
+      <div>서로 닮은 두 평면도형에서</div>
+      <ol>
+        <li>대응변의 길이의 비는 (<input class="blank" id="propBlank1" style="width:70px">)하다.</li>
+        <li>대응각의 크기는 각각 같다.</li>
+      </ol>
+      <div class="footnote">서로 닮은 두 평면도형에서 대응변의 길이의 비를 (<input class="blank" id="propBlank2" style="width:80px">)라고 한다.<br>참고: 두 원은 항상 서로 닮은 도형이고, 닮음비는 두 원의 반지름의 길이의 비이다.</div>
+    </div>
+    <div style="text-align:center"><button class="btn btn-check" onclick="checkProperty()">확인</button></div>
+    <div class="feedback" id="propertyFb"></div>
+    <div class="reveal" id="propertyNextBlock">
+      <div style="text-align:center"><button class="btn btn-primary" onclick="goToExamples()">예제 문제 풀어보기 →</button></div>
+    </div>
+  </div>`;
+}
+function checkProperty(){
+  const b1 = document.getElementById('propBlank1'), b2 = document.getElementById('propBlank2');
+  const v1 = String(b1.value||'').trim().replace(/\s+/g,'');
+  const v2 = String(b2.value||'').trim().replace(/\s+/g,'');
+  const ok1 = v1==='일정' || v1==='일정하다';
+  const ok2 = v2==='닮음비' || v2==='닮음비이다' || v2==='닮음비다';
+  b1.classList.toggle('correct',ok1); b1.classList.toggle('wrong',!ok1);
+  b2.classList.toggle('correct',ok2); b2.classList.toggle('wrong',!ok2);
+  const fb = document.getElementById('propertyFb');
+  if(ok1 && ok2){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 닮음의 성질을 잘 정리했어요.';
+    unlock('propertyNextBlock');
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 확인해보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   예제 문제
+════════════════════════════════ */
+const EXAMPLES = [
+  { key:'ex-quad', num:1, name:'사각형', // BC=9, FG=6(BC:FG=3:2), EH=8(HE가 FG보다 실제로 더 긴 변) → AD=EH*3/2=12, ∠F=∠B=80°
+    localPts: SHAPES[1].localPts,
+    smallLabels:['A','B','C','D'], bigLabels:['E','F','G','H'],
+    ratio:[3,2], askSideAns:12, askAngleAns:80 },
+  { key:'ex-tri', num:2, name:'삼각형', // AB=8(가장 긴 변), BC=6(가장 짧은 변), DE=12(AB:DE=2:3) → EF=BC*3/2=9, ∠D=∠A=40°(실제 도형 각도)
+    localPts: SHAPES[0].localPts,
+    smallLabels:['A','B','C'], bigLabels:['D','E','F'],
+    ratio:[2,3], askSideAns:9, askAngleAns:40 }
+];
+
+function exFigureSVG(cfg, smallLabelMap, bigLabelMap, smallAngleMap){
+  const n = cfg.localPts.length;
+  const smallPts = cfg.localPts.map(([x,y])=>[x+SMALL_ANCHOR.x, y+SMALL_ANCHOR.y]);
+  const bigPts = cfg.localPts.map(([x,y])=>[x*1.5+BIG_ANCHOR.x-40, y*1.5+BIG_ANCHOR.y]);
+  const smallC = centroidOf(smallPts), bigC = centroidOf(bigPts);
+  let html = `<polygon class="small-shape" points="${ptsToStr(smallPts)}"></polygon>`;
+  html += `<polygon class="big-shape" points="${ptsToStr(bigPts)}"></polygon>`;
+  for(let i=0;i<n;i++){
+    if(smallLabelMap[i]!==undefined) html += sideLabelSVG(smallPts[i], smallPts[(i+1)%n], smallC, smallLabelMap[i]);
+    if(bigLabelMap[i]!==undefined) html += sideLabelSVG(bigPts[i], bigPts[(i+1)%n], bigC, bigLabelMap[i]);
+  }
+  smallPts.forEach((p,i)=>{ const lp = outwardLabel(p, smallC, 20); html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="#4f6fe0">${cfg.smallLabels[i]}</text>`; });
+  bigPts.forEach((p,i)=>{ const lp = outwardLabel(p, bigC, 22); html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="#e05a20">${cfg.bigLabels[i]}</text>`; });
+  Object.keys(smallAngleMap).forEach(i=>{
+    i = parseInt(i,10);
+    const [dA,dB] = vertexDirs(cfg.localPts, i);
+    html += `<g transform="translate(${smallPts[i][0]},${smallPts[i][1]})">${angleMarkerSVG(dA,dB,20,14,'#4f6fe0','')}</g>`;
+    // 각도 숫자 채우기 (angleMarkerSVG는 text를 비워두므로 마지막에 별도 처리)
+  });
+  return { html, smallPts, bigPts };
+}
+
+function buildExampleHTML(cfg){
+  return `
+  <div class="reveal${cfg.num===1?' show':''}" id="sec-${cfg.key}">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge ex-num">${cfg.num}</div><h2>예제 ${cfg.num}. ${cfg.name}</h2></div>
+      <div class="step-body">
+        <p>${cfg.smallLabels.join('')} ∽ ${cfg.bigLabels.join('')} 일 때, 다음을 구하시오.</p>
+        <div class="svg-wrap"><svg id="svg-${cfg.key}" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="proof-block">
+          (1) 닮음비 ( ${cfg.smallLabels.join('')} : ${cfg.bigLabels.join('')} ) = <input class="blank" id="${cfg.key}-r1"> : <input class="blank" id="${cfg.key}-r2"><br>
+          (2) <span id="${cfg.key}-sideq"></span>의 길이 = <input class="blank" id="${cfg.key}-side">cm<br>
+          (3) <span id="${cfg.key}-angleq"></span>의 크기 = <input class="blank" id="${cfg.key}-angle">°
+        </div>
+        <button class="btn btn-check" onclick="checkExample('${cfg.key}')">확인</button>
+        <div class="feedback" id="fb-${cfg.key}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function initExamples(){
+  let html = '';
+  EXAMPLES.forEach(cfg=> html += buildExampleHTML(cfg));
+  document.getElementById('exampleRoot').innerHTML = `<div class="example-title">📘 예제로 확인하기</div><div class="example-sub">닮음비, 대응변의 길이, 대응각의 크기를 구해 보자.</div>` + html;
+
+  // 예제1: 사각형 ABCD∽EFGH — ∠B=80°, BC=9 / FG=6, EH=8(실제로 HE가 FG보다 긴 변) → 닮음비 3:2, AD=12, ∠F=80
+  {
+    const cfg = EXAMPLES[0];
+    const { html: svgHtml } = exFigureSVG(cfg, {1:9}, {1:6,3:8}, {1:80});
+    document.getElementById('svg-'+cfg.key).innerHTML = svgHtml;
+    document.getElementById(cfg.key+'-sideq').innerHTML = `변 <span class="seg">AD</span>`;
+    document.getElementById(cfg.key+'-angleq').textContent = '∠F';
+    // 각도 숫자 채우기
+    document.querySelector(`#svg-${cfg.key} .angle-num`).textContent = '80°';
+  }
+  // 예제2: 삼각형 ABC∽DEF — AB=8(가장 긴 변),BC=6(가장 짧은 변),∠A=40°(실제 도형 각도) / DE=12 → 닮음비 2:3, EF=9, ∠D=40
+  {
+    const cfg = EXAMPLES[1];
+    const { html: svgHtml } = exFigureSVG(cfg, {0:8,1:6}, {0:12}, {0:40});
+    document.getElementById('svg-'+cfg.key).innerHTML = svgHtml;
+    document.getElementById(cfg.key+'-sideq').innerHTML = `변 <span class="seg">EF</span>`;
+    document.getElementById(cfg.key+'-angleq').textContent = '∠D';
+    document.querySelector(`#svg-${cfg.key} .angle-num`).textContent = '40°';
+  }
+}
+function checkExample(key){
+  const cfg = EXAMPLES.find(c=>c.key===key);
+  const r1 = parseFloat(document.getElementById(key+'-r1').value);
+  const r2 = parseFloat(document.getElementById(key+'-r2').value);
+  const side = parseFloat(document.getElementById(key+'-side').value);
+  const angle = parseFloat(document.getElementById(key+'-angle').value);
+  const okR = ratioMatches(r1,r2,cfg.ratio[0],cfg.ratio[1]);
+  const okSide = numMatches(side, cfg.askSideAns, 0.1);
+  const okAngle = numMatches(angle, cfg.askAngleAns, 0.5);
+  [ ['r1',okR], ['r2',okR], ['side',okSide], ['angle',okAngle] ].forEach(([suf,ok])=>{
+    const el = document.getElementById(key+'-'+suf);
+    el.classList.toggle('correct',ok); el.classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('fb-'+key);
+  if(okR && okSide && okAngle){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 잘했어요.';
+    const idx = EXAMPLES.findIndex(c=>c.key===key);
+    if(idx < EXAMPLES.length-1){ unlock('sec-'+EXAMPLES[idx+1].key); }
+    else{ showDone(); }
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 아직 정확하지 않아요. 빨간색 빈칸을 다시 확인해보세요.';
+  }
+}
+function showDone(){
+  document.getElementById('doneRoot').innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div style="font-size:18px;font-weight:800">닮음의 성질 학습을 모두 마쳤어요!</div></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+initSections();
+initProperty();
+initExamples();
+</script>
+</body>
+</html>

@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>형성평가 - 도형의 닮음</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --blue:#2563eb;--blue-l:#dbeafe;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:680px;margin:0 auto;padding:24px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.back-btn{background:#fff;border:1.5px solid #d8ddfb;color:var(--indigo);font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;font-family:inherit;margin-bottom:14px}
+.back-btn:hover{background:var(--indigo-ll)}
+
+/* 메뉴 */
+.menu-head{text-align:center;margin-bottom:22px}
+.menu-head h2{font-size:21px;margin-bottom:6px}
+.menu-head p{font-size:13.5px;color:var(--ink2)}
+.game-grid{display:flex;flex-direction:column;gap:12px}
+.game-card{background:#fff;border:2px solid #e0e7ff;border-radius:14px;padding:18px 18px;cursor:pointer;text-align:left;transition:.15s;font-family:inherit;display:flex;gap:14px;align-items:center;width:100%}
+.game-card:hover{border-color:var(--indigo);box-shadow:var(--shadow)}
+.gc-icon{font-size:30px;flex-shrink:0}
+.gc-title{font-size:15px;font-weight:800;margin-bottom:4px;color:var(--ink);display:flex;align-items:center;gap:8px}
+.gc-desc{font-size:12.5px;color:var(--ink2);line-height:1.55}
+.gc-badge{font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;flex-shrink:0}
+.gc-badge.pass{background:var(--green-l);color:#14532d}
+.gc-badge.fail{background:var(--red-l);color:var(--red)}
+
+.game-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.game-desc{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.6}
+
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+
+.progress{font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:10px;text-align:center}
+.round-msg{text-align:center;font-size:14px;font-weight:800;margin-top:10px;min-height:20px}
+.round-msg.ok{color:var(--green)}
+.round-msg.no{color:var(--red)}
+
+/* 파트① 도형 클릭 */
+.p1-poly{fill:#4f46e5;fill-opacity:.35;stroke:#4f46e5;stroke-width:2;cursor:pointer}
+.p1-poly.selected{stroke:#f59e0b;stroke-width:3.5;fill-opacity:.55}
+.p1-poly.found0{fill:var(--green);fill-opacity:.55;stroke:var(--green);cursor:default}
+.p1-poly.found1{fill:var(--red);fill-opacity:.55;stroke:var(--red);cursor:default}
+.p1-poly.found2{fill:var(--blue);fill-opacity:.55;stroke:var(--blue);cursor:default}
+.p1-poly.mistake{animation:p1shake .4s}
+@keyframes p1shake{0%,100%{stroke:#dc2626;stroke-width:2}50%{stroke:#dc2626;stroke-width:4;fill-opacity:.6}}
+
+/* 파트② 겹쳐보기 */
+.p2-ref{fill:#4f46e5;fill-opacity:.35;stroke:#4f46e5;stroke-width:2.5;stroke-dasharray:6 4}
+.p2-cmp{fill:#e05a20;fill-opacity:.5;stroke:#e05a20;stroke-width:2.5;cursor:grab}
+.p2-cmp:active{cursor:grabbing}
+.tag-label{font-size:12px;font-weight:700;fill:var(--ink3);text-anchor:middle}
+.manip-btn-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.manip-btn{padding:9px 14px;border-radius:10px;border:2px solid var(--indigo);background:#fff;color:var(--indigo);font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+.manip-btn:hover{background:var(--indigo-ll)}
+.manip-btn:active{transform:translateY(2px)}
+.ox-row{display:flex;gap:14px;justify-content:center;margin-top:14px}
+.ox-btn{flex:1;max-width:200px;padding:14px 10px;border-radius:14px;border:none;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.ox-btn:active{transform:translateY(3px);box-shadow:none}
+.ox-btn.o{background:var(--indigo)}
+.ox-btn.x{background:var(--red)}
+.ox-btn.correct{background:var(--green)!important}
+.ox-btn.wrong{background:#9ca3af!important}
+.ox-btn:disabled{cursor:default}
+
+/* 파트③ 대응관계 */
+.ref-shape{fill:#4f46e5;fill-opacity:.45;stroke:#4f46e5;stroke-width:2.5}
+.cmp-shape{fill:#e05a20;fill-opacity:.45;stroke:#e05a20;stroke-width:2.5}
+#p3SmallPoly{cursor:grab}
+#p3SmallPoly:active{cursor:grabbing}
+.qcard{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:20px;margin-bottom:14px;box-shadow:var(--shadow);text-align:center}
+.qtext{font-size:15px;font-weight:700;line-height:1.7;margin-bottom:12px}
+.opt-list{display:flex;flex-direction:column;gap:10px}
+.opt-card{display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;text-align:left;color:var(--ink);transition:.12s}
+.opt-card:hover{border-color:var(--indigo);background:var(--indigo-ll)}
+.opt-card.correct{border-color:var(--green);background:var(--green-ll);color:#14532d}
+.opt-card.wrong{border-color:var(--red);background:var(--red-l);color:var(--red)}
+.opt-card:disabled{cursor:default}
+.opt-badge{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#f0f0f8;color:var(--ink3);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.fb-line{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:10px}
+.fb-line.ok{color:var(--green)}
+.fb-line.no{color:var(--red)}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.done-score{font-size:32px;font-weight:800;color:var(--indigo);margin:8px 0}
+.done-score.fail{color:var(--red)}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.menu-btn{padding:11px 26px;border-radius:8px;background:#fff;color:var(--ink);border:1.5px solid #d8ddfb;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">형성평가 · 도형의 닮음</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <!-- 메뉴 -->
+  <div class="screen active" id="scMenu">
+    <div class="menu-head">
+      <h2>✅ 형성평가: 도형의 닮음</h2>
+      <p>세 가지 활동으로 닮음 개념을 확인해봐요. 각 활동은 통과 기준이 있어요!</p>
+    </div>
+    <div class="game-grid">
+      <button class="game-card" onclick="openSection('P1')">
+        <div class="gc-icon">👀</div>
+        <div style="flex:1">
+          <div class="gc-title">① 눈으로 판별하기 <span class="gc-badge" id="badgeP1" style="display:none"></span></div>
+          <div class="gc-desc">도형 10개 중 닮은 3쌍을 찾아보세요 (3문제 중 2문제 이상 통과)</div>
+        </div>
+      </button>
+      <button class="game-card" onclick="openSection('P2')">
+        <div class="gc-icon">🔄</div>
+        <div style="flex:1">
+          <div class="gc-title">② 겹쳐서 닮음 판별하기 <span class="gc-badge" id="badgeP2" style="display:none"></span></div>
+          <div class="gc-desc">도형을 끌고, 돌리고, 늘려서 겹쳐보며 닮음인지 판별해요 (5문제 중 4문제 이상 통과)</div>
+        </div>
+      </button>
+      <button class="game-card" onclick="openSection('P3')">
+        <div class="gc-icon">🔗</div>
+        <div style="flex:1">
+          <div class="gc-title">③ 닮음 기호와 대응관계 <span class="gc-badge" id="badgeP3" style="display:none"></span></div>
+          <div class="gc-desc">닮음 기호로 나타내고, 대응변·대응각을 찾아요 (3문제 중 2문제 이상 통과)</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ① 눈으로 판별하기 -->
+  <div class="screen" id="scP1">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">👀 눈으로 판별하기</div>
+    <div class="game-desc">정확히 잴 필요 없어요! 눈으로 봤을 때 "닮았다"고 느껴지는 두 도형을 연달아 클릭하세요. 10개 중 3쌍만 닮음이에요.</div>
+    <div class="progress" id="p1Progress">라운드 1 / 3</div>
+    <div class="card" id="p1Card">
+      <div class="svg-wrap">
+        <svg id="p1Svg" viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="round-msg" id="p1Msg"></div>
+    </div>
+    <div id="p1Done" style="display:none"></div>
+  </div>
+
+  <!-- ② 겹쳐서 판별하기 -->
+  <div class="screen" id="scP2">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">🔄 겹쳐서 닮음 판별하기</div>
+    <div class="game-desc">점선 도형(기준)에 주황 도형을 끌어다 놓고, 확대·축소·회전해서 겹쳐보세요. 완전히 겹칠 수 있으면 닮음, 아무리 해도 안 겹치면 닮음이 아니에요.</div>
+    <div class="progress" id="p2Progress">1 / 5</div>
+    <div class="card" id="p2Card">
+      <div class="svg-wrap">
+        <svg id="p2Svg" viewBox="0 0 640 380" xmlns="http://www.w3.org/2000/svg">
+          <polygon id="p2RefPoly" class="p2-ref" points=""></polygon>
+          <text id="p2RefLabel" class="tag-label"></text>
+          <g id="p2ManipG">
+            <polygon id="p2CmpPoly" class="p2-cmp" points=""></polygon>
+          </g>
+          <text id="p2CmpLabel" class="tag-label"></text>
+          <line id="p2RotateLine" stroke="#e05a20" stroke-width="2" stroke-dasharray="3 3"></line>
+          <circle id="p2RotateHandle" r="12" fill="#fff" stroke="#e05a20" stroke-width="3" cursor="grab"></circle>
+          <text id="p2RotateIcon" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#e05a20" style="pointer-events:none">↻</text>
+        </svg>
+      </div>
+      <div class="manip-btn-row">
+        <button class="manip-btn" onclick="p2Rotate(-5)">↺ 회전</button>
+        <button class="manip-btn" onclick="p2Scale(-0.1)">➖ 축소</button>
+        <button class="manip-btn" onclick="p2Scale(0.1)">➕ 확대</button>
+        <button class="manip-btn" onclick="p2Rotate(5)">↻ 회전</button>
+        <button class="manip-btn" onclick="p2Reset()">↩ 초기화</button>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--ink3);margin-top:6px">🟠 주황 손잡이를 끌면 도형을 자유롭게 회전할 수 있어요</div>
+      <div class="ox-row">
+        <button class="ox-btn o" id="p2SimBtn" onclick="p2Answer(true)">닮음이다</button>
+        <button class="ox-btn x" id="p2NotBtn" onclick="p2Answer(false)">닮음이 아니다</button>
+      </div>
+      <div class="fb-line" id="p2Fb"></div>
+    </div>
+    <div id="p2Done" style="display:none"></div>
+  </div>
+
+  <!-- ③ 닮음 기호와 대응관계 -->
+  <div class="screen" id="scP3">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">🔗 닮음 기호와 대응관계</div>
+    <div class="game-desc" id="p3Desc">작은 도형을 확대한 것이 큰 도형이에요. 대응 관계를 생각하며 물음에 답해보세요.</div>
+    <div class="progress" id="p3Progress2">라운드 1 / 3</div>
+    <div class="card" id="p3Card">
+      <div class="svg-wrap">
+        <svg id="p3Svg" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="manip-btn-row">
+        <button class="manip-btn" onclick="p3RotateLeft(-5)">↺ 회전</button>
+        <button class="manip-btn" onclick="p3FlipLeft()">↔ 좌우 대칭</button>
+        <button class="manip-btn" onclick="p3RotateLeft(5)">↻ 회전</button>
+        <button class="manip-btn" onclick="p3ResetLeftBtn()">↩ 초기화</button>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--ink3);margin-top:6px">🔵 파란 손잡이를 끌면 자유롭게 회전, 도형 몸통을 끌면 이동, ↔ 버튼으로 좌우 대칭 (정답에는 영향 없어요)</div>
+    </div>
+    <div class="progress" id="p3Progress">1 / 4</div>
+    <div class="qcard" id="p3Qcard">
+      <div class="qtext" id="p3Qtext"></div>
+      <div class="opt-list" id="p3OptList"></div>
+      <div class="fb-line" id="p3Fb"></div>
+    </div>
+    <div id="p3Done" style="display:none"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'shape-similarity-assessment' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function randInt(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+function randFloat(a,b){ return a + Math.random()*(b-a); }
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function sampleDistinct(n, count){ // n개 중 서로 다른 count개 인덱스
+  const idxs = shuffle([...Array(n).keys()]);
+  return idxs.slice(0, count);
+}
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function toSvgPoint(svg, evt){
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const ctm = svg.getScreenCTM().inverse();
+  return pt.matrixTransform(ctm);
+}
+function ptsToStr(pts){ return pts.map(p=>`${p[0]},${p[1]}`).join(' '); }
+function maxRadius(pts){
+  let m = 0;
+  pts.forEach(([x,y])=>{ m = Math.max(m, Math.hypot(x,y)); });
+  return m;
+}
+function centroidOf(pts){
+  const cx = pts.reduce((s,p)=>s+p[0],0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p[1],0)/pts.length;
+  return {x:cx,y:cy};
+}
+function outwardLabel(p, centroid, dist){
+  const dx = p[0]-centroid.x, dy = p[1]-centroid.y, len = Math.hypot(dx,dy)||1;
+  return { x: p[0]+dx/len*dist, y: p[1]+dy/len*dist };
+}
+
+/* ════════════════════════════════
+   도형 템플릿 (로컬 좌표, 중심이 원점 근처)
+════════════════════════════════ */
+function starPts(outerR, innerR, n){
+  const pts=[];
+  for(let i=0;i<n*2;i++){
+    const r = i%2===0?outerR:innerR;
+    const angle = -Math.PI/2 + i*Math.PI/n;
+    pts.push([Math.round((r*Math.cos(angle))*10)/10, Math.round((r*Math.sin(angle))*10)/10]);
+  }
+  return pts;
+}
+const TEMPLATES = [
+  { name:'부등변삼각형', pts:[[-50,40],[50,20],[-10,-50]] },
+  { name:'ㄱ자모양', pts:[[-50,-50],[10,-50],[10,-10],[50,-10],[50,50],[-50,50]] },
+  { name:'화살표', pts:[[-50,-15],[10,-15],[10,-35],[50,0],[10,35],[10,15],[-50,15]] },
+  { name:'집모양', pts:[[-40,50],[-40,0],[0,-50],[40,0],[40,50]] },
+  { name:'사다리꼴', pts:[[-50,40],[50,40],[25,-40],[-15,-40]] },
+  { name:'별모양', pts:starPts(55,22,5) },
+  { name:'십자가', pts:[[-18,-55],[18,-55],[18,-18],[55,-18],[55,18],[18,18],[18,55],[-18,55],[-18,18],[-55,18],[-55,-18],[-18,-18]] },
+  { name:'T자모양', pts:[[-50,-50],[50,-50],[50,-15],[15,-15],[15,55],[-15,55],[-15,-15],[-50,-15]] },
+  { name:'계단모양', pts:[[-50,50],[-50,10],[-10,10],[-10,-30],[30,-30],[30,-50],[55,-50],[55,50]] },
+  { name:'번개모양', pts:[[-10,-60],[35,-60],[0,-5],[30,-5],[-30,60],[-5,0],[-40,0]] },
+  { name:'비정형육각형', pts:[[-20,-55],[35,-40],[50,15],[10,55],[-45,35],[-55,-15]] }
+];
+
+/* ════════════════════════════════
+   화면 전환 / 메뉴 배지
+════════════════════════════════ */
+const assessStatus = { P1:null, P2:null, P3:null };
+function showMenu(){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('scMenu').classList.add('active');
+}
+function openSection(name){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sc'+name).classList.add('active');
+  if(name==='P1') p1Init();
+  if(name==='P2') p2Init();
+  if(name==='P3') p3Init();
+}
+function updateBadge(name, pass){
+  assessStatus[name] = pass;
+  const el = document.getElementById('badge'+name);
+  el.style.display = 'inline-block';
+  el.className = 'gc-badge ' + (pass ? 'pass' : 'fail');
+  el.textContent = pass ? '통과' : '재도전 필요';
+}
+
+/* ════════════════════════════════
+   ① 눈으로 판별하기
+════════════════════════════════ */
+const P1_ROUNDS = 3, P1_PASS = 2;
+const p1 = { round:0, results:[], mistakes:0, foundOrder:[], selectedId:null, locked:[], shapes:[] };
+const P1_COLS=5, P1_ROWS=2, P1_TILE_W=640/P1_COLS, P1_TILE_H=400/P1_ROWS;
+const P1_SIZE_MULTS = [0.72, 1.0, 1.28];
+
+function p1Init(){
+  p1.round = 0; p1.results = [];
+  document.getElementById('p1Card').style.display='block';
+  document.getElementById('p1Done').style.display='none';
+  document.getElementById('p1Done').innerHTML='';
+  p1NewRound();
+}
+function p1NewRound(){
+  p1.mistakes = 0; p1.foundOrder = []; p1.selectedId = null; p1.locked = [];
+  document.getElementById('p1Progress').textContent = `라운드 ${p1.round+1} / ${P1_ROUNDS}`;
+  document.getElementById('p1Msg').textContent = '';
+  document.getElementById('p1Msg').className = 'round-msg';
+
+  const pairTplIdxs = sampleDistinct(TEMPLATES.length, 3);
+  const remaining = [...Array(TEMPLATES.length).keys()].filter(i=>!pairTplIdxs.includes(i));
+  const loneTplIdxs = shuffle(remaining).slice(0,4);
+
+  const shapes = [];
+  let id = 0;
+  pairTplIdxs.forEach((tplIdx, pairGroup)=>{
+    const [m1, m2] = shuffle(P1_SIZE_MULTS).slice(0,2);
+    shapes.push({ id:id++, tplIdx, pairGroup, mult:m1, rot:randInt(0,359) });
+    shapes.push({ id:id++, tplIdx, pairGroup, mult:m2, rot:randInt(0,359) });
+  });
+  loneTplIdxs.forEach(tplIdx=>{
+    shapes.push({ id:id++, tplIdx, pairGroup:null, mult:pickRandom(P1_SIZE_MULTS), rot:randInt(0,359) });
+  });
+  const slots = shuffle([...Array(10).keys()]);
+  shapes.forEach((sh, i)=>{ sh.slot = slots[i]; });
+  p1.shapes = shapes;
+  p1Render();
+}
+function p1Render(){
+  let html = '';
+  p1.shapes.forEach(sh=>{
+    const row = Math.floor(sh.slot / P1_COLS), col = sh.slot % P1_COLS;
+    const cx = col*P1_TILE_W + P1_TILE_W/2, cy = row*P1_TILE_H + P1_TILE_H/2;
+    const t = TEMPLATES[sh.tplIdx];
+    const unit = 42 / maxRadius(t.pts);
+    const finalScale = unit * sh.mult;
+    html += `<g transform="translate(${cx},${cy}) rotate(${sh.rot}) scale(${finalScale})"><polygon class="p1-poly" data-id="${sh.id}" points="${ptsToStr(t.pts)}"></polygon></g>`;
+  });
+  const svg = document.getElementById('p1Svg');
+  svg.innerHTML = html;
+  svg.querySelectorAll('.p1-poly').forEach(poly=>{
+    poly.addEventListener('click', ()=>p1ShapeClick(parseInt(poly.dataset.id,10)));
+  });
+}
+function p1PolyEl(id){ return document.querySelector(`#p1Svg .p1-poly[data-id="${id}"]`); }
+function p1ShapeClick(id){
+  if(p1.locked.includes(id)) return;
+  if(p1.selectedId===null){
+    p1.selectedId = id;
+    p1PolyEl(id).classList.add('selected');
+    return;
+  }
+  if(p1.selectedId===id){
+    p1PolyEl(id).classList.remove('selected');
+    p1.selectedId = null;
+    return;
+  }
+  const a = p1.shapes.find(s=>s.id===p1.selectedId);
+  const b = p1.shapes.find(s=>s.id===id);
+  const prevId = p1.selectedId;
+  p1PolyEl(prevId).classList.remove('selected');
+  p1.selectedId = null;
+
+  if(a.pairGroup!==null && a.pairGroup===b.pairGroup){
+    const colorClass = 'found' + p1.foundOrder.length;
+    p1PolyEl(a.id).classList.add(colorClass);
+    p1PolyEl(b.id).classList.add(colorClass);
+    p1.locked.push(a.id, b.id);
+    p1.foundOrder.push(a.pairGroup);
+    if(p1.foundOrder.length>=3){ setTimeout(p1RoundEnd, 900); }
+  } else {
+    p1.mistakes++;
+    [a.id,b.id].forEach(sid=>{
+      const el = p1PolyEl(sid);
+      el.classList.add('mistake');
+      setTimeout(()=>el.classList.remove('mistake'), 400);
+    });
+  }
+}
+function p1RoundEnd(){
+  const success = p1.mistakes===0;
+  p1.results.push(success);
+  const msg = document.getElementById('p1Msg');
+  msg.textContent = success ? `🎉 라운드 ${p1.round+1} 성공! 실수 없이 3쌍을 모두 찾았어요.` : `😅 라운드 ${p1.round+1} 아쉬워요. (틀린 시도 ${p1.mistakes}번)`;
+  msg.className = 'round-msg ' + (success?'ok':'no');
+  p1.round++;
+  setTimeout(()=>{
+    if(p1.round>=P1_ROUNDS){ p1Finish(); }
+    else{ p1NewRound(); }
+  }, 1400);
+}
+function p1Finish(){
+  const successCount = p1.results.filter(x=>x).length;
+  const pass = successCount>=P1_PASS;
+  updateBadge('P1', pass);
+  document.getElementById('p1Card').style.display='none';
+  const el = document.getElementById('p1Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">${pass?'🎉':'💪'}</div><div>${P1_ROUNDS}라운드 중</div><div class="done-score ${pass?'':'fail'}">${successCount} / ${P1_ROUNDS} 성공</div><div>${pass?'통과했어요!':'2라운드 이상 성공해야 통과해요.'}</div><button class="restart-btn" onclick="p1Init()">🔄 다시 도전</button><button class="menu-btn" onclick="showMenu()">목록으로</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   ② 겹쳐서 닮음 판별하기
+════════════════════════════════ */
+const P2_TOTAL = 5, P2_PASS = 4;
+const P2_REF_ANCHOR = { x:170, y:190 };
+const P2_CMP_ANCHOR = { x:470, y:190 };
+const p2 = { round:0, correct:0, cur:null, manip:null };
+
+function genP2Round(){
+  const t = pickRandom(TEMPLATES);
+  const isSimilar = Math.random() < 0.5;
+  let sx = 1, sy = 1;
+  if(!isSimilar){
+    const skew = randFloat(1.4, 2.0);
+    if(Math.random()<0.5) sx *= skew; else sy *= skew;
+  }
+  const unit = 90 / maxRadius(t.pts);
+  return { template:t, sx, sy, isSimilar, unit };
+}
+function p2Init(){
+  p2.round = 0; p2.correct = 0;
+  document.getElementById('p2Card').style.display='block';
+  document.getElementById('p2Done').style.display='none';
+  document.getElementById('p2Done').innerHTML='';
+  document.querySelector('#scP2 .progress').style.display='block';
+  p2Next();
+}
+function p2Next(){
+  p2.round++;
+  if(p2.round>P2_TOTAL){ p2Finish(); return; }
+  document.getElementById('p2Progress').textContent = `${p2.round} / ${P2_TOTAL}`;
+  p2.cur = genP2Round();
+  p2ResetManip();
+  document.getElementById('p2SimBtn').className='ox-btn o'; document.getElementById('p2SimBtn').disabled=false;
+  document.getElementById('p2NotBtn').className='ox-btn x'; document.getElementById('p2NotBtn').disabled=false;
+  document.getElementById('p2Fb').textContent='';
+}
+function p2ResetManip(){
+  p2.manip = {
+    tx: P2_CMP_ANCHOR.x + randInt(-20,20),
+    ty: P2_CMP_ANCHOR.y + randInt(-20,20),
+    angle: randInt(0,359),
+    scale: randFloat(0.5,1.6)
+  };
+  p2Render();
+}
+function p2Render(){
+  const { template, sx, sy, unit } = p2.cur;
+  const refPts = template.pts.map(([x,y])=>[x*unit + P2_REF_ANCHOR.x, y*unit + P2_REF_ANCHOR.y]);
+  document.getElementById('p2RefPoly').setAttribute('points', ptsToStr(refPts));
+  document.getElementById('p2RefLabel').setAttribute('x', P2_REF_ANCHOR.x);
+  document.getElementById('p2RefLabel').setAttribute('y', P2_REF_ANCHOR.y + 110);
+  document.getElementById('p2RefLabel').textContent = '기준 도형';
+
+  const cmpLocalPts = template.pts.map(([x,y])=>[x*unit*sx, y*unit*sy]);
+  document.getElementById('p2CmpPoly').setAttribute('points', ptsToStr(cmpLocalPts));
+  const m = p2.manip;
+  document.getElementById('p2ManipG').setAttribute('transform', `translate(${m.tx},${m.ty}) rotate(${m.angle}) scale(${m.scale})`);
+  document.getElementById('p2CmpLabel').setAttribute('x', m.tx);
+  document.getElementById('p2CmpLabel').setAttribute('y', m.ty + 110);
+  document.getElementById('p2CmpLabel').textContent = '비교 도형 (끌기 + 핀치 + 손잡이 회전)';
+
+  // 회전 손잡이: 도형 중심에서 위쪽으로 R만큼 떨어진 지점, 도형의 회전/확대와 함께 이동
+  const handleLocalDist = maxRadius(cmpLocalPts) + 24;
+  const rad = m.angle*Math.PI/180;
+  const hx = m.tx + handleLocalDist*m.scale*Math.sin(rad);
+  const hy = m.ty - handleLocalDist*m.scale*Math.cos(rad);
+  document.getElementById('p2RotateLine').setAttribute('x1', m.tx);
+  document.getElementById('p2RotateLine').setAttribute('y1', m.ty);
+  document.getElementById('p2RotateLine').setAttribute('x2', hx);
+  document.getElementById('p2RotateLine').setAttribute('y2', hy);
+  document.getElementById('p2RotateHandle').setAttribute('cx', hx);
+  document.getElementById('p2RotateHandle').setAttribute('cy', hy);
+  document.getElementById('p2RotateIcon').setAttribute('x', hx);
+  document.getElementById('p2RotateIcon').setAttribute('y', hy);
+}
+function p2Rotate(deg){ p2.manip.angle = (p2.manip.angle + deg + 360) % 360; p2Render(); }
+function p2Scale(delta){ p2.manip.scale = clamp(p2.manip.scale + delta, 0.2, 3.5); p2Render(); }
+function p2Reset(){ p2ResetManip(); }
+function p2Answer(chosen){
+  if(document.getElementById('p2SimBtn').disabled) return;
+  const isCorrect = chosen === p2.cur.isSimilar;
+  if(isCorrect) p2.correct++;
+  document.getElementById(chosen?'p2SimBtn':'p2NotBtn').classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) document.getElementById(p2.cur.isSimilar?'p2SimBtn':'p2NotBtn').classList.add('correct');
+  document.getElementById('p2SimBtn').disabled=true; document.getElementById('p2NotBtn').disabled=true;
+  const fb = document.getElementById('p2Fb');
+  fb.className = 'fb-line ' + (isCorrect?'ok':'no');
+  fb.textContent = isCorrect ? '✅ 정답이에요!' : (p2.cur.isSimilar ? '❌ 오답이에요. 사실 두 도형은 닮음이에요(비율이 같아요).' : '❌ 오답이에요. 사실 가로·세로 비율이 달라서 닮음이 아니에요.');
+  setTimeout(()=>{ p2Next(); }, 1300);
+}
+function p2Finish(){
+  const pass = p2.correct >= P2_PASS;
+  updateBadge('P2', pass);
+  document.getElementById('p2Card').style.display='none';
+  document.querySelector('#scP2 .progress').style.display='none';
+  const el = document.getElementById('p2Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">${pass?'🎉':'💪'}</div><div>${P2_TOTAL}문제 중</div><div class="done-score ${pass?'':'fail'}">${p2.correct} / ${P2_TOTAL} 정답</div><div>${pass?'통과했어요!':'4문제 이상 맞아야 통과해요.'}</div><button class="restart-btn" onclick="p2Init()">🔄 다시 도전</button><button class="menu-btn" onclick="showMenu()">목록으로</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+// 포인터(마우스/터치) 추적 — 손가락 1개는 이동, 2개는 핀치(배율+회전+이동)
+const p2ActivePointers = new Map();
+let p2DragStart = null, p2PinchStart = null;
+const p2Svg = document.getElementById('p2Svg');
+function p2PointerDown(evt){
+  evt.preventDefault();
+  const pt = toSvgPoint(p2Svg, evt);
+  p2ActivePointers.set(evt.pointerId, pt);
+  p2Svg.setPointerCapture && p2Svg.setPointerCapture(evt.pointerId);
+  p2RestartGesture();
+}
+function p2RestartGesture(){
+  const pts = [...p2ActivePointers.values()];
+  if(pts.length===1){
+    p2PinchStart = null;
+    p2DragStart = { startPt: pts[0], tx0: p2.manip.tx, ty0: p2.manip.ty };
+  } else if(pts.length===2){
+    p2DragStart = null;
+    const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y) || 1;
+    const mid = { x:(pts[0].x+pts[1].x)/2, y:(pts[0].y+pts[1].y)/2 };
+    const angleRaw = Math.atan2(pts[1].y-pts[0].y, pts[1].x-pts[0].x);
+    p2PinchStart = { dist, angleRaw, scale0:p2.manip.scale, angle0:p2.manip.angle, tx0:p2.manip.tx, ty0:p2.manip.ty, mid0:mid };
+  }
+}
+document.getElementById('p2CmpPoly').addEventListener('pointerdown', p2PointerDown);
+p2Svg.addEventListener('pointermove', function(evt){
+  if(!p2ActivePointers.has(evt.pointerId)) return;
+  const pt = toSvgPoint(p2Svg, evt);
+  p2ActivePointers.set(evt.pointerId, pt);
+  const pts = [...p2ActivePointers.values()];
+  if(pts.length===1 && p2DragStart){
+    p2.manip.tx = p2DragStart.tx0 + (pts[0].x - p2DragStart.startPt.x);
+    p2.manip.ty = p2DragStart.ty0 + (pts[0].y - p2DragStart.startPt.y);
+    p2Render();
+  } else if(pts.length===2 && p2PinchStart){
+    const ps = p2PinchStart;
+    const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y) || 1;
+    const mid = { x:(pts[0].x+pts[1].x)/2, y:(pts[0].y+pts[1].y)/2 };
+    const angleRaw = Math.atan2(pts[1].y-pts[0].y, pts[1].x-pts[0].x);
+    p2.manip.scale = clamp(ps.scale0 * (dist/ps.dist), 0.2, 3.5);
+    p2.manip.angle = (ps.angle0 + (angleRaw-ps.angleRaw)*180/Math.PI + 360*10) % 360;
+    p2.manip.tx = ps.tx0 + (mid.x - ps.mid0.x);
+    p2.manip.ty = ps.ty0 + (mid.y - ps.mid0.y);
+    p2Render();
+  }
+});
+function p2PointerUp(evt){
+  p2ActivePointers.delete(evt.pointerId);
+  if(p2ActivePointers.size===0){ p2DragStart=null; p2PinchStart=null; }
+  else{ p2RestartGesture(); }
+}
+p2Svg.addEventListener('pointerup', p2PointerUp);
+p2Svg.addEventListener('pointercancel', p2PointerUp);
+p2Svg.addEventListener('pointerleave', function(evt){
+  if(p2ActivePointers.has(evt.pointerId)) p2PointerUp(evt);
+});
+
+// 회전 손잡이 드래그 — 도형 중심을 기준으로 손잡이를 끄는 각도만큼 그대로 회전
+let p2RotateDrag = null;
+const p2Handle = document.getElementById('p2RotateHandle');
+function p2HandleDown(evt){
+  evt.preventDefault();
+  evt.stopPropagation();
+  p2Handle.setPointerCapture && p2Handle.setPointerCapture(evt.pointerId);
+  const pt = toSvgPoint(p2Svg, evt);
+  const startAngleRaw = Math.atan2(pt.y - p2.manip.ty, pt.x - p2.manip.tx) * 180/Math.PI;
+  p2RotateDrag = { pointerId: evt.pointerId, startAngleRaw, angle0: p2.manip.angle };
+}
+function p2HandleMove(evt){
+  if(!p2RotateDrag || evt.pointerId !== p2RotateDrag.pointerId) return;
+  const pt = toSvgPoint(p2Svg, evt);
+  const curAngleRaw = Math.atan2(pt.y - p2.manip.ty, pt.x - p2.manip.tx) * 180/Math.PI;
+  p2.manip.angle = (p2RotateDrag.angle0 + (curAngleRaw - p2RotateDrag.startAngleRaw) + 3600) % 360;
+  p2Render();
+}
+function p2HandleUp(evt){
+  if(p2RotateDrag && evt.pointerId === p2RotateDrag.pointerId) p2RotateDrag = null;
+}
+p2Handle.addEventListener('pointerdown', p2HandleDown);
+p2Handle.addEventListener('pointermove', p2HandleMove);
+p2Handle.addEventListener('pointerup', p2HandleUp);
+p2Handle.addEventListener('pointercancel', p2HandleUp);
+
+/* ════════════════════════════════
+   ③ 닮음 기호와 대응관계
+════════════════════════════════ */
+// 내각을 모두 서로 10도 이상 차이나게 미리 역산한 좌표(삼각형 40/60/80도, 사각형 60/80/100/120도, 오각형 68/88/108/128/148도)
+const CORRES_SHAPES = [
+  { name:'삼각형',  sym:'△', smallLabels:['A','B','C'],         bigLabels:['D','E','F'],         localPts:[[-75.8,-25.6],[60,-25.6],[15.7,51.2]] },
+  { name:'사각형',  sym:'□', smallLabels:['A','B','C','D'],      bigLabels:['E','F','G','H'],      localPts:[[-69.6,-39.4],[50,-39.4],[37.8,29.2],[-18.2,49.6]] },
+  { name:'오각형',  sym:'',  smallLabels:['A','B','C','D','E'],  bigLabels:['F','G','H','I','J'],  localPts:[[-67.6,-42.8],[45.6,-42.8],[67.9,25.8],[-1.4,45.6],[-44.6,14.2]] }
+];
+function rotatePts(pts, deg){
+  const rad = deg*Math.PI/180, c = Math.cos(rad), s = Math.sin(rad);
+  return pts.map(([x,y])=>[x*c - y*s, x*s + y*c]);
+}
+const P3_ROUNDS = 3, P3_PASS = 2;
+const p3 = { shapeIdx:0, scale:1.8, bigRotation:0, step:0, questions:[], round:0, mistakes:0, results:[] };
+
+function notationText(shape, labels){
+  return shape.sym ? `${shape.sym}${labels.join('')}` : `${shape.name} ${labels.join('')}`;
+}
+function permuteWrongs(arr){
+  const n = arr.length;
+  const swapped = (i,j)=>{ const c=arr.slice(); [c[i],c[j]]=[c[j],c[i]]; return c; };
+  const variants = [swapped(0,1), swapped(0,n-1), swapped(1,n-1)];
+  const seen = new Set([arr.join('')]);
+  const out = [];
+  variants.forEach(v=>{
+    const key = v.join('');
+    if(!seen.has(key)){ seen.add(key); out.push(v); }
+  });
+  while(out.length<3){ out.push(shuffle(arr)); } // 이론상 도달하지 않음(안전장치)
+  return out.slice(0,3);
+}
+function buildP3Questions(shape, B){
+  const n = shape.smallLabels.length, S = shape.smallLabels;
+  const qs = [];
+  const i1 = randInt(0,n-1);
+  qs.push({ q:`점 ${S[i1]}의 대응점은?`, opts:B.slice(), answer:B[i1], seg:false });
+  const i2 = randInt(0,n-1);
+  const edgeOpts = []; for(let j=0;j<n;j++) edgeOpts.push(B[j]+B[(j+1)%n]);
+  qs.push({ q:`변 <span class="seg">${S[i2]}${S[(i2+1)%n]}</span>의 대응변은?`, opts:edgeOpts, answer:B[i2]+B[(i2+1)%n], seg:true });
+  const i3 = randInt(0,n-1);
+  qs.push({ q:`∠${S[i3]}의 대응각은?`, opts:B.map(b=>'∠'+b), answer:'∠'+B[i3], seg:false });
+  const correctNotation = notationText(shape, B);
+  const wrongNotations = permuteWrongs(B).map(w=>notationText(shape, w));
+  qs.push({ q:`${notationText(shape,S)}와(과) 이 도형의 닮음 관계를 기호로 바르게 나타낸 것은?`, opts:[correctNotation, ...wrongNotations], answer:correctNotation, seg:false });
+  return qs;
+}
+function updateP3Progress2(){
+  document.getElementById('p3Progress2').textContent = `라운드 ${p3.round+1} / ${P3_ROUNDS}`;
+}
+function p3ResetLeftManip(){
+  p3.leftManip = { tx:170, ty:190, angle:0, flipX:1 };
+}
+function p3NewRound(){
+  p3.mistakes = 0;
+  p3.shapeIdx = randInt(0, CORRES_SHAPES.length-1);
+  const shape = CORRES_SHAPES[p3.shapeIdx];
+  p3.scale = randFloat(1.5,2.0);
+  p3.bigRotation = pickRandom([randInt(20,160), randInt(200,340)]);
+  p3.bigFlip = p3.roundFlips[p3.round] ? -1 : 1;
+  p3.bigLabelsRound = shuffle(shape.bigLabels); // 대응점이 항상 알파벳순이 되지 않도록 매 라운드 랜덤 배정
+  p3.step = 0;
+  p3ResetLeftManip();
+  p3.questions = buildP3Questions(shape, p3.bigLabelsRound);
+  const flipHint = p3.bigFlip===-1 ? '확대하고 좌우로 뒤집은' : '확대한';
+  document.getElementById('p3Desc').textContent = `작은 ${shape.name}을(를) ${flipHint} 것이 큰 ${shape.name}이에요. 대응 관계를 생각하며 물음에 답해보세요.`;
+  updateP3Progress2();
+  p3Draw();
+  p3RenderStep();
+}
+function p3Init(){
+  p3.round = 0; p3.results = [];
+  p3.roundFlips = shuffle([true, true, false]); // P3_ROUNDS(3) 중 2라운드는 좌우 대칭이 필요한 닮음으로 출제
+  document.getElementById('p3Card').style.display='block';
+  document.getElementById('p3Qcard').style.display='block';
+  document.getElementById('p3Progress').style.display='block';
+  document.getElementById('p3Done').style.display='none';
+  document.getElementById('p3Done').innerHTML='';
+  p3NewRound();
+}
+function localBBox(pts){
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  return { minX:Math.min(...xs), maxX:Math.max(...xs), minY:Math.min(...ys), maxY:Math.max(...ys) };
+}
+function anchorForRegion(bbox, scale, regionX, regionW, regionY, regionH){
+  const cx = regionX + regionW/2, cy = regionY + regionH/2;
+  const localCx = (bbox.minX+bbox.maxX)/2*scale, localCy = (bbox.minY+bbox.maxY)/2*scale;
+  return { x: cx - localCx, y: cy - localCy };
+}
+function p3Draw(){
+  // 오른쪽(큰, 고정) 도형을 먼저 그려서 아래쪽에 깔고, 왼쪽(작은, 조작 가능) 도형과 회전 손잡이를
+  // 나중에 그려서 항상 위쪽에 오게 한다 — 두 도형이 겹쳐도 왼쪽 도형을 계속 클릭/드래그할 수 있도록.
+  // 라운드 중에는 p3RenderLeft()가 좌표(attribute)만 갱신하므로 드래그/회전 중 포인터 캡처가 끊기지 않는다.
+  const shape = CORRES_SHAPES[p3.shapeIdx];
+  const k = p3.scale;
+  const mirroredLocal = shape.localPts.map(([x,y])=>[x*p3.bigFlip, y]);
+  const rotatedLocal = rotatePts(mirroredLocal, p3.bigRotation);
+  const smallBbox = localBBox(shape.localPts);
+  const bigBbox = localBBox(rotatedLocal);
+  p3._centeredSmallLocal = shape.localPts.map(([x,y])=>[x-(smallBbox.minX+smallBbox.maxX)/2, y-(smallBbox.minY+smallBbox.maxY)/2]);
+  p3._smallR = maxRadius(p3._centeredSmallLocal) + 24;
+  const bigAnchor = anchorForRegion(bigBbox, k, 380, 300, 20, 340);
+  const bigPts = rotatedLocal.map(([x,y])=>[x*k+bigAnchor.x, y*k+bigAnchor.y]);
+
+  let html = `<polygon points="${ptsToStr(bigPts)}" class="cmp-shape"></polygon>`;
+  const bigC = centroidOf(bigPts);
+  bigPts.forEach((p,i)=>{
+    const lp = outwardLabel(p, bigC, 18);
+    html += `<text x="${lp.x}" y="${lp.y}" font-size="15" font-weight="800" fill="#e05a20" text-anchor="middle">${p3.bigLabelsRound[i]}</text>`;
+  });
+  html += `<polygon points="" class="ref-shape" id="p3SmallPoly"></polygon>`;
+  shape.smallLabels.forEach((lab,i)=>{
+    html += `<text id="p3SmallLabel${i}" font-size="15" font-weight="800" fill="#4f46e5" text-anchor="middle">${lab}</text>`;
+  });
+  html += `<line id="p3RotateLine" stroke="#4f46e5" stroke-width="2" stroke-dasharray="3 3"></line>`;
+  html += `<circle id="p3RotateHandle" r="12" fill="#fff" stroke="#4f46e5" stroke-width="3" cursor="grab"></circle>`;
+  html += `<text id="p3RotateIcon" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#4f46e5" style="pointer-events:none">↻</text>`;
+  document.getElementById('p3Svg').innerHTML = html;
+  document.getElementById('p3SmallPoly').addEventListener('pointerdown', p3SmallPointerDown);
+  const handle = document.getElementById('p3RotateHandle');
+  handle.addEventListener('pointerdown', p3HandleDown);
+  handle.addEventListener('pointermove', p3HandleMove);
+  handle.addEventListener('pointerup', p3HandleUp);
+  handle.addEventListener('pointercancel', p3HandleUp);
+  p3RenderLeft();
+}
+function p3RenderLeft(overrideFlipX){
+  const shape = CORRES_SHAPES[p3.shapeIdx];
+  const m = p3.leftManip;
+  const flipX = (overrideFlipX!==undefined) ? overrideFlipX : m.flipX;
+  const rad = m.angle*Math.PI/180, c = Math.cos(rad), s = Math.sin(rad);
+  const smallPts = p3._centeredSmallLocal.map(([x,y])=>{
+    const fx = x*flipX;
+    const rx = fx*c - y*s, ry = fx*s + y*c;
+    return [rx+m.tx, ry+m.ty];
+  });
+  document.getElementById('p3SmallPoly').setAttribute('points', ptsToStr(smallPts));
+  const smallC = centroidOf(smallPts);
+  smallPts.forEach((p,i)=>{
+    const lp = outwardLabel(p, smallC, 18);
+    const el = document.getElementById('p3SmallLabel'+i);
+    el.setAttribute('x', lp.x);
+    el.setAttribute('y', lp.y);
+  });
+  // 회전 손잡이 위치: 도형 중심에서 위쪽으로 R만큼 (좌우대칭은 x=0인 이 점에 영향 없음)
+  const R = p3._smallR;
+  const hx = m.tx + R*Math.sin(rad);
+  const hy = m.ty - R*Math.cos(rad);
+  document.getElementById('p3RotateLine').setAttribute('x1', m.tx);
+  document.getElementById('p3RotateLine').setAttribute('y1', m.ty);
+  document.getElementById('p3RotateLine').setAttribute('x2', hx);
+  document.getElementById('p3RotateLine').setAttribute('y2', hy);
+  document.getElementById('p3RotateHandle').setAttribute('cx', hx);
+  document.getElementById('p3RotateHandle').setAttribute('cy', hy);
+  document.getElementById('p3RotateIcon').setAttribute('x', hx);
+  document.getElementById('p3RotateIcon').setAttribute('y', hy);
+}
+function p3RotateLeft(deg){ p3.leftManip.angle = (p3.leftManip.angle + deg + 3600) % 360; p3RenderLeft(); }
+function p3ResetLeftBtn(){ p3ResetLeftManip(); p3RenderLeft(); }
+
+// 좌우 대칭: flipX를 1 → 0 → -1(또는 반대)로 애니메이션시켜 실제로 뒤집히는 모습을 보여준다.
+let p3FlipAnimating = false;
+function p3FlipLeft(){
+  if(p3FlipAnimating) return;
+  p3FlipAnimating = true;
+  const startFlip = p3.leftManip.flipX;
+  const endFlip = -startFlip;
+  const duration = 420;
+  const t0 = performance.now();
+  function step(now){
+    const t = Math.min(1, (now-t0)/duration);
+    p3RenderLeft(startFlip + (endFlip-startFlip)*t);
+    if(t<1){ requestAnimationFrame(step); }
+    else { p3.leftManip.flipX = endFlip; p3FlipAnimating = false; p3RenderLeft(); }
+  }
+  requestAnimationFrame(step);
+}
+
+// 회전 손잡이 드래그 — 도형 중심을 기준으로 손잡이를 끄는 각도만큼 그대로 회전 (파트②와 동일한 방식)
+let p3RotateDrag = null;
+function p3HandleDown(evt){
+  evt.preventDefault();
+  evt.stopPropagation();
+  const handle = document.getElementById('p3RotateHandle');
+  handle.setPointerCapture && handle.setPointerCapture(evt.pointerId);
+  const pt = toSvgPoint(document.getElementById('p3Svg'), evt);
+  const startAngleRaw = Math.atan2(pt.y - p3.leftManip.ty, pt.x - p3.leftManip.tx) * 180/Math.PI;
+  p3RotateDrag = { pointerId: evt.pointerId, startAngleRaw, angle0: p3.leftManip.angle };
+}
+function p3HandleMove(evt){
+  if(!p3RotateDrag || evt.pointerId !== p3RotateDrag.pointerId) return;
+  const pt = toSvgPoint(document.getElementById('p3Svg'), evt);
+  const curAngleRaw = Math.atan2(pt.y - p3.leftManip.ty, pt.x - p3.leftManip.tx) * 180/Math.PI;
+  p3.leftManip.angle = (p3RotateDrag.angle0 + (curAngleRaw - p3RotateDrag.startAngleRaw) + 3600) % 360;
+  p3RenderLeft();
+}
+function p3HandleUp(evt){
+  if(p3RotateDrag && evt.pointerId === p3RotateDrag.pointerId) p3RotateDrag = null;
+}
+
+// 왼쪽(작은) 도형 끌기 — svg 요소 자체는 라운드 내내 재사용되므로 포인터 캡처가 끊기지 않는다.
+let p3DragStart = null;
+function p3SmallPointerDown(evt){
+  evt.preventDefault();
+  const svg = document.getElementById('p3Svg');
+  const pt = toSvgPoint(svg, evt);
+  const poly = document.getElementById('p3SmallPoly');
+  poly.setPointerCapture && poly.setPointerCapture(evt.pointerId);
+  p3DragStart = { pointerId: evt.pointerId, startPt: pt, tx0: p3.leftManip.tx, ty0: p3.leftManip.ty };
+}
+document.getElementById('p3Svg').addEventListener('pointermove', function(evt){
+  if(!p3DragStart || evt.pointerId !== p3DragStart.pointerId) return;
+  const pt = toSvgPoint(document.getElementById('p3Svg'), evt);
+  p3.leftManip.tx = p3DragStart.tx0 + (pt.x - p3DragStart.startPt.x);
+  p3.leftManip.ty = p3DragStart.ty0 + (pt.y - p3DragStart.startPt.y);
+  p3RenderLeft();
+});
+['pointerup','pointercancel'].forEach(evtName=>{
+  document.getElementById('p3Svg').addEventListener(evtName, function(evt){
+    if(p3DragStart && evt.pointerId === p3DragStart.pointerId) p3DragStart = null;
+  });
+});
+function p3RenderStep(){
+  const total = p3.questions.length;
+  document.getElementById('p3Progress').textContent = `${p3.step+1} / ${total}`;
+  const item = p3.questions[p3.step];
+  document.getElementById('p3Qtext').innerHTML = item.q;
+  const shuffled = shuffle(item.opts);
+  document.getElementById('p3OptList').innerHTML = shuffled.map((o,i)=>{
+    const display = item.seg ? `<span class="seg">${o}</span>` : o;
+    return `<button class="opt-card" data-idx="${i}" onclick="p3Answer(this,${i})"><span class="opt-badge">${String.fromCharCode(65+i)}</span><span>${display}</span></button>`;
+  }).join('');
+  p3._shown = shuffled;
+  document.getElementById('p3Fb').textContent='';
+}
+function p3Answer(btn, idx){
+  if(btn.disabled) return;
+  const item = p3.questions[p3.step];
+  const chosen = p3._shown[idx];
+  const isCorrect = chosen === item.answer;
+  if(!isCorrect) p3.mistakes++;
+  btn.classList.add(isCorrect?'correct':'wrong');
+  document.querySelectorAll('#p3OptList .opt-card').forEach((b,i)=>{
+    b.disabled = true;
+    if(p3._shown[i]===item.answer) b.classList.add('correct');
+  });
+  const fb = document.getElementById('p3Fb');
+  fb.className = 'fb-line ' + (isCorrect?'ok':'no');
+  const answerDisplay = item.seg ? `<span class="seg">${item.answer}</span>` : item.answer;
+  fb.innerHTML = isCorrect ? '✅ 정답이에요!' : `❌ 정답은 "${answerDisplay}"예요.`;
+  setTimeout(()=>{
+    p3.step++;
+    if(p3.step>=p3.questions.length){ p3RoundEnd(); }
+    else{ p3RenderStep(); }
+  }, 1100);
+}
+function p3RoundEnd(){
+  const success = p3.mistakes===0;
+  p3.results.push(success);
+  p3.round++;
+  if(p3.round>=P3_ROUNDS){ p3Finish(); }
+  else{ p3NewRound(); }
+}
+function p3Finish(){
+  const successCount = p3.results.filter(x=>x).length;
+  const pass = successCount>=P3_PASS;
+  updateBadge('P3', pass);
+  document.getElementById('p3Card').style.display='none';
+  document.getElementById('p3Qcard').style.display='none';
+  document.getElementById('p3Progress').style.display='none';
+  const el = document.getElementById('p3Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">${pass?'🎉':'💪'}</div><div>${P3_ROUNDS}라운드 중</div><div class="done-score ${pass?'':'fail'}">${successCount} / ${P3_ROUNDS} 성공</div><div>${pass?'통과했어요!':'2라운드 이상 실수 없이 맞아야 통과해요.'}</div><button class="restart-btn" onclick="p3Init()">🔄 다시 도전</button><button class="menu-btn" onclick="showMenu()">목록으로</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+</script>
+</body>
+</html>
