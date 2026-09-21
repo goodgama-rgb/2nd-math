@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>닮은 도형의 넓이의 비와 부피의 비</title>
+<style>
+:root{
+  --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+  --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --orange:#e05a20;
+  --line:#e3e8f4; --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--ink)}
+.hdr{background:var(--primary);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:760px;margin:0 auto;padding:20px 16px 70px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.goal-banner{background:linear-gradient(135deg,#eef2ff,#fff0f5);border:2px solid #c9d4fb;border-radius:14px;padding:16px 18px;text-align:center;font-size:14.5px;line-height:1.7;color:var(--primary-dark);margin-bottom:18px}
+.goal-banner b{font-size:16.5px}
+
+.reveal{max-height:0;opacity:0;overflow:hidden;transition:.45s ease}
+.reveal.show{max-height:8000px;opacity:1;margin-top:16px}
+
+.step-card{background:var(--card);border-radius:16px;padding:18px 20px 20px;border-left:6px solid var(--primary);box-shadow:0 4px 14px rgba(43,47,66,.05);margin-bottom:18px}
+.step-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.step-badge{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex:none}
+.step-head h2{margin:0;font-size:16.5px}
+.step-body p{margin:6px 0 10px;font-size:14px;line-height:1.6;color:#3c4257}
+
+.svg-wrap{background:#fbfcff;border-radius:14px;border:1px solid var(--line);padding:6px;margin-bottom:12px}
+svg{width:100%;height:auto;display:block}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+
+.s1-draggable{fill:#6c8bff;fill-opacity:.55;stroke:#4f6fe0;stroke-width:2.5;touch-action:none;cursor:grab}
+.s1-tile-placed{fill:#6c8bff;fill-opacity:.4;stroke:#4f6fe0;stroke-width:1.6}
+.s2-cell{fill:#6c8bff;fill-opacity:.35;stroke:#4f6fe0;stroke-width:1.3;transform-box:fill-box;transform-origin:center;animation:tilepop .3s ease}
+.s4-drag{touch-action:none;cursor:grab}
+@keyframes tilepop{from{opacity:0;transform:scale(.55)} to{opacity:1;transform:scale(1)}}
+
+.counter-text{text-align:center;font-size:15px;font-weight:800;color:var(--primary-dark);margin:6px 0 10px}
+
+.proof-block{background:#fbfcff;border:1.5px solid var(--line);border-radius:14px;padding:14px 18px;margin:10px 0;font-size:14.5px;line-height:2.3;color:#2b2f42}
+.proof-block .hint{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--primary);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 3px;color:var(--primary-dark)}
+.blank.wide{width:96px}
+.blank:focus{outline:none;border-bottom-color:var(--primary-dark);background:#eef2ff}
+.blank.correct{border-bottom-color:#3fbf91;background:#e9faf3;color:#1e7a53}
+.blank.wrong{border-bottom-color:#e97a7a;background:#fdecec;color:#b3261e}
+
+.btn{border:none;border-radius:12px;padding:10px 16px;font-size:13.5px;font-weight:700;cursor:pointer;background:#eef1fa;color:var(--ink);font-family:inherit;transition:.15s}
+.btn:hover{background:#e2e7f8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-check{background:var(--primary);color:#fff}
+.btn-check:hover{background:var(--primary-dark)}
+.btn-primary{background:var(--primary);color:#fff;padding:11px 22px}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;justify-content:center}
+
+.feedback{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13.5px;line-height:1.6;display:none}
+.feedback.success{display:block;background:#e7f8f0;color:#1e7a53;border:1px solid #b7ead2}
+.feedback.error{display:block;background:#fdeceb;color:#b3261e;border:1px solid #f6c6c2}
+
+.summary-box{margin-top:8px;padding:14px 16px;border-radius:12px;background:linear-gradient(135deg,#eef2ff,#fff5f8);border:1.5px dashed #b9c4f5;font-size:13.5px;line-height:1.7}
+.summary-box b{color:var(--primary-dark)}
+
+.property-box{background:#eef2ff;border:2px solid #c9d4fb;border-radius:14px;padding:18px 20px;margin:18px 0}
+.property-box .tag{font-size:12px;font-weight:800;color:var(--primary-dark);letter-spacing:.3px;margin-bottom:8px}
+table.sumtable{border-collapse:collapse;margin:14px auto;font-size:14.5px;width:100%;max-width:420px}
+table.sumtable td,table.sumtable th{border:1px solid #c9d4fb;padding:9px 10px;text-align:center}
+table.sumtable th{background:#dfe6fd;color:var(--primary-dark)}
+
+.done-wrap{text-align:center;padding:30px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">닮은 도형의 넓이의 비 · 부피의 비</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+  <div class="goal-banner">
+    <span style="display:block;font-size:12px;font-weight:700;color:#8b93c2;margin-bottom:4px">함께 탐구</span>
+    <b>닮음비를 알면 넓이의 비와 부피의 비도 알 수 있을까?</b><br>
+    정사각형과 정육면체를 직접 채워보면서 그 답을 찾아봅시다.
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="reveal show" id="step1">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">1</div><h2>정사각형으로 넓이의 비 살펴보기</h2></div>
+      <div class="step-body">
+        <p>모든 정사각형은 서로 닮음입니다. 작은 정사각형(한 변의 길이 1)을 큰 정사각형 안에 <b>직접 드래그해서</b> 빈틈없이 채우면 몇 개가 필요할까요?</p>
+        <div class="svg-wrap"><svg id="s1svg" viewBox="0 0 620 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="counter-text" id="s1counter">채워진 개수: 0 / 4</div>
+        <div class="btn-row">
+          <button class="btn" onclick="s1Reset()">다시 보기</button>
+        </div>
+
+        <div class="reveal" id="s1-blank1">
+          <div class="proof-block">닮음비가 1 : 2 일 때, 넓이의 비는 1 : <input class="blank" id="s1-ans1" inputmode="numeric" maxlength="3"></div>
+          <button class="btn btn-check" onclick="s1Check1()">확인</button>
+          <div class="feedback" id="s1-fb1"></div>
+        </div>
+
+        <div class="reveal" id="s1-switchWrap">
+          <div class="btn-row"><button class="btn" onclick="s1SwitchTo3()">이번엔 닮음비 1 : 3 으로 다시 채워보기</button></div>
+        </div>
+
+        <div class="reveal" id="s1-blank2">
+          <div class="proof-block">닮음비가 1 : 3 일 때, 넓이의 비는 1 : <input class="blank" id="s1-ans2" inputmode="numeric" maxlength="3"></div>
+          <button class="btn btn-check" onclick="s1Check2()">확인</button>
+          <div class="feedback" id="s1-fb2"></div>
+        </div>
+
+        <div class="reveal" id="s1-blank3">
+          <div class="proof-block">두 결과 (1:4, 1:9)를 보면, 닮은 두 도형의 넓이의 비는 닮음비의 (<input class="blank wide" id="s1-ans3">)과 같다.</div>
+          <button class="btn btn-check" onclick="s1Check3()">확인</button>
+          <div class="feedback" id="s1-fb3"></div>
+          <div class="reveal" id="s1-nextWrap"><div class="btn-row"><button class="btn btn-primary" onclick="unlock('step2')">다음으로 →</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="reveal" id="step2">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">2</div><h2>왜 제곱이 될까? (직사각형으로 원리 이해하기)</h2></div>
+      <div class="step-body">
+        <p>정사각형이 아니어도 마찬가지일까요? 가로 4칸, 세로 6칸인 직사각형을 <b>가로로 2배</b>, 그다음 <b>세로로도 2배</b>로 늘려서 나란히 비교해 봅시다.</p>
+        <div class="svg-wrap"><svg id="s2svg" viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="counter-text" id="s2counter">넓이: 4 × 6 = 24칸</div>
+        <div class="btn-row">
+          <button class="btn btn-check" id="s2btnA" onclick="s2StepA()">① 가로를 2배로 늘리기</button>
+          <button class="btn btn-check" id="s2btnB" onclick="s2StepB()" disabled>② 세로도 2배로 늘리기</button>
+          <button class="btn" onclick="s2Reset()">처음부터 다시</button>
+        </div>
+
+        <div class="reveal" id="s2-blank1">
+          <div class="proof-block">가로가 2배, 세로도 2배가 되면 넓이는 2 × 2 = (<input class="blank" id="s2-ans1">) 배가 된다.</div>
+          <button class="btn btn-check" onclick="s2Check1()">확인</button>
+          <div class="feedback" id="s2-fb1"></div>
+          <div class="reveal" id="s2-nextWrap"><div class="btn-row"><button class="btn btn-primary" onclick="unlock('step3')">다음으로 →</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="reveal" id="step3">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">3</div><h2>일반적인 도형에서도 확인하기</h2></div>
+      <div class="step-body">
+        <p>닮음비가 정수가 아니어도 성립할까요? 아래 두 직각삼각형은 닮음비가 2 : 3 입니다. 각각의 넓이를 구하고, 넓이의 비를 확인해 봅시다.</p>
+        <div class="svg-wrap"><svg id="s3svg" viewBox="0 0 620 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+        <div class="proof-block">
+          작은 삼각형의 넓이 = 6 × 8 ÷ 2 = <input class="blank" id="s3-ans-a"> ,&nbsp;
+          큰 삼각형의 넓이 = 9 × 12 ÷ 2 = <input class="blank" id="s3-ans-b">
+        </div>
+        <button class="btn btn-check" onclick="s3CheckAreas()">확인</button>
+        <div class="feedback" id="s3-fb-areas"></div>
+
+        <div class="reveal" id="s3-blank2">
+          <div class="proof-block">
+            두 삼각형의 넓이의 비는 (<input class="blank" id="s3-raw-a"> : <input class="blank" id="s3-raw-b">) = (<input class="blank" id="s3-red-a"> : <input class="blank" id="s3-red-b">) 이다.
+            <span class="hint">※ 두 번째 괄호는 반드시 더 이상 약분되지 않는 기약분수(가장 간단한 자연수의 비) 형태로 적으세요.</span>
+          </div>
+          <button class="btn btn-check" onclick="s3CheckRatio()">확인</button>
+          <div class="feedback" id="s3-fb-ratio"></div>
+        </div>
+
+        <div class="reveal" id="s3-blank3">
+          <div class="proof-block">닮음비 2:3 의 제곱은 4:9 이다. 방금 구한 넓이의 비와 (<button class="btn" style="padding:5px 12px" onclick="s3Choose(true,this)">같다</button><button class="btn" style="padding:5px 12px" onclick="s3Choose(false,this)">다르다</button>)</div>
+          <div class="feedback" id="s3-fb-final"></div>
+          <div class="reveal" id="s3-nextWrap"><div class="btn-row"><button class="btn btn-primary" onclick="unlock('step4')">다음으로 →</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="reveal" id="step4">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">4</div><h2>정육면체로 부피의 비 살펴보기</h2></div>
+      <div class="step-body">
+        <p>이번엔 입체도형입니다. 작은 정육면체(한 변의 길이 1)를 큰 정육면체(닮음비 1:2, 한 변의 길이 2) 안에 채우면 몇 개가 필요할까요? <b>작은 정육면체를 움직여서, 직접 커다란 정육면체를 채워봅시다.</b> (매번 반짝이는 점선 칸이 지금 채울 자리예요)</p>
+        <div class="svg-wrap"><svg id="s4svg" viewBox="0 0 480 370" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="counter-text" id="s4counter">채워진 개수: 0 / 8</div>
+        <div class="btn-row">
+          <button class="btn" onclick="s4Reset()">다시 보기</button>
+        </div>
+
+        <div class="reveal" id="s4-q1">
+          <div class="proof-block">큰 정육면체에는 작은 정육면체가 몇 개 들어갈까요? 총 (<input class="blank" id="s4-ans1">) 개</div>
+          <button class="btn btn-check" onclick="s4Check1()">확인</button>
+          <div class="feedback" id="s4-fb1"></div>
+        </div>
+
+        <div class="reveal" id="s4-q2">
+          <div class="proof-block">닮음비가 1:2 인 입체도형의 부피의 비는 (<input class="blank" id="s4-ans2a">) : (<input class="blank" id="s4-ans2b">) 이다.</div>
+          <button class="btn btn-check" onclick="s4Check2()">확인</button>
+          <div class="feedback" id="s4-fb2"></div>
+        </div>
+
+        <div class="reveal" id="s4-q3">
+          <div class="proof-block">닮음비가 1 : k 이면, 부피의 비는 1 : k 를 세 번 곱한 값, 즉 닮음비의 (<input class="blank wide" id="s4-ans3">)과 같다.</div>
+          <button class="btn btn-check" onclick="s4Check3()">확인</button>
+          <div class="feedback" id="s4-fb3"></div>
+          <div class="reveal" id="s4-nextWrap"><div class="btn-row"><button class="btn btn-primary" onclick="unlock('step5')">다음으로 →</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="reveal" id="step5">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">5</div><h2>일반적인 입체도형에서도 확인하기</h2></div>
+      <div class="step-body">
+        <p>두 직육면체는 닮음비가 2 : 3 입니다. 각각의 부피를 구하고, 부피의 비를 확인해 봅시다.</p>
+        <div class="svg-wrap"><svg id="s5svg" viewBox="0 0 620 360" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+        <div class="proof-block">
+          작은 직육면체의 부피 = 4 × 6 × 10 = <input class="blank" id="s5-ans-a"> ,&nbsp;
+          큰 직육면체의 부피 = 6 × 9 × 15 = <input class="blank" id="s5-ans-b">
+        </div>
+        <button class="btn btn-check" onclick="s5CheckVol()">확인</button>
+        <div class="feedback" id="s5-fb-vol"></div>
+
+        <div class="reveal" id="s5-blank2">
+          <div class="proof-block">두 직육면체의 부피의 비는 <input class="blank" id="s5-ratio-a"> : <input class="blank" id="s5-ratio-b"> 이다.</div>
+          <button class="btn btn-check" onclick="s5CheckRatio()">확인</button>
+          <div class="feedback" id="s5-fb-ratio"></div>
+        </div>
+
+        <div class="reveal" id="s5-blank3">
+          <div class="proof-block">닮음비 2:3 의 세제곱은 8:27 이다. 방금 구한 부피의 비를 가장 간단한 자연수의 비로 나타내면 8:27 과 (<button class="btn" style="padding:5px 12px" onclick="s5Choose(true,this)">같다</button><button class="btn" style="padding:5px 12px" onclick="s5Choose(false,this)">다르다</button>)</div>
+          <div class="feedback" id="s5-fb-final"></div>
+          <div class="reveal" id="s5-nextWrap"><div class="btn-row"><button class="btn btn-primary" onclick="unlock('step6')">정리하기 →</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="reveal" id="step6">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">6</div><h2>정리 및 적용</h2></div>
+      <div class="step-body">
+        <div class="property-box">
+          <div class="tag">핵심 정리</div>
+          닮은 두 도형의 닮음비가 <b>m : n</b> 일 때,
+          <table class="sumtable">
+            <tr><th>닮음비</th><td>m : n</td></tr>
+            <tr><th>넓이의 비</th><td>m² : n²</td></tr>
+            <tr><th>부피의 비</th><td>m³ : n³</td></tr>
+          </table>
+        </div>
+
+        <div class="proof-block">
+          [문제1] 닮음비가 2 : 5 인 두 도형이 있다.<br>
+          넓이의 비는 4 : (<input class="blank" id="s6-a1">) , 부피의 비는 8 : (<input class="blank" id="s6-a2">) 이다.
+        </div>
+        <button class="btn btn-check" onclick="s6Check1()">확인</button>
+        <div class="feedback" id="s6-fb1"></div>
+
+        <div class="reveal" id="s6-q2">
+          <div class="proof-block">
+            [문제2] 두 도형의 넓이의 비가 9 : 16 일 때, 닮음비는 3 : (<input class="blank" id="s6-a3">) 이다.
+          </div>
+          <button class="btn btn-check" onclick="s6Check2()">확인</button>
+          <div class="feedback" id="s6-fb2"></div>
+        </div>
+
+        <div class="reveal" id="s6-done">
+          <div class="done-wrap">
+            <div class="done-icon">🎉</div>
+            <div style="font-size:16px;font-weight:800">학습을 완료했습니다!</div>
+            <div style="color:var(--muted);font-size:13.5px;margin-top:6px">넓이의 비 = 닮음비², 부피의 비 = 닮음비³</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'similarity-area-volume-ratio' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+const PROJ_ANGLE = Math.PI/6, PROJ_ZF = 0.5;
+function project3D(p, scale){
+  const [x,y,z] = p;
+  const px = x + z*Math.cos(PROJ_ANGLE)*PROJ_ZF;
+  const py = -y - z*Math.sin(PROJ_ANGLE)*PROJ_ZF;
+  return [px*scale, py*scale];
+}
+function centroidOf(pts){ const cx=pts.reduce((s,p)=>s+p[0],0)/pts.length, cy=pts.reduce((s,p)=>s+p[1],0)/pts.length; return {x:cx,y:cy}; }
+function ratioMatches(a,b,ra,rb){
+  if(!isFinite(a)||!isFinite(b)||a<=0||b<=0) return false;
+  const lhs=a*rb, rhs=b*ra;
+  return Math.abs(lhs-rhs) < 0.02*Math.max(Math.abs(lhs),Math.abs(rhs),1);
+}
+function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.05); }
+function gcd(a,b){ a=Math.round(Math.abs(a)); b=Math.round(Math.abs(b)); while(b){ const t=b; b=a%b; a=t; } return a; }
+function sideLabelSVG(p1, p2, centroid, value, bulge){
+  bulge = bulge || 16;
+  const mid=[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2];
+  const ex = p2[0]-p1[0], ey = p2[1]-p1[1], elen = Math.hypot(ex,ey)||1;
+  let dx = -ey/elen, dy = ex/elen;
+  const toMid = [mid[0]-centroid.x, mid[1]-centroid.y];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" d="M ${p1[0]} ${p1[1]} Q ${ctrl[0]} ${ctrl[1]} ${p2[0]} ${p2[1]}"></path>`+
+    `<text class="edgelen" x="${labelPt[0]}" y="${labelPt[1]}">${value}</text>`;
+}
+function unlock(id){
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(()=>{ el.scrollIntoView({behavior:'smooth', block:'start'}); }, 150);
+}
+function toSVGPoint(svg, evt){
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+/* 박스(직육면체) 공용: 앞면(z=0)·윗면(y=h)·오른쪽면(x=w)만 보이고,
+   대각선 반대편 꼭짓점(왼쪽·아래·뒤 세 면이 만나는 점)만 가려짐 — node로 투영 좌표 검증 완료.
+   위치를 옮겨 그릴 수 있도록 (ox,oy,oz) 오프셋을 지원 (정육면체 안의 작은 정육면체 하나하나를 그릴 때 사용) */
+const BOX_EDGES = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+const BOX_HIDDEN = [[3,0],[2,3],[3,7]];
+const BOX_FACES = { front:[0,1,5,4], top:[4,5,6,7], right:[1,2,6,5] };
+function boxLocalPtsAt(ox,oy,oz,w,h,d){
+  return [[0,0,0],[w,0,0],[w,0,d],[0,0,d],[0,h,0],[w,h,0],[w,h,d],[0,h,d]].map(p=>[p[0]+ox,p[1]+oy,p[2]+oz]);
+}
+function boxScreenPtsAt(ox,oy,oz,w,h,d,anchor,scale){
+  return boxLocalPtsAt(ox,oy,oz,w,h,d).map(p=>{ const pr=project3D(p,scale); return [anchor.x+pr[0], anchor.y+pr[1]]; });
+}
+function boxIsHidden(i,j){ return BOX_HIDDEN.some(([a,b])=>(a===i&&b===j)||(a===j&&b===i)); }
+function drawBoxOutline(pts, color, strokeW){
+  let h='';
+  BOX_EDGES.forEach(([i,j])=>{
+    const hidden = boxIsHidden(i,j);
+    h += `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="${color}" stroke-width="${strokeW||2.2}"${hidden?' stroke-dasharray="5 4"':''}></line>`;
+  });
+  return h;
+}
+function drawUnitCubeFilled(pts, color){
+  let h = '';
+  Object.values(BOX_FACES).forEach(idx=>{
+    const poly = idx.map(i=>pts[i].join(',')).join(' ');
+    h += `<polygon points="${poly}" fill="${color}" fill-opacity="0.4"></polygon>`;
+  });
+  h += drawBoxOutline(pts, color, 1.6);
+  return h;
+}
+
+const state = {
+  s1:{k:2, cells:[], filled:0, bx:0, by:0},
+  s4:{k:2, order:[], idx:0, filled:0}
+};
+
+/* ════════════════════════════════
+   STEP 1 : 정사각형 드래그 타일링
+════════════════════════════════ */
+const S1_CELL = 50, S1_SRC = {x:60,y:190}, S1_BX = 260, S1_BOTTOM = 270;
+function s1Draw(k){
+  state.s1.k = k; state.s1.filled = 0; state.s1.cells = new Array(k*k).fill(false);
+  const side = S1_CELL*k;
+  const by = S1_BOTTOM - side;
+  state.s1.bx = S1_BX; state.s1.by = by;
+  const smallC = {x:S1_SRC.x+S1_CELL/2, y:S1_SRC.y+S1_CELL/2};
+  const bigC = {x:S1_BX+side/2, y:by+side/2};
+  let html = '';
+  html += sideLabelSVG([S1_SRC.x,S1_SRC.y+S1_CELL],[S1_SRC.x+S1_CELL,S1_SRC.y+S1_CELL], smallC, 1, 16);
+  html += `<text class="vlabel" x="${smallC.x}" y="${S1_SRC.y-16}" fill="#4f6fe0">작은 정사각형</text>`;
+  html += `<rect x="${S1_BX}" y="${by}" width="${side}" height="${side}" fill="none" stroke="#e05a20" stroke-width="2.5"></rect>`;
+  for(let i=1;i<k;i++){
+    html += `<line x1="${S1_BX+i*S1_CELL}" y1="${by}" x2="${S1_BX+i*S1_CELL}" y2="${by+side}" stroke="#e7bfa8" stroke-width="1.3" stroke-dasharray="4 3"></line>`;
+    html += `<line x1="${S1_BX}" y1="${by+i*S1_CELL}" x2="${S1_BX+side}" y2="${by+i*S1_CELL}" stroke="#e7bfa8" stroke-width="1.3" stroke-dasharray="4 3"></line>`;
+  }
+  html += sideLabelSVG([S1_BX,by+side],[S1_BX+side,by+side], bigC, k, 16);
+  html += `<text class="vlabel" x="${bigC.x}" y="${by-16}" fill="#e05a20">큰 정사각형 (닮음비 1:${k})</text>`;
+  html += `<g id="s1tiles"></g>`;
+  document.getElementById('s1svg').innerHTML = html;
+  document.getElementById('s1counter').textContent = `채워진 개수: 0 / ${k*k}`;
+  s1MakeDraggable();
+}
+function s1Reset(){ s1Draw(state.s1.k); }
+function s1MakeDraggable(){
+  const svg = document.getElementById('s1svg');
+  const old = document.getElementById('s1-drag');
+  if(old) old.remove();
+  const drag = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  drag.setAttribute('id','s1-drag');
+  drag.setAttribute('x', S1_SRC.x); drag.setAttribute('y', S1_SRC.y);
+  drag.setAttribute('width', S1_CELL); drag.setAttribute('height', S1_CELL);
+  drag.setAttribute('class','s1-draggable');
+  svg.appendChild(drag);
+  let dragging = false, offset = {x:0,y:0};
+  drag.addEventListener('pointerdown', evt=>{
+    dragging = true;
+    drag.setPointerCapture(evt.pointerId);
+    const p = toSVGPoint(svg, evt);
+    offset.x = p.x - parseFloat(drag.getAttribute('x'));
+    offset.y = p.y - parseFloat(drag.getAttribute('y'));
+    drag.style.cursor = 'grabbing';
+  });
+  drag.addEventListener('pointermove', evt=>{
+    if(!dragging) return;
+    const p = toSVGPoint(svg, evt);
+    drag.setAttribute('x', p.x - offset.x);
+    drag.setAttribute('y', p.y - offset.y);
+  });
+  drag.addEventListener('pointerup', evt=>{
+    if(!dragging) return;
+    dragging = false;
+    drag.style.cursor = 'grab';
+    const cx = parseFloat(drag.getAttribute('x')) + S1_CELL/2;
+    const cy = parseFloat(drag.getAttribute('y')) + S1_CELL/2;
+    const k = state.s1.k;
+    let bestIdx = -1, bestDist = Infinity;
+    for(let i=0;i<k*k;i++){
+      if(state.s1.cells[i]) continue;
+      const col = i%k, row = Math.floor(i/k);
+      const ccx = state.s1.bx + col*S1_CELL + S1_CELL/2, ccy = state.s1.by + row*S1_CELL + S1_CELL/2;
+      const d = Math.hypot(cx-ccx, cy-ccy);
+      if(d < bestDist){ bestDist = d; bestIdx = i; }
+    }
+    if(bestIdx >= 0 && bestDist < S1_CELL*0.7){
+      state.s1.cells[bestIdx] = true;
+      state.s1.filled++;
+      const col = bestIdx%k, row = Math.floor(bestIdx/k);
+      const tile = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      tile.setAttribute('x', state.s1.bx + col*S1_CELL);
+      tile.setAttribute('y', state.s1.by + row*S1_CELL);
+      tile.setAttribute('width', S1_CELL); tile.setAttribute('height', S1_CELL);
+      tile.setAttribute('class','s1-tile-placed');
+      document.getElementById('s1tiles').appendChild(tile);
+      document.getElementById('s1counter').textContent = `채워진 개수: ${state.s1.filled} / ${k*k}`;
+      if(state.s1.filled >= k*k){
+        drag.style.display = 'none';
+        if(k===2) unlock('s1-blank1'); else unlock('s1-blank2');
+      } else {
+        drag.setAttribute('x', S1_SRC.x); drag.setAttribute('y', S1_SRC.y);
+      }
+    } else {
+      drag.setAttribute('x', S1_SRC.x); drag.setAttribute('y', S1_SRC.y);
+    }
+  });
+}
+function s1SwitchTo3(){ s1Draw(3); document.getElementById('s1svg').scrollIntoView({behavior:'smooth', block:'center'}); }
+function s1Check1(){
+  const v = parseFloat(document.getElementById('s1-ans1').value);
+  const ok = numMatches(v,4,0.01);
+  document.getElementById('s1-ans1').classList.toggle('correct',ok);
+  document.getElementById('s1-ans1').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s1-fb1');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 1:2의 닮음비에서 넓이의 비는 1:4예요.'; unlock('s1-switchWrap'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 위에서 몇 칸이 채워졌는지 다시 세어보세요.'; }
+}
+function s1Check2(){
+  const v = parseFloat(document.getElementById('s1-ans2').value);
+  const ok = numMatches(v,9,0.01);
+  document.getElementById('s1-ans2').classList.toggle('correct',ok);
+  document.getElementById('s1-ans2').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s1-fb2');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 1:3의 닮음비에서 넓이의 비는 1:9예요.'; unlock('s1-blank3'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 위에서 몇 칸이 채워졌는지 다시 세어보세요.'; }
+}
+function s1Check3(){
+  const v = String(document.getElementById('s1-ans3').value||'').trim().replace(/\s+/g,'');
+  const ok = v==='제곱' || v==='제곱이다' || v==='제곱값' || v==='2제곱';
+  document.getElementById('s1-ans3').classList.toggle('correct',ok);
+  document.getElementById('s1-ans3').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s1-fb3');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 넓이의 비 = (닮음비)² 입니다.'; unlock('s1-nextWrap'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 힌트: 1:4는 1:2의 무엇일까요? (2×2)'; }
+}
+
+/* ════════════════════════════════
+   STEP 2 : 직사각형 가로·세로 확대 (누적 비교)
+════════════════════════════════ */
+const S2_UNIT = 15, S2_BOTTOM = 260;
+function s2CellsGroup(x, cols, rows, top){
+  let h = '';
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      h += `<rect x="${x+c*S2_UNIT}" y="${top+r*S2_UNIT}" width="${S2_UNIT}" height="${S2_UNIT}" class="s2-cell"></rect>`;
+    }
+  }
+  h += `<rect x="${x}" y="${top}" width="${cols*S2_UNIT}" height="${rows*S2_UNIT}" fill="none" stroke="#4f6fe0" stroke-width="2.2"></rect>`;
+  h += `<text x="${x+cols*S2_UNIT/2}" y="${top-9}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2b2f42">가로 ${cols}</text>`;
+  h += `<text x="${x-8}" y="${top+rows*S2_UNIT/2+4}" text-anchor="end" font-size="12.5" font-weight="700" fill="#2b2f42">세로 ${rows}</text>`;
+  h += `<text x="${x+cols*S2_UNIT/2}" y="${top+rows*S2_UNIT+20}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#4f6fe0">넓이 ${cols*rows}</text>`;
+  return h;
+}
+function s2Draw(){
+  document.getElementById('s2svg').innerHTML = s2CellsGroup(60,4,6,170);
+  document.getElementById('s2counter').textContent = '넓이: 4 × 6 = 24칸';
+  document.getElementById('s2btnA').disabled = false;
+  document.getElementById('s2btnB').disabled = true;
+}
+function s2StepA(){
+  document.getElementById('s2svg').innerHTML += s2CellsGroup(170,8,6,170);
+  document.getElementById('s2counter').textContent = '24칸 → 48칸 (가로만 2배가 되니, 넓이도 2배)';
+  document.getElementById('s2btnA').disabled = true;
+  document.getElementById('s2btnB').disabled = false;
+}
+function s2StepB(){
+  document.getElementById('s2svg').innerHTML += s2CellsGroup(340,8,12,80);
+  document.getElementById('s2counter').textContent = '48칸 → 96칸 (세로도 2배가 되니, 처음의 4배)';
+  document.getElementById('s2btnB').disabled = true;
+  unlock('s2-blank1');
+}
+function s2Reset(){ s2Draw(); }
+function s2Check1(){
+  const v = parseFloat(document.getElementById('s2-ans1').value);
+  const ok = numMatches(v,4,0.01);
+  document.getElementById('s2-ans1').classList.toggle('correct',ok);
+  document.getElementById('s2-ans1').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s2-fb1');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 가로·세로가 각각 k배가 되면 넓이는 k×k = k²배가 돼요.'; unlock('s2-nextWrap'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 24칸에서 96칸이 되었어요. 96 ÷ 24를 계산해보세요.'; }
+}
+
+/* ════════════════════════════════
+   STEP 3 : 직각삼각형 (닮음비 2:3)
+════════════════════════════════ */
+function s3Draw(){
+  const unit = 12;
+  const small = {x:80, y:260, base:6*unit, height:8*unit};
+  const big = {x:300, y:260, base:9*unit, height:12*unit};
+  function tri(o, color){
+    const A=[o.x,o.y], B=[o.x+o.base,o.y], C=[o.x,o.y-o.height];
+    const cen = centroidOf([A,B,C]);
+    let h = `<polygon points="${A} ${B} ${C}" fill="${color}" fill-opacity="0.18" stroke="${color}" stroke-width="2.5"></polygon>`;
+    h += `<polyline points="${o.x+14},${o.y} ${o.x+14},${o.y-14} ${o.x},${o.y-14}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
+    h += sideLabelSVG(A,B,cen, o.base/unit, 15);
+    h += sideLabelSVG(A,C,cen, o.height/unit, 15);
+    return h;
+  }
+  let html = tri(small,'#4f6fe0') + tri(big,'#e05a20');
+  html += `<text class="vlabel" x="${small.x+small.base/2}" y="${small.y+52}" fill="#4f6fe0">작은 삼각형</text>`;
+  html += `<text class="vlabel" x="${big.x+big.base/2}" y="${big.y+52}" fill="#e05a20">큰 삼각형 (닮음비 2:3)</text>`;
+  document.getElementById('s3svg').innerHTML = html;
+}
+function s3CheckAreas(){
+  const a = parseFloat(document.getElementById('s3-ans-a').value);
+  const b = parseFloat(document.getElementById('s3-ans-b').value);
+  const okA = numMatches(a,24,0.01), okB = numMatches(b,54,0.01);
+  document.getElementById('s3-ans-a').classList.toggle('correct',okA); document.getElementById('s3-ans-a').classList.toggle('wrong',!okA);
+  document.getElementById('s3-ans-b').classList.toggle('correct',okB); document.getElementById('s3-ans-b').classList.toggle('wrong',!okB);
+  const fb = document.getElementById('s3-fb-areas');
+  if(okA&&okB){ fb.className='feedback success'; fb.textContent='🎉 정답이에요!'; unlock('s3-blank2'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 넓이 = 밑변 × 높이 ÷ 2 로 다시 계산해보세요.'; }
+}
+function s3CheckRatio(){
+  const ra = parseFloat(document.getElementById('s3-raw-a').value);
+  const rb = parseFloat(document.getElementById('s3-raw-b').value);
+  const sa = parseFloat(document.getElementById('s3-red-a').value);
+  const sb = parseFloat(document.getElementById('s3-red-b').value);
+  const okRaw = ratioMatches(ra,rb,24,54);
+  const okRed = ratioMatches(sa,sb,24,54) && Number.isInteger(sa) && Number.isInteger(sb) && gcd(sa,sb)===1;
+  [['s3-raw-a',okRaw],['s3-raw-b',okRaw],['s3-red-a',okRed],['s3-red-b',okRed]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok);
+    document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('s3-fb-ratio');
+  if(okRaw && okRed){ fb.className='feedback success'; fb.textContent='🎉 정답이에요!'; unlock('s3-blank3'); }
+  else if(!okRaw){ fb.className='feedback error'; fb.textContent='❌ 첫 번째 괄호에는 방금 구한 넓이 그대로의 비(24:54 등)를 적어보세요.'; }
+  else{ fb.className='feedback error'; fb.textContent='❌ 두 번째 괄호는 더는 약분이 안 되는 기약분수(가장 간단한 자연수의 비)여야 해요.'; }
+}
+function s3Choose(isEqual, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.style.background='#eef1fa'); btn.style.background='#c9d4fb'; }
+  const fb = document.getElementById('s3-fb-final');
+  if(isEqual){ fb.className='feedback success'; fb.textContent='🎉 맞아요! 24:54를 기약분수로 나타내면 4:9와 같아요. 넓이의 비 = 닮음비²'; unlock('s3-nextWrap'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 24:54를 6으로 나누어 간단히 해보세요.'; }
+}
+
+/* ════════════════════════════════
+   STEP 4 : 정육면체 드래그로 채우기
+════════════════════════════════ */
+const S4_SCALE = 50, S4_SRC_A = {x:70,y:280}, S4_BIG_A = {x:260,y:280};
+function s4CellCenter(a,b,c){
+  const pr = project3D([a+0.5,b+0.5,c+0.5], S4_SCALE);
+  return {x:S4_BIG_A.x+pr[0], y:S4_BIG_A.y+pr[1]};
+}
+function s4BuildOrder(k){
+  const cells = [];
+  for(let a=0;a<k;a++) for(let b=0;b<k;b++) for(let c=0;c<k;c++) cells.push([a,b,c]);
+  // 화면에 먼저 보이는(안쪽/뒤쪽) 칸부터 채워야, 나중에 채우는 칸이 앞의 칸을 가려도 문제가 없음
+  cells.sort((p,q)=>{
+    const sp = (p[2]+0.5) - (p[0]+0.5) - (p[1]+0.5);
+    const sq = (q[2]+0.5) - (q[0]+0.5) - (q[1]+0.5);
+    return sq - sp;
+  });
+  return cells;
+}
+function s4Draw(){
+  state.s4.k = 2;
+  state.s4.order = s4BuildOrder(2);
+  state.s4.idx = 0;
+  state.s4.filled = 0;
+  s4Render();
+}
+function s4Render(){
+  const k = state.s4.k;
+  const bigPts = boxScreenPtsAt(0,0,0,k,k,k,S4_BIG_A,S4_SCALE);
+  const smallRefPts = boxScreenPtsAt(0,0,0,1,1,1,S4_SRC_A,S4_SCALE);
+  const bigC = centroidOf(bigPts), refC = centroidOf(smallRefPts);
+  let html = '';
+  html += drawBoxOutline(smallRefPts,'#4f6fe0');
+  html += sideLabelSVG(smallRefPts[0],smallRefPts[1],refC,1,14);
+  html += `<text class="vlabel" x="${refC.x}" y="${S4_SRC_A.y+56}" fill="#4f6fe0">작은 정육면체</text>`;
+  html += `<g id="s4placed"></g>`;
+  html += `<g id="s4target"></g>`;
+  html += drawBoxOutline(bigPts,'#e05a20');
+  html += sideLabelSVG(bigPts[0],bigPts[1],bigC,2,18);
+  html += `<text class="vlabel" x="${bigC.x}" y="${S4_BIG_A.y+56}" fill="#e05a20">큰 정육면체 (닮음비 1:2)</text>`;
+  document.getElementById('s4svg').innerHTML = html;
+  document.getElementById('s4counter').textContent = `채워진 개수: 0 / ${k*k*k}`;
+  s4ShowNextTarget();
+  s4MakeDraggable();
+}
+function s4TargetOutline(pts){
+  let h = '';
+  BOX_EDGES.forEach(([i,j])=>{
+    h += `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="#f59e0b" stroke-width="2.4" stroke-dasharray="3 3" opacity="0.95"></line>`;
+  });
+  return h;
+}
+function s4ShowNextTarget(){
+  if(state.s4.idx >= state.s4.order.length){ document.getElementById('s4target').innerHTML=''; return; }
+  const [a,b,c] = state.s4.order[state.s4.idx];
+  const pts = boxScreenPtsAt(a,b,c,1,1,1,S4_BIG_A,S4_SCALE);
+  document.getElementById('s4target').innerHTML = s4TargetOutline(pts);
+}
+function s4PlaceCell(cell){
+  const [a,b,c] = cell;
+  const pts = boxScreenPtsAt(a,b,c,1,1,1,S4_BIG_A,S4_SCALE);
+  const wrap = document.createElementNS('http://www.w3.org/2000/svg','g');
+  wrap.innerHTML = drawUnitCubeFilled(pts, '#6c8bff');
+  document.getElementById('s4placed').appendChild(wrap);
+  state.s4.filled++;
+  document.getElementById('s4counter').textContent = `채워진 개수: ${state.s4.filled} / ${state.s4.order.length}`;
+}
+function s4MakeDraggable(){
+  const svg = document.getElementById('s4svg');
+  const old = document.getElementById('s4-drag');
+  if(old) old.remove();
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('id','s4-drag');
+  g.setAttribute('class','s4-drag');
+  const basePts = boxScreenPtsAt(0,0,0,1,1,1,S4_SRC_A,S4_SCALE);
+  g.innerHTML = drawUnitCubeFilled(basePts, '#6c8bff');
+  svg.appendChild(g);
+  g.setAttribute('transform','translate(0,0)');
+  const refCenter = centroidOf(basePts);
+  let dragging = false, start = {x:0,y:0};
+  g.addEventListener('pointerdown', evt=>{
+    if(state.s4.idx >= state.s4.order.length) return;
+    dragging = true;
+    g.setPointerCapture(evt.pointerId);
+    start = toSVGPoint(svg, evt);
+    g.style.cursor = 'grabbing';
+  });
+  g.addEventListener('pointermove', evt=>{
+    if(!dragging) return;
+    const p = toSVGPoint(svg, evt);
+    g.setAttribute('transform', `translate(${p.x-start.x},${p.y-start.y})`);
+  });
+  g.addEventListener('pointerup', evt=>{
+    if(!dragging) return;
+    dragging = false;
+    g.style.cursor = 'grab';
+    const p = toSVGPoint(svg, evt);
+    const curCenter = {x:refCenter.x + (p.x-start.x), y:refCenter.y + (p.y-start.y)};
+    const target = state.s4.order[state.s4.idx];
+    const tCenter = s4CellCenter(target[0],target[1],target[2]);
+    const dist = Math.hypot(curCenter.x-tCenter.x, curCenter.y-tCenter.y);
+    if(dist < 38){
+      s4PlaceCell(target);
+      state.s4.idx++;
+      g.setAttribute('transform','translate(0,0)');
+      if(state.s4.idx >= state.s4.order.length){
+        g.style.display = 'none';
+        document.getElementById('s4target').innerHTML = '';
+        unlock('s4-q1');
+      } else {
+        s4ShowNextTarget();
+      }
+    } else {
+      g.setAttribute('transform','translate(0,0)');
+    }
+  });
+}
+function s4Reset(){ s4Draw(); }
+function s4Check1(){
+  const v = parseFloat(document.getElementById('s4-ans1').value);
+  const ok = numMatches(v,8,0.01);
+  document.getElementById('s4-ans1').classList.toggle('correct',ok); document.getElementById('s4-ans1').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s4-fb1');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 총 8개가 들어가요.'; unlock('s4-q2'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 방금 몇 개를 채웠는지 위 개수를 다시 확인해보세요.'; }
+}
+function s4Check2(){
+  const a = parseFloat(document.getElementById('s4-ans2a').value);
+  const b = parseFloat(document.getElementById('s4-ans2b').value);
+  const ok = ratioMatches(a,b,1,8);
+  document.getElementById('s4-ans2a').classList.toggle('correct',ok); document.getElementById('s4-ans2a').classList.toggle('wrong',!ok);
+  document.getElementById('s4-ans2b').classList.toggle('correct',ok); document.getElementById('s4-ans2b').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s4-fb2');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요!'; unlock('s4-q3'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 방금 채운 개수를 다시 떠올려보세요 (작은 정육면체 1개 : 전체 개수).'; }
+}
+function s4Check3(){
+  const v = String(document.getElementById('s4-ans3').value||'').trim().replace(/\s+/g,'');
+  const ok = v==='세제곱' || v==='세제곱이다' || v==='3제곱';
+  document.getElementById('s4-ans3').classList.toggle('correct',ok); document.getElementById('s4-ans3').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s4-fb3');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 부피의 비 = (닮음비)³ 입니다.'; unlock('s4-nextWrap'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 힌트: 1:8은 1:2를 몇 번 곱한 값일까요? (2×2×2)'; }
+}
+
+/* ════════════════════════════════
+   STEP 5 : 직육면체 (닮음비 2:3)
+════════════════════════════════ */
+const S5_SCALE = 16, S5_SMALL_A = {x:100,y:300}, S5_BIG_A = {x:360,y:300};
+function s5Draw(){
+  const smallPts = boxScreenPtsAt(0,0,0,4,6,10,S5_SMALL_A,S5_SCALE);
+  const bigPts = boxScreenPtsAt(0,0,0,6,9,15,S5_BIG_A,S5_SCALE);
+  const smallC = centroidOf(smallPts), bigC = centroidOf(bigPts);
+  let html = '';
+  html += drawBoxOutline(smallPts,'#4f6fe0');
+  html += drawBoxOutline(bigPts,'#e05a20');
+  html += sideLabelSVG(smallPts[0],smallPts[1],smallC,4,16);
+  html += sideLabelSVG(smallPts[0],smallPts[4],smallC,6,16);
+  html += sideLabelSVG(smallPts[1],smallPts[2],smallC,10,16);
+  html += sideLabelSVG(bigPts[0],bigPts[1],bigC,6,16);
+  html += sideLabelSVG(bigPts[0],bigPts[4],bigC,9,16);
+  html += sideLabelSVG(bigPts[1],bigPts[2],bigC,15,16);
+  html += `<text class="vlabel" x="${S5_SMALL_A.x+40}" y="${S5_SMALL_A.y+30}" fill="#4f6fe0">작은 직육면체</text>`;
+  html += `<text class="vlabel" x="${S5_BIG_A.x+70}" y="${S5_BIG_A.y+30}" fill="#e05a20">큰 직육면체 (닮음비 2:3)</text>`;
+  document.getElementById('s5svg').innerHTML = html;
+}
+function s5CheckVol(){
+  const a = parseFloat(document.getElementById('s5-ans-a').value);
+  const b = parseFloat(document.getElementById('s5-ans-b').value);
+  const okA = numMatches(a,240,0.01), okB = numMatches(b,810,0.01);
+  document.getElementById('s5-ans-a').classList.toggle('correct',okA); document.getElementById('s5-ans-a').classList.toggle('wrong',!okA);
+  document.getElementById('s5-ans-b').classList.toggle('correct',okB); document.getElementById('s5-ans-b').classList.toggle('wrong',!okB);
+  const fb = document.getElementById('s5-fb-vol');
+  if(okA&&okB){ fb.className='feedback success'; fb.textContent='🎉 정답이에요!'; unlock('s5-blank2'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 부피 = 가로 × 세로 × 높이 로 다시 계산해보세요.'; }
+}
+function s5CheckRatio(){
+  const a = parseFloat(document.getElementById('s5-ratio-a').value);
+  const b = parseFloat(document.getElementById('s5-ratio-b').value);
+  const ok = ratioMatches(a,b,240,810);
+  document.getElementById('s5-ratio-a').classList.toggle('correct',ok); document.getElementById('s5-ratio-a').classList.toggle('wrong',!ok);
+  document.getElementById('s5-ratio-b').classList.toggle('correct',ok); document.getElementById('s5-ratio-b').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s5-fb-ratio');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요!'; unlock('s5-blank3'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 240 : 810을 그대로 입력하거나 간단히 정리해보세요.'; }
+}
+function s5Choose(isEqual, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.style.background='#eef1fa'); btn.style.background='#c9d4fb'; }
+  const fb = document.getElementById('s5-fb-final');
+  if(isEqual){ fb.className='feedback success'; fb.textContent='🎉 맞아요! 240:810을 30으로 나누면 8:27과 같아요. 부피의 비 = 닮음비³'; unlock('s5-nextWrap'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 240:810의 공약수 30으로 나누어 간단히 해보세요.'; }
+}
+
+/* ════════════════════════════════
+   STEP 6 : 정리 및 적용
+════════════════════════════════ */
+function s6Check1(){
+  const a = parseFloat(document.getElementById('s6-a1').value);
+  const b = parseFloat(document.getElementById('s6-a2').value);
+  const okA = numMatches(a,25,0.01), okB = numMatches(b,125,0.01);
+  document.getElementById('s6-a1').classList.toggle('correct',okA); document.getElementById('s6-a1').classList.toggle('wrong',!okA);
+  document.getElementById('s6-a2').classList.toggle('correct',okB); document.getElementById('s6-a2').classList.toggle('wrong',!okB);
+  const fb = document.getElementById('s6-fb1');
+  if(okA&&okB){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 5² = 25, 5³ = 125'; unlock('s6-q2'); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 5의 제곱과 세제곱을 각각 계산해보세요.'; }
+}
+function s6Check2(){
+  const v = parseFloat(document.getElementById('s6-a3').value);
+  const ok = numMatches(v,4,0.01);
+  document.getElementById('s6-a3').classList.toggle('correct',ok); document.getElementById('s6-a3').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('s6-fb2');
+  if(ok){ fb.className='feedback success'; fb.textContent='🎉 정답이에요! 9=3², 16=4² 이므로 닮음비는 3:4예요.'; unlock('s6-done'); if(window._reportHubComplete) window._reportHubComplete(); }
+  else{ fb.className='feedback error'; fb.textContent='❌ 제곱해서 9와 16이 되는 수를 각각 찾아보세요.'; }
+}
+
+/* 초기화 */
+s1Draw(2);
+s2Draw();
+s3Draw();
+s4Draw();
+s5Draw();
+</script>
+</body>
+</html>

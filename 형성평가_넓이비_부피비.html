@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>형성평가 - 넓이의 비와 부피의 비</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --purple:#9b7cff;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:680px;margin:0 auto;padding:24px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.back-btn{background:#fff;border:1.5px solid #d8ddfb;color:var(--indigo);font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;font-family:inherit;margin-bottom:14px}
+.back-btn:hover{background:var(--indigo-ll)}
+
+.menu-head{text-align:center;margin-bottom:22px}
+.menu-head h2{font-size:21px;margin-bottom:6px}
+.menu-head p{font-size:13.5px;color:var(--ink2)}
+.game-grid{display:flex;flex-direction:column;gap:12px}
+.game-card{background:#fff;border:2px solid #e0e7ff;border-radius:14px;padding:18px;cursor:pointer;text-align:left;transition:.15s;font-family:inherit;display:flex;gap:14px;align-items:center;width:100%}
+.game-card:hover{border-color:var(--indigo);box-shadow:var(--shadow)}
+.gc-icon{font-size:30px;flex-shrink:0}
+.gc-title{font-size:15px;font-weight:800;margin-bottom:4px;color:var(--ink);display:flex;align-items:center;gap:8px}
+.gc-desc{font-size:12.5px;color:var(--ink2);line-height:1.55}
+.gc-badge{font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;flex-shrink:0}
+.gc-badge.pass{background:var(--green-l);color:#14532d}
+.gc-badge.fail{background:var(--red-l);color:var(--red)}
+
+.game-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.game-desc{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.6}
+
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee}
+.svg-wrap svg{width:100%;height:auto;display:block}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.color-swatch{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.lv3-draw-wrap{position:relative}
+.lv3-draw-wrap .svg-wrap{border-radius:10px 10px 0 0;border-bottom:none}
+.lv3-scratch-area{height:130px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.lv3-ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+
+.small-shape{fill:#4f46e5;fill-opacity:.35;stroke:#4f46e5;stroke-width:2.5}
+.big-shape{fill:#e05a20;fill-opacity:.35;stroke:#e05a20;stroke-width:2.5}
+.vlabel{font-size:15px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+.hintline{font-size:12px;color:var(--ink3);text-align:center;margin-top:6px}
+
+.progress{font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:10px;text-align:center}
+.qtext{font-size:14.5px;font-weight:700;line-height:1.7;margin:10px 0;text-align:center}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 3px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.qrow{margin:8px 0;font-size:14px;line-height:2}
+
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn-outline{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo)}
+.btn-row{display:flex;gap:10px;justify-content:center;margin-top:14px}
+
+.fb-line{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:10px}
+.fb-line.ok{color:var(--green)}
+.fb-line.no{color:var(--red)}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.done-score{font-size:32px;font-weight:800;color:var(--indigo);margin:8px 0}
+.done-score.fail{color:var(--red)}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.menu-btn{padding:11px 26px;border-radius:8px;background:#fff;color:var(--ink);border:1.5px solid #d8ddfb;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">형성평가 · 넓이의 비와 부피의 비</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <div class="screen active" id="scMenu">
+    <div class="menu-head">
+      <h2>✅ 형성평가: 넓이의 비와 부피의 비</h2>
+      <p>닮음비와 넓이의 비·부피의 비 관계를 세 단계로 확인해봐요</p>
+    </div>
+    <div class="game-grid">
+      <button class="game-card" onclick="openLevel('lv1')">
+        <div class="gc-icon">①</div>
+        <div style="flex:1"><div class="gc-title">닮음비 → 넓이비·부피비 Lv.1 <span class="gc-badge" id="badge-lv1" style="display:none"></span></div>
+        <div class="gc-desc">평면도형·입체도형의 닮음비가 주어지면 넓이의 비 또는 부피의 비를 구해요 (6/8 이상 통과)</div></div>
+      </button>
+      <button class="game-card" onclick="openLevel('lv2')">
+        <div class="gc-icon">②</div>
+        <div style="flex:1"><div class="gc-title">실전 문제 Lv.2 <span class="gc-badge" id="badge-lv2" style="display:none"></span></div>
+        <div class="gc-desc">대응변의 길이(또는 닮음비)와 한 도형의 넓이·부피가 주어지면, 다른 도형의 넓이·부피를 구해요 (4/6 이상 통과)</div></div>
+      </button>
+      <button class="game-card" onclick="openLevel('lv3')">
+        <div class="gc-icon">③</div>
+        <div style="flex:1"><div class="gc-title">닮음비 역으로 구하기 Lv.3 <span class="gc-badge" id="badge-lv3" style="display:none"></span></div>
+        <div class="gc-desc">넓이의 비 또는 부피의 비가 주어지면 거꾸로 닮음비를 구해요 (3/4 이상 통과)</div></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="screen" id="scLv1">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">① 닮음비 → 넓이비·부피비 Lv.1</div>
+    <div class="game-desc">두 도형은 서로 닮은 도형이에요. 주어진 닮음비를 보고 넓이의 비(평면도형) 또는 부피의 비(입체도형)를 구하세요. (약분하지 않아도 정답으로 인정해요)</div>
+    <div class="progress" id="lv1Progress">1 / 8</div>
+    <div class="card" id="lv1Card">
+      <div class="svg-wrap"><svg id="lv1Svg" viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="qtext" id="lv1Qtext"></div>
+      <div style="text-align:center">비 = <input class="blank" id="lv1A"> : <input class="blank" id="lv1B"></div>
+      <div class="btn-row"><button class="btn" onclick="lv1Check()">확인</button></div>
+      <div class="fb-line" id="lv1Fb"></div>
+    </div>
+    <div id="lv1Done" style="display:none"></div>
+  </div>
+
+  <div class="screen" id="scLv2">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">② 실전 문제 Lv.2</div>
+    <div class="game-desc">평면도형은 대응변의 길이 한 쌍을 보고 닮음비를 직접 구해야 해요. 입체도형은 닮음비가 바로 주어져요.</div>
+    <div class="progress" id="lv2Progress">1 / 6</div>
+    <div class="card" id="lv2Card">
+      <div class="svg-wrap"><svg id="lv2Svg" viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="qtext" id="lv2Qtext"></div>
+      <div style="text-align:center" id="lv2AnsWrap">넓이(또는 부피) = <input class="blank" id="lv2A" style="width:80px"><span id="lv2PiSuffix"></span> (단위: cm² 또는 cm³)</div>
+      <div class="btn-row"><button class="btn" onclick="lv2Check()">확인</button></div>
+      <div class="fb-line" id="lv2Fb"></div>
+    </div>
+    <div id="lv2Done" style="display:none"></div>
+  </div>
+
+  <div class="screen" id="scLv3">
+    <button class="back-btn" onclick="showMenu()">← 목록으로</button>
+    <div class="game-title">③ 닮음비 역으로 구하기 Lv.3</div>
+    <div class="game-desc">넓이의 비 또는 부피의 비가 주어지면, 거꾸로 닮음비를 구해보세요.</div>
+    <div class="progress" id="lv3Progress">1 / 4</div>
+    <div class="card" id="lv3Card">
+      <div class="draw-toolbar">
+        <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+        <button class="color-swatch active" style="background:#1a1a2e" onclick="lv3SelectColor('#1a1a2e',this)" title="검정"></button>
+        <button class="color-swatch" style="background:#dc2626" onclick="lv3SelectColor('#dc2626',this)" title="빨강"></button>
+        <button class="color-swatch" style="background:#2563eb" onclick="lv3SelectColor('#2563eb',this)" title="파랑"></button>
+        <button class="color-swatch" style="background:#16a34a" onclick="lv3SelectColor('#16a34a',this)" title="초록"></button>
+        <button class="color-swatch" style="background:#eab308" onclick="lv3SelectColor('#eab308',this)" title="노랑"></button>
+        <button class="eraser-btn" id="lv3EraserBtn" onclick="lv3ToggleEraser()">🧽 지우개</button>
+      </div>
+      <div class="lv3-draw-wrap" id="lv3DrawWrap">
+        <div class="svg-wrap"><svg id="lv3Svg" viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="lv3-scratch-area"></div>
+        <canvas id="lv3Ink" class="lv3-ink-canvas"></canvas>
+      </div>
+      <div class="qtext" id="lv3Qtext"></div>
+      <div style="text-align:center">닮음비 = <input class="blank" id="lv3A"> : <input class="blank" id="lv3B"></div>
+      <div style="text-align:center;margin-top:8px" id="lv3LenWrap">길이 = <input class="blank" id="lv3C" style="width:70px"> cm</div>
+      <div class="btn-row"><button class="btn" onclick="lv3Check()">확인</button></div>
+      <div class="fb-line" id="lv3Fb"></div>
+    </div>
+    <div id="lv3Done" style="display:none"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'area-volume-ratio-assessment' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function randInt(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function ptsToStr(pts){ return pts.map(p=>`${p[0]},${p[1]}`).join(' '); }
+function centroidOf(pts){ const cx=pts.reduce((s,p)=>s+p[0],0)/pts.length, cy=pts.reduce((s,p)=>s+p[1],0)/pts.length; return {x:cx,y:cy}; }
+function outwardLabel(p, centroid, dist){
+  const dx=p[0]-centroid.x, dy=p[1]-centroid.y, len=Math.hypot(dx,dy)||1;
+  return { x:p[0]+dx/len*dist, y:p[1]+dy/len*dist };
+}
+function sideLabelSVG(p1, p2, centroid, value, bulge){
+  bulge = bulge || 14;
+  const mid=[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2];
+  const ex = p2[0]-p1[0], ey = p2[1]-p1[1], elen = Math.hypot(ex,ey)||1;
+  let dx = -ey/elen, dy = ex/elen;
+  const toMid = [mid[0]-centroid.x, mid[1]-centroid.y];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" d="M ${p1[0]} ${p1[1]} Q ${ctrl[0]} ${ctrl[1]} ${p2[0]} ${p2[1]}"></path>`+
+    `<text class="edgelen" x="${labelPt[0]}" y="${labelPt[1]}">${value}</text>`;
+}
+function ratioMatches(a,b,ra,rb){
+  if(!isFinite(a)||!isFinite(b)||a<=0||b<=0) return false;
+  const lhs=a*rb, rhs=b*ra;
+  return Math.abs(lhs-rhs) < 0.02*Math.max(Math.abs(lhs),Math.abs(rhs),1);
+}
+function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.5); }
+
+/* ════════════════════════════════
+   2D 도형 풀 (모든 각이 20도 이상 차이, 비정형 사각형) — 기존 형성평가 파일과 동일한 풀 재사용
+════════════════════════════════ */
+const TRIANGLE_POOL = [
+  { pts:[[-77.7,-19.2],[55.5,-19.2],[22.2,38.4]], angles:[30,60,90] },
+  { pts:[[-79,-12.5],[55.2,-12.5],[23.8,25]], angles:[20,50,110] },
+  { pts:[[-76.8,-22.4],[57.8,-22.4],[19,44.7]], angles:[35,60,85] },
+  { pts:[[-78.4,-15.7],[55.7,-15.7],[22.7,31.4]], angles:[25,55,100] }
+];
+const QUAD_POOL = [
+  { pts:[[-71.9,-35.2],[42.3,-35.2],[25.1,29.2],[4.4,41.1]], angles:[45,75,135,105] },
+  { pts:[[-64.6,-47.1],[39,-47.1],[19.6,44.1],[6,50.2]], angles:[54,78,126,102] },
+  { pts:[[-71.4,-36.2],[43.7,-36.2],[27.4,28.9],[0.3,43.4]], angles:[48,76,132,104] }
+];
+const TRI_LABELS_S = ['A','B','C'], TRI_LABELS_B = ['D','E','F'];
+const QUAD_LABELS_S = ['A','B','C','D'], QUAD_LABELS_B = ['E','F','G','H'];
+
+/* ════════════════════════════════
+   3D 입체 (사선 투영, project3D는 선형함수: project3D(k*p)=k*project3D(p))
+════════════════════════════════ */
+const PROJ_ANGLE = Math.PI/6, PROJ_ZF = 0.5, PROJ_SCALE = 13;
+function project3D(p){
+  const [x,y,z] = p;
+  const px = x + z*Math.cos(PROJ_ANGLE)*PROJ_ZF;
+  const py = -y - z*Math.sin(PROJ_ANGLE)*PROJ_ZF;
+  return [px*PROJ_SCALE, py*PROJ_SCALE];
+}
+const PYRAMID = {
+  local3D:[[-3,0,0],[4,0,0],[0,0,5],[0,7,1.5]],
+  smallLabels:['A','B','C','D'], bigLabels:['E','F','G','H'],
+  wireEdges:[[0,1],[1,2],[2,0],[0,3],[1,3],[2,3]]
+};
+const PRISM = {
+  local3D:[[-3,0,0],[3,0,-1],[4,0,4],[-2,0,5],[-3,6,0],[3,6,-1],[4,6,4],[-2,6,5]],
+  smallLabels:['A','B','C','D','E','F','G','H'], bigLabels:['I','J','K','L','M','N','O','P'],
+  wireEdges:[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]],
+  hiddenEdges:[[2,3],[3,0]]
+};
+// x,z축 모두 원점 중심으로 대칭이 되도록 잡아서(프리즘/사면체처럼 한쪽으로 치우치지 않게), 닮음비가 커져도 캔버스를 벗어나지 않게 함
+const CUBE = {
+  local3D:[[-3,0,-3],[3,0,-3],[3,0,3],[-3,0,3],[-3,6,-3],[3,6,-3],[3,6,3],[-3,6,3]],
+  smallLabels:['A','B','C','D','E','F','G','H'], bigLabels:['I','J','K','L','M','N','O','P'],
+  wireEdges:[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]],
+  hiddenEdges:[[3,0],[2,3],[3,7]]
+};
+const ANCHOR2D_S = {x:150,y:230}, ANCHOR2D_B = {x:500,y:230};
+const SMALL3D_ANCHOR = {x:160,y:320}, BIG3D_ANCHOR = {x:540,y:320};
+function build2DPair(pts, k){
+  const smallPts = pts.map(([x,y])=>[x+ANCHOR2D_S.x, y+ANCHOR2D_S.y]);
+  const bigPts = pts.map(([x,y])=>[x*k+ANCHOR2D_B.x, y*k+ANCHOR2D_B.y]);
+  return { smallPts, bigPts, smallC:centroidOf(smallPts), bigC:centroidOf(bigPts) };
+}
+function drawShapeOutline(pts, labels, color){
+  let h = `<polygon points="${ptsToStr(pts)}" style="fill:${color};fill-opacity:.35;stroke:${color};stroke-width:2.5"></polygon>`;
+  const c = centroidOf(pts);
+  pts.forEach((p,i)=>{ const lp=outwardLabel(p,c,20); h += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${color}">${labels[i]}</text>`; });
+  return h;
+}
+function solid3Points(local3D, anchor, k){
+  return local3D.map(p=>{ const sp=p.map(v=>v*k); const pr=project3D(sp); return [anchor.x+pr[0], anchor.y+pr[1]]; });
+}
+function isHiddenEdge(hiddenEdges, i, j){
+  return hiddenEdges.some(([a,b])=>(a===i&&b===j)||(a===j&&b===i));
+}
+function pointInTriangle2D(p, a, b, c){
+  function sign(p1,p2,p3){ return (p1[0]-p3[0])*(p2[1]-p3[1]) - (p2[0]-p3[0])*(p1[1]-p3[1]); }
+  const d1=sign(p,a,b), d2=sign(p,b,c), d3=sign(p,c,a);
+  const hasNeg=(d1<0)||(d2<0)||(d3<0), hasPos=(d1>0)||(d2>0)||(d3>0);
+  return !(hasNeg && hasPos);
+}
+function tetraHiddenEdges(pts4){
+  for(let i=0;i<4;i++){
+    const others = [0,1,2,3].filter(j=>j!==i);
+    if(pointInTriangle2D(pts4[i], pts4[others[0]], pts4[others[1]], pts4[others[2]])){
+      return others.map(j=>[i,j]);
+    }
+  }
+  return [];
+}
+function drawSolidOutline(pts, labels, wireEdges, hiddenEdges, color){
+  let h='';
+  wireEdges.forEach(([i,j])=>{
+    const hidden = isHiddenEdge(hiddenEdges,i,j);
+    h += `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="${color}" stroke-width="2"${hidden?' stroke-dasharray="5 4"':''}></line>`;
+  });
+  const c = centroidOf(pts);
+  pts.forEach((p,i)=>{ const lp=outwardLabel(p,c,16); h += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${color}">${labels[i]}</text>`; });
+  return h;
+}
+// 원기둥은 오각뿔류와 다른 방식(타원)으로 그린다: 윗면은 완전한 타원(항상 보임), 밑면은 앞쪽 절반만 실선(보임)·뒤쪽 절반은 점선(가려짐)
+function cylinderSVG(cx, bottomY, rx, ry, h, color){
+  const topY = bottomY - h;
+  let html = '';
+  html += `<rect x="${cx-rx}" y="${topY}" width="${rx*2}" height="${h}" fill="${color}" fill-opacity="0.12" stroke="none"></rect>`;
+  html += `<line x1="${cx-rx}" y1="${topY}" x2="${cx-rx}" y2="${bottomY}" stroke="${color}" stroke-width="2.5"></line>`;
+  html += `<line x1="${cx+rx}" y1="${topY}" x2="${cx+rx}" y2="${bottomY}" stroke="${color}" stroke-width="2.5"></line>`;
+  html += `<path d="M ${cx-rx} ${bottomY} A ${rx} ${ry} 0 0 1 ${cx+rx} ${bottomY}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4 3"></path>`;
+  html += `<path d="M ${cx-rx} ${bottomY} A ${rx} ${ry} 0 0 0 ${cx+rx} ${bottomY}" fill="none" stroke="${color}" stroke-width="2.5"></path>`;
+  html += `<ellipse cx="${cx}" cy="${topY}" rx="${rx}" ry="${ry}" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="2.5"></ellipse>`;
+  return html;
+}
+const KIND_NAME = { tri:'삼각형', quad:'사각형', circle:'원', cube:'정육면체', pyr:'사각뿔', pri:'삼각기둥', cyl:'원기둥' };
+const AREA_KINDS = ['tri','quad','circle'];
+
+/* ════════════════════════════════
+   메뉴 / 화면 전환
+════════════════════════════════ */
+const levelStatus = {};
+function showMenu(){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('scMenu').classList.add('active');
+}
+function openLevel(lv){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sc'+({lv1:'Lv1',lv2:'Lv2',lv3:'Lv3'})[lv]).classList.add('active');
+  if(lv==='lv1') lv1Init();
+  if(lv==='lv2') lv2Init();
+  if(lv==='lv3') lv3Init();
+}
+function updateBadge(lv, pass){
+  levelStatus[lv]=pass;
+  const el = document.getElementById('badge-'+lv);
+  el.style.display='inline-block';
+  el.className = 'gc-badge ' + (pass?'pass':'fail');
+  el.textContent = pass ? '통과' : '재도전 필요';
+}
+
+/* ════════════════════════════════
+   레벨1: 닮음비 → 넓이비·부피비 — 8문제 (평면 4 + 입체 4, 8개 비는 모두 서로 다름)
+════════════════════════════════ */
+const LV1_QUESTIONS = [
+  {kind:'tri', ratio:[1,2]}, {kind:'tri', ratio:[3,4]},
+  {kind:'quad', ratio:[4,5]}, {kind:'circle', ratio:[2,5]},
+  {kind:'cube', ratio:[5,6]}, {kind:'pyr', ratio:[5,7]},
+  {kind:'pri', ratio:[2,3]}, {kind:'cyl', ratio:[3,5]}
+];
+const lv1 = { round:0, total:8, correct:0, order:[], cur:null };
+// 완전 무작위 셔플만 쓰면 8문제(4+4) 중 우연히 같은 종류가 3~4개 연달아 나올 수 있어서,
+// "같은 종류(넓이/부피)가 3번 이상 연속되지 않는" 순서가 나올 때까지 다시 섞는다
+function lv1OrderValid(order){
+  let run = 1;
+  for(let i=1;i<order.length;i++){
+    const prevArea = AREA_KINDS.includes(order[i-1].kind);
+    const curArea = AREA_KINDS.includes(order[i].kind);
+    if(prevArea===curArea){ run++; if(run>=3) return false; } else { run=1; }
+  }
+  return true;
+}
+function lv1BuildOrder(){
+  let order, tries=0;
+  do{ order = shuffle(LV1_QUESTIONS); tries++; } while(!lv1OrderValid(order) && tries<200);
+  return order;
+}
+function lv1Init(){
+  lv1.round=0; lv1.correct=0; lv1.order = lv1BuildOrder();
+  document.getElementById('lv1Card').style.display='block';
+  document.getElementById('lv1Done').style.display='none';
+  document.getElementById('lv1Done').innerHTML='';
+  lv1Next();
+}
+function lv1Next(){
+  lv1.round++;
+  if(lv1.round>lv1.total){ lv1Finish(); return; }
+  document.getElementById('lv1Progress').textContent = `${lv1.round} / ${lv1.total}`;
+  const q = lv1.order[lv1.round-1];
+  lv1.cur = q;
+  const [p,qd] = q.ratio; const k = qd/p;
+  const isArea = AREA_KINDS.includes(q.kind);
+  const svg = document.getElementById('lv1Svg');
+  let html='';
+  if(q.kind==='tri' || q.kind==='quad'){
+    const pool = q.kind==='tri'? TRIANGLE_POOL : QUAD_POOL;
+    const labelsS = q.kind==='tri'? TRI_LABELS_S : QUAD_LABELS_S;
+    const labelsB = q.kind==='tri'? TRI_LABELS_B : QUAD_LABELS_B;
+    const shape = pickRandom(pool);
+    const {smallPts,bigPts} = build2DPair(shape.pts, k);
+    html += drawShapeOutline(smallPts, labelsS, '#4f46e5');
+    html += drawShapeOutline(bigPts, labelsB, '#e05a20');
+  } else if(q.kind==='circle'){
+    const baseR = 34;
+    html += `<circle cx="${ANCHOR2D_S.x}" cy="${ANCHOR2D_S.y}" r="${baseR}" style="fill:#4f46e5;fill-opacity:.2;stroke:#4f46e5;stroke-width:2.5"></circle>`;
+    html += `<circle cx="${ANCHOR2D_B.x}" cy="${ANCHOR2D_B.y}" r="${baseR*k}" style="fill:#e05a20;fill-opacity:.2;stroke:#e05a20;stroke-width:2.5"></circle>`;
+  } else if(q.kind==='cyl'){
+    html += cylinderSVG(SMALL3D_ANCHOR.x, SMALL3D_ANCHOR.y, 28, 10, 70, '#4f46e5');
+    html += cylinderSVG(BIG3D_ANCHOR.x, BIG3D_ANCHOR.y, 28*k, 10*k, 70*k, '#e05a20');
+  } else {
+    const cfg = q.kind==='cube'?CUBE : q.kind==='pyr'?PYRAMID : PRISM;
+    const smallPts = solid3Points(cfg.local3D, SMALL3D_ANCHOR, 1);
+    const bigPts = solid3Points(cfg.local3D, BIG3D_ANCHOR, k);
+    const hiddenS = q.kind==='pyr' ? tetraHiddenEdges(smallPts) : cfg.hiddenEdges;
+    const hiddenB = q.kind==='pyr' ? tetraHiddenEdges(bigPts) : cfg.hiddenEdges;
+    html += drawSolidOutline(smallPts, cfg.smallLabels, cfg.wireEdges, hiddenS, '#4f46e5');
+    html += drawSolidOutline(bigPts, cfg.bigLabels, cfg.wireEdges, hiddenB, '#e05a20');
+  }
+  svg.innerHTML = html;
+  document.getElementById('lv1Qtext').innerHTML = `두 ${KIND_NAME[q.kind]}의 닮음비가 ${p}:${qd}이다. 두 ${KIND_NAME[q.kind]}의 ${isArea?'넓이':'부피'}의 비는?`;
+  document.getElementById('lv1A').value=''; document.getElementById('lv1B').value='';
+  document.getElementById('lv1A').classList.remove('correct','wrong');
+  document.getElementById('lv1B').classList.remove('correct','wrong');
+  document.getElementById('lv1Fb').textContent='';
+}
+function lv1Check(){
+  const a = parseFloat(document.getElementById('lv1A').value);
+  const b = parseFloat(document.getElementById('lv1B').value);
+  const [p,q] = lv1.cur.ratio;
+  const isArea = AREA_KINDS.includes(lv1.cur.kind);
+  const target = isArea ? [p*p, q*q] : [p*p*p, q*q*q];
+  const ok = ratioMatches(a,b,target[0],target[1]);
+  document.getElementById('lv1A').classList.toggle('correct',ok); document.getElementById('lv1A').classList.toggle('wrong',!ok);
+  document.getElementById('lv1B').classList.toggle('correct',ok); document.getElementById('lv1B').classList.toggle('wrong',!ok);
+  if(ok) lv1.correct++;
+  const fb = document.getElementById('lv1Fb');
+  fb.className = 'fb-line ' + (ok?'ok':'no');
+  fb.textContent = ok ? '✅ 정답이에요!' : `❌ 오답이에요. 정답은 ${target[0]} : ${target[1]} (또는 그와 같은 비)예요.`;
+  setTimeout(lv1Next, 1300);
+}
+function lv1Finish(){
+  const pass = lv1.correct >= 6;
+  updateBadge('lv1', pass);
+  document.getElementById('lv1Card').style.display='none';
+  const el = document.getElementById('lv1Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">${pass?'🎉':'💪'}</div><div>${lv1.total}문제 중</div><div class="done-score ${pass?'':'fail'}">${lv1.correct} / ${lv1.total}</div><div>${pass?'통과했어요!':'6문제 이상 맞아야 통과해요.'}</div><button class="restart-btn" onclick="lv1Init()">🔄 다시 도전</button><button class="menu-btn" onclick="showMenu()">목록으로</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   레벨2: 실전 문제 — 6문제 (평면 3: 삼각형2+사각형1 / 입체 3: 사각뿔+삼각기둥+원기둥)
+   평면도형은 대응변 길이 한 쌍을 보고 닮음비를 직접 구해야 하고, 입체도형은 닮음비가 바로 주어짐
+════════════════════════════════ */
+const LV2_QUESTIONS = [
+  {kind:'tri', ratio:[2,3], sideBase:6, smallVal:24, bigVal:54, given:'small'},
+  {kind:'tri', ratio:[3,5], sideBase:9, smallVal:18, bigVal:50, given:'big'},
+  {kind:'quad', ratio:[4,5], sideBase:8, smallVal:48, bigVal:75, given:'small'},
+  {kind:'pyr', ratio:[2,3], smallVal:40, bigVal:135, given:'small'},
+  {kind:'pri', ratio:[3,5], smallVal:54, bigVal:250, given:'big'},
+  {kind:'cyl', ratio:[2,5], smallVal:8, bigVal:125, given:'small'}
+];
+const lv2 = { round:0, total:6, correct:0, order:[], cur:null, answer:0 };
+function lv2Init(){
+  lv2.round=0; lv2.correct=0; lv2.order = shuffle(LV2_QUESTIONS);
+  document.getElementById('lv2Card').style.display='block';
+  document.getElementById('lv2Done').style.display='none';
+  document.getElementById('lv2Done').innerHTML='';
+  lv2Next();
+}
+function lv2Next(){
+  lv2.round++;
+  if(lv2.round>lv2.total){ lv2Finish(); return; }
+  document.getElementById('lv2Progress').textContent = `${lv2.round} / ${lv2.total}`;
+  const q = lv2.order[lv2.round-1];
+  lv2.cur = q;
+  const [p,qd] = q.ratio; const k = qd/p;
+  const svg = document.getElementById('lv2Svg');
+  let html='', qtext='';
+  const isPlane = (q.kind==='tri' || q.kind==='quad');
+  if(isPlane){
+    const pool = q.kind==='tri'? TRIANGLE_POOL : QUAD_POOL;
+    const labelsS = q.kind==='tri'? TRI_LABELS_S : QUAD_LABELS_S;
+    const labelsB = q.kind==='tri'? TRI_LABELS_B : QUAD_LABELS_B;
+    const shape = pickRandom(pool);
+    const {smallPts,bigPts,smallC,bigC} = build2DPair(shape.pts, k);
+    html += drawShapeOutline(smallPts, labelsS, '#4f46e5');
+    html += drawShapeOutline(bigPts, labelsB, '#e05a20');
+    const bigSide = Math.round(q.sideBase*k*100)/100;
+    html += sideLabelSVG(smallPts[0], smallPts[1], smallC, q.sideBase, 18);
+    html += sideLabelSVG(bigPts[0], bigPts[1], bigC, bigSide, 18);
+    const nameS = q.kind==='tri' ? `△${labelsS.join('')}` : `□${labelsS.join('')}`;
+    const nameB = q.kind==='tri' ? `△${labelsB.join('')}` : `□${labelsB.join('')}`;
+    if(q.given==='small'){
+      qtext = `위 그림에서 ${nameS}∽${nameB}이다. ${nameS}의 넓이가 ${q.smallVal}cm²일 때, ${nameB}의 넓이를 구하시오.`;
+      lv2.answer = q.bigVal;
+    } else {
+      qtext = `위 그림에서 ${nameS}∽${nameB}이다. ${nameB}의 넓이가 ${q.bigVal}cm²일 때, ${nameS}의 넓이를 구하시오.`;
+      lv2.answer = q.smallVal;
+    }
+  } else if(q.kind==='cyl'){
+    html += cylinderSVG(SMALL3D_ANCHOR.x, SMALL3D_ANCHOR.y, 28, 10, 70, '#4f46e5');
+    html += cylinderSVG(BIG3D_ANCHOR.x, BIG3D_ANCHOR.y, 28*k, 10*k, 70*k, '#e05a20');
+    if(q.given==='small'){
+      qtext = `두 원기둥은 서로 닮은 도형이고, 닮음비는 ${p}:${qd}이다. 작은 원기둥의 부피가 ${q.smallVal}π cm³일 때, 큰 원기둥의 부피를 구하시오. (답이 Nπ cm³ 꼴이면, N만 입력하세요)`;
+      lv2.answer = q.bigVal;
+    } else {
+      qtext = `두 원기둥은 서로 닮은 도형이고, 닮음비는 ${p}:${qd}이다. 큰 원기둥의 부피가 ${q.bigVal}π cm³일 때, 작은 원기둥의 부피를 구하시오. (답이 Nπ cm³ 꼴이면, N만 입력하세요)`;
+      lv2.answer = q.smallVal;
+    }
+  } else {
+    const cfg = q.kind==='pyr' ? PYRAMID : PRISM;
+    const smallPts = solid3Points(cfg.local3D, SMALL3D_ANCHOR, 1);
+    const bigPts = solid3Points(cfg.local3D, BIG3D_ANCHOR, k);
+    const hiddenS = q.kind==='pyr' ? tetraHiddenEdges(smallPts) : cfg.hiddenEdges;
+    const hiddenB = q.kind==='pyr' ? tetraHiddenEdges(bigPts) : cfg.hiddenEdges;
+    html += drawSolidOutline(smallPts, cfg.smallLabels, cfg.wireEdges, hiddenS, '#4f46e5');
+    html += drawSolidOutline(bigPts, cfg.bigLabels, cfg.wireEdges, hiddenB, '#e05a20');
+    const kindName = KIND_NAME[q.kind];
+    if(q.given==='small'){
+      qtext = `두 ${kindName}은(는) 서로 닮은 도형이고, 닮음비는 ${p}:${qd}이다. 작은 ${kindName}의 부피가 ${q.smallVal}cm³일 때, 큰 ${kindName}의 부피를 구하시오.`;
+      lv2.answer = q.bigVal;
+    } else {
+      qtext = `두 ${kindName}은(는) 서로 닮은 도형이고, 닮음비는 ${p}:${qd}이다. 큰 ${kindName}의 부피가 ${q.bigVal}cm³일 때, 작은 ${kindName}의 부피를 구하시오.`;
+      lv2.answer = q.smallVal;
+    }
+  }
+  svg.innerHTML = html;
+  document.getElementById('lv2Qtext').innerHTML = qtext;
+  document.getElementById('lv2PiSuffix').textContent = q.kind==='cyl' ? 'π' : '';
+  document.getElementById('lv2A').value='';
+  document.getElementById('lv2A').classList.remove('correct','wrong');
+  document.getElementById('lv2Fb').textContent='';
+}
+function lv2Check(){
+  const v = parseFloat(document.getElementById('lv2A').value);
+  const ok = numMatches(v, lv2.answer, 0.01);
+  document.getElementById('lv2A').classList.toggle('correct',ok); document.getElementById('lv2A').classList.toggle('wrong',!ok);
+  if(ok) lv2.correct++;
+  const fb = document.getElementById('lv2Fb');
+  fb.className = 'fb-line ' + (ok?'ok':'no');
+  fb.textContent = ok ? '✅ 정답이에요!' : `❌ 오답이에요. 정답은 ${lv2.answer}${lv2.cur.kind==='cyl'?'π':''} 이에요.`;
+  setTimeout(lv2Next, 1500);
+}
+function lv2Finish(){
+  const pass = lv2.correct >= 4;
+  updateBadge('lv2', pass);
+  document.getElementById('lv2Card').style.display='none';
+  const el = document.getElementById('lv2Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">${pass?'🎉':'💪'}</div><div>${lv2.total}문제 중</div><div class="done-score ${pass?'':'fail'}">${lv2.correct} / ${lv2.total}</div><div>${pass?'통과했어요!':'4문제 이상 맞아야 통과해요.'}</div><button class="restart-btn" onclick="lv2Init()">🔄 다시 도전</button><button class="menu-btn" onclick="showMenu()">목록으로</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   레벨3: 닮음비 역으로 구하기 — 4문제 (넓이비/부피비가 주어지고 닮음비를 역산)
+════════════════════════════════ */
+// lenGiven: 'small'|'big' — 어느 쪽 도형의 길이를 제시하고, 반대쪽 대응 길이를 구하게 할지
+const LV3_QUESTIONS = [
+  {kind:'tri', mode:'area', given:[4,9], sim:[2,3], smallLen:4, bigLen:6, lenGiven:'small'},
+  {kind:'quad', mode:'area', given:[16,25], sim:[4,5], smallLen:12, bigLen:15, lenGiven:'big'},
+  {kind:'cyl', mode:'volume', given:[27,64], sim:[3,4], smallLen:6, bigLen:8, lenGiven:'small'},
+  {kind:'cube', mode:'volume', given:[1,8], sim:[1,2], smallLen:7, bigLen:14, lenGiven:'big'}
+];
+const lv3 = { round:0, total:4, correct:0, order:[], cur:null };
+/* ════════════════════════════════
+   레벨3 전용: 도형 위 + 아래 여백에 손으로 필기하는 계산 연습장
+   (검정/빨강/파랑/초록/노랑 펜 + 부분 지우개, 문제가 바뀌면 자동으로 비움)
+════════════════════════════════ */
+const lv3Draw = { color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, cssW:0, cssH:0 };
+function lv3SetupCanvas(){
+  const wrap = document.getElementById('lv3DrawWrap');
+  const canvas = document.getElementById('lv3Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  lv3Draw.cssW = rect.width; lv3Draw.cssH = rect.height;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  lv3UpdateCursor();
+}
+function lv3CanvasPoint(evt){
+  const canvas = document.getElementById('lv3Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+let lv3DrawBound = false;
+function lv3BindDrawingOnce(){
+  if(lv3DrawBound) return;
+  lv3DrawBound = true;
+  const canvas = document.getElementById('lv3Ink');
+  canvas.addEventListener('pointerdown', evt=>{
+    lv3Draw.drawing = true;
+    canvas.setPointerCapture(evt.pointerId);
+    const p = lv3CanvasPoint(evt);
+    lv3Draw.lastX=p.x; lv3Draw.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!lv3Draw.drawing) return;
+    const p = lv3CanvasPoint(evt);
+    const ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(lv3Draw.lastX, lv3Draw.lastY);
+    ctx.lineTo(p.x, p.y);
+    if(lv3Draw.erasing){
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = 24;
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = lv3Draw.color;
+      ctx.lineWidth = 3;
+    }
+    ctx.stroke();
+    lv3Draw.lastX=p.x; lv3Draw.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>{
+    canvas.addEventListener(evtName, ()=>{ lv3Draw.drawing=false; });
+  });
+  window.addEventListener('resize', ()=>{
+    if(document.getElementById('scLv3').classList.contains('active')) lv3SetupCanvas();
+  });
+}
+function lv3SelectColor(color, btn){
+  lv3Draw.color = color; lv3Draw.erasing = false;
+  document.querySelectorAll('#lv3Card .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('lv3EraserBtn').classList.remove('active');
+  lv3UpdateCursor();
+}
+function lv3ToggleEraser(){
+  lv3Draw.erasing = true;
+  document.querySelectorAll('#lv3Card .color-swatch').forEach(b=>b.classList.remove('active'));
+  document.getElementById('lv3EraserBtn').classList.add('active');
+  lv3UpdateCursor();
+}
+// 마우스 커서를 실제 펜 색깔의 연필 모양(끝부분이 클릭 지점)으로, 지우개는 실제 지워지는 굵기(24px)와
+// 같은 크기의 원으로 만들어서, 캔버스 위에서 어디에 그려지고/얼마나 지워질지 눈으로 바로 알 수 있게 함
+function lv3MakeCursorURL(draw, size){
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function lv3UpdateCursor(){
+  const canvas = document.getElementById('lv3Ink');
+  if(!canvas) return;
+  if(lv3Draw.erasing){
+    const size = 26, r = 11;
+    const url = lv3MakeCursorURL((cx,s)=>{
+      cx.beginPath(); cx.arc(s/2, s/2, r, 0, Math.PI*2);
+      cx.fillStyle = 'rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth = 2; cx.strokeStyle = '#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size = 34;
+    const url = lv3MakeCursorURL((cx,s)=>{
+      cx.save();
+      cx.translate(18,18);
+      cx.rotate(135*Math.PI/180);
+      cx.fillStyle = lv3Draw.color;
+      cx.fillRect(-4,-14,8,16); // 연필 몸통(현재 펜 색)
+      cx.fillStyle = '#f4c98c';
+      cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill(); // 나무 부분
+      cx.fillStyle = '#333a4d';
+      cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill(); // 심(뾰족한 끝)
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+function lv3Init(){
+  lv3.round=0; lv3.correct=0; lv3.order = shuffle(LV3_QUESTIONS);
+  document.getElementById('lv3Card').style.display='block';
+  document.getElementById('lv3Done').style.display='none';
+  document.getElementById('lv3Done').innerHTML='';
+  lv3BindDrawingOnce();
+  lv3Next();
+}
+function lv3Next(){
+  lv3.round++;
+  if(lv3.round>lv3.total){ lv3Finish(); return; }
+  document.getElementById('lv3Progress').textContent = `${lv3.round} / ${lv3.total}`;
+  const q = lv3.order[lv3.round-1];
+  lv3.cur = q;
+  const k = q.sim[1]/q.sim[0];
+  const svg = document.getElementById('lv3Svg');
+  let html='', lenText='', lenAnswer=0;
+  if(q.kind==='tri' || q.kind==='quad'){
+    const pool = q.kind==='tri'? TRIANGLE_POOL : QUAD_POOL;
+    const labelsS = q.kind==='tri'? TRI_LABELS_S : QUAD_LABELS_S;
+    const labelsB = q.kind==='tri'? TRI_LABELS_B : QUAD_LABELS_B;
+    const shape = pickRandom(pool);
+    const {smallPts,bigPts,smallC,bigC} = build2DPair(shape.pts, k);
+    html += drawShapeOutline(smallPts, labelsS, '#4f46e5');
+    html += drawShapeOutline(bigPts, labelsB, '#e05a20');
+    const nameS = labelsS[0]+labelsS[1], nameB = labelsB[0]+labelsB[1];
+    const shapeNameS = q.kind==='tri' ? `△${labelsS.join('')}` : `□${labelsS.join('')}`;
+    const shapeNameB = q.kind==='tri' ? `△${labelsB.join('')}` : `□${labelsB.join('')}`;
+    if(q.lenGiven==='small'){
+      html += sideLabelSVG(smallPts[0], smallPts[1], smallC, q.smallLen, 18);
+      lenText = `또, ${shapeNameS}의 <span class="seg">${nameS}</span> = ${q.smallLen}cm일 때, ${shapeNameB}의 <span class="seg">${nameB}</span>의 길이를 구하시오.`;
+      lenAnswer = q.bigLen;
+    } else {
+      html += sideLabelSVG(bigPts[0], bigPts[1], bigC, q.bigLen, 18);
+      lenText = `또, ${shapeNameB}의 <span class="seg">${nameB}</span> = ${q.bigLen}cm일 때, ${shapeNameS}의 <span class="seg">${nameS}</span>의 길이를 구하시오.`;
+      lenAnswer = q.smallLen;
+    }
+  } else if(q.kind==='cyl'){
+    const smallTop = SMALL3D_ANCHOR.y-70, bigTop = BIG3D_ANCHOR.y-70*k;
+    html += cylinderSVG(SMALL3D_ANCHOR.x, SMALL3D_ANCHOR.y, 28, 10, 70, '#4f46e5');
+    html += cylinderSVG(BIG3D_ANCHOR.x, BIG3D_ANCHOR.y, 28*k, 10*k, 70*k, '#e05a20');
+    if(q.lenGiven==='small'){
+      html += `<line x1="${SMALL3D_ANCHOR.x}" y1="${smallTop}" x2="${SMALL3D_ANCHOR.x+28}" y2="${smallTop}" stroke="#4f46e5" stroke-width="2" stroke-dasharray="4 3"></line>`;
+      html += `<text class="edgelen" x="${SMALL3D_ANCHOR.x+14}" y="${smallTop-8}">${q.smallLen}</text>`;
+      lenText = `또, 작은 원기둥의 반지름이 ${q.smallLen}cm일 때, 큰 원기둥의 반지름을 구하시오.`;
+      lenAnswer = q.bigLen;
+    } else {
+      html += `<line x1="${BIG3D_ANCHOR.x}" y1="${bigTop}" x2="${BIG3D_ANCHOR.x+28*k}" y2="${bigTop}" stroke="#e05a20" stroke-width="2" stroke-dasharray="4 3"></line>`;
+      html += `<text class="edgelen" x="${BIG3D_ANCHOR.x+14*k}" y="${bigTop-8}">${q.bigLen}</text>`;
+      lenText = `또, 큰 원기둥의 반지름이 ${q.bigLen}cm일 때, 작은 원기둥의 반지름을 구하시오.`;
+      lenAnswer = q.smallLen;
+    }
+  } else {
+    const cfg = q.kind==='cube'?CUBE : q.kind==='pyr'?PYRAMID : PRISM;
+    const smallPts = solid3Points(cfg.local3D, SMALL3D_ANCHOR, 1);
+    const bigPts = solid3Points(cfg.local3D, BIG3D_ANCHOR, k);
+    const hiddenS = q.kind==='pyr' ? tetraHiddenEdges(smallPts) : cfg.hiddenEdges;
+    const hiddenB = q.kind==='pyr' ? tetraHiddenEdges(bigPts) : cfg.hiddenEdges;
+    html += drawSolidOutline(smallPts, cfg.smallLabels, cfg.wireEdges, hiddenS, '#4f46e5');
+    html += drawSolidOutline(bigPts, cfg.bigLabels, cfg.wireEdges, hiddenB, '#e05a20');
+    const nameS = cfg.smallLabels[0]+cfg.smallLabels[1], nameB = cfg.bigLabels[0]+cfg.bigLabels[1];
+    const kindName = KIND_NAME[q.kind];
+    const smallC = centroidOf(smallPts), bigC = centroidOf(bigPts);
+    if(q.lenGiven==='small'){
+      html += sideLabelSVG(smallPts[0], smallPts[1], smallC, q.smallLen, 18);
+      lenText = `또, 작은 ${kindName}의 모서리 <span class="seg">${nameS}</span> = ${q.smallLen}cm일 때, 큰 ${kindName}의 모서리 <span class="seg">${nameB}</span>의 길이를 구하시오.`;
+      lenAnswer = q.bigLen;
+    } else {
+      html += sideLabelSVG(bigPts[0], bigPts[1], bigC, q.bigLen, 18);
+      lenText = `또, 큰 ${kindName}의 모서리 <span class="seg">${nameB}</span> = ${q.bigLen}cm일 때, 작은 ${kindName}의 모서리 <span class="seg">${nameS}</span>의 길이를 구하시오.`;
+      lenAnswer = q.smallLen;
+    }
+  }
+  lv3.lenAnswer = lenAnswer;
+  svg.innerHTML = html;
+  const modeName = q.mode==='area' ? '넓이' : '부피';
+  document.getElementById('lv3Qtext').innerHTML = `두 ${KIND_NAME[q.kind]}은(는) 서로 닮은 도형이고, ${modeName}의 비가 ${q.given[0]}:${q.given[1]}이다. 두 ${KIND_NAME[q.kind]}의 닮음비를 구하시오. ${lenText}`;
+  document.getElementById('lv3A').value=''; document.getElementById('lv3B').value=''; document.getElementById('lv3C').value='';
+  document.getElementById('lv3A').classList.remove('correct','wrong');
+  document.getElementById('lv3B').classList.remove('correct','wrong');
+  document.getElementById('lv3C').classList.remove('correct','wrong');
+  document.getElementById('lv3Fb').textContent='';
+  lv3SetupCanvas(); // 문제가 바뀔 때마다 캔버스를 다시 세팅 — 크기 재계산과 동시에 이전 필기가 자동으로 지워짐
+}
+function lv3Check(){
+  const a = parseFloat(document.getElementById('lv3A').value);
+  const b = parseFloat(document.getElementById('lv3B').value);
+  const c = parseFloat(document.getElementById('lv3C').value);
+  const [sp,sq] = lv3.cur.sim;
+  const okRatio = ratioMatches(a,b,sp,sq);
+  const okLen = numMatches(c, lv3.lenAnswer, 0.01);
+  const ok = okRatio && okLen;
+  document.getElementById('lv3A').classList.toggle('correct',okRatio); document.getElementById('lv3A').classList.toggle('wrong',!okRatio);
+  document.getElementById('lv3B').classList.toggle('correct',okRatio); document.getElementById('lv3B').classList.toggle('wrong',!okRatio);
+  document.getElementById('lv3C').classList.toggle('correct',okLen); document.getElementById('lv3C').classList.toggle('wrong',!okLen);
+  if(ok) lv3.correct++;
+  const fb = document.getElementById('lv3Fb');
+  fb.className = 'fb-line ' + (ok?'ok':'no');
+  fb.textContent = ok ? '✅ 정답이에요!' : `❌ 오답이에요. 닮음비는 ${sp}:${sq}, 길이는 ${lv3.lenAnswer}cm예요.`;
+  setTimeout(lv3Next, 1500);
+}
+function lv3Finish(){
+  const pass = lv3.correct >= 3;
+  updateBadge('lv3', pass);
+  document.getElementById('lv3Card').style.display='none';
+  const el = document.getElementById('lv3Done');
+  el.style.display='block';
+  el.innerHTML = `<div class="done-wrap"><div class="done-icon">${pass?'🎉':'💪'}</div><div>${lv3.total}문제 중</div><div class="done-score ${pass?'':'fail'}">${lv3.correct} / ${lv3.total}</div><div>${pass?'통과했어요!':'3문제 이상 맞아야 통과해요.'}</div><button class="restart-btn" onclick="lv3Init()">🔄 다시 도전</button><button class="menu-btn" onclick="showMenu()">목록으로</button></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+</script>
+</body>
+</html>

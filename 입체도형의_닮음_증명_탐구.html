@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>입체도형의 닮음 탐구</title>
+<style>
+:root{
+  --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+  --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --orange:#e05a20;
+  --line:#e3e8f4; --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--ink)}
+.hdr{background:var(--primary);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:760px;margin:0 auto;padding:20px 16px 70px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.goal-banner{background:linear-gradient(135deg,#eef2ff,#fff0f5);border:2px solid #c9d4fb;border-radius:14px;padding:16px 18px;text-align:center;font-size:14.5px;line-height:1.7;color:var(--primary-dark);margin-bottom:18px}
+.goal-banner b{font-size:16.5px}
+
+.reveal{max-height:0;opacity:0;overflow:hidden;transition:.45s ease}
+.reveal.show{max-height:8000px;opacity:1;margin-top:16px}
+
+.step-card{background:var(--card);border-radius:16px;padding:18px 20px 20px;border-left:6px solid var(--primary);box-shadow:0 4px 14px rgba(43,47,66,.05);margin-bottom:18px}
+.step-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.step-badge{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:none}
+.step-head h2{margin:0;font-size:16.5px}
+.step-body p{margin:6px 0 10px;font-size:14px;line-height:1.6;color:#3c4257}
+
+.svg-wrap{background:#fbfcff;border-radius:14px;border:1px solid var(--line);padding:6px;margin-bottom:12px}
+svg{width:100%;height:auto;display:block}
+.vlabel{font-size:15px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+.face-highlight-small{fill:#4f6fe0;fill-opacity:.35;stroke:none}
+.face-highlight-big{fill:#e05a20;fill-opacity:.12;stroke:#e05a20;stroke-width:2;stroke-dasharray:6 4}
+.face-fly-poly{fill:#4f6fe0;fill-opacity:.55;stroke:#4f6fe0;stroke-width:2.5;transform-origin:0px 0px}
+
+.proof-block{background:#fbfcff;border:1.5px solid var(--line);border-radius:14px;padding:14px 18px;margin:10px 0;font-size:14.5px;line-height:2.3;color:#2b2f42}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--primary);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 3px;color:var(--primary-dark)}
+.blank:focus{outline:none;border-bottom-color:var(--primary-dark);background:#eef2ff}
+.blank.correct{border-bottom-color:#3fbf91;background:#e9faf3;color:#1e7a53}
+.blank.wrong{border-bottom-color:#e97a7a;background:#fdecec;color:#b3261e}
+
+.btn{border:none;border-radius:12px;padding:10px 16px;font-size:13.5px;font-weight:700;cursor:pointer;background:#eef1fa;color:var(--ink);font-family:inherit;transition:.15s}
+.btn:hover{background:#e2e7f8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-check{background:var(--primary);color:#fff}
+.btn-check:hover{background:var(--primary-dark)}
+.btn-primary{background:var(--primary);color:#fff;padding:11px 22px}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(79,111,224,.35)}
+.angle-btn-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.angle-btn{border:1.5px solid var(--primary);background:#fff;color:var(--primary-dark);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.angle-btn:hover{background:#eef2ff}
+.angle-btn.viewed{background:#eef2ff}
+
+.feedback{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13.5px;line-height:1.6;display:none}
+.feedback.success{display:block;background:#e7f8f0;color:#1e7a53;border:1px solid #b7ead2}
+.feedback.error{display:block;background:#fdeceb;color:#b3261e;border:1px solid #f6c6c2}
+
+.summary-box{margin-top:8px;padding:14px 16px;border-radius:12px;background:linear-gradient(135deg,#eef2ff,#fff5f8);border:1.5px dashed #b9c4f5;font-size:13.5px;line-height:1.7}
+.summary-box b{color:var(--primary-dark)}
+
+.property-box{background:#eef2ff;border:2px solid #c9d4fb;border-radius:14px;padding:18px 20px;margin:18px 0}
+.property-box .tag{font-size:12px;font-weight:800;color:var(--primary-dark);letter-spacing:.3px;margin-bottom:8px}
+.property-box ol{margin:8px 0 0;padding-left:20px;font-size:14.5px;line-height:1.9}
+.footnote{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.6}
+
+.example-title{font-size:20px;font-weight:800;margin:26px 0 6px;text-align:center}
+.example-sub{font-size:13.5px;color:var(--muted);text-align:center;margin-bottom:16px}
+.ex-num{background:var(--pink);color:#fff}
+
+.done-wrap{text-align:center;padding:30px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">입체도형의 닮음</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+  <div id="tanguPage">
+    <div class="goal-banner">
+      <span class="tag" style="display:block;font-size:12px;font-weight:700;color:#8b93c2;margin-bottom:4px">함께 탐구</span>
+      <b>서로 닮은 두 입체도형에는 어떤 성질이 있을까?</b><br>
+      대응하는 모서리의 길이의 비와 대응하는 면을 사각뿔, 삼각기둥에서 각각 확인해 봅시다.
+    </div>
+
+    <div id="sectionsRoot"></div>
+    <div id="propertyRoot"></div>
+  </div>
+
+  <div id="examplePage" style="display:none">
+    <div id="exampleRoot"></div>
+    <div id="doneRoot"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'solid-similarity-properties' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════
+   공용 3D/2D 헬퍼
+════════════════════════════════ */
+const PROJ_ANGLE = Math.PI/6, PROJ_ZF = 0.5, PROJ_SCALE = 13;
+function project3D(p){
+  const [x,y,z] = p;
+  const px = x + z*Math.cos(PROJ_ANGLE)*PROJ_ZF;
+  const py = -y - z*Math.sin(PROJ_ANGLE)*PROJ_ZF;
+  return [px*PROJ_SCALE, py*PROJ_SCALE];
+}
+function ptsToStr(pts){ return pts.map(p=>`${p[0]},${p[1]}`).join(' '); }
+function centroidOf(pts){
+  const cx = pts.reduce((s,p)=>s+p[0],0)/pts.length, cy = pts.reduce((s,p)=>s+p[1],0)/pts.length;
+  return {x:cx,y:cy};
+}
+function outwardLabel(p, centroid, dist){
+  const dx = p[0]-centroid.x, dy = p[1]-centroid.y, len = Math.hypot(dx,dy)||1;
+  return { x: p[0]+dx/len*dist, y: p[1]+dy/len*dist };
+}
+function ratioMatches(a,b,ra,rb){
+  if(!isFinite(a)||!isFinite(b)||a<=0||b<=0) return false;
+  const lhs=a*rb, rhs=b*ra;
+  return Math.abs(lhs-rhs) < 0.02*Math.max(Math.abs(lhs),Math.abs(rhs),1);
+}
+function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.05); }
+function normName(v){ return String(v||'').trim().toUpperCase().replace(/\s+/g,''); }
+function nameMatches(v, answer){
+  const n = normName(v);
+  if(n.length!==2) return false;
+  return n.split('').sort().join('') === answer.split('').sort().join('');
+}
+
+/* ════════════════════════════════
+   입체도형 데이터 (작은/큰 입체는 같은 방향, 닮음비만 다름)
+════════════════════════════════ */
+const SMALL3D_ANCHOR = {x:160,y:320}, BIG3D_ANCHOR = {x:540,y:320};
+const SOLIDS = [
+  { key:'pyr', name:'사각뿔',
+    smallLabels:['A','B','C','D','E'], bigLabels:['F','G','H','I','J'],
+    local3D:[[-3,0,0],[3,0,0],[3,0,6],[-3,0,6],[0,8,3]], // A,B,C,D(밑면 정사각형), E(꼭짓점)
+    ratio:[2,3],
+    wireEdges:[[0,1],[1,2],[2,3],[3,0],[0,4],[1,4],[2,4],[3,4]],
+    hiddenEdges:[[2,3]],
+    edgeIdx:[[0,1],[2,3],[0,4],[2,4]], edgeSmallVal:[6,6,10,10],
+    faces:[
+      { fkey:'base', idx:[0,1,2,3], name:'밑면(사각형)', color:'#4f6fe0' },
+      { fkey:'side', idx:[0,1,4], name:'옆면(삼각형)', color:'#9b7cff' }
+    ] },
+  { key:'pri', name:'삼각기둥',
+    smallLabels:['A','B','C','D','E','F'], bigLabels:['G','H','I','J','K','L'],
+    local3D:[[-3,0,0],[4,0,0],[0,0,5],[-3,8,0],[4,8,0],[0,8,5]], // A,B,C(밑면), D,E,F(윗면, 각각 A,B,C 위)
+    ratio:[3,4],
+    wireEdges:[[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[0,3],[1,4],[2,5]],
+    hiddenEdges:[[1,2],[2,0],[2,5]],
+    edgeIdx:[[2,0],[1,2],[0,1],[0,3]], edgeSmallVal:[6,9,12,15],
+    faces:[
+      { fkey:'base', idx:[0,1,2], name:'밑면(삼각형)', color:'#4f6fe0' },
+      { fkey:'side', idx:[0,1,4,3], name:'옆면(직사각형)', color:'#9b7cff' }
+    ] }
+];
+const state = {};
+
+function solidPoints(cfg, big){
+  const k = big ? (cfg.ratio[1]/cfg.ratio[0]) : 1;
+  const anchor = big ? BIG3D_ANCHOR : SMALL3D_ANCHOR;
+  return cfg.local3D.map(p=>{
+    const sp = p.map(v=>v*k);
+    const pr = project3D(sp);
+    return [anchor.x+pr[0], anchor.y+pr[1]];
+  });
+}
+function isHiddenEdge(cfg, i, j){
+  return cfg.hiddenEdges.some(([a,b])=>(a===i&&b===j)||(a===j&&b===i));
+}
+// 변의 길이 표기 규칙: 실제 선분 위에 적지 않고, 바깥쪽으로 볼록한 점선 곡선 + 곡선 꼭대기에 값만
+function sideLabelSVG(p1, p2, centroid, value){
+  const mid = [(p1[0]+p2[0])/2, (p1[1]+p2[1])/2];
+  let dx = mid[0]-centroid.x, dy = mid[1]-centroid.y, len = Math.hypot(dx,dy)||1;
+  dx/=len; dy/=len;
+  const bulge = 14;
+  const ctrl = [mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt = [mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" d="M ${p1[0]} ${p1[1]} Q ${ctrl[0]} ${ctrl[1]} ${p2[0]} ${p2[1]}"></path>`+
+    `<text class="edgelen" x="${labelPt[0]}" y="${labelPt[1]}">${value}</text>`;
+}
+function buildWireframeSVG(cfg){
+  const smallPts = solidPoints(cfg,false);
+  const bigPts = solidPoints(cfg,true);
+  const smallC = centroidOf(smallPts), bigC = centroidOf(bigPts);
+  let html = '';
+  // 탐구2에서 사용할 대응면 하이라이트(밑면 + 옆면) — 작은 도형은 채움, 큰 도형은 점선 목표 윤곽
+  cfg.faces.forEach(face=>{
+    const smallFacePts = face.idx.map(i=>smallPts[i]);
+    const bigFacePts = face.idx.map(i=>bigPts[i]);
+    html += `<polygon id="faceSmall-${cfg.key}-${face.fkey}" class="face-highlight-small" style="fill:${face.color};stroke:${face.color}" points="${ptsToStr(smallFacePts)}"></polygon>`;
+    html += `<polygon id="faceBig-${cfg.key}-${face.fkey}" class="face-highlight-big" style="stroke:${face.color}" points="${ptsToStr(bigFacePts)}"></polygon>`;
+  });
+
+  function drawSolid(pts, labels, color){
+    let h='';
+    cfg.wireEdges.forEach(([i,j])=>{
+      const hidden = isHiddenEdge(cfg,i,j);
+      h += `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="${color}" stroke-width="2"${hidden?' stroke-dasharray="5 4"':''}></line>`;
+    });
+    const c = centroidOf(pts);
+    pts.forEach((p,idx)=>{
+      const lp = outwardLabel(p,c,16);
+      h += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${color}">${labels[idx]}</text>`;
+    });
+    return h;
+  }
+  html += drawSolid(smallPts, cfg.smallLabels, '#4f6fe0');
+  html += drawSolid(bigPts, cfg.bigLabels, '#e05a20');
+  cfg.edgeIdx.forEach(([i,j], idx)=>{
+    const sv = cfg.edgeSmallVal[idx];
+    const bv = Math.round(sv*cfg.ratio[1]/cfg.ratio[0]*10)/10;
+    html += sideLabelSVG(smallPts[i], smallPts[j], smallC, sv);
+    html += sideLabelSVG(bigPts[i], bigPts[j], bigC, bv);
+  });
+  return html;
+}
+
+/* ════════════════════════════════
+   화면 전환
+════════════════════════════════ */
+function unlock(id){
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(()=>{ el.scrollIntoView({behavior:'smooth', block:'start'}); }, 150);
+}
+function goToExamples(){
+  document.getElementById('tanguPage').style.display = 'none';
+  document.getElementById('examplePage').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ════════════════════════════════
+   탐구 섹션 (사각뿔 → 삼각기둥)
+════════════════════════════════ */
+function buildSection(cfg, isFirst, nextKey){
+  const ratioRows = cfg.edgeIdx.map(([i,j], idx)=>{
+    const a = cfg.smallLabels[i], b = cfg.smallLabels[j];
+    const c = cfg.bigLabels[i], d = cfg.bigLabels[j];
+    return `<p>모서리 <span class="seg">${a}${b}</span> : 모서리 (`+
+      `<input class="blank corrblank" data-role="corr" data-key="${cfg.key}" data-idx="${idx}" data-answer="${c}${d}" maxlength="4">`+
+      `) = `+
+      `<input class="blank" data-role="ratio" data-key="${cfg.key}" data-idx="${idx}" data-part="a" inputmode="decimal"> : `+
+      `<input class="blank" data-role="ratio" data-key="${cfg.key}" data-idx="${idx}" data-part="b" inputmode="decimal"></p>`;
+  }).join('');
+
+  return `
+  <div class="reveal${isFirst?' show':''}" id="sec-${cfg.key}">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge">${cfg.name[0]}</div><h2>${cfg.name}에서 닮음의 성질 확인하기</h2></div>
+      <div class="step-body">
+        <div class="svg-wrap"><svg id="svg-${cfg.key}" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+        <div class="summary-box" id="t1summary-${cfg.key}" style="display:none">
+          ✅ <b>탐구1 완료</b> — 대응하는 모서리의 길이의 비 = 닮음비 <span id="t1summaryRatio-${cfg.key}"></span>
+          <a href="javascript:void(0)" onclick="toggleT1('${cfg.key}')" style="margin-left:8px">다시 보기</a>
+        </div>
+
+        <div id="t1wrap-${cfg.key}">
+          <p><b>탐구1</b> 입체도형 ${cfg.key==='pyr'?'사각뿔':'삼각기둥'} ${cfg.smallLabels.join('')}와(과) ${cfg.bigLabels.join('')}는 서로 닮은 도형이다. 대표로 뽑은 모서리 4개에 대해 대응 모서리를 찾고, 길이의 비를 구해 보자.</p>
+          <div class="proof-block">${ratioRows}</div>
+          <button class="btn btn-check" onclick="checkRatios('${cfg.key}')">확인</button>
+          <div class="feedback" id="ratioFb-${cfg.key}"></div>
+
+          <div class="reveal" id="discBlock-${cfg.key}">
+            <div class="proof-block">대응하는 모서리의 길이의 비는 모두
+              <button class="btn btn-sm" onclick="chooseDisc('${cfg.key}',true,this)">같다</button>
+              <button class="btn btn-sm" onclick="chooseDisc('${cfg.key}',false,this)">다르다</button>
+            </div>
+            <div class="feedback" id="discFb-${cfg.key}"></div>
+          </div>
+
+          <div class="reveal" id="termBlock-${cfg.key}">
+            <div class="proof-block">🎉 맞아요! 모든 대응하는 모서리의 길이의 비가 같아요! 이 일정한 비를 두 입체도형의 (<input class="blank" id="term-${cfg.key}" style="width:80px">)라고 한다.</div>
+            <button class="btn btn-check" onclick="checkTerm('${cfg.key}')">확인</button>
+            <div class="feedback" id="termFb-${cfg.key}"></div>
+          </div>
+
+          <div class="reveal" id="simBlock-${cfg.key}">
+            <div class="proof-block">${cfg.key==='pyr'?'사각뿔':'삼각기둥'} ${cfg.smallLabels.join('')}와(과) ${cfg.bigLabels.join('')}의 닮음비는 <input class="blank" id="simA-${cfg.key}"> : <input class="blank" id="simB-${cfg.key}"> 이다.</div>
+            <button class="btn btn-check" onclick="checkSimRatio('${cfg.key}')">확인</button>
+            <div class="feedback" id="simFb-${cfg.key}"></div>
+          </div>
+        </div>
+
+        <div class="reveal" id="faceBlock-${cfg.key}">
+          <p><b>탐구2</b> 이번엔 대응하는 면을 비교해 보자. 위 그림에서 색칠된 작은 도형의 면들이 큰 도형의 점선으로 표시된 대응하는 면과 닮음인지 확인해 보자. 버튼을 누르면 작은 도형의 면이 확대되며 큰 도형의 대응하는 면 위로 이동해서 겹쳐져요.</p>
+          <div class="angle-btn-row">
+            ${cfg.faces.map(face=>`<button class="angle-btn" id="facebtn-${cfg.key}-${face.fkey}" onclick="overlapFace('${cfg.key}','${face.fkey}')">${face.name} 겹쳐보기</button>`).join('')}
+          </div>
+          <div class="feedback" id="faceFb-${cfg.key}"></div>
+
+          <div class="reveal" id="faceDiscBlock-${cfg.key}">
+            <div class="proof-block">대응하는 면은 서로
+              <button class="btn btn-sm" onclick="chooseFaceDisc('${cfg.key}',true,this)">닮은 도형이다</button>
+              <button class="btn btn-sm" onclick="chooseFaceDisc('${cfg.key}',false,this)">닮은 도형이 아니다</button>
+            </div>
+            <div class="feedback" id="faceDiscFb-${cfg.key}"></div>
+          </div>
+        </div>
+
+        <div class="reveal" id="doneBlock-${cfg.key}">
+          <div class="summary-box">🎉 이 입체도형에서 대응하는 모서리의 길이의 비가 일정하고, 대응하는 면이 서로 닮음이라는 것을 확인했어요.</div>
+          ${nextKey ? `<button class="btn btn-primary" onclick="unlock('sec-${nextKey}')">다음 입체도형으로 →</button>` : `<button class="btn btn-primary" onclick="unlock('propertySec')">성질 정리 보기 →</button>`}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function initSections(){
+  let html = '';
+  SOLIDS.forEach((cfg,i)=>{
+    const nextKey = SOLIDS[i+1] ? SOLIDS[i+1].key : null;
+    html += buildSection(cfg, i===0, nextKey);
+    state[cfg.key] = { facesViewed: {} };
+  });
+  document.getElementById('sectionsRoot').innerHTML = html;
+  SOLIDS.forEach(cfg=>{
+    document.getElementById('svg-'+cfg.key).innerHTML = buildWireframeSVG(cfg);
+  });
+}
+
+function checkRatios(key){
+  const cfg = SOLIDS.find(c=>c.key===key);
+  const ratioInputs = document.querySelectorAll(`input[data-role="ratio"][data-key="${key}"]`);
+  const corrInputs = document.querySelectorAll(`input[data-role="corr"][data-key="${key}"]`);
+  let allOk = true;
+  const byIdx = {};
+  ratioInputs.forEach(inp=>{ const idx=inp.dataset.idx; byIdx[idx]=byIdx[idx]||{}; byIdx[idx][inp.dataset.part]=inp; });
+  corrInputs.forEach(inp=>{
+    const ok = nameMatches(inp.value, inp.dataset.answer);
+    inp.classList.toggle('correct',ok); inp.classList.toggle('wrong',!ok);
+    if(!ok) allOk = false;
+  });
+  Object.keys(byIdx).forEach(idx=>{
+    const aInp = byIdx[idx].a, bInp = byIdx[idx].b;
+    const a = parseFloat(aInp.value), b = parseFloat(bInp.value);
+    const ok = ratioMatches(a,b,cfg.ratio[0],cfg.ratio[1]);
+    aInp.classList.toggle('correct',ok); aInp.classList.toggle('wrong',!ok);
+    bInp.classList.toggle('correct',ok); bInp.classList.toggle('wrong',!ok);
+    if(!ok) allOk = false;
+  });
+  const fb = document.getElementById('ratioFb-'+key);
+  if(allOk){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 대응 모서리를 잘 찾았고, 비도 모두 같네요.';
+    unlock('discBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 아직 정확하지 않아요. 빨간색 빈칸을 다시 확인해보세요.';
+  }
+}
+function chooseDisc(key, isEqual, btnEl){
+  if(btnEl){ btnEl.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btnEl.classList.add('active'); }
+  const fb = document.getElementById('discFb-'+key);
+  if(isEqual){
+    fb.className='feedback success';
+    fb.textContent='🎉 맞아요!';
+    unlock('termBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 생각해보아요. 탐구1에서 구한 비를 다시 살펴보세요.';
+  }
+}
+function checkTerm(key){
+  const inp = document.getElementById('term-'+key);
+  const v = String(inp.value||'').trim().replace(/\s+/g,'');
+  const ok = v==='닮음비' || v==='닮음비이다' || v==='닮음비다';
+  inp.classList.toggle('correct',ok); inp.classList.toggle('wrong',!ok);
+  const fb = document.getElementById('termFb-'+key);
+  if(ok){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! "닮음비"가 맞아요.';
+    unlock('simBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 힌트: 이 활동의 제목을 다시 살펴보세요.';
+  }
+}
+function checkSimRatio(key){
+  const cfg = SOLIDS.find(c=>c.key===key);
+  const aInp = document.getElementById('simA-'+key), bInp = document.getElementById('simB-'+key);
+  const a = parseFloat(aInp.value), b = parseFloat(bInp.value);
+  const ok = ratioMatches(a,b,cfg.ratio[0],cfg.ratio[1]);
+  aInp.classList.toggle('correct',ok); aInp.classList.toggle('wrong',!ok);
+  bInp.classList.toggle('correct',ok); bInp.classList.toggle('wrong',!ok);
+  const fb = document.getElementById('simFb-'+key);
+  if(ok){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 닮음비를 잘 찾았어요.';
+    collapseT1(key, `${a}:${b}`);
+    unlock('faceBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 확인해보세요.';
+  }
+}
+function collapseT1(key, ratioText){
+  document.getElementById('t1wrap-'+key).style.display = 'none';
+  const summary = document.getElementById('t1summary-'+key);
+  document.getElementById('t1summaryRatio-'+key).textContent = ratioText;
+  summary.style.display = 'block';
+}
+function toggleT1(key){
+  const wrap = document.getElementById('t1wrap-'+key);
+  wrap.style.display = (wrap.style.display==='none') ? '' : 'none';
+}
+
+/* ════════════════════════════════
+   탐구2: 대응하는 면 겹쳐보기 (탐구1의 와이어프레임 그림을 그대로 재사용)
+   project3D가 선형함수라서 project3D(k*p) = k*project3D(p)가 항상 성립 — 즉 작은 도형의
+   면을 큰 도형 쪽으로 "이동 + 닮음비만큼 확대"만 해도 항상 정확히 겹쳐진다(회전 불필요).
+════════════════════════════════ */
+function overlapFace(key, fkey){
+  const cfg = SOLIDS.find(c=>c.key===key);
+  const svg = document.getElementById('svg-'+key);
+  svg.querySelectorAll(`.face-fly-${key}-${fkey}`).forEach(el=>el.remove());
+  const source = document.getElementById(`faceSmall-${key}-${fkey}`);
+  const clone = source.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.setAttribute('class', `face-fly-poly face-fly-${key}-${fkey}`);
+  clone.style.fill = source.style.fill;
+  clone.style.stroke = source.style.stroke;
+  svg.appendChild(clone);
+  clone.style.transform = 'translate(0px,0px) scale(1)';
+  void clone.getBoundingClientRect();
+  clone.style.transition = 'transform .8s ease';
+  const k = cfg.ratio[1]/cfg.ratio[0];
+  const tx = BIG3D_ANCHOR.x - k*SMALL3D_ANCHOR.x;
+  const ty = BIG3D_ANCHOR.y - k*SMALL3D_ANCHOR.y;
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      clone.style.transform = `translate(${tx}px, ${ty}px) scale(${k})`;
+    });
+  });
+  if(!state[key].facesViewed[fkey]){
+    state[key].facesViewed[fkey] = true;
+    const allViewed = cfg.faces.every(f=>state[key].facesViewed[f.fkey]);
+    if(allViewed){ setTimeout(()=>{ unlock('faceDiscBlock-'+key); }, 900); }
+  }
+}
+function chooseFaceDisc(key, isSimilar, btnEl){
+  if(btnEl){ btnEl.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btnEl.classList.add('active'); }
+  const fb = document.getElementById('faceDiscFb-'+key);
+  if(isSimilar){
+    fb.className='feedback success';
+    fb.textContent='🎉 맞아요!';
+    unlock('doneBlock-'+key);
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 생각해보아요. 면 겹쳐보기 버튼을 다시 눌러 확인해봐도 좋아요.';
+  }
+}
+
+/* ════════════════════════════════
+   닮음의 성질 정리 박스
+════════════════════════════════ */
+function initProperty(){
+  document.getElementById('propertyRoot').innerHTML = `
+  <div class="reveal" id="propertySec">
+    <div class="property-box">
+      <div class="tag">입체도형에서 닮음의 성질</div>
+      <div>서로 닮은 두 입체도형에서</div>
+      <ol>
+        <li>대응하는 모서리의 길이의 비는 (<input class="blank" id="propBlank1" style="width:70px">)하다.</li>
+        <li>대응하는 면은 서로 (<input class="blank" id="propBlank2" style="width:110px">)이다.</li>
+      </ol>
+      <div class="footnote">서로 닮은 두 입체도형에서 대응하는 모서리의 길이의 비를 <b>닮음비</b>라고 한다.<br>참고: 두 구는 항상 서로 닮은 도형이고, 닮음비는 두 구의 반지름의 길이의 비이다.</div>
+    </div>
+    <div style="text-align:center"><button class="btn btn-check" onclick="checkProperty()">확인</button></div>
+    <div class="feedback" id="propertyFb"></div>
+    <div class="reveal" id="propertyNextBlock">
+      <div style="text-align:center"><button class="btn btn-primary" onclick="goToExamples()">예제 문제 풀어보기 →</button></div>
+    </div>
+  </div>`;
+}
+function checkProperty(){
+  const b1 = document.getElementById('propBlank1'), b2 = document.getElementById('propBlank2');
+  const v1 = String(b1.value||'').trim().replace(/\s+/g,'');
+  const v2 = String(b2.value||'').trim().replace(/\s+/g,'');
+  const ok1 = v1==='일정' || v1==='일정하다';
+  const ok2 = v2==='닮은도형' || v2==='닮은도형이다';
+  b1.classList.toggle('correct',ok1); b1.classList.toggle('wrong',!ok1);
+  b2.classList.toggle('correct',ok2); b2.classList.toggle('wrong',!ok2);
+  const fb = document.getElementById('propertyFb');
+  if(ok1 && ok2){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 입체도형의 닮음 성질을 잘 정리했어요.';
+    unlock('propertyNextBlock');
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 다시 확인해보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   예제 문제
+════════════════════════════════ */
+const EXAMPLES = [
+  { key:'ex-pyr', num:1, name:'사각뿔', // AB=4, FG=6(AB:FG=2:3), FJ=15 → AE=FJ*2/3=10
+    cfg: SOLIDS[0],
+    smallEdgeIdx:[0,1], bigEdgeIdx:[0,1], bigEdgeIdx2:[0,4],
+    smallVal:4, bigVal:6, bigVal2:15,
+    askEdgeIdx:[0,4], ratio:[2,3], askAns:10 },
+  { key:'ex-pri', num:2, name:'삼각기둥', // AB=5, GH=10(AB:GH=1:2), GJ=16 → AD=GJ*1/2=8
+    cfg: SOLIDS[1],
+    smallEdgeIdx:[0,1], bigEdgeIdx:[0,1], bigEdgeIdx2:[0,3],
+    smallVal:5, bigVal:10, bigVal2:16,
+    askEdgeIdx:[0,3], ratio:[1,2], askAns:8 }
+];
+
+function buildExampleWireframe(ex){
+  const cfg = ex.cfg;
+  const smallPts = solidPoints(cfg,false);
+  // 예제 전용 확대율(닮음비와 무관, 그림 크기만 맞추기 위함)
+  const dispK = 1.6;
+  const anchor = BIG3D_ANCHOR;
+  const bigPts = cfg.local3D.map(p=>{
+    const sp = p.map(v=>v*dispK);
+    const pr = project3D(sp);
+    return [anchor.x+pr[0], anchor.y+pr[1]];
+  });
+  let html = '';
+  function drawSolid(pts, labels, color){
+    let h='';
+    cfg.wireEdges.forEach(([i,j])=>{
+      const hidden = isHiddenEdge(cfg,i,j);
+      h += `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="${color}" stroke-width="2"${hidden?' stroke-dasharray="5 4"':''}></line>`;
+    });
+    const c = centroidOf(pts);
+    pts.forEach((p,idx)=>{
+      const lp = outwardLabel(p,c,16);
+      h += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${color}">${labels[idx]}</text>`;
+    });
+    return h;
+  }
+  html += drawSolid(smallPts, cfg.smallLabels, '#4f6fe0');
+  html += drawSolid(bigPts, cfg.bigLabels, '#e05a20');
+  const smallC = centroidOf(smallPts), bigC = centroidOf(bigPts);
+  const [asi,asj] = ex.smallEdgeIdx, [abi,abj] = ex.bigEdgeIdx, [abi2,abj2] = ex.bigEdgeIdx2;
+  html += sideLabelSVG(smallPts[asi], smallPts[asj], smallC, ex.smallVal);
+  html += sideLabelSVG(bigPts[abi], bigPts[abj], bigC, ex.bigVal);
+  html += sideLabelSVG(bigPts[abi2], bigPts[abj2], bigC, ex.bigVal2);
+  return html;
+}
+
+function buildExampleHTML(ex){
+  const cfg = ex.cfg;
+  const [ai,aj] = ex.smallEdgeIdx, [bi,bj] = ex.bigEdgeIdx, [qi,qj] = ex.askEdgeIdx;
+  return `
+  <div class="reveal${ex.num===1?' show':''}" id="sec-${ex.key}">
+    <div class="step-card">
+      <div class="step-head"><div class="step-badge ex-num">${ex.num}</div><h2>예제 ${ex.num}. ${ex.name}</h2></div>
+      <div class="step-body">
+        <p>${cfg.smallLabels.join('')} ∽ ${cfg.bigLabels.join('')} 일 때, 다음을 구하시오.</p>
+        <div class="svg-wrap"><svg id="svg-${ex.key}" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="proof-block">
+          (1) 닮음비 ( ${cfg.smallLabels.join('')} : ${cfg.bigLabels.join('')} ) = <input class="blank" id="${ex.key}-r1"> : <input class="blank" id="${ex.key}-r2"><br>
+          (2) 모서리 <span class="seg">${cfg.smallLabels[qi]}${cfg.smallLabels[qj]}</span>의 길이 = <input class="blank" id="${ex.key}-side">
+        </div>
+        <button class="btn btn-check" onclick="checkExample('${ex.key}')">확인</button>
+        <div class="feedback" id="fb-${ex.key}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+function initExamples(){
+  let html = '';
+  EXAMPLES.forEach(ex=> html += buildExampleHTML(ex));
+  document.getElementById('exampleRoot').innerHTML = `<div class="example-title">📘 예제로 확인하기</div><div class="example-sub">닮음비와 모서리의 길이를 구해 보자.</div>` + html;
+  EXAMPLES.forEach(ex=>{
+    document.getElementById('svg-'+ex.key).innerHTML = buildExampleWireframe(ex);
+  });
+}
+function checkExample(key){
+  const ex = EXAMPLES.find(e=>e.key===key);
+  const r1 = parseFloat(document.getElementById(key+'-r1').value);
+  const r2 = parseFloat(document.getElementById(key+'-r2').value);
+  const side = parseFloat(document.getElementById(key+'-side').value);
+  const okR = ratioMatches(r1,r2,ex.ratio[0],ex.ratio[1]);
+  const okSide = numMatches(side, ex.askAns, 0.1);
+  [['r1',okR],['r2',okR],['side',okSide]].forEach(([suf,ok])=>{
+    const el = document.getElementById(key+'-'+suf);
+    el.classList.toggle('correct',ok); el.classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('fb-'+key);
+  if(okR && okSide){
+    fb.className='feedback success';
+    fb.textContent='🎉 정답이에요! 잘했어요.';
+    const idx = EXAMPLES.findIndex(e=>e.key===key);
+    if(idx < EXAMPLES.length-1){ unlock('sec-'+EXAMPLES[idx+1].key); }
+    else{ showDone(); }
+  }else{
+    fb.className='feedback error';
+    fb.textContent='❌ 아직 정확하지 않아요. 빨간색 빈칸을 다시 확인해보세요.';
+  }
+}
+function showDone(){
+  document.getElementById('doneRoot').innerHTML = `<div class="done-wrap"><div class="done-icon">🎉</div><div style="font-size:18px;font-weight:800">입체도형의 닮음 학습을 모두 마쳤어요!</div></div>`;
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+initSections();
+initProperty();
+initExamples();
+</script>
+</body>
+</html>
