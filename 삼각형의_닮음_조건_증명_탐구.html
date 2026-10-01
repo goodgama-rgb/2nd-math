@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼각형의 닮음 조건 탐구</title>
+<style>
+:root{
+  --bg:#f3f6fc; --card:#ffffff; --ink:#2b2f42; --muted:#6b7280;
+  --primary:#6c8bff; --primary-dark:#4f6fe0; --pink:#ff9db3; --green:#57c6a0; --orange:#e05a20;
+  --line:#e3e8f4; --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--ink)}
+.hdr{background:var(--primary);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:720px;margin:0 auto;padding:20px 16px 70px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.goal-banner{background:linear-gradient(135deg,#eef2ff,#fff0f5);border:2px solid #c9d4fb;border-radius:14px;padding:14px 18px;text-align:center;font-size:14px;line-height:1.6;color:var(--primary-dark);margin-bottom:14px}
+.goal-banner b{font-size:15.5px}
+
+.stage{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(43,47,66,.06)}
+.svg-wrap{background:#fbfcff;border-radius:14px;border:1px solid var(--line);padding:4px;margin-bottom:10px}
+svg{width:100%;height:auto;display:block}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+.angle-num{font-size:12px;font-weight:800;text-anchor:middle}
+
+.panel{min-height:120px}
+.panel p{margin:4px 0 10px;font-size:14px;line-height:1.6;color:#3c4257}
+.panel-title{font-size:14.5px;font-weight:800;color:var(--primary-dark);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.step-badge{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none}
+.counter-line{text-align:center;font-weight:800;color:var(--primary-dark);font-size:14px;margin:8px 0}
+.proof-block{background:#fbfcff;border:1.5px solid var(--line);border-radius:14px;padding:12px 16px;margin:10px 0;font-size:14px;line-height:2}
+
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--primary);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 3px;color:var(--primary-dark)}
+.blank:focus{outline:none;border-bottom-color:var(--primary-dark);background:#eef2ff}
+.blank.correct{border-bottom-color:#3fbf91;background:#e9faf3;color:#1e7a53}
+.blank.wrong{border-bottom-color:#e97a7a;background:#fdecec;color:#b3261e}
+
+.btn{border:none;border-radius:12px;padding:10px 16px;font-size:13.5px;font-weight:700;cursor:pointer;background:#eef1fa;color:var(--ink);font-family:inherit;transition:.15s}
+.btn:hover{background:#e2e7f8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-check{background:var(--primary);color:#fff}
+.btn-check:hover{background:var(--primary-dark)}
+.btn-primary{background:var(--primary);color:#fff;padding:11px 22px}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn.active{background:var(--primary);color:#fff}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;justify-content:center;align-items:center}
+
+.feedback{margin-top:8px;padding:9px 12px;border-radius:10px;font-size:13.5px;line-height:1.5;display:none}
+.feedback.success{display:block;background:#e7f8f0;color:#1e7a53;border:1px solid #b7ead2}
+.feedback.error{display:block;background:#fdeceb;color:#b3261e;border:1px solid #f6c6c2}
+
+.summary-box{margin-top:8px;padding:13px 15px;border-radius:12px;background:linear-gradient(135deg,#eef2ff,#fff5f8);border:1.5px dashed #b9c4f5;font-size:13.5px;line-height:1.7}
+.summary-box b{color:var(--primary-dark)}
+.notice-end{text-align:center;padding:16px 10px;color:var(--muted);font-size:12.5px;border-top:2px dashed var(--line);margin-top:10px}
+.progress-dots{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+.progress-dots span{width:8px;height:8px;border-radius:50%;background:#d8ddfb}
+.progress-dots span.on{background:var(--primary)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">삼각형의 닮음 조건 · 함께 탐구</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+  <div id="tanguPage">
+    <div class="goal-banner">
+      <b>삼각형의 닮음 조건은 무엇일까?</b><br>
+      두 삼각형이 닮음인지 알아보려면, 정말 모든 변과 각을 다 확인해야 할까요?
+    </div>
+
+    <div class="stage">
+      <div class="svg-wrap"><svg id="mainSvg" viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="progress-dots" id="dots"></div>
+      <div class="panel" id="panel"></div>
+    </div>
+  </div>
+
+  <div id="provePage" style="display:none">
+    <div class="goal-banner" id="proveBanner">
+      <b>닮음 조건, 증명해보자</b><br>
+      문자로 놓고 일반적으로 살펴봐요.
+    </div>
+    <div class="stage">
+      <div class="svg-wrap"><svg id="proveSvg" viewBox="0 0 740 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="panel" id="provePanel"></div>
+    </div>
+  </div>
+
+  <div id="summaryPage" style="display:none">
+    <div class="goal-banner">
+      <b>정리 및 문제 풀기</b><br>
+      세 가지 닮음 조건을 정리하고, 직접 판별해봐요.
+    </div>
+    <div class="stage">
+      <div class="svg-wrap"><svg id="summarySvg" viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="panel" id="summaryPanel"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { grade:p.get('grade'), cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'triangle-similarity-condition-exploration' };
+  window._student = s;
+  let _db = null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported = false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported = true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=> console.warn('hub complete log failed', err));
+  };
+})();
+</script>
+<script>
+const svgNS = 'http://www.w3.org/2000/svg';
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function centroidOf(pts){ const cx=pts.reduce((s,p)=>s+p[0],0)/pts.length, cy=pts.reduce((s,p)=>s+p[1],0)/pts.length; return {x:cx,y:cy}; }
+function outwardLabel(p, centroid, dist){
+  const dx=p[0]-centroid.x, dy=p[1]-centroid.y, len=Math.hypot(dx,dy)||1;
+  return { x:p[0]+dx/len*dist, y:p[1]+dy/len*dist };
+}
+function sideLabelSVG(p1, p2, centroid, value, bulge){
+  return sideLabelSVGAt(p1, p2, centroid, value, bulge, 0.5);
+}
+// t(0~1)로 라벨을 곡선 위 원하는 위치로 밀어서 쓸 수 있는 버전 — 두 변이 같은 직선 위에 겹쳐 있는 경우
+// (예: B-A와 B-A'처럼 한쪽이 다른 쪽에 포함될 때) 항상 중점(t=0.5)에 두면 두 라벨이 같은 자리에 몰려서
+// 겹치므로, 바깥쪽(먼) 변의 라벨은 t를 0.5에서 벗어나게 밀어 서로 떨어뜨린다. 곡선 자체는 항상 p1~p2 전체를 잇는다.
+function sideLabelSVGAt(p1, p2, centroid, value, bulge, t){
+  bulge = bulge || 14;
+  if(t===undefined) t = 0.5;
+  const mid=[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2];
+  const ex = p2[0]-p1[0], ey = p2[1]-p1[1], elen = Math.hypot(ex,ey)||1;
+  let dx = -ey/elen, dy = ex/elen;
+  const toMid = [mid[0]-centroid.x, mid[1]-centroid.y];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const bx = (1-t)*(1-t)*p1[0] + 2*(1-t)*t*ctrl[0] + t*t*p2[0];
+  const by = (1-t)*(1-t)*p1[1] + 2*(1-t)*t*ctrl[1] + t*t*p2[1];
+  const labelPt=[bx+dx*13, by+dy*13];
+  return `<path class="sidecurve" d="M ${p1[0]} ${p1[1]} Q ${ctrl[0]} ${ctrl[1]} ${p2[0]} ${p2[1]}"></path>`+
+    `<text class="edgelen" x="${labelPt[0]}" y="${labelPt[1]}">${value}</text>`;
+}
+function angleArcPath(dirA, dirB, r){
+  const a1=Math.atan2(dirA[1],dirA[0]), a2=Math.atan2(dirB[1],dirB[0]);
+  let diff=a2-a1; while(diff<=-Math.PI) diff+=2*Math.PI; while(diff>Math.PI) diff-=2*Math.PI;
+  const sweep = diff>0?1:0;
+  const x1=r*Math.cos(a1), y1=r*Math.sin(a1), x2=r*Math.cos(a2), y2=r*Math.sin(a2);
+  return `M ${x1} ${y1} A ${r} ${r} 0 0 ${sweep} ${x2} ${y2}`;
+}
+function angleMarkerSVG(vertex, dirA, dirB, color, value){
+  const rayLen=22, arcR=15;
+  const bis=[dirA[0]+dirB[0],dirA[1]+dirB[1]]; const bl=Math.hypot(bis[0],bis[1])||1;
+  const halfAngle = Math.acos(Math.max(-1, Math.min(1, bl/2)));
+  const clearance = 10;
+  const labelDist = clearance/Math.max(Math.sin(halfAngle), 0.05) + arcR;
+  const lp=[bis[0]/bl*labelDist, bis[1]/bl*labelDist];
+  return `<g transform="translate(${vertex[0]},${vertex[1]})">`+
+    `<line x1="0" y1="0" x2="${(dirA[0]*rayLen).toFixed(1)}" y2="${(dirA[1]*rayLen).toFixed(1)}" stroke="${color}" stroke-width="2"></line>`+
+    `<line x1="0" y1="0" x2="${(dirB[0]*rayLen).toFixed(1)}" y2="${(dirB[1]*rayLen).toFixed(1)}" stroke="${color}" stroke-width="2"></line>`+
+    `<path d="${angleArcPath(dirA,dirB,arcR)}" fill="none" stroke="${color}" stroke-width="2.2"></path>`+
+    (value!==undefined ? `<text class="angle-num" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${color}">${value}</text>` : '')+
+  `</g>`;
+}
+function dirFromAngle(deg){ const r=deg*Math.PI/180; return [Math.cos(r), -Math.sin(r)]; }
+function angleFromDir(dx,dy){ return Math.atan2(-dy,dx)*180/Math.PI; }
+function polar(ox,oy,deg,len){ const r=deg*Math.PI/180; return [ox+Math.cos(r)*len, oy-Math.sin(r)*len]; }
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function toSVGPoint(svg, evt){
+  const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+/* ════════════════════════════════
+   기하 데이터 — AB=5, BC=8, ∠B=60°(CA는 코사인법칙으로 정확히 7, 화면엔 숫자를 안 보여줌)
+   △DEF는 B(=E)를 중심으로 딱 2배 확대만 함 (회전은 전혀 없음, 방향이 완전히 같음)
+════════════════════════════════ */
+const UNIT = 16, AB=5, BC=8, ANG_B=60;
+const ANCHOR_S = {x:90,y:230}, ANCHOR_B = {x:420,y:230};
+const Bs=[ANCHOR_S.x,ANCHOR_S.y], Cs=polar(ANCHOR_S.x,ANCHOR_S.y,0,BC*UNIT), As=polar(ANCHOR_S.x,ANCHOR_S.y,ANG_B,AB*UNIT);
+const Bb=[ANCHOR_B.x,ANCHOR_B.y], Cb=polar(ANCHOR_B.x,ANCHOR_B.y,0,BC*2*UNIT), Ab=polar(ANCHOR_B.x,ANCHOR_B.y,ANG_B,AB*2*UNIT);
+const smallC = centroidOf([As,Bs,Cs]), bigC = centroidOf([Ab,Bb,Cb]);
+
+function baseSceneSVG(){
+  let html = '';
+  html += `<polygon points="${As} ${Bs} ${Cs}" style="fill:#6c8bff;fill-opacity:.18;stroke:#4f6fe0;stroke-width:2.5"></polygon>`;
+  html += `<polygon points="${Ab} ${Bb} ${Cb}" style="fill:#ff9db3;fill-opacity:.18;stroke:#e05a20;stroke-width:2.5"></polygon>`;
+  [['A',As,'#4f6fe0',smallC],['B',Bs,'#4f6fe0',smallC],['C',Cs,'#4f6fe0',smallC],["D",Ab,'#e05a20',bigC],["E",Bb,'#e05a20',bigC],["F",Cb,'#e05a20',bigC]].forEach(([l,p,c,cen])=>{
+    const lp = outwardLabel(p,cen,18);
+    html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${c}">${l}</text>`;
+  });
+  html += sideLabelSVG(As,Bs,smallC,AB,14);
+  html += sideLabelSVG(Bs,Cs,smallC,BC,14);
+  html += sideLabelSVG(Ab,Bb,bigC,AB*2,14);
+  html += sideLabelSVG(Bb,Cb,bigC,BC*2,14);
+  html += angleMarkerSVG(Bs, dirFromAngle(0), dirFromAngle(ANG_B), '#4f6fe0', ANG_B+'°');
+  html += angleMarkerSVG(Bb, dirFromAngle(0), dirFromAngle(ANG_B), '#e05a20', ANG_B+'°');
+  return html;
+}
+function fullRender(){
+  document.getElementById('mainSvg').innerHTML = baseSceneSVG() +
+    `<g id="placedCopies"></g><g id="angleOverlayGroup"></g><g id="wholeOverlayGroup"></g>`;
+}
+function setDots(n, total){
+  let h=''; for(let i=0;i<total;i++) h+=`<span class="${i<n?'on':''}"></span>`;
+  document.getElementById('dots').innerHTML = h;
+}
+
+/* ════════════════════════════════
+   변 비교 드래그 엔진 — 막대는 항상 삼각형의 실제 변 자리(srcA-srcB)에서 시작한다.
+   그 자리를 그대로 집어서 대응변 위로 옮겨 놓는 것 (별도 보관함이 아니라 진짜 그 변)
+════════════════════════════════ */
+let dragCtx = null;
+function beginSegCompare(srcA, srcB, tgtA, tgtB, color, onDone){
+  document.getElementById('placedCopies').innerHTML = '';
+  const unitLen = dist(srcA,srcB), tgtLen = dist(tgtA,tgtB);
+  const tgtDir = [(tgtB[0]-tgtA[0])/tgtLen, (tgtB[1]-tgtA[1])/tgtLen];
+  const totalSlots = Math.round(tgtLen/unitLen);
+  dragCtx = { srcA,srcB,tgtA,tgtB,color,unitLen,tgtLen,tgtDir, totalSlots, filled:new Array(totalSlots).fill(false), filledCount:0, onDone };
+  makeRodDraggable();
+}
+function slotCenterOf(i){
+  return [dragCtx.tgtA[0]+dragCtx.tgtDir[0]*dragCtx.unitLen*(i+0.5), dragCtx.tgtA[1]+dragCtx.tgtDir[1]*dragCtx.unitLen*(i+0.5)];
+}
+function placeCopy(slotIdx){
+  const p1=[dragCtx.tgtA[0]+dragCtx.tgtDir[0]*dragCtx.unitLen*slotIdx, dragCtx.tgtA[1]+dragCtx.tgtDir[1]*dragCtx.unitLen*slotIdx];
+  const p2=[dragCtx.tgtA[0]+dragCtx.tgtDir[0]*dragCtx.unitLen*(slotIdx+1), dragCtx.tgtA[1]+dragCtx.tgtDir[1]*dragCtx.unitLen*(slotIdx+1)];
+  const line = document.createElementNS(svgNS,'line');
+  line.setAttribute('x1',p1[0]); line.setAttribute('y1',p1[1]); line.setAttribute('x2',p2[0]); line.setAttribute('y2',p2[1]);
+  line.setAttribute('stroke',dragCtx.color); line.setAttribute('stroke-width','6'); line.setAttribute('stroke-linecap','round');
+  line.setAttribute('opacity', (slotIdx%2===0)?'0.85':'0.6');
+  document.getElementById('placedCopies').appendChild(line);
+}
+function makeRodDraggable(){
+  const svg = document.getElementById('mainSvg');
+  const old = document.getElementById('rod-drag'); if(old) old.remove();
+  const rod = document.createElementNS(svgNS,'g');
+  rod.setAttribute('id','rod-drag');
+  // 막대는 삼각형의 실제 변(srcA~srcB) 위치 그대로 그려서, 그 변을 직접 집는 느낌을 준다
+  rod.innerHTML = `<line x1="${dragCtx.srcA[0]}" y1="${dragCtx.srcA[1]}" x2="${dragCtx.srcB[0]}" y2="${dragCtx.srcB[1]}" stroke="${dragCtx.color}" stroke-width="7" stroke-linecap="round"></line>`+
+    `<circle cx="${dragCtx.srcA[0]}" cy="${dragCtx.srcA[1]}" r="5" fill="${dragCtx.color}"></circle><circle cx="${dragCtx.srcB[0]}" cy="${dragCtx.srcB[1]}" r="5" fill="${dragCtx.color}"></circle>`;
+  rod.style.cursor='grab'; rod.style.touchAction='none';
+  rod.setAttribute('transform','translate(0,0)');
+  svg.appendChild(rod);
+  let dragging=false, curDX=0, curDY=0, offX=0, offY=0;
+  rod.addEventListener('pointerdown', evt=>{
+    dragging=true; rod.setPointerCapture(evt.pointerId);
+    const p = toSVGPoint(svg,evt); offX=p.x-curDX; offY=p.y-curDY;
+    rod.style.cursor='grabbing';
+  });
+  rod.addEventListener('pointermove', evt=>{
+    if(!dragging) return;
+    const p = toSVGPoint(svg,evt); curDX=p.x-offX; curDY=p.y-offY;
+    rod.setAttribute('transform',`translate(${curDX},${curDY})`);
+  });
+  rod.addEventListener('pointerup', evt=>{
+    if(!dragging) return; dragging=false; rod.style.cursor='grab';
+    const curMid = [(dragCtx.srcA[0]+dragCtx.srcB[0])/2+curDX, (dragCtx.srcA[1]+dragCtx.srcB[1])/2+curDY];
+    // 어느 쪽 끝(A쪽이든 C쪽이든)에 놓든, 아직 안 채워진 슬롯 중 가장 가까운 곳에 맞춰준다 (순서 상관없음)
+    let bestIdx=-1, bestDist=Infinity;
+    for(let i=0;i<dragCtx.totalSlots;i++){
+      if(dragCtx.filled[i]) continue;
+      const d = dist(curMid, slotCenterOf(i));
+      if(d<bestDist){ bestDist=d; bestIdx=i; }
+    }
+    if(bestIdx>=0 && bestDist < dragCtx.unitLen*0.9){
+      placeCopy(bestIdx);
+      dragCtx.filled[bestIdx]=true;
+      dragCtx.filledCount++;
+      window.onRodPlaced && window.onRodPlaced(dragCtx.filledCount);
+      curDX=0; curDY=0;
+      if(dragCtx.filledCount>=dragCtx.totalSlots){
+        rod.remove();
+        dragCtx.onDone(dragCtx.filledCount);
+        return;
+      }
+      rod.setAttribute('transform','translate(0,0)');
+    } else {
+      curDX=0; curDY=0;
+      rod.setAttribute('transform','translate(0,0)');
+      window.onRodMiss && window.onRodMiss();
+    }
+  });
+}
+function endSegCompare(){
+  const old = document.getElementById('rod-drag'); if(old) old.remove();
+}
+
+/* ════════════════════════════════
+   각 겹쳐보기 애니메이션 (좌표를 프레임마다 직접 계산 — CSS transform 안 씀, 회전 없이 그대로 슬라이드)
+════════════════════════════════ */
+function animateAngleOverlap(vertexFrom, angA_from, angB_from, vertexTo, angA_to, color, durMs, onDone){
+  const g = document.getElementById('angleOverlayGroup');
+  g.innerHTML = '';
+  const wrap = document.createElementNS(svgNS,'g'); g.appendChild(wrap);
+  const rotDelta = angA_to - angA_from;
+  const t0 = performance.now();
+  function frame(now){
+    const t = Math.min(1,(now-t0)/durMs);
+    const ease = t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+    const vx = vertexFrom[0]+(vertexTo[0]-vertexFrom[0])*ease;
+    const vy = vertexFrom[1]+(vertexTo[1]-vertexFrom[1])*ease;
+    const dA = dirFromAngle(angA_from+rotDelta*ease), dB = dirFromAngle(angB_from+rotDelta*ease);
+    const rayLen=24;
+    wrap.innerHTML = `<line x1="${vx}" y1="${vy}" x2="${vx+dA[0]*rayLen}" y2="${vy+dA[1]*rayLen}" stroke="${color}" stroke-width="3.5"></line>`+
+      `<line x1="${vx}" y1="${vy}" x2="${vx+dB[0]*rayLen}" y2="${vy+dB[1]*rayLen}" stroke="${color}" stroke-width="3.5"></line>`+
+      `<circle cx="${vx}" cy="${vy}" r="3" fill="${color}"></circle>`;
+    if(t<1) requestAnimationFrame(frame); else onDone();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ════════════════════════════════
+   삼각형 ABC를 꼭짓점 B를 공유한 채로 제자리에서 2배 확대하는 애니메이션
+   (이동 없이 커지기만 해서, B를 공유하며 겹쳐진 모양임을 한눈에 보여줌)
+════════════════════════════════ */
+function animateGrowInPlace(durMs, onDone){
+  const g = document.getElementById('wholeOverlayGroup');
+  g.innerHTML = '';
+  function polarOf(from,to){ return { r: dist(from,to), a: angleFromDir(to[0]-from[0], to[1]-from[1]) }; }
+  const pA = polarOf(Bs,As), pC = polarOf(Bs,Cs);
+  const t0 = performance.now();
+  function frame(now){
+    const t = Math.min(1,(now-t0)/durMs);
+    const ease = t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+    const scale = 1+ease*1;
+    const dA = polar(Bs[0],Bs[1], pA.a, pA.r*scale), dC = polar(Bs[0],Bs[1], pC.a, pC.r*scale);
+    let labelHtml = '';
+    if(t>=1){
+      const growC = centroidOf([dA,Bs,dC]);
+      labelHtml = `<text class="vlabel" x="${dA[0]-16}" y="${dA[1]-8}" fill="#4f6fe0">A'</text><text class="vlabel" x="${dC[0]+18}" y="${dC[1]+4}" fill="#4f6fe0">C'</text>`+
+        sideLabelSVGAt(dA, Bs, growC, AB*2, 20, 0.2)+
+        sideLabelSVGAt(Bs, dC, growC, BC*2, 20, 0.8);
+    }
+    g.innerHTML = `<polygon points="${dA} ${Bs} ${dC}" style="fill:#4f6fe0;fill-opacity:.28;stroke:#4f6fe0;stroke-width:2.5"></polygon>` + labelHtml;
+    if(t<1) requestAnimationFrame(frame); else onDone();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ════════════════════════════════
+   패널 진행 (한 화면 안에서 컨트롤 영역만 교체)
+════════════════════════════════ */
+const TOTAL_PANELS = 3; // 점 개수는 "1,2,3단계" 세 개의 실제 진행 단계 기준(맨 처음 시작화면은 진행 단계로 안 침) — 마지막 단계에서 점이 다 채워져야 함
+function panel(id){ document.getElementById('panel').innerHTML = id; }
+// innerHTML을 통째로 읽어서 다시 쓰면(panel.innerHTML = panel.innerHTML+extra), 학생이 입력창에 친 값은
+// (DOM의 .value 프로퍼티일 뿐 HTML로 직렬화되지 않아) 사라져버린다 — insertAdjacentHTML로 기존 DOM은 그대로 두고 뒤에만 추가
+function appendPanel(extra){ document.getElementById('panel').insertAdjacentHTML('beforeend', extra); }
+
+function goPanel0(){
+  setDots(0,TOTAL_PANELS);
+  panel(`
+    <div class="panel-title"><span class="step-badge">0</span>시작하기</div>
+    <p>△ABC와 △DEF는 닮은 도형이에요. <span class="seg">AB</span>, <span class="seg">BC</span>, ∠B와 그 대응 요소들은 이미 표시되어 있어요. 나머지(<span class="seg">CA</span>, ∠A, ∠C)는 아직 표시하지 않았는데, 하나씩 손으로 직접 확인해볼 거예요.</p>
+    <div class="btn-row"><button class="btn btn-primary" onclick="goPanel1()">시작하기 →</button></div>
+  `);
+}
+
+/* ── 패널1: 대응하는 변의 길이의 비 구하기 (AB:DE, BC:EF는 이미 나온 숫자로 바로 계산, CA:FD는 예상만) ── */
+function goPanel1(){
+  setDots(1,TOTAL_PANELS);
+  panel(`
+    <div class="panel-title"><span class="step-badge">1</span>대응하는 변의 길이의 비 구하기</div>
+    <p>△ABC와 △DEF에서 <span class="seg">AB</span>, <span class="seg">BC</span>와 그 대응변인 <span class="seg">DE</span>, <span class="seg">EF</span>의 길이는 이미 그림에 나와 있어요. 두 변의 길이의 비를 각각 구해볼까요?</p>
+    <div class="proof-block">
+      <span class="seg">AB</span> : <span class="seg">DE</span> = 1 : <input class="blank" id="p1rAB" inputmode="numeric" style="width:50px"><br>
+      <span class="seg">BC</span> : <span class="seg">EF</span> = 1 : <input class="blank" id="p1rBC" inputmode="numeric" style="width:50px">
+    </div>
+    <div class="btn-row"><button class="btn btn-check" id="p1ratiosBtn" onclick="p1CheckRatios()">확인</button></div>
+    <div class="feedback" id="p1fbRatios"></div>
+  `);
+}
+function p1CheckRatios(){
+  const vAB = parseFloat(document.getElementById('p1rAB').value);
+  const vBC = parseFloat(document.getElementById('p1rBC').value);
+  const okAB = vAB===2, okBC = vBC===2;
+  document.getElementById('p1rAB').classList.toggle('correct',okAB); document.getElementById('p1rAB').classList.toggle('wrong',!okAB);
+  document.getElementById('p1rBC').classList.toggle('correct',okBC); document.getElementById('p1rBC').classList.toggle('wrong',!okBC);
+  const fb = document.getElementById('p1fbRatios');
+  if(okAB && okBC){
+    fb.className='feedback success'; fb.textContent = '맞아요! 두 비가 똑같이 1:2네요.';
+    document.getElementById('p1ratiosBtn').disabled = true; // 연타해도 아래 블록이 중복으로 안 쌓이게
+    appendPanel(`
+      <p>그렇다면 아직 길이를 알려주지 않은 <span class="seg">CA</span>와 <span class="seg">FD</span>의 비는 어떻게 될까요? 예상해봐요.</p>
+      <div class="proof-block"><span class="seg">CA</span> : <span class="seg">FD</span> = 1 : <input class="blank" id="p1rPredict" inputmode="numeric" style="width:50px"></div>
+      <div class="btn-row"><button class="btn btn-check" id="p1predictBtn" onclick="p1CheckPredictRatio()">예상하기</button></div>
+      <div class="feedback" id="p1fbPredictRatio"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '그림에 나와 있는 길이로 다시 계산해보세요.';
+  }
+}
+function p1CheckPredictRatio(){
+  const v = document.getElementById('p1rPredict').value;
+  const fb = document.getElementById('p1fbPredictRatio');
+  if(v===''){ fb.className='feedback error'; fb.textContent = '숫자를 입력해주세요.'; return; }
+  fb.className='feedback success';
+  fb.textContent = `좋아요, 1:${v}로 예상했네요! 이 예상이 맞는지 직접 변을 옮겨서 확인해봐요.`;
+  document.getElementById('p1predictBtn').disabled = true; // 연타해도 아래 '다음' 버튼이 중복으로 안 쌓이게
+  appendPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goPanel2()">변을 옮겨서 확인하기 →</button></div>`);
+}
+
+/* ── 패널2: 변을 옮겨서 비교하기 (AB, BC는 이미 숫자로 나와 있으니, 아직 안 나온 CA로 확인) ── */
+function goPanel2(){
+  setDots(2,TOTAL_PANELS);
+  panel(`
+    <div class="panel-title"><span class="step-badge">2</span>변을 옮겨서 비교하기</div>
+    <p>방금 <span class="seg">CA</span> : <span class="seg">FD</span>의 비를 예상해봤어요. <span class="seg">CA</span>를 <span class="seg">FD</span> 위에 몇 번 옮겨놓으면 딱 맞을까요? 직접 옮겨서 확인하기 전에, 몇 번일지 다시 한번 예상해봐요.</p>
+    <div class="btn-row">몇 개일까요? <input class="blank" id="p1predict" inputmode="numeric" style="width:50px"> <button class="btn btn-check" onclick="p1CheckPredict()">예상하기</button></div>
+    <div class="feedback" id="p1fbPredict"></div>
+  `);
+}
+function p1CheckPredict(){
+  const fb = document.getElementById('p1fbPredict');
+  fb.className='feedback success';
+  fb.textContent = '좋아요! 이제 진짜로 옮겨서 확인해봐요. 아래 CA 막대를 드래그해서 C\'A\' 위에 놓아보세요.';
+  appendPanel(`
+    <div class="counter-line" id="p1counter">놓은 개수: 0</div>
+    <div class="feedback" id="p1fb"></div>
+  `);
+  window.onRodPlaced = (n)=>{ document.getElementById('p1counter').textContent = '놓은 개수: '+n; };
+  window.onRodMiss = ()=>{ const fbm=document.getElementById('p1fb'); fbm.className='feedback error'; fbm.textContent="FD 선을 따라 이어지는 자리에 놓아보세요."; };
+  beginSegCompare(Cs,As,Cb,Ab,'#9b7cff', onP1RodsDone);
+}
+function onP1RodsDone(n){
+  window.onRodPlaced=null; window.onRodMiss=null;
+  appendPanel(`
+    <div class="proof-block">몇 개가 필요했나요? <input class="blank" id="p1count" inputmode="numeric" style="width:50px">개</div>
+    <div class="btn-row"><button class="btn btn-check" onclick="p1CheckCount(${n})">확인</button></div>
+    <div class="feedback" id="p1fbCount"></div>
+  `);
+}
+function p1CheckCount(actual){
+  const v = parseFloat(document.getElementById('p1count').value);
+  const ok = v===actual;
+  document.getElementById('p1count').classList.toggle('correct',ok); document.getElementById('p1count').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('p1fbCount');
+  if(ok){
+    fb.className='feedback success'; fb.textContent = '정답이에요! 우리가 정한 적 없는 변인데도 값이 딱 나왔어요.';
+    appendPanel(`
+      <div class="proof-block"><span class="seg">CA</span> : <span class="seg">FD</span> = 1 : <input class="blank" id="p1ratio" inputmode="numeric" style="width:50px"></div>
+      <div class="btn-row"><button class="btn btn-check" onclick="p1CheckRatio()">확인</button></div>
+      <div class="feedback" id="p1fbRatio"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '다시 한번 세어보세요.';
+  }
+}
+function p1CheckRatio(){
+  const v = parseFloat(document.getElementById('p1ratio').value);
+  const ok = v===2;
+  document.getElementById('p1ratio').classList.toggle('correct',ok); document.getElementById('p1ratio').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('p1fbRatio');
+  if(ok){
+    fb.className='feedback success'; fb.textContent = '맞아요! CA:FD = 1:2 예요. AB:DE, BC:EF와 똑같은 비율이었어요.';
+    appendPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goPanel3()">다음 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent = '방금 몇 개가 필요했는지 다시 떠올려보세요.';
+  }
+}
+
+/* ── 패널3: 닮음이란 무엇이었을까? ── */
+function goPanel3(){
+  setDots(3,TOTAL_PANELS);
+  endSegCompare();
+  panel(`
+    <div class="panel-title"><span class="step-badge">3</span>닮음이란 무엇이었을까?</div>
+    <p>닮음의 뜻을 다시 떠올려봐요: 한 도형을 확대 또는 축소하여 다른 도형과 (<input class="blank" id="ansDef">)이 되면, 두 도형은 서로 닮음이에요.</p>
+    <div class="btn-row"><button class="btn btn-check" onclick="checkDef()">확인</button></div>
+    <div class="feedback" id="p4fbDef"></div>
+
+    <div id="p4growWrap" style="display:none;margin-top:12px">
+      <p>삼각형 ABC를 2배 확대해봅시다.</p>
+      <div class="btn-row"><button class="btn btn-check" id="p4growBtn" onclick="runGrow()">2배 확대하기 ▶</button></div>
+      <div class="feedback" id="p4fbGrow"></div>
+    </div>
+
+    <div id="p4sameWrap" style="display:none;margin-top:12px">
+      <p>두 삼각형 A'B'C'와 △DEF에서 같은 것은 무엇인가요?</p>
+      <p style="font-weight:700;font-size:13px;color:var(--muted);margin:0 0 4px">변은 몇 개가 같을까요?</p>
+      <div class="btn-row">
+        <button class="btn" onclick="p4PickSide(1,this)">한 변의 길이</button>
+        <button class="btn" onclick="p4PickSide(2,this)">두 변의 길이</button>
+        <button class="btn" onclick="p4PickSide(3,this)">세 변의 길이</button>
+      </div>
+      <p style="font-weight:700;font-size:13px;color:var(--muted);margin:0 0 4px">각은 어떻게 같을까요?</p>
+      <div class="btn-row">
+        <button class="btn" onclick="p4PickAngle('non',this)">끼인각이 아닌 한 각</button>
+        <button class="btn" onclick="p4PickAngle('in',this)">끼인각</button>
+        <button class="btn" onclick="p4PickAngle('both',this)">양 끝각</button>
+      </div>
+      <div class="feedback" id="p4fbSame"></div>
+    </div>
+  `);
+}
+function checkDef(){
+  const v = String(document.getElementById('ansDef').value||'').trim().replace(/\s+/g,'');
+  const ok = v==='합동' || v==='합동이다';
+  document.getElementById('ansDef').classList.toggle('correct',ok); document.getElementById('ansDef').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('p4fbDef');
+  if(ok){ fb.className='feedback success'; fb.textContent='맞아요! 확대·축소해서 합동이 되면 닮음이에요.'; document.getElementById('p4growWrap').style.display='block'; }
+  else{ fb.className='feedback error'; fb.textContent='힌트: 크기는 달라도 모양이 완전히 같을 때 쓰는 말이에요.'; }
+}
+function runGrow(){
+  document.getElementById('p4growBtn').disabled = true;
+  animateGrowInPlace(1000, ()=>{
+    const fb=document.getElementById('p4fbGrow'); fb.className='feedback success'; fb.textContent="삼각형 A'B'C'가 나타났어요! 삼각형 ABC와 꼭짓점 B를 공유하고 있어요.";
+    document.getElementById('p4sameWrap').style.display='block';
+  });
+}
+const p4pick = { side:null, angle:null };
+function p4PickSide(v, btn){
+  p4pick.side = v;
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  p4CheckSame();
+}
+function p4PickAngle(v, btn){
+  p4pick.angle = v;
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  p4CheckSame();
+}
+function p4CheckSame(){
+  if(p4pick.side===null || p4pick.angle===null) return;
+  const ok = p4pick.side===2 && p4pick.angle==='in';
+  const fb = document.getElementById('p4fbSame');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요! 두 변의 길이와 그 끼인각이 같아요.';
+    appendPanel(`
+      <div class="proof-block">두 삼각형은 합동인가요? <button class="btn" onclick="p4CheckCongruent(true,this)">네</button><button class="btn" onclick="p4CheckCongruent(false,this)">아니오</button></div>
+      <div class="feedback" id="p4fbCongruent"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent="다시 생각해보세요. A'B'C'는 AB, BC를 2배 늘리고 ∠B는 그대로 확대한 도형이에요.";
+  }
+}
+function p4CheckCongruent(val, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const fb = document.getElementById('p4fbCongruent');
+  if(val){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    appendPanel(`
+      <div class="proof-block">합동인 이유는 무엇인가요?
+        <button class="btn" onclick="p4PickReason('SSS',this)">SSS 합동</button>
+        <button class="btn" onclick="p4PickReason('SAS',this)">SAS 합동</button>
+        <button class="btn" onclick="p4PickReason('ASA',this)">ASA 합동</button>
+      </div>
+      <div class="feedback" id="p4fbReason"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요 — 두 변의 길이와 그 끼인각이 각각 같으면 두 삼각형은 어떻게 될까요?';
+  }
+}
+function p4PickReason(v, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const ok = v==='SAS';
+  const fb = document.getElementById('p4fbReason');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요! SAS 합동이에요.';
+    appendPanel(`
+      <div class="proof-block">삼각형 ABC를 2배 확대한 삼각형 A'B'C'는 삼각형 DEF와 SAS합동입니다. 그렇다면 삼각형 ABC와 삼각형 DEF는 닮음이라고 말할 수 있을까요?
+        <button class="btn" onclick="p4Conclude(true,this)">네</button><button class="btn" onclick="p4Conclude(false,this)">아니오</button>
+      </div>
+      <div class="feedback" id="p4fbConclude"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='힌트: 두 변의 길이와 그 끼인각이 같을 때 쓰는 합동 조건이에요.';
+  }
+}
+function p4Conclude(val, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const fb = document.getElementById('p4fbConclude');
+  if(val){
+    fb.className='feedback success'; fb.textContent='맞아요! △ABC ∽ △DEF 예요.';
+    appendPanel(`
+      <div class="summary-box">
+        <b>우리가 직접 정한 것</b> — <span class="seg">AB</span>:<span class="seg">DE</span>=1:2, <span class="seg">BC</span>:<span class="seg">EF</span>=1:2, ∠B=∠E<br>
+        <b>정하지 않았는데 저절로 맞은 것</b> — <span class="seg">CA</span>:<span class="seg">FD</span>=1:2, ∠A=∠D, ∠C=∠F
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="goToProve()">이제 왜 그런지 증명해보기 →</button></div>
+    `);
+    if(window._reportHubComplete) window._reportHubComplete();
+  } else {
+    fb.className='feedback error'; fb.textContent='방금 확대한 도형이 DEF와 합동이었잖아요 — 닮음의 정의를 다시 떠올려보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   증명 공용 — 문자(a,b,c)와 기호(●,▲)로 "일반적인 삼각형"을 다룸.
+   내부 좌표는 AB=5,BC=8,∠B=60°(→CA=7, 함께 탐구와 동일)를 그대로 재사용하되, 화면엔 숫자를 안 보여줌.
+════════════════════════════════ */
+const G_AB=5, G_BC=8, G_ANGB=60, G_UNIT=16;
+const G_ANCHOR_S={x:90,y:230}, G_ANCHOR_B={x:420,y:230};
+const gBs=[G_ANCHOR_S.x,G_ANCHOR_S.y], gCs=polar(G_ANCHOR_S.x,G_ANCHOR_S.y,0,G_BC*G_UNIT), gAs=polar(G_ANCHOR_S.x,G_ANCHOR_S.y,G_ANGB,G_AB*G_UNIT);
+const gBb=[G_ANCHOR_B.x,G_ANCHOR_B.y], gCb=polar(G_ANCHOR_B.x,G_ANCHOR_B.y,0,G_BC*2*G_UNIT), gAb=polar(G_ANCHOR_B.x,G_ANCHOR_B.y,G_ANGB,G_AB*2*G_UNIT);
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function normExpr(v){ return String(v||'').trim().toLowerCase().replace(/\s+/g,'').replace(/[*×]/g,''); }
+function exprMatches(v, expected){ return normExpr(v)===expected; }
+// 각의 크기를 숫자 대신 도형 기호(●,▲)로 표시 — "일반적인 각"임을 나타냄
+function angleMarkerSVGSym(vertex, dirA, dirB, color, sym){
+  const rayLen=22, arcR=15;
+  const bis=[dirA[0]+dirB[0],dirA[1]+dirB[1]]; const bl=Math.hypot(bis[0],bis[1])||1;
+  const halfAngle = Math.acos(Math.max(-1, Math.min(1, bl/2)));
+  // 기호(●/▲)는 글자보다 훨씬 작으니, 숫자 각도 라벨(angleMarkerSVG)보다 훨씬 작은 여백만 줘서 호 바로 옆에 붙인다
+  const clearance = 5;
+  const labelDist = clearance/Math.max(Math.sin(halfAngle), 0.05) + arcR;
+  const lp=[bis[0]/bl*labelDist, bis[1]/bl*labelDist];
+  let symSvg='';
+  if(sym==='circle') symSvg = `<circle cx="${lp[0].toFixed(1)}" cy="${lp[1].toFixed(1)}" r="4.5" fill="${color}"></circle>`;
+  else symSvg = `<polygon points="${lp[0].toFixed(1)},${(lp[1]-5.5).toFixed(1)} ${(lp[0]-5).toFixed(1)},${(lp[1]+4.5).toFixed(1)} ${(lp[0]+5).toFixed(1)},${(lp[1]+4.5).toFixed(1)}" fill="${color}"></polygon>`;
+  return `<g transform="translate(${vertex[0]},${vertex[1]})">`+
+    `<line x1="0" y1="0" x2="${(dirA[0]*rayLen).toFixed(1)}" y2="${(dirA[1]*rayLen).toFixed(1)}" stroke="${color}" stroke-width="2"></line>`+
+    `<line x1="0" y1="0" x2="${(dirB[0]*rayLen).toFixed(1)}" y2="${(dirB[1]*rayLen).toFixed(1)}" stroke="${color}" stroke-width="2"></line>`+
+    `<path d="${angleArcPath(dirA,dirB,arcR)}" fill="none" stroke="${color}" stroke-width="2.2"></path>`+
+    symSvg+
+  `</g>`;
+}
+function provePanel(html){ document.getElementById('provePanel').innerHTML = html; }
+function appendProvePanel(extra){ document.getElementById('provePanel').insertAdjacentHTML('beforeend', extra); }
+function proveBanner(title, sub){ document.getElementById('proveBanner').innerHTML = `<b>${title}</b><br>${sub}`; }
+function growAnimate(durMs, labelFn, onDone){
+  // Bs를 공유한 채 제자리에서 2배로 커지는 공용 애니메이션. 다 커진 뒤 라벨을 어떻게 붙일지는 labelFn(dA,dC,growC)이 결정
+  const g = document.getElementById('proveGrowGroup');
+  g.innerHTML='';
+  function polarOf(from,to){ return { r: dist(from,to), a: angleFromDir(to[0]-from[0], to[1]-from[1]) }; }
+  const pA = polarOf(gBs,gAs), pC = polarOf(gBs,gCs);
+  const t0 = performance.now();
+  function frame(now){
+    const t = Math.min(1,(now-t0)/durMs);
+    const ease = t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+    const scale = 1+ease*1;
+    const dA = polar(gBs[0],gBs[1], pA.a, pA.r*scale), dC = polar(gBs[0],gBs[1], pC.a, pC.r*scale);
+    let labelHtml='';
+    if(t>=1){
+      const growC = centroidOf([dA,gBs,dC]);
+      labelHtml = labelFn(dA,dC,growC);
+    }
+    g.innerHTML = `<polygon points="${dA} ${gBs} ${dC}" style="fill:#4f6fe0;fill-opacity:.28;stroke:#4f6fe0;stroke-width:2.5"></polygon>` + labelHtml;
+    if(t<1) requestAnimationFrame(frame); else onDone();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ════════════════════════════════
+   증명 1 — SAS 닮음 조건
+════════════════════════════════ */
+function sasBaseSceneSVG(){
+  const smallC = centroidOf([gAs,gBs,gCs]), bigC = centroidOf([gAb,gBb,gCb]);
+  let html='';
+  html += `<polygon points="${gAs} ${gBs} ${gCs}" style="fill:#6c8bff;fill-opacity:.18;stroke:#4f6fe0;stroke-width:2.5"></polygon>`;
+  html += `<polygon points="${gAb} ${gBb} ${gCb}" style="fill:#ff9db3;fill-opacity:.18;stroke:#e05a20;stroke-width:2.5"></polygon>`;
+  [['A',gAs,'#4f6fe0',smallC],['B',gBs,'#4f6fe0',smallC],['C',gCs,'#4f6fe0',smallC],['D',gAb,'#e05a20',bigC],['E',gBb,'#e05a20',bigC],['F',gCb,'#e05a20',bigC]].forEach(([l,p,c,cen])=>{
+    const lp=outwardLabel(p,cen,16);
+    html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${c}">${l}</text>`;
+  });
+  html += sideLabelSVG(gAs,gBs,smallC,'a',12);
+  html += sideLabelSVG(gBs,gCs,smallC,'b',12);
+  // DE, EF는 학생이 직접 구해야 하는 값이라 정답을 맞히기 전까지는 그림에 미리 보여주지 않는다(proveRevealGroup에 나중에 추가)
+  html += angleMarkerSVGSym(gBs, dirFromAngle(0), dirFromAngle(G_ANGB), '#4f6fe0', 'circle');
+  html += angleMarkerSVGSym(gBb, dirFromAngle(0), dirFromAngle(G_ANGB), '#e05a20', 'circle');
+  return html;
+}
+function proveFullRender(sceneFn){
+  document.getElementById('proveSvg').innerHTML = sceneFn() + `<g id="proveGrowGroup"></g><g id="proveRevealGroup"></g>`;
+}
+function proveReveal(svgHtml){
+  document.getElementById('proveRevealGroup').insertAdjacentHTML('beforeend', svgHtml);
+}
+
+function goToProve(){
+  document.getElementById('tanguPage').style.display = 'none';
+  document.getElementById('provePage').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+  proveBanner('SAS 닮음 조건, 증명해보자', '문자로 놓고 일반적으로 살펴봐요.');
+  proveFullRender(sasBaseSceneSVG);
+  goSasA();
+}
+function goSasA(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">1</span>가정</div>
+    <p>△ABC에서 <span class="seg">AB</span>=a, <span class="seg">BC</span>=b, ∠B=● 라고 하자. 두 삼각형의 닮음비가 1:2라고 하자.</p>
+    <div class="proof-block">이때 △DEF의 두 변 <span class="seg">DE</span>, <span class="seg">EF</span>의 길이는 무엇이 될까요?<br>
+      <span class="seg">DE</span> = (<input class="blank" id="sasDE" style="width:60px">) &nbsp; <span class="seg">EF</span> = (<input class="blank" id="sasEF" style="width:60px">)
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="sasCheckDE()">확인</button></div>
+    <div class="feedback" id="sasFbDE"></div>
+  `);
+}
+function sasCheckDE(){
+  const ok1=exprMatches(document.getElementById('sasDE').value,'2a'), ok2=exprMatches(document.getElementById('sasEF').value,'2b');
+  document.getElementById('sasDE').classList.toggle('correct',ok1); document.getElementById('sasDE').classList.toggle('wrong',!ok1);
+  document.getElementById('sasEF').classList.toggle('correct',ok2); document.getElementById('sasEF').classList.toggle('wrong',!ok2);
+  const fb = document.getElementById('sasFbDE');
+  if(ok1&&ok2){
+    fb.className='feedback success'; fb.textContent='맞아요! 닮음비가 1:2이니 DE=2a, EF=2b예요.';
+    const bigC = centroidOf([gAb,gBb,gCb]);
+    proveReveal(sideLabelSVG(gAb,gBb,bigC,'2a',12) + sideLabelSVG(gBb,gCb,bigC,'2b',12));
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSasB()">다음 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='힌트: 닮음비가 1:2이면 대응변의 길이도 2배예요. (2a, 2b 형태로 입력해보세요)';
+  }
+}
+function goSasB(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">2</span>△ABC를 2배 확대하기</div>
+    <p>△ABC를 2배로 확대한 도형을 △A'B'C'라고 하자. (B'은 B와 같은 점이에요)</p>
+    <div class="btn-row"><button class="btn btn-check" id="sasGrowBtn" onclick="sasRunGrow()">2배 확대하기 ▶</button></div>
+    <div class="feedback" id="sasFbGrow"></div>
+  `);
+}
+function sasRunGrow(){
+  document.getElementById('sasGrowBtn').disabled = true;
+  growAnimate(1000, (dA,dC,growC)=>{
+    return `<text class="vlabel" x="${dA[0]-16}" y="${dA[1]-8}" fill="#4f6fe0">A'</text><text class="vlabel" x="${dC[0]+18}" y="${dC[1]+4}" fill="#4f6fe0">C'</text>`+
+      sideLabelSVGAt(dA, gBs, growC, '2a', 16, 0.2)+
+      sideLabelSVGAt(gBs, dC, growC, '2b', 16, 0.8);
+  }, ()=>{
+    const fb=document.getElementById('sasFbGrow'); fb.className='feedback success'; fb.textContent="△A'B'C'가 나타났어요.";
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSasC()">다음 →</button></div>`);
+  });
+}
+function goSasC(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">3</span>△A'B'C'와 △DEF 비교하기</div>
+    <p>△A'B'C'와 △DEF에서 대응하는 것을 찾아 적어보자.</p>
+    <div class="proof-block">
+      <span class="seg">A'B'</span> = <span class="seg">DE</span> = (<input class="blank" id="sasC1" style="width:55px">)<br>
+      <span class="seg">B'C'</span> = <span class="seg">EF</span> = (<input class="blank" id="sasC2" style="width:55px">)<br>
+      ∠B' = ∠(<input class="blank" id="sasC3" style="width:40px">) = <span style="color:#4f6fe0;font-size:16px">●</span>
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="sasCheckC()">확인</button></div>
+    <div class="feedback" id="sasFbC"></div>
+  `);
+}
+function sasCheckC(){
+  const ok1=exprMatches(document.getElementById('sasC1').value,'2a');
+  const ok2=exprMatches(document.getElementById('sasC2').value,'2b');
+  const ok3=normExpr(document.getElementById('sasC3').value)==='e';
+  document.getElementById('sasC1').classList.toggle('correct',ok1); document.getElementById('sasC1').classList.toggle('wrong',!ok1);
+  document.getElementById('sasC2').classList.toggle('correct',ok2); document.getElementById('sasC2').classList.toggle('wrong',!ok2);
+  document.getElementById('sasC3').classList.toggle('correct',ok3); document.getElementById('sasC3').classList.toggle('wrong',!ok3);
+  const fb = document.getElementById('sasFbC');
+  if(ok1&&ok2&&ok3){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    appendProvePanel(`
+      <div class="proof-block">두 삼각형 A'B'C'와 DEF에서 같은 것은 무엇일까요?</div>
+      <p style="font-weight:700;font-size:13px;color:var(--muted);margin:0 0 4px">변은 몇 개가 같을까요?</p>
+      <div class="btn-row">
+        <button class="btn" onclick="sasPickSide(1,this)">한 변의 길이</button>
+        <button class="btn" onclick="sasPickSide(2,this)">두 변의 길이</button>
+        <button class="btn" onclick="sasPickSide(3,this)">세 변의 길이</button>
+      </div>
+      <p style="font-weight:700;font-size:13px;color:var(--muted);margin:0 0 4px">각은 어떻게 같을까요?</p>
+      <div class="btn-row">
+        <button class="btn" onclick="sasPickAngle('non',this)">끼인각이 아닌 한 각</button>
+        <button class="btn" onclick="sasPickAngle('in',this)">끼인각</button>
+        <button class="btn" onclick="sasPickAngle('both',this)">양 끝각</button>
+      </div>
+      <div class="feedback" id="sasFbSame"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '위에서 확대한 도형의 값을 다시 확인해보세요.';
+  }
+}
+const sasPick = {side:null, angle:null};
+function sasPickSide(v,btn){ sasPick.side=v; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); sasCheckSame(); }
+function sasPickAngle(v,btn){ sasPick.angle=v; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); sasCheckSame(); }
+function sasCheckSame(){
+  if(sasPick.side===null||sasPick.angle===null) return;
+  const ok = sasPick.side===2 && sasPick.angle==='in';
+  const fb=document.getElementById('sasFbSame');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요! 두 변의 길이와 그 끼인각이 같아요.';
+    appendProvePanel(`
+      <div class="proof-block">그러므로 △A'B'C'와 △DEF는 어떤 합동인가요?
+        <button class="btn" onclick="sasPickReason('SSS',this)">SSS 합동</button>
+        <button class="btn" onclick="sasPickReason('SAS',this)">SAS 합동</button>
+        <button class="btn" onclick="sasPickReason('ASA',this)">ASA 합동</button>
+      </div>
+      <div class="feedback" id="sasFbReason"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요. 우리가 정한 것과 확대해서 얻은 것을 떠올려보세요.';
+  }
+}
+function sasPickReason(v, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const ok = v==='SAS';
+  const fb = document.getElementById('sasFbReason');
+  if(ok){
+    fb.className='feedback success'; fb.textContent = '맞아요! SAS 합동이에요.';
+    appendProvePanel(`
+      <div class="proof-block">△A'B'C' ≡ △DEF (SAS 합동)<br>그런데 △A'B'C'는 △ABC를 2배 확대한 도형이었죠. 그렇다면 △ABC와 △DEF는 닮음이라고 할 수 있을까요?
+        <button class="btn" onclick="sasConclude(true,this)">네</button><button class="btn" onclick="sasConclude(false,this)">아니오</button>
+      </div>
+      <div class="feedback" id="sasFbConclude"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '힌트: 두 변의 길이와 그 끼인각이 같을 때 쓰는 합동 조건이에요.';
+  }
+}
+function sasConclude(val, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const fb = document.getElementById('sasFbConclude');
+  if(val){
+    fb.className='feedback success'; fb.textContent = '맞아요! △ABC ∽ △DEF 예요.';
+    appendProvePanel(`
+      <div class="summary-box"><b>SAS 닮음 조건</b> — 두 삼각형에서 대응하는 두 변의 길이의 비가 같고, 그 끼인각의 크기가 같으면 두 삼각형은 서로 닮음이다.</div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="goToSSS()">다음: SSS 닮음 조건 증명하기 →</button></div>
+    `);
+    if(window._reportHubComplete) window._reportHubComplete();
+  } else {
+    fb.className='feedback error'; fb.textContent = '방금 SAS합동을 확인했잖아요 — 닮음의 정의를 다시 떠올려보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   증명 2 — SSS 닮음 조건 (같은 좌표에 세 번째 변 c=CA를 추가로 사용)
+════════════════════════════════ */
+function sssBaseSceneSVG(){
+  const smallC = centroidOf([gAs,gBs,gCs]), bigC = centroidOf([gAb,gBb,gCb]);
+  let html='';
+  html += `<polygon points="${gAs} ${gBs} ${gCs}" style="fill:#6c8bff;fill-opacity:.18;stroke:#4f6fe0;stroke-width:2.5"></polygon>`;
+  html += `<polygon points="${gAb} ${gBb} ${gCb}" style="fill:#ff9db3;fill-opacity:.18;stroke:#e05a20;stroke-width:2.5"></polygon>`;
+  [['A',gAs,'#4f6fe0',smallC],['B',gBs,'#4f6fe0',smallC],['C',gCs,'#4f6fe0',smallC],['D',gAb,'#e05a20',bigC],['E',gBb,'#e05a20',bigC],['F',gCb,'#e05a20',bigC]].forEach(([l,p,c,cen])=>{
+    const lp=outwardLabel(p,cen,16);
+    html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${c}">${l}</text>`;
+  });
+  html += sideLabelSVG(gAs,gBs,smallC,'a',12);
+  html += sideLabelSVG(gBs,gCs,smallC,'b',12);
+  html += sideLabelSVG(gCs,gAs,smallC,'c',12);
+  // DE, EF, FD는 학생이 직접 구해야 하는 값이라 정답을 맞히기 전까지는 그림에 미리 보여주지 않는다
+  return html;
+}
+function goToSSS(){
+  proveBanner('SSS 닮음 조건, 증명해보자', '이번엔 각은 몰라도 돼요. 세 변의 길이의 비만 같으면 될까요?');
+  proveFullRender(sssBaseSceneSVG);
+  goSssA();
+}
+function goSssA(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">1</span>가정</div>
+    <p>△ABC에서 <span class="seg">AB</span>=a, <span class="seg">BC</span>=b, <span class="seg">CA</span>=c 라고 하자. 두 삼각형의 닮음비가 1:2라고 하자.</p>
+    <div class="proof-block">이때 △DEF의 세 변의 길이는 무엇이 될까요?<br>
+      <span class="seg">DE</span> = (<input class="blank" id="sssDE" style="width:55px">) &nbsp;
+      <span class="seg">EF</span> = (<input class="blank" id="sssEF" style="width:55px">) &nbsp;
+      <span class="seg">FD</span> = (<input class="blank" id="sssFD" style="width:55px">)
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="sssCheckDE()">확인</button></div>
+    <div class="feedback" id="sssFbDE"></div>
+  `);
+}
+function sssCheckDE(){
+  const ok1=exprMatches(document.getElementById('sssDE').value,'2a');
+  const ok2=exprMatches(document.getElementById('sssEF').value,'2b');
+  const ok3=exprMatches(document.getElementById('sssFD').value,'2c');
+  [['sssDE',ok1],['sssEF',ok2],['sssFD',ok3]].forEach(([id,ok])=>{ document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok); });
+  const fb = document.getElementById('sssFbDE');
+  if(ok1&&ok2&&ok3){
+    fb.className='feedback success'; fb.textContent='맞아요! 닮음비가 1:2이니 세 변 모두 2배예요.';
+    const bigC = centroidOf([gAb,gBb,gCb]);
+    proveReveal(sideLabelSVG(gAb,gBb,bigC,'2a',12) + sideLabelSVG(gBb,gCb,bigC,'2b',12) + sideLabelSVG(gCb,gAb,bigC,'2c',12));
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSssB()">다음 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='힌트: 닮음비가 1:2이면 대응변의 길이도 모두 2배예요.';
+  }
+}
+function goSssB(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">2</span>△ABC를 2배 확대하기</div>
+    <p>△ABC를 2배로 확대한 도형을 △A'B'C'라고 하자. (B'은 B와 같은 점이에요)</p>
+    <div class="btn-row"><button class="btn btn-check" id="sssGrowBtn" onclick="sssRunGrow()">2배 확대하기 ▶</button></div>
+    <div class="feedback" id="sssFbGrow"></div>
+  `);
+}
+function sssRunGrow(){
+  document.getElementById('sssGrowBtn').disabled = true;
+  growAnimate(1000, (dA,dC,growC)=>{
+    return `<text class="vlabel" x="${dA[0]-16}" y="${dA[1]-8}" fill="#4f6fe0">A'</text><text class="vlabel" x="${dC[0]+18}" y="${dC[1]+4}" fill="#4f6fe0">C'</text>`+
+      sideLabelSVGAt(dA, gBs, growC, '2a', 16, 0.2)+
+      sideLabelSVGAt(gBs, dC, growC, '2b', 16, 0.8)+
+      sideLabelSVGAt(dC, dA, growC, '2c', 16, 0.5);
+  }, ()=>{
+    const fb=document.getElementById('sssFbGrow'); fb.className='feedback success'; fb.textContent="△A'B'C'가 나타났어요. 세 번째 변(C'A')도 저절로 그려졌어요.";
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSssC()">다음 →</button></div>`);
+  });
+}
+function goSssC(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">3</span>△A'B'C'와 △DEF 비교하기</div>
+    <p>△A'B'C'와 △DEF에서 대응하는 세 변을 찾아 적어보자.</p>
+    <div class="proof-block">
+      <span class="seg">A'B'</span> = <span class="seg">DE</span> = (<input class="blank" id="sssC1" style="width:55px">)<br>
+      <span class="seg">B'C'</span> = <span class="seg">EF</span> = (<input class="blank" id="sssC2" style="width:55px">)<br>
+      <span class="seg">C'A'</span> = <span class="seg">FD</span> = (<input class="blank" id="sssC3" style="width:55px">)
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="sssCheckC()">확인</button></div>
+    <div class="feedback" id="sssFbC"></div>
+  `);
+}
+function sssCheckC(){
+  const ok1=exprMatches(document.getElementById('sssC1').value,'2a');
+  const ok2=exprMatches(document.getElementById('sssC2').value,'2b');
+  const ok3=exprMatches(document.getElementById('sssC3').value,'2c');
+  [['sssC1',ok1],['sssC2',ok2],['sssC3',ok3]].forEach(([id,ok])=>{ document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok); });
+  const fb = document.getElementById('sssFbC');
+  if(ok1&&ok2&&ok3){
+    fb.className='feedback success'; fb.textContent='맞아요! 세 쌍의 대응변의 길이가 모두 같아요.';
+    appendProvePanel(`
+      <div class="proof-block">그러므로 △A'B'C'와 △DEF는 어떤 합동인가요?
+        <button class="btn" onclick="sssPickReason('SSS',this)">SSS 합동</button>
+        <button class="btn" onclick="sssPickReason('SAS',this)">SAS 합동</button>
+        <button class="btn" onclick="sssPickReason('ASA',this)">ASA 합동</button>
+      </div>
+      <div class="feedback" id="sssFbReason"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '위에서 확대한 도형의 값을 다시 확인해보세요.';
+  }
+}
+function sssPickReason(v, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const ok = v==='SSS';
+  const fb = document.getElementById('sssFbReason');
+  if(ok){
+    fb.className='feedback success'; fb.textContent = '맞아요! SSS 합동이에요.';
+    appendProvePanel(`
+      <div class="proof-block">△A'B'C' ≡ △DEF (SSS 합동)<br>그런데 △A'B'C'는 △ABC를 2배 확대한 도형이었죠. 그렇다면 △ABC와 △DEF는 닮음이라고 할 수 있을까요?
+        <button class="btn" onclick="sssConclude(true,this)">네</button><button class="btn" onclick="sssConclude(false,this)">아니오</button>
+      </div>
+      <div class="feedback" id="sssFbConclude"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '힌트: 세 쌍의 대응변의 길이가 모두 같을 때 쓰는 합동 조건이에요.';
+  }
+}
+function sssConclude(val, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const fb = document.getElementById('sssFbConclude');
+  if(val){
+    fb.className='feedback success'; fb.textContent = '맞아요! △ABC ∽ △DEF 예요.';
+    appendProvePanel(`
+      <div class="summary-box"><b>SSS 닮음 조건</b> — 두 삼각형에서 대응하는 세 변의 길이의 비가 모두 같으면 두 삼각형은 서로 닮음이다.</div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="goToAA()">다음: AA 닮음 조건 증명하기 →</button></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '방금 SSS합동을 확인했잖아요 — 닮음의 정의를 다시 떠올려보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   증명 3 — AA 닮음 조건 (변의 비가 주어지지 않음 — 닮음비를 우리가 직접 정해도 됨을 강조)
+════════════════════════════════ */
+function aaBaseSceneSVG(){
+  const smallC = centroidOf([gAs,gBs,gCs]), bigC = centroidOf([gAb,gBb,gCb]);
+  let html='';
+  html += `<polygon points="${gAs} ${gBs} ${gCs}" style="fill:#6c8bff;fill-opacity:.18;stroke:#4f6fe0;stroke-width:2.5"></polygon>`;
+  html += `<polygon points="${gAb} ${gBb} ${gCb}" style="fill:#ff9db3;fill-opacity:.18;stroke:#e05a20;stroke-width:2.5"></polygon>`;
+  [['A',gAs,'#4f6fe0',smallC],['B',gBs,'#4f6fe0',smallC],['C',gCs,'#4f6fe0',smallC],['D',gAb,'#e05a20',bigC],['E',gBb,'#e05a20',bigC],['F',gCb,'#e05a20',bigC]].forEach(([l,p,c,cen])=>{
+    const lp=outwardLabel(p,cen,16);
+    html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${c}">${l}</text>`;
+  });
+  html += angleMarkerSVGSym(gBs, dirFromAngle(0), dirFromAngle(G_ANGB), '#4f6fe0', 'circle');
+  html += angleMarkerSVGSym(gCs, unitVec(gCs,gBs), unitVec(gCs,gAs), '#4f6fe0', 'triangle');
+  html += angleMarkerSVGSym(gBb, dirFromAngle(0), dirFromAngle(G_ANGB), '#e05a20', 'circle');
+  html += angleMarkerSVGSym(gCb, unitVec(gCb,gBb), unitVec(gCb,gAb), '#e05a20', 'triangle');
+  return html;
+}
+function goToAA(){
+  proveBanner('AA 닮음 조건, 증명해보자', '이번엔 변의 길이가 하나도 안 주어져요. 그래도 증명할 수 있을까요?');
+  proveFullRender(aaBaseSceneSVG);
+  goAaA();
+}
+function goAaA(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">1</span>가정</div>
+    <p>△ABC에서 ∠B=●, ∠C=▲ 라고 하자. △DEF에서도 ∠E=●, ∠F=▲ 이다.</p>
+    <div class="proof-block">삼각형의 세 내각의 크기의 합은 180°이다. 그렇다면 ∠A와 ∠D의 크기는
+      <button class="btn" onclick="aaPickThird(true,this)">같다</button><button class="btn" onclick="aaPickThird(false,this)">다르다</button>
+    </div>
+    <div class="feedback" id="aaFbThird"></div>
+  `);
+}
+function aaPickThird(val, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const fb = document.getElementById('aaFbThird');
+  if(val){
+    fb.className='feedback success'; fb.textContent = '맞아요! ∠A = 180°-●-▲ = ∠D 예요. 두 각이 각각 같으면 나머지 한 각도 저절로 같아요.';
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goAaB()">다음 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent = '힌트: ∠A = 180°-∠B-∠C, ∠D = 180°-∠E-∠F 인데, ∠B=∠E, ∠C=∠F 예요.';
+  }
+}
+function goAaB(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">2</span>△ABC를 확대하기</div>
+    <p>그런데 AA 조건에는 변의 길이의 비가 하나도 주어지지 않았어요. 그래도 괜찮아요 — 닮음비를 우리가 직접 정해도 증명에는 문제가 없거든요. <span class="seg">BC</span>의 길이를 b라고 하고, 편의상 닮음비를 1:2로 정해서 △ABC를 2배로 확대한 도형을 △A'B'C'라고 하자.</p>
+    <div class="btn-row"><button class="btn btn-check" id="aaGrowBtn" onclick="aaRunGrow()">2배 확대하기 ▶</button></div>
+    <div class="feedback" id="aaFbGrow"></div>
+  `);
+}
+function aaRunGrow(){
+  document.getElementById('aaGrowBtn').disabled = true;
+  growAnimate(1000, (dA,dC,growC)=>{
+    const dirCB = unitVec(dC,gBs), dirCA = unitVec(dC,dA);
+    return `<text class="vlabel" x="${dA[0]-16}" y="${dA[1]-8}" fill="#4f6fe0">A'</text><text class="vlabel" x="${dC[0]+18}" y="${dC[1]+4}" fill="#4f6fe0">C'</text>`+
+      sideLabelSVGAt(gBs, dC, growC, '2b', 16, 0.8)+
+      angleMarkerSVGSym(gBs, dirFromAngle(0), dirFromAngle(G_ANGB), '#4f6fe0', 'circle')+
+      angleMarkerSVGSym(dC, dirCB, dirCA, '#4f6fe0', 'triangle');
+  }, ()=>{
+    const fb=document.getElementById('aaFbGrow'); fb.className='feedback success'; fb.textContent="△A'B'C'가 나타났어요.";
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goAaC()">다음 →</button></div>`);
+  });
+}
+function goAaC(){
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">3</span>△A'B'C'와 △DEF 비교하기</div>
+    <p>△A'B'C'와 △DEF에서 대응하는 것을 찾아 적어보자.</p>
+    <div class="proof-block">
+      <span class="seg">B'C'</span> = <span class="seg">EF</span> = (<input class="blank" id="aaC1" style="width:55px">)<br>
+      ∠B' = ∠(<input class="blank" id="aaC2" style="width:40px">) = <span style="color:#4f6fe0;font-size:16px">●</span><br>
+      ∠C' = ∠(<input class="blank" id="aaC3" style="width:40px">) = <span style="color:#4f6fe0;font-size:15px">▲</span>
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="aaCheckC()">확인</button></div>
+    <div class="feedback" id="aaFbC"></div>
+  `);
+}
+function aaCheckC(){
+  const ok1=exprMatches(document.getElementById('aaC1').value,'2b');
+  const ok2=normExpr(document.getElementById('aaC2').value)==='e';
+  const ok3=normExpr(document.getElementById('aaC3').value)==='f';
+  [['aaC1',ok1],['aaC2',ok2],['aaC3',ok3]].forEach(([id,ok])=>{ document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok); });
+  const fb = document.getElementById('aaFbC');
+  if(ok1&&ok2&&ok3){
+    fb.className='feedback success'; fb.textContent = '맞아요! 한 변의 길이와 그 양 끝 각이 각각 같아요.';
+    appendProvePanel(`
+      <div class="proof-block">그러므로 △A'B'C'와 △DEF는 어떤 합동인가요?
+        <button class="btn" onclick="aaPickReason('SSS',this)">SSS 합동</button>
+        <button class="btn" onclick="aaPickReason('SAS',this)">SAS 합동</button>
+        <button class="btn" onclick="aaPickReason('ASA',this)">ASA 합동</button>
+      </div>
+      <div class="feedback" id="aaFbReason"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '위에서 확대한 도형의 값을 다시 확인해보세요.';
+  }
+}
+function aaPickReason(v, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const ok = v==='ASA';
+  const fb = document.getElementById('aaFbReason');
+  if(ok){
+    fb.className='feedback success'; fb.textContent = '맞아요! 한 변과 그 양 끝 각이 같으면 ASA 합동이에요.';
+    appendProvePanel(`
+      <div class="proof-block">△A'B'C' ≡ △DEF (ASA 합동)<br>그런데 △A'B'C'는 △ABC를 확대한 도형이었죠. 그렇다면 △ABC와 △DEF는 닮음이라고 할 수 있을까요?
+        <button class="btn" onclick="aaConclude(true,this)">네</button><button class="btn" onclick="aaConclude(false,this)">아니오</button>
+      </div>
+      <div class="feedback" id="aaFbConclude"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '힌트: 한 변의 길이와 그 양 끝 각의 크기가 같을 때 쓰는 합동 조건이에요.';
+  }
+}
+function aaConclude(val, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const fb = document.getElementById('aaFbConclude');
+  if(val){
+    fb.className='feedback success'; fb.textContent = '맞아요! △ABC ∽ △DEF 예요.';
+    appendProvePanel(`
+      <div class="summary-box"><b>AA 닮음 조건</b> — 두 삼각형에서 대응하는 두 쌍의 각의 크기가 각각 같으면 두 삼각형은 서로 닮음이다.</div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="goToSummary()">다음: 정리 및 문제 풀기 →</button></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent = '방금 ASA합동을 확인했잖아요 — 닮음의 정의를 다시 떠올려보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   정리 및 문제 풀기 — SSS/SAS/AA 정리, 스스로 확인, 연습문제 4개(오답 1개 포함)
+════════════════════════════════ */
+const SUM_UNIT=14, SUM_ANCHOR_S={x:90,y:230}, SUM_ANCHOR_B={x:380,y:230};
+function angleBetweenPts(vertex, p1, p2){
+  const v1=[p1[0]-vertex[0],p1[1]-vertex[1]], v2=[p2[0]-vertex[0],p2[1]-vertex[1]];
+  const dot=v1[0]*v2[0]+v1[1]*v2[1], l1=Math.hypot(...v1)||1, l2=Math.hypot(...v2)||1;
+  return Math.acos(Math.max(-1,Math.min(1,dot/(l1*l2))))*180/Math.PI;
+}
+function drawPairScene(r){
+  // 각B·각C를 동시에 보여주는 라운드(AA)는 두 각의 라벨이 서로 가까워 겹치기 쉬워서,
+  // 라운드별로 확대 배율(unit)과 DEF 위치(anchorBx)를 따로 줄 수 있게 함(기본값은 공용 SUM_UNIT/SUM_ANCHOR_B)
+  const UNIT = r.unit || SUM_UNIT;
+  const ANCHOR_S = SUM_ANCHOR_S;
+  const ANCHOR_B = {x: r.anchorBx || SUM_ANCHOR_B.x, y: SUM_ANCHOR_B.y};
+  const Bs=[ANCHOR_S.x,ANCHOR_S.y], Cs=polar(ANCHOR_S.x,ANCHOR_S.y,0,r.BC*UNIT), As=polar(ANCHOR_S.x,ANCHOR_S.y,r.angB,r.AB*UNIT);
+  const Bb=[ANCHOR_B.x,ANCHOR_B.y], Cb=polar(ANCHOR_B.x,ANCHOR_B.y,0,r.EF*UNIT), Ab=polar(ANCHOR_B.x,ANCHOR_B.y,r.angE,r.DE*UNIT);
+  const smallC=centroidOf([As,Bs,Cs]), bigC=centroidOf([Ab,Bb,Cb]);
+  let html='';
+  html += `<polygon points="${As} ${Bs} ${Cs}" style="fill:#6c8bff;fill-opacity:.18;stroke:#4f6fe0;stroke-width:2.5"></polygon>`;
+  html += `<polygon points="${Ab} ${Bb} ${Cb}" style="fill:#ff9db3;fill-opacity:.18;stroke:#e05a20;stroke-width:2.5"></polygon>`;
+  [['A',As,'#4f6fe0',smallC],['B',Bs,'#4f6fe0',smallC],['C',Cs,'#4f6fe0',smallC],['D',Ab,'#e05a20',bigC],['E',Bb,'#e05a20',bigC],['F',Cb,'#e05a20',bigC]].forEach(([l,p,c,cen])=>{
+    const lp=outwardLabel(p,cen,16);
+    html += `<text class="vlabel" x="${lp.x}" y="${lp.y}" fill="${c}">${l}</text>`;
+  });
+  if(r.showSides.includes('AB')){ html+=sideLabelSVG(As,Bs,smallC,r.AB,12); html+=sideLabelSVG(Ab,Bb,bigC,r.DE,12); }
+  if(r.showSides.includes('BC')){ html+=sideLabelSVG(Bs,Cs,smallC,r.BC,12); html+=sideLabelSVG(Bb,Cb,bigC,r.EF,12); }
+  if(r.showSides.includes('CA')){
+    html+=sideLabelSVG(Cs,As,smallC,Math.round(dist(Cs,As)/UNIT*10)/10,12);
+    html+=sideLabelSVG(Cb,Ab,bigC,Math.round(dist(Cb,Ab)/UNIT*10)/10,12);
+  }
+  if(r.showAngleB){ html+=angleMarkerSVG(Bs, dirFromAngle(0), dirFromAngle(r.angB), '#4f6fe0', r.angB+'°'); html+=angleMarkerSVG(Bb, dirFromAngle(0), dirFromAngle(r.angE), '#e05a20', r.angE+'°'); }
+  if(r.showAngleC){
+    const angC = Math.round(angleBetweenPts(Cs,Bs,As)), angF = Math.round(angleBetweenPts(Cb,Bb,Ab));
+    html+=angleMarkerSVG(Cs, unitVec(Cs,Bs), unitVec(Cs,As), '#4f6fe0', angC+'°');
+    html+=angleMarkerSVG(Cb, unitVec(Cb,Bb), unitVec(Cb,Ab), '#e05a20', angF+'°');
+  }
+  return html;
+}
+function sumPanel(html){ document.getElementById('summaryPanel').innerHTML = html; }
+function appendSumPanel(extra){ document.getElementById('summaryPanel').insertAdjacentHTML('beforeend', extra); }
+
+function goToSummary(){
+  document.getElementById('provePage').style.display='none';
+  document.getElementById('summaryPage').style.display='block';
+  window.scrollTo({top:0, behavior:'smooth'});
+  document.getElementById('summarySvg').innerHTML='';
+  goSum0();
+}
+function goSum0(){
+  sumPanel(`
+    <div class="panel-title"><span class="step-badge">★</span>세 가지 닮음 조건 정리</div>
+    <div class="proof-block">
+      (<input class="blank" id="sumB1" style="width:55px">) 닮음 — 세 쌍의 대응변의 길이의 비가 모두 같다.<br><br>
+      (<input class="blank" id="sumB2" style="width:55px">) 닮음 — 두 쌍의 대응변의 길이의 비가 같고, 그 (<input class="blank" id="sumB3" style="width:60px">)의 크기가 같다.<br><br>
+      (<input class="blank" id="sumB4" style="width:55px">) 닮음 — 두 쌍의 대응각의 크기가 각각 같다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="checkSum0()">확인</button></div>
+    <div class="feedback" id="sum0Fb"></div>
+  `);
+}
+function checkSum0(){
+  const v1=normExpr(document.getElementById('sumB1').value);
+  const v2=normExpr(document.getElementById('sumB2').value);
+  const v3=String(document.getElementById('sumB3').value||'').trim().replace(/\s+/g,'');
+  const v4=normExpr(document.getElementById('sumB4').value);
+  const ok1=v1==='sss', ok2=v2==='sas', ok3=(v3==='끼인각'), ok4=v4==='aa';
+  [['sumB1',ok1],['sumB2',ok2],['sumB3',ok3],['sumB4',ok4]].forEach(([id,ok])=>{ document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok); });
+  const fb = document.getElementById('sum0Fb');
+  if(ok1&&ok2&&ok3&&ok4){
+    fb.className='feedback success'; fb.textContent='정답이에요! 세 가지 닮음 조건을 잘 기억하고 있어요.';
+    appendSumPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSumSelf()">스스로 확인 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요.';
+  }
+}
+function goSumSelf(){
+  // AB=3,BC=5는 값 자체는 작아서 계산은 쉽지만, 그대로 그리면 변(42px)이 각도 라벨 오프셋(41px)과 거의 같아져
+  // 삼각형이 화면에서 지나치게 작고 빡빡해 보인다 — unit을 키워서 같은 숫자를 더 크게 그린다
+  const r = {AB:3,BC:5,angB:60,DE:6,EF:10,angE:60, showSides:['AB','BC'], showAngleB:true, showAngleC:false, unit:20};
+  document.getElementById('summarySvg').innerHTML = drawPairScene(r);
+  sumPanel(`
+    <div class="panel-title"><span class="step-badge">✓</span>스스로 확인</div>
+    <div class="proof-block">△ABC와 △DEF에서 <span class="seg">AB</span>:<span class="seg">DE</span> = 3:6 = 1:(<input class="blank" id="selfA" style="width:45px">) , <span class="seg">BC</span>:<span class="seg">EF</span> = 5:10 = 1:(<input class="blank" id="selfB" style="width:45px">) , ∠B=∠E=60°이므로, 이 두 삼각형은 (<input class="blank" id="selfC" style="width:70px">) 닮음이다.</div>
+    <div class="btn-row"><button class="btn btn-check" onclick="checkSumSelf()">확인</button></div>
+    <div class="feedback" id="selfFb"></div>
+  `);
+}
+function checkSumSelf(){
+  const a=parseFloat(document.getElementById('selfA').value), b=parseFloat(document.getElementById('selfB').value);
+  const c=normExpr(document.getElementById('selfC').value);
+  const okA=Math.abs(a-2)<0.05, okB=Math.abs(b-2)<0.05, okC=(c==='sas');
+  document.getElementById('selfA').classList.toggle('correct',okA); document.getElementById('selfA').classList.toggle('wrong',!okA);
+  document.getElementById('selfB').classList.toggle('correct',okB); document.getElementById('selfB').classList.toggle('wrong',!okB);
+  document.getElementById('selfC').classList.toggle('correct',okC); document.getElementById('selfC').classList.toggle('wrong',!okC);
+  const fb = document.getElementById('selfFb');
+  if(okA&&okB&&okC){
+    fb.className='feedback success'; fb.textContent='정답이에요! SAS 닮음이에요.';
+    appendSumPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSumQuizStart()">문제 풀어보기 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요. (마지막 칸은 "SAS"라고 입력하세요)';
+  }
+}
+
+const QUIZ_ROUNDS = [
+  { AB:6,BC:8,angB:90,DE:9,EF:12,angE:90, showSides:['AB','BC','CA'], showAngleB:false, showAngleC:false, similar:true, reason:'SSS' },
+  { AB:5,BC:7,angB:55,DE:10,EF:14,angE:55, showSides:['AB','BC'], showAngleB:true, showAngleC:false, similar:true, reason:'SAS' },
+  { AB:4,BC:6,angB:50,DE:8.8,EF:13.2,angE:50, showSides:[], showAngleB:true, showAngleC:true, similar:true, reason:'AA', unit:20, anchorBx:320 },
+  { AB:4,BC:6,angB:45,DE:8,EF:15,angE:45, showSides:['AB','BC'], showAngleB:true, showAngleC:false, similar:false, reason:null, unit:18, anchorBx:320 },
+];
+const quiz = { round:0, correct:0, total:QUIZ_ROUNDS.length, cur:null };
+function goSumQuizStart(){
+  quiz.round=0; quiz.correct=0;
+  goSumQuizNext();
+}
+function goSumQuizNext(){
+  quiz.round++;
+  if(quiz.round>quiz.total){ goSumFinish(); return; }
+  const r = QUIZ_ROUNDS[quiz.round-1];
+  quiz.cur = r;
+  document.getElementById('summarySvg').innerHTML = drawPairScene(r);
+  sumPanel(`
+    <div class="panel-title"><span class="step-badge">${quiz.round}</span>문제 ${quiz.round} / ${quiz.total}</div>
+    <div class="proof-block">△ABC와 △DEF는 닮음일까요?
+      <button class="btn" onclick="quizCheckSimilar(true,this)">닮음이다</button><button class="btn" onclick="quizCheckSimilar(false,this)">닮음이 아니다</button>
+    </div>
+    <div class="feedback" id="quizFbSim"></div>
+  `);
+}
+function quizCheckSimilar(val, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const r = quiz.cur;
+  const fb = document.getElementById('quizFbSim');
+  if(val!==r.similar){
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요. 표시된 값들을 자세히 비교해보세요.';
+    return;
+  }
+  if(r.similar){
+    fb.className='feedback success'; fb.textContent='맞아요! 무슨 조건일까요?';
+    appendSumPanel(`
+      <div class="btn-row">
+        <button class="btn" onclick="quizPickReason('SSS',this)">SSS 닮음</button>
+        <button class="btn" onclick="quizPickReason('SAS',this)">SAS 닮음</button>
+        <button class="btn" onclick="quizPickReason('AA',this)">AA 닮음</button>
+      </div>
+      <div class="feedback" id="quizFbReason"></div>
+    `);
+  } else {
+    fb.className='feedback success'; fb.textContent='정답이에요! 한 각이 같아도, 그 각을 낀 두 변의 비가 서로 다르면 닮음이 아니에요.';
+    quiz.correct++;
+    appendSumPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSumQuizNext()">다음 →</button></div>`);
+  }
+}
+function quizPickReason(v, btn){
+  if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const r = quiz.cur;
+  const ok = v===r.reason;
+  const fb = document.getElementById('quizFbReason');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='정답이에요!';
+    quiz.correct++;
+    appendSumPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goSumQuizNext()">다음 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요.';
+  }
+}
+function goSumFinish(){
+  const pass = quiz.correct >= 3;
+  sumPanel(`
+    <div class="panel-title"><span class="step-badge">✓</span>결과</div>
+    <div class="summary-box" style="text-align:center">
+      <div style="font-size:28px;font-weight:800;color:var(--primary-dark)">${quiz.correct} / ${quiz.total}</div>
+      <div>${pass?'훌륭해요! 세 가지 닮음 조건을 잘 이해했어요.':'조금 더 복습이 필요해요.'}</div>
+    </div>
+    <div class="btn-row">${pass
+      ? `<button class="btn btn-primary" onclick="goSumFinishComplete()">✅ 학습 완료</button>`
+      : `<button class="btn" onclick="goSumQuizStart()">🔄 다시 풀기</button>`
+    }</div>
+    <div class="notice-end">오늘의 증명·정리 학습은 여기까지예요!</div>
+  `);
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+function goSumFinishComplete(){
+  document.getElementById('hubBackLink').click();
+}
+
+fullRender();
+goPanel0();
+// 개발/검수용 — ?section=prove 또는 ?section=summary 로 열면 해당 화면으로 바로 이동(학생용 기본 동작에는 영향 없음)
+(function(){
+  const sec = new URLSearchParams(location.search).get('section');
+  if(sec==='prove'){ document.getElementById('tanguPage').style.display='none'; goToProve(); }
+  else if(sec==='summary'){ document.getElementById('tanguPage').style.display='none'; goToSummary(); }
+})();
+</script>
+</body>
+</html>
