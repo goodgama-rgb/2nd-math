@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼각형의 닮음 조건 — 형성평가</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:680px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+
+.prog-bar{background:#fff;border-bottom:1px solid #dfe3fb}
+.prog-inner{max-width:680px;margin:0 auto;display:flex}
+.ptab{flex:1;padding:11px 8px 9px;font-size:12.5px;font-weight:700;color:var(--ink3);border-bottom:3px solid transparent;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.ptab.active{color:var(--indigo);border-bottom-color:var(--indigo)}
+.ptab.done{color:var(--green);border-bottom-color:var(--green)}
+.pnum{width:18px;height:18px;border-radius:50%;background:var(--indigo-l);color:var(--ink2);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.ptab.active .pnum{background:var(--indigo);color:#fff}
+.ptab.done .pnum{background:var(--green);color:#fff}
+
+.concept{background:#fff;border-left:3px solid var(--indigo);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--ink);line-height:1.8}
+.concept strong{color:var(--indigo)}
+
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.progress{text-align:center;font-weight:800;color:var(--indigo);font-size:13px;margin-bottom:8px}
+.qtext{font-size:14.5px;font-weight:700;line-height:1.7;margin-bottom:10px;text-align:center}
+
+.svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee;margin-bottom:12px}
+.svg-wrap svg{width:100%;height:auto;display:block}
+
+.tri-a{fill:#4f46e5;fill-opacity:.10;stroke:#4f46e5;stroke-width:2.2}
+.tri-b{fill:#e05a20;fill-opacity:.10;stroke:#e05a20;stroke-width:2.2}
+.vlabel{font-size:15px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+
+.blank{display:inline-block;width:50px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-outline{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo)}
+.btn-outline.active{background:var(--indigo);color:#fff}
+.btn.active{background:var(--indigo);color:#fff}
+.btn-row{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+
+.answer-block{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:13.5px;line-height:2.4}
+.answer-line{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.answer-label{font-weight:700;color:var(--ink2);min-width:110px;text-align:right}
+
+.fb-line{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:10px}
+.fb-line.ok{color:var(--green)}
+.fb-line.no{color:var(--red)}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.done-score{font-size:30px;font-weight:800;color:var(--indigo);margin:8px 0}
+.done-score.fail{color:var(--red)}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">삼각형의 닮음 조건 · 형성평가</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="prog-bar">
+  <div class="prog-inner">
+    <div class="ptab active" id="ptab0"><span class="pnum">1</span>레벨1</div>
+    <div class="ptab" id="ptab1"><span class="pnum">2</span>레벨2</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="screen active" id="scQuiz">
+    <div class="concept" id="quizConcept">
+      <strong>레벨1:</strong> 그림을 보고 서로 닮은 두 삼각형을 기호로 나타내고, 닮음 조건을 고른 뒤, x의 값을 구하세요. (4문제 중 3문제 이상 정답이면 통과해요)
+    </div>
+    <div class="card">
+      <div class="progress" id="quizProgress">1 / 4</div>
+      <div class="qtext" id="quizQtext"></div>
+      <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="answer-block">
+        <div class="answer-line"><span class="answer-label">서로 닮은 삼각형:</span> △<input class="blank" id="qAns1" style="width:60px"> ∽ △<input class="blank" id="qAns2" style="width:60px"></div>
+        <div class="answer-line" style="margin-top:6px"><span class="answer-label">닮음 조건:</span>
+          <button class="btn btn-outline" onclick="quizPickCond('SSS',this)">SSS닮음</button>
+          <button class="btn btn-outline" onclick="quizPickCond('SAS',this)">SAS닮음</button>
+          <button class="btn btn-outline" onclick="quizPickCond('AA',this)">AA닮음</button>
+        </div>
+        <div class="answer-line" style="margin-top:6px"><span class="answer-label">x의 값:</span> x = <input class="blank" id="qAnsX" inputmode="numeric" style="width:70px"> <span id="qUnitLabel">cm</span></div>
+      </div>
+      <div class="btn-row"><button class="btn" id="quizCheckBtn" onclick="quizCheck()">확인</button></div>
+      <div class="fb-line" id="quizFb"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scLevelResult">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon" id="lrIcon">🎉</div>
+        <div id="lrTitle" style="font-weight:800;font-size:16px"></div>
+        <div class="done-score" id="lrScore"></div>
+        <div id="lrMsg" style="color:var(--ink2)"></div>
+        <button class="primary-btn" id="lrNextBtn" onclick="lrNext()">다음으로</button>
+        <button class="restart-btn" id="lrRetryBtn" onclick="lrRetry()" style="display:none">🔄 이 레벨 다시 풀기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon">🏁</div>
+        <h2>형성평가 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px">레벨1: <span id="finalL1"></span> &nbsp;·&nbsp; 레벨2: <span id="finalL2"></span></p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'triangle-similarity-condition-assessment' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+<script>
+/* ════════════════════════════════
+   공용 기하/판정 헬퍼
+════════════════════════════════ */
+function polar(ox,oy,deg,len){ const r=deg*Math.PI/180; return [ox+Math.cos(r)*len, oy-Math.sin(r)*len]; }
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function lerp(p,q,t){ return [p[0]+(q[0]-p[0])*t, p[1]+(q[1]-p[1])*t]; }
+function centroidOf(pts){ const cx=pts.reduce((s,p)=>s+p[0],0)/pts.length, cy=pts.reduce((s,p)=>s+p[1],0)/pts.length; return [cx,cy]; }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function outwardLabel(p, centroid, d){ const dx=p[0]-centroid[0], dy=p[1]-centroid[1], len=Math.hypot(dx,dy)||1; return [p[0]+dx/len*d, p[1]+dy/len*d]; }
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function angleBetweenPts(vertex, p1, p2){
+  const v1=[p1[0]-vertex[0],p1[1]-vertex[1]], v2=[p2[0]-vertex[0],p2[1]-vertex[1]];
+  const dot=v1[0]*v2[0]+v1[1]*v2[1], l1=Math.hypot(...v1)||1, l2=Math.hypot(...v2)||1;
+  return Math.acos(Math.max(-1,Math.min(1,dot/(l1*l2))))*180/Math.PI;
+}
+function sideLabelSVGAt(p1, p2, centroid, value, bulge, t){
+  t = (t===undefined)?0.5:t;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-centroid[0], mid[1]-centroid[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="edgelen" x="${labelPt[0].toFixed(1)}" y="${labelPt[1].toFixed(1)}">${value}</text>`;
+}
+function angleArcSVG(vertex, dirA, dirB, color, arcR, noLabel){
+  arcR = arcR||15;
+  const a1=Math.atan2(-dirA[1],dirA[0]), a2=Math.atan2(-dirB[1],dirB[0]);
+  let diff=a2-a1; while(diff<=-Math.PI) diff+=2*Math.PI; while(diff>Math.PI) diff-=2*Math.PI;
+  const sweep = diff>0?0:1;
+  const x1=vertex[0]+dirA[0]*arcR, y1=vertex[1]+dirA[1]*arcR, x2=vertex[0]+dirB[0]*arcR, y2=vertex[1]+dirB[1]*arcR;
+  return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${arcR} ${arcR} 0 0 ${sweep} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.2"></path>`;
+}
+function angleLabelSVG(vertex, dirA, dirB, color, value, clearance){
+  clearance = clearance===undefined?10:clearance;
+  const bis=[dirA[0]+dirB[0],dirA[1]+dirB[1]]; const bl=Math.hypot(bis[0],bis[1])||1;
+  const halfAngle = Math.acos(Math.max(-1, Math.min(1, bl/2)));
+  const labelDist = clearance/Math.max(Math.sin(halfAngle), 0.05) + 15;
+  const lp=[vertex[0]+bis[0]/bl*labelDist, vertex[1]+bis[1]/bl*labelDist];
+  return `<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="12.5" font-weight="700" fill="${color}">${value}</text>`;
+}
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.05); }
+function normLetters(v){ return String(v||'').trim().toUpperCase().replace(/[△∽\s]/g,''); }
+function sameAngle(v, vertex, ray1, ray2){
+  const n = normLetters(v);
+  if(n.length!==3 || n[1]!==vertex) return false;
+  const outer = [n[0],n[2]].sort().join('');
+  const expect = [ray1,ray2].sort().join('');
+  return outer===expect;
+}
+// 닮음 기호 △XYZ∽△PQR는 두 삼각형의 이름을 어느 꼭짓점부터, 어느 방향으로 읽어도(6가지 순열) 똑같이 유효하다 —
+// 중요한 건 "두 이름의 같은 자리에 있는 글자끼리 대응점이 맞는가"뿐, 알파벳이 어느 꼭짓점에서 시작하는지가 아니다.
+// 예: A↔D,B↔E,C↔F 대응이면 "△ABC∽△DEF" 뿐 아니라 "△BCA∽△EFD", "△CBA∽△FED" 등도 전부 정답.
+function samePairPerm(left, right){
+  const L=normLetters(left), R=normLetters(right);
+  return (idx)=> L[idx[0]]+L[idx[1]]+L[idx[2]] + '|' + (R[idx[0]]+R[idx[1]]+R[idx[2]]);
+}
+const PERM3 = [[0,1,2],[1,2,0],[2,0,1],[0,2,1],[2,1,0],[1,0,2]];
+function sameTrianglePair(v1, v2, pair){
+  const input = normLetters(v1)+'|'+normLetters(v2);
+  if(normLetters(v1).length!==3 || normLetters(v2).length!==3) return false;
+  const gen = samePairPerm(pair[0], pair[1]);
+  return PERM3.some(idx => gen(idx)===input);
+}
+
+/* ════════════════════════════════
+   유형 A — AA 겹침형 (△ADE ⊂ △ABC, 공통 꼭짓점 A)
+════════════════════════════════ */
+const POOL_A = [
+  {AD:2,DB:4,BC:6,angB:70,DE:2}, {AD:2,DB:5,BC:7,angB:75,DE:2},
+  {AD:3,DB:4,BC:7,angB:70,DE:3}, {AD:4,DB:5,BC:9,angB:65,DE:4}
+];
+const U_A = 20;
+function geoA(r){
+  const AB=r.AD+r.DB;
+  const B=[70,250], C=[70+r.BC*U_A,250];
+  const A=polar(B[0],B[1], r.angB, AB*U_A);
+  const D=lerp(B,A, r.DB/AB);
+  const E=[D[0]+r.DE*U_A, D[1]];
+  return {A,B,C,D,E};
+}
+function drawA(r, mode){
+  const g = geoA(r);
+  const cABC = bboxCenterOf([g.A,g.B,g.C]), cADE = bboxCenterOf([g.A,g.D,g.E]);
+  let html = '';
+  html += `<polygon class="tri-a" points="${g.A} ${g.B} ${g.C}"></polygon>`;
+  html += `<polygon class="tri-b" points="${g.A} ${g.D} ${g.E}"></polygon>`;
+  const showDE = mode==='normal' ? 'x' : r.DE;
+  const showAD = mode==='normal' ? r.AD : 'x';
+  html += angleArcSVG(g.B, unitVec(g.B,g.C), unitVec(g.B,g.A), '#4f46e5', 14);
+  html += angleLabelSVG(g.B, unitVec(g.B,g.C), unitVec(g.B,g.A), '#4f46e5', r.angB+'°', 9);
+  html += angleArcSVG(g.D, unitVec(g.D,g.E), unitVec(g.D,g.A), '#e05a20', 14);
+  html += angleLabelSVG(g.D, unitVec(g.D,g.E), unitVec(g.D,g.A), '#e05a20', r.angB+'°', 9);
+  html += sideLabelSVGAt(g.B, g.D, cADE, r.DB, 12, 0.5);
+  html += sideLabelSVGAt(g.A, g.D, cADE, showAD, 11, 0.3);
+  html += sideLabelSVGAt(g.B, g.C, cABC, r.BC, 14, 0.5);
+  html += sideLabelSVGAt(g.D, g.E, cADE, showDE, 11, 0.5);
+  [['A',g.A,cABC,'#1a1a2e'],['B',g.B,cABC,'#4f46e5'],['C',g.C,cABC,'#4f46e5']].forEach(([l,p,c,col])=>{
+    const lp=outwardLabel(p,c,16); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  [['D',g.D,cADE,'#e05a20'],['E',g.E,cADE,'#e05a20']].forEach(([l,p,c,col])=>{
+    const lp=outwardLabel(p,c,13); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  return html;
+}
+function answerA(r, mode){
+  const x = mode==='normal' ? r.DE : r.AD;
+  return { pair:['ABC','ADE'], cond:'AA', x };
+}
+
+/* ════════════════════════════════
+   유형 B — SSS 대각선형 (사각형 ABCD, 대각선 AC로 나뉜 두 이등변삼각형)
+════════════════════════════════ */
+// BC는 SSS 닮음(AB:DC=BC:CA=CA:AD)을 실제로 확인하는 데 꼭 필요한 세 번째 변 — 반드시 그림에 표시한다.
+const POOL_B = [
+  {a:6,b:9,angB:70,x:40,BC:4}, {a:6,b:7,angB:65,x:50,BC:5},
+  {a:8,b:10,angB:66,x:48,BC:6.5}, {a:8,b:9,angB:64,x:52,BC:7}
+];
+const U_B = 17;
+function geoB(r){
+  const B=[70,250];
+  const BCexact = 2*r.a*Math.cos(r.angB*Math.PI/180);
+  const C=[70+BCexact*U_B,250];
+  const A=polar(B[0],B[1], r.angB, r.a*U_B);
+  const ACd = dist(A,C);
+  const M=[(A[0]+C[0])/2,(A[1]+C[1])/2];
+  const ACdir=unitVec(A,C);
+  const perp=[-ACdir[1],ACdir[0]];
+  const towardB=[B[0]-M[0],B[1]-M[1]];
+  const perpAway = (perp[0]*towardB[0]+perp[1]*towardB[1])>0 ? [-perp[0],-perp[1]] : perp;
+  const h2 = Math.sqrt(Math.max(0,(r.b*U_B)**2-(ACd/2)**2));
+  const D=[M[0]+perpAway[0]*h2, M[1]+perpAway[1]*h2];
+  return {A,B,C,D};
+}
+function drawB(r, mode){
+  const g = geoB(r);
+  const cABC = bboxCenterOf([g.A,g.B,g.C]), cACD = bboxCenterOf([g.A,g.C,g.D]);
+  let html = '';
+  html += `<polygon class="tri-a" points="${g.A} ${g.B} ${g.C}"></polygon>`;
+  html += `<polygon class="tri-b" points="${g.A} ${g.C} ${g.D}"></polygon>`;
+  html += sideLabelSVGAt(g.A, g.B, cABC, r.a, 12, 0.5);
+  html += sideLabelSVGAt(g.C, g.A, cABC, r.a, 12, 0.5);
+  html += sideLabelSVGAt(g.B, g.C, cABC, r.BC, 14, 0.5);
+  html += sideLabelSVGAt(g.A, g.D, cACD, r.b, 11, 0.5);
+  html += sideLabelSVGAt(g.D, g.C, cACD, r.b, 11, 0.5);
+  const showAngB = mode==='normal' ? r.angB+'°' : 'x°';
+  const showApex = mode==='normal' ? 'x°' : r.x+'°';
+  html += angleArcSVG(g.B, unitVec(g.B,g.C), unitVec(g.B,g.A), '#4f46e5', 16);
+  html += angleLabelSVG(g.B, unitVec(g.B,g.C), unitVec(g.B,g.A), '#4f46e5', showAngB, 10);
+  html += angleArcSVG(g.D, unitVec(g.D,g.A), unitVec(g.D,g.C), '#e05a20', 14);
+  html += angleLabelSVG(g.D, unitVec(g.D,g.A), unitVec(g.D,g.C), '#e05a20', showApex, 8);
+  [['A',g.A,cABC,'#1a1a2e'],['B',g.B,cABC,'#4f46e5'],['C',g.C,cABC,'#1a1a2e']].forEach(([l,p,c,col])=>{
+    const lp=outwardLabel(p,c,16); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  { const lp=outwardLabel(g.D,cACD,16); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#e05a20">D</text>`; }
+  return html;
+}
+function answerB(r, mode){
+  const x = mode==='normal' ? r.x : r.angB;
+  return { pair:['ABC','DCA'], cond:'SSS', x };
+}
+
+/* ════════════════════════════════
+   유형 C — SAS 겹침형(대응 뒤바뀜): D는 AB 위, E는 AC 위, DE 작도, △ADE∽△ACB
+════════════════════════════════ */
+const POOL_C = [
+  {AB:10,AC:12,AD:6,AE:5,DB:4,EC:7,angA:65,BC:12,DE:6},
+  {AB:12,AC:12,AD:8,AE:8,DB:4,EC:4,angA:60,BC:12,DE:8},
+  {AB:15,AC:15,AD:10,AE:10,DB:5,EC:5,angA:60,BC:15,DE:10},
+  {AB:16,AC:16,AD:12,AE:12,DB:4,EC:4,angA:60,BC:16,DE:12}
+];
+const U_C = 15;
+function geoC(r){
+  const A=[70,60];
+  const B=polar(A[0],A[1], -8, r.AB*U_C);
+  const C=polar(A[0],A[1], -8-r.angA, r.AC*U_C);
+  const D=lerp(A,B, r.AD/r.AB);
+  const E=lerp(A,C, r.AE/r.AC);
+  return {A,B,C,D,E};
+}
+function drawC(r, mode){
+  const g = geoC(r);
+  const cABC = bboxCenterOf([g.A,g.B,g.C]), cADE = bboxCenterOf([g.A,g.D,g.E]);
+  let html = '';
+  html += `<polygon class="tri-a" points="${g.A} ${g.B} ${g.C}"></polygon>`;
+  html += `<polygon class="tri-b" points="${g.A} ${g.D} ${g.E}"></polygon>`;
+  html += `<line x1="${g.D[0].toFixed(1)}" y1="${g.D[1].toFixed(1)}" x2="${g.E[0].toFixed(1)}" y2="${g.E[1].toFixed(1)}" stroke="#e05a20" stroke-width="2.2"></line>`;
+  html += sideLabelSVGAt(g.A, g.D, cADE, r.AD, 10, 0.3);
+  html += sideLabelSVGAt(g.D, g.B, cABC, r.DB, 11, 0.6);
+  html += sideLabelSVGAt(g.A, g.E, cADE, r.AE, 10, 0.3);
+  html += sideLabelSVGAt(g.E, g.C, cABC, r.EC, 11, 0.6);
+  const showBC = mode==='normal' ? 'x' : r.BC;
+  const showDE = mode==='normal' ? r.DE : 'x';
+  html += sideLabelSVGAt(g.B, g.C, cABC, showBC, 16, 0.5);
+  html += sideLabelSVGAt(g.D, g.E, cADE, showDE, 10, 0.5);
+  [['A',g.A,cABC,'#1a1a2e'],['B',g.B,cABC,'#4f46e5'],['C',g.C,cABC,'#4f46e5']].forEach(([l,p,c,col])=>{
+    const lp=outwardLabel(p,c,16); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  [['D',g.D,cADE,'#e05a20'],['E',g.E,cADE,'#e05a20']].forEach(([l,p,c,col])=>{
+    const lp=outwardLabel(p,c,13); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  return html;
+}
+function answerC(r, mode){
+  const x = mode==='normal' ? r.BC : r.DE;
+  return { pair:['ADE','ACB'], cond:'SAS', x };
+}
+
+/* ════════════════════════════════
+   유형 D — AB²=AC·AD형: D는 AC 위의 점, △ABD∽△ACB(SAS, 공통각 A)
+════════════════════════════════ */
+const POOL_D = [
+  {AB:6,AC:8,AD:4.5,DC:3.5}, {AB:6,AC:9,AD:4,DC:5},
+  {AB:12,AC:16,AD:9,DC:7}, {AB:12,AC:18,AD:8,DC:10}
+];
+const U_D = 15;
+function geoD(r){
+  const A=[70,60], angA=55;
+  const B=polar(A[0],A[1], -8, r.AB*U_D);
+  const C=polar(A[0],A[1], -8-angA, r.AC*U_D);
+  const D=lerp(A,C, r.AD/r.AC);
+  return {A,B,C,D};
+}
+function drawD(r, mode){
+  const g = geoD(r);
+  const cABC = bboxCenterOf([g.A,g.B,g.C]);
+  let html = '';
+  html += `<polygon class="tri-a" points="${g.A} ${g.B} ${g.C}"></polygon>`;
+  html += `<polygon class="tri-b" points="${g.A} ${g.B} ${g.D}"></polygon>`;
+  html += `<line x1="${g.B[0].toFixed(1)}" y1="${g.B[1].toFixed(1)}" x2="${g.D[0].toFixed(1)}" y2="${g.D[1].toFixed(1)}" stroke="#e05a20" stroke-width="2.2"></line>`;
+  const showAC = mode==='normal' ? r.AC : 'x';
+  const showAD = mode==='normal' ? 'x' : r.AD;
+  // AD와 AC는 같은 직선(A-D-C) 위에 겹쳐 있어서, 두 점선 곡선을 같은 부풀림으로 그리면 서로 겹쳐
+  // 가독성이 떨어진다 — AC는 훨씬 더 바깥쪽(큰 bulge)으로 밀어내고, 라벨도 D와 안 겹치는 C쪽 끝으로 민다.
+  // (DC 구간 자체는 따로 표시할 값이 없으므로 점선을 그리지 않는다 — 괜히 셋째 곡선이 더 겹칠 뿐)
+  html += sideLabelSVGAt(g.A, g.B, cABC, r.AB, 13, 0.5);
+  html += sideLabelSVGAt(g.A, g.D, cABC, showAD, 10, 0.3);
+  html += sideLabelSVGAt(g.A, g.C, cABC, showAC, 32, 0.9);
+  const matchAngle = Math.round(angleBetweenPts(g.B, g.D, g.A));
+  html += angleArcSVG(g.B, unitVec(g.B,g.D), unitVec(g.B,g.A), '#e05a20', 13);
+  html += angleLabelSVG(g.B, unitVec(g.B,g.D), unitVec(g.B,g.A), '#e05a20', matchAngle+'°', 8);
+  html += angleArcSVG(g.C, unitVec(g.C,g.A), unitVec(g.C,g.B), '#e05a20', 13);
+  html += angleLabelSVG(g.C, unitVec(g.C,g.A), unitVec(g.C,g.B), '#e05a20', matchAngle+'°', 8);
+  [['A',g.A,cABC,'#1a1a2e'],['B',g.B,cABC,'#4f46e5'],['C',g.C,cABC,'#4f46e5']].forEach(([l,p,c,col])=>{
+    const lp=outwardLabel(p,c,16); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  { const lp=outwardLabel(g.D,cABC,14); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#e05a20">D</text>`; }
+  return html;
+}
+function answerD(r, mode){
+  const x = mode==='normal' ? r.AD : r.AC;
+  return { pair:['ABD','ACB'], cond:'SAS', x };
+}
+
+/* ════════════════════════════════
+   문제 조립 — 4가지 유형을 공용 인터페이스로
+════════════════════════════════ */
+const TYPES = [
+  { key:'A', pool:POOL_A, draw:drawA, answer:answerA, viewBox:'0 0 420 320' },
+  { key:'B', pool:POOL_B, draw:drawB, answer:answerB, viewBox:'0 0 420 320', unit:'°' },
+  { key:'C', pool:POOL_C, draw:drawC, answer:answerC, viewBox:'0 0 420 320' },
+  { key:'D', pool:POOL_D, draw:drawD, answer:answerD, viewBox:'0 0 420 320' }
+];
+// 레벨2가 레벨1과 같은 숫자 조합을 우연히 또 뽑지 않도록, 유형별로 방금 쓴 항목을 기억해뒀다가 제외한다
+const usedEntryByType = {};
+function buildLevelQuestions(mode){
+  return shuffle(TYPES.map(t=>{
+    const avoid = usedEntryByType[t.key];
+    let candidates = t.pool;
+    if(avoid && t.pool.length>1) candidates = t.pool.filter(e=>e!==avoid);
+    const r = candidates[Math.floor(Math.random()*candidates.length)];
+    usedEntryByType[t.key] = r;
+    return { type:t, entry:r, mode };
+  }));
+}
+
+/* ════════════════════════════════
+   진행 상태 및 화면 전환
+════════════════════════════════ */
+const st = { level:1, idx:0, correct:0, questions:[], cur:null, l1Score:null, l2Score:null };
+let quizCondPick = null;
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function updatePhaseTabs(cur){
+  ['ptab0','ptab1'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.classList.remove('active','done');
+    if(i<cur) el.classList.add('done'); else if(i===cur) el.classList.add('active');
+  });
+}
+function startLevel(level){
+  st.level=level; st.idx=0; st.correct=0;
+  st.questions = buildLevelQuestions(level===1?'normal':'swap');
+  document.getElementById('quizConcept').innerHTML = level===1
+    ? '<strong>레벨1:</strong> 그림을 보고 서로 닮은 두 삼각형을 기호로 나타내고, 닮음 조건을 고른 뒤, x의 값을 구하세요. (4문제 중 3문제 이상 정답이면 통과해요)'
+    : '<strong>레벨2:</strong> 레벨1과 같은 유형이지만, 주어진 값과 구하는 값(x)의 자리가 바뀌어요. (4문제 중 3문제 이상 정답이면 통과해요)';
+  updatePhaseTabs(level-1);
+  showScreen('scQuiz');
+  quizNext();
+}
+function quizNext(){
+  st.idx++;
+  if(st.idx>st.questions.length){ levelFinish(); return; }
+  st.cur = st.questions[st.idx-1];
+  quizCondPick = null;
+  document.getElementById('quizProgress').textContent = `${st.idx} / ${st.questions.length}`;
+  document.getElementById('quizQtext').textContent = '다음 그림에서 서로 닮은 삼각형을 찾아 기호 ∽로 나타내고, x의 값을 구하시오.';
+  document.getElementById('quizSvg').setAttribute('viewBox', st.cur.type.viewBox);
+  document.getElementById('quizSvg').innerHTML = st.cur.type.draw(st.cur.entry, st.cur.mode);
+  document.getElementById('qUnitLabel').textContent = st.cur.type.unit || 'cm';
+  ['qAns1','qAns2','qAnsX'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).classList.remove('correct','wrong'); });
+  document.querySelectorAll('#scQuiz .btn-outline').forEach(b=>b.classList.remove('active'));
+  document.getElementById('quizCheckBtn').disabled=false;
+  document.getElementById('quizFb').textContent='';
+}
+function quizPickCond(v, btn){
+  quizCondPick = v;
+  btn.parentElement.querySelectorAll('.btn-outline').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function quizCheck(){
+  const ans = st.cur.type.answer(st.cur.entry, st.cur.mode);
+  const v1raw = document.getElementById('qAns1').value, v2raw = document.getElementById('qAns2').value;
+  const okPair = sameTrianglePair(v1raw, v2raw, ans.pair);
+  const okCond = quizCondPick===ans.cond;
+  const xv = parseFloat(document.getElementById('qAnsX').value);
+  const okX = numMatches(xv, ans.x, 0.05);
+  document.getElementById('qAns1').classList.toggle('correct',okPair); document.getElementById('qAns1').classList.toggle('wrong',!okPair);
+  document.getElementById('qAns2').classList.toggle('correct',okPair); document.getElementById('qAns2').classList.toggle('wrong',!okPair);
+  document.getElementById('qAnsX').classList.toggle('correct',okX); document.getElementById('qAnsX').classList.toggle('wrong',!okX);
+  const ok = okPair && okCond && okX;
+  const fb = document.getElementById('quizFb');
+  if(ok){
+    fb.className='fb-line ok'; fb.textContent='정답이에요!';
+    st.correct++;
+    document.getElementById('quizCheckBtn').disabled=true;
+    setTimeout(quizNext, 1300);
+  } else {
+    // 오답이어도 바로 다음 문제로 넘기거나 정답을 알려주지 않는다 — 어느 부분이 틀렸는지만 알려주고
+    // 학생이 입력을 고쳐서 다시 '확인'을 누를 수 있게 그대로 둔다(버튼도 안 잠금, 다음으로도 안 넘어감).
+    fb.className='fb-line no';
+    const parts=[];
+    if(!okPair) parts.push('닮음 기호(대응 순서)');
+    if(!okCond) parts.push('닮음 조건');
+    if(!okX) parts.push('x값');
+    fb.textContent = '❌ '+parts.join(', ')+'이(가) 틀렸어요. 다시 확인해서 고쳐보세요.';
+  }
+}
+function levelFinish(){
+  const total = st.questions.length;
+  const pass = st.correct >= 3;
+  if(st.level===1) st.l1Score = {correct:st.correct, total, pass};
+  else st.l2Score = {correct:st.correct, total, pass};
+  document.getElementById('lrIcon').textContent = pass?'🎉':'💪';
+  document.getElementById('lrTitle').textContent = `레벨${st.level} 결과`;
+  document.getElementById('lrScore').textContent = `${st.correct} / ${total}`;
+  document.getElementById('lrScore').classList.toggle('fail', !pass);
+  document.getElementById('lrMsg').textContent = pass ? '통과했어요!' : '3문제 이상 맞아야 통과해요.';
+  document.getElementById('lrRetryBtn').style.display = pass ? 'none' : 'inline-block';
+  document.getElementById('lrNextBtn').textContent = st.level===1 ? '레벨2로 →' : '결과 보기 →';
+  updatePhaseTabs(st.level);
+  showScreen('scLevelResult');
+}
+function lrRetry(){ startLevel(st.level); }
+function lrNext(){
+  if(st.level===1){ startLevel(2); }
+  else{
+    document.getElementById('finalL1').textContent = `${st.l1Score.correct}/${st.l1Score.total} (${st.l1Score.pass?'통과':'재도전 필요'})`;
+    document.getElementById('finalL2').textContent = `${st.l2Score.correct}/${st.l2Score.total} (${st.l2Score.pass?'통과':'재도전 필요'})`;
+    showScreen('scDone');
+    if(window._reportHubComplete) window._reportHubComplete();
+  }
+}
+
+startLevel(1);
+</script>
+</body>
+</html>

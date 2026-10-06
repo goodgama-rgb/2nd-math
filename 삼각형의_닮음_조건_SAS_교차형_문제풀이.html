@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼각형의 닮음 조건 — 교차형 SAS 문제풀이</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--orange-l:#fff0e8;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:680px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+
+.prog-bar{background:#fff;border-bottom:1px solid #dfe3fb}
+.prog-inner{max-width:680px;margin:0 auto;display:flex}
+.ptab{flex:1;padding:11px 8px 9px;font-size:12.5px;font-weight:700;color:var(--ink3);border-bottom:3px solid transparent;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.ptab.active{color:var(--indigo);border-bottom-color:var(--indigo)}
+.ptab.done{color:var(--green);border-bottom-color:var(--green)}
+.pnum{width:18px;height:18px;border-radius:50%;background:var(--indigo-l);color:var(--ink2);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.ptab.active .pnum{background:var(--indigo);color:#fff}
+.ptab.done .pnum{background:var(--green);color:#fff}
+
+.streak-bar{background:var(--indigo-ll);border-bottom:1px solid #dfe3fb;padding:8px 24px;display:none}
+.streak-bar.show{display:block}
+.streak-inner{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.streak-label{font-size:12px;color:var(--ink2);font-weight:600}
+.streak-dots{display:flex;gap:6px}
+.sdot{width:14px;height:14px;border-radius:50%;background:#d8ddfb;transition:all .3s}
+.sdot.hit{background:var(--green)}
+
+.concept{background:#fff;border-left:3px solid var(--indigo);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--ink);line-height:1.8}
+.concept strong{color:var(--indigo)}
+
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.qtext{font-size:14.5px;font-weight:700;line-height:1.7;margin-bottom:10px;text-align:center}
+.qnum-badge{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--indigo);color:#fff;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;margin-right:6px}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+
+.draw-wrap{position:relative}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
+.svg-wrap svg{width:100%;height:auto;display:block}
+.scratch-area{height:100px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+
+.tri-a{fill:#4f46e5;fill-opacity:.10;stroke:#4f46e5;stroke-width:2.2}
+.tri-b{fill:#e05a20;fill-opacity:.10;stroke:#e05a20;stroke-width:2.2}
+.vlabel{font-size:15px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 3px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.blank.wide{width:80px}
+
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.active{background:var(--indigo);color:#fff}
+.btn-outline{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo)}
+.btn-outline.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.btn-row{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+
+.fb-line{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:10px}
+.fb-line.ok{color:var(--green)}
+.fb-line.no{color:var(--red)}
+
+.step-block{margin-top:16px;padding-top:14px;border-top:1px dashed #e0e7ff}
+.step-block:first-of-type{margin-top:0;padding-top:0;border-top:none}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">삼각형의 닮음 조건 · 교차형(SAS) 문제풀이</span>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="prog-bar">
+  <div class="prog-inner">
+    <div class="ptab active" id="ptab0"><span class="pnum">1</span>교차형 기본 익히기</div>
+    <div class="ptab" id="ptab1"><span class="pnum">2</span>교차형 문제 풀이</div>
+  </div>
+</div>
+<div class="streak-bar" id="streakBar">
+  <div class="streak-inner">
+    <span class="streak-label">연속 정답</span>
+    <div class="streak-dots"><span class="sdot" id="sd0"></span><span class="sdot" id="sd1"></span></div>
+    <span style="font-size:12px;color:var(--ink2)" id="streakMsg">2문제 연속 정답 → 완료!</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEVEL 1 -->
+  <div class="screen active" id="scLv1">
+    <div class="concept">
+      <strong>교차형(X자) 닮음:</strong> <span class="seg">AD</span>와 <span class="seg">BE</span>의 교점을 C라고 하면, ∠ACB와 ∠DCE는 맞꼭지각이에요. 여기에 끼인변의 비까지 같으면 <strong>SAS 닮음</strong>이 성립해요.
+    </div>
+    <div class="card">
+      <div class="draw-toolbar">
+        <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+        <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('lv1','#1a1a2e',this)" title="검정"></button>
+        <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('lv1','#dc2626',this)" title="빨강"></button>
+        <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('lv1','#2563eb',this)" title="파랑"></button>
+        <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('lv1','#16a34a',this)" title="초록"></button>
+        <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('lv1','#eab308',this)" title="노랑"></button>
+        <button class="eraser-btn" id="lv1EraserBtn" onclick="drawToggleEraser('lv1')">🧽 지우개</button>
+      </div>
+      <div class="draw-wrap" id="lv1DrawWrap">
+        <div class="svg-wrap"><svg id="lv1Svg" viewBox="0 0 540 340" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="scratch-area"></div>
+        <canvas id="lv1Ink" class="ink-canvas"></canvas>
+      </div>
+      <div id="lv1Steps"></div>
+    </div>
+  </div>
+
+  <!-- LEVEL 2 -->
+  <div class="screen" id="scLv2">
+    <div class="concept">
+      <strong>이제 숫자를 바꿔서 연습해봐요:</strong> 닮음 기호(△ABC∽△DEC)가 먼저 주어지면, 그 순서만 보고도 어떤 변끼리 대응하는지 알 수 있어요. 끼인변 네 개 중 하나, 그리고 대응변 한 쌍 중 하나를 구해볼게요.
+    </div>
+    <div class="card">
+      <div class="qtext" id="lv2Qtext"></div>
+      <div class="draw-toolbar">
+        <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+        <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('lv2','#1a1a2e',this)" title="검정"></button>
+        <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('lv2','#dc2626',this)" title="빨강"></button>
+        <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('lv2','#2563eb',this)" title="파랑"></button>
+        <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('lv2','#16a34a',this)" title="초록"></button>
+        <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('lv2','#eab308',this)" title="노랑"></button>
+        <button class="eraser-btn" id="lv2EraserBtn" onclick="drawToggleEraser('lv2')">🧽 지우개</button>
+      </div>
+      <div class="draw-wrap" id="lv2DrawWrap">
+        <div class="svg-wrap"><svg id="lv2Svg" viewBox="0 0 540 340" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="scratch-area"></div>
+        <canvas id="lv2Ink" class="ink-canvas"></canvas>
+      </div>
+      <div id="lv2Steps"></div>
+    </div>
+  </div>
+
+  <!-- COMPLETE -->
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon">🎉</div>
+        <h2>교차형 SAS 닮음, 완성!</h2>
+        <p style="color:var(--ink2);margin-top:8px">대응점·대응변·닮음 조건·변의 길이까지 전부 연습했어요.</p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'triangle-similarity-cross-sas' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+<script>
+/* ════════════════════════════════
+   공용 기하 헬퍼
+════════════════════════════════ */
+function polar(ox,oy,deg,len){ const r=deg*Math.PI/180; return [ox+Math.cos(r)*len, oy-Math.sin(r)*len]; }
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function centroidOf(pts){ const cx=pts.reduce((s,p)=>s+p[0],0)/pts.length, cy=pts.reduce((s,p)=>s+p[1],0)/pts.length; return [cx,cy]; }
+function outwardLabel(p, centroid, d){
+  const dx=p[0]-centroid[0], dy=p[1]-centroid[1], len=Math.hypot(dx,dy)||1;
+  return [p[0]+dx/len*d, p[1]+dy/len*d];
+}
+function sideLabelSVGAt(p1, p2, centroid, value, bulge, t){
+  t = (t===undefined)?0.5:t;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-centroid[0], mid[1]-centroid[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="edgelen" x="${labelPt[0].toFixed(1)}" y="${labelPt[1].toFixed(1)}">${value}</text>`;
+}
+function angleArcSVG(vertex, dirA, dirB, color, arcR){
+  arcR = arcR||15;
+  const a1=Math.atan2(-dirA[1],dirA[0]), a2=Math.atan2(-dirB[1],dirB[0]);
+  let diff=a2-a1; while(diff<=-Math.PI) diff+=2*Math.PI; while(diff>Math.PI) diff-=2*Math.PI;
+  const sweep = diff>0?0:1;
+  const x1=vertex[0]+dirA[0]*arcR, y1=vertex[1]+dirA[1]*arcR, x2=vertex[0]+dirB[0]*arcR, y2=vertex[1]+dirB[1]*arcR;
+  return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${arcR} ${arcR} 0 0 ${sweep} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.2"></path>`;
+}
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.05); }
+function normLetters(v){ return String(v||'').trim().toUpperCase().replace(/[△∽\s]/g,''); }
+function sameSeg(v, pair){ const n=normLetters(v); return n===pair || n===pair.split('').reverse().join(''); }
+// 각 이름은 꼭짓점(가운데 글자)만 고정이고 양쪽 변은 순서 상관없음 — 예: 각DCE = 각ECD (둘 다 꼭짓점 C),
+// 변 이름이 AB=BA로 순서 상관없는 것과 같은 원리. 이후에도 각 이름을 비교할 땐 항상 이 규칙을 적용할 것.
+function sameAngle(v, vertex, ray1, ray2){
+  const n = normLetters(v);
+  if(n.length!==3 || n[1]!==vertex) return false;
+  const outer = [n[0],n[2]].sort().join('');
+  const expect = [ray1,ray2].sort().join('');
+  return outer===expect;
+}
+
+/* ════════════════════════════════
+   교차형(X자) 장면 생성 — A,D는 한 직선 위(C를 사이에 두고), B,E는 다른 직선 위
+   CA,CD / CB,CE 는 각각 C로부터의 거리. dirA_deg는 C→A 방향, angACB는 ∠ACB(=∠DCE, 맞꼭지각)
+════════════════════════════════ */
+const CROSS_U = 16, CROSS_C = [260,180], CROSS_DIR_A = 100;
+function buildCrossGeo(CA,CD,CB,CE,angACB){
+  const dirA = CROSS_DIR_A, dirD = dirA+180, dirB = dirA+angACB, dirE = dirB+180;
+  const A = polar(CROSS_C[0],CROSS_C[1], dirA, CA*CROSS_U);
+  const D = polar(CROSS_C[0],CROSS_C[1], dirD, CD*CROSS_U);
+  const B = polar(CROSS_C[0],CROSS_C[1], dirB, CB*CROSS_U);
+  const E = polar(CROSS_C[0],CROSS_C[1], dirE, CE*CROSS_U);
+  return {A,B,C:CROSS_C,D,E};
+}
+// labels: {CA,CD,CB,CE} 중 보여줄 값(숫자 또는 'x') — undefined면 그 변 길이라벨 자체를 안 그림(레벨1 일부 단계에서 사용)
+// showAngle: 'none' | 'acb' | 'both' — ∠ACB만, 또는 ∠ACB+∠DCE 둘 다(맞꼭지각 확인 후)
+function crossSceneSVG(geo, labels, showAngle, showTriFill){
+  const {A,B,C,D,E} = geo;
+  const cABC = centroidOf([A,B,C]), cDEC = centroidOf([D,E,C]);
+  let html = '';
+  if(showTriFill){
+    html += `<polygon class="tri-a" points="${A} ${B} ${C}"></polygon>`;
+    html += `<polygon class="tri-b" points="${D} ${E} ${C}"></polygon>`;
+  }
+  html += `<line x1="${A[0].toFixed(1)}" y1="${A[1].toFixed(1)}" x2="${D[0].toFixed(1)}" y2="${D[1].toFixed(1)}" stroke="#333a4d" stroke-width="2"></line>`;
+  html += `<line x1="${B[0].toFixed(1)}" y1="${B[1].toFixed(1)}" x2="${E[0].toFixed(1)}" y2="${E[1].toFixed(1)}" stroke="#333a4d" stroke-width="2"></line>`;
+  html += `<line x1="${A[0].toFixed(1)}" y1="${A[1].toFixed(1)}" x2="${B[0].toFixed(1)}" y2="${B[1].toFixed(1)}" stroke="#4f46e5" stroke-width="2"></line>`;
+  html += `<line x1="${D[0].toFixed(1)}" y1="${D[1].toFixed(1)}" x2="${E[0].toFixed(1)}" y2="${E[1].toFixed(1)}" stroke="#e05a20" stroke-width="2"></line>`;
+  if(labels.CA!==undefined) html += sideLabelSVGAt(C,A,cABC,labels.CA,11,0.55);
+  if(labels.CD!==undefined) html += sideLabelSVGAt(C,D,cDEC,labels.CD,11,0.55);
+  if(labels.CB!==undefined) html += sideLabelSVGAt(C,B,cABC,labels.CB,11,0.55);
+  if(labels.CE!==undefined) html += sideLabelSVGAt(C,E,cDEC,labels.CE,11,0.55);
+  if(labels.AB!==undefined) html += sideLabelSVGAt(A,B,cABC,labels.AB,13,0.5);
+  if(labels.DE!==undefined) html += sideLabelSVGAt(D,E,cDEC,labels.DE,13,0.5);
+  if(showAngle==='acb' || showAngle==='both'){
+    html += angleArcSVG(C, unitVec(C,A), unitVec(C,B), '#4f46e5', 16);
+  }
+  if(showAngle==='both'){
+    html += angleArcSVG(C, unitVec(C,D), unitVec(C,E), '#e05a20', 16);
+  }
+  [['A',A,'#4f46e5'],['B',B,'#4f46e5'],['C',C,'#333a4d'],['D',D,'#e05a20'],['E',E,'#e05a20']].forEach(([l,p,col])=>{
+    const cen = (l==='A'||l==='B') ? cABC : (l==='D'||l==='E') ? cDEC : centroidOf([A,B,D,E]);
+    const lp = outwardLabel(p, cen, 16);
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  return html;
+}
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스) — 기존 파일들과 동일한 패턴 재사용
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0 }; return drawSt[key]; }
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{
+    const scr = key==='lv1' ? 'scLv1' : 'scLv2';
+    if(document.getElementById(scr).classList.contains('active')) drawSetupCanvas(key);
+  });
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false;
+  document.querySelectorAll('#sc'+(key==='lv1'?'Lv1':'Lv2')+' .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key); d.erasing=true;
+  document.querySelectorAll('#sc'+(key==='lv1'?'Lv1':'Lv2')+' .color-swatch').forEach(b=>b.classList.remove('active'));
+  document.getElementById(key+'EraserBtn').classList.add('active');
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   레벨1 — 예제1 고정 (AC=9,CD=6,BC=12,CE=8,AB=15 → DE=10), 5단계 순차 진행
+════════════════════════════════ */
+const EX1 = {CA:9,CD:6,CB:12,CE:8, ang:90, AB:15, DE:10};
+const ex1Geo = buildCrossGeo(EX1.CA,EX1.CD,EX1.CB,EX1.CE,EX1.ang);
+function lv1Render(labels, showAngle, showTriFill){
+  document.getElementById('lv1Svg').innerHTML = crossSceneSVG(ex1Geo, labels, showAngle, showTriFill);
+}
+function lv1Steps(html){ document.getElementById('lv1Steps').innerHTML = html; }
+function lv1AppendStep(html){ document.getElementById('lv1Steps').insertAdjacentHTML('beforeend', html); }
+
+function lv1Start(){
+  lv1Render({CA:EX1.CA,CD:EX1.CD,CB:EX1.CB,CE:EX1.CE,AB:EX1.AB}, 'none', false);
+  lv1Steps(`
+    <div class="step-block">
+      <div class="qtext"><span class="qnum-badge">1</span><span class="seg">AB</span>, <span class="seg">BC</span>, <span class="seg">CA</span>의 대응변을 쓰고, 그 길이의 비를 구해보세요.</div>
+      <div style="text-align:center;line-height:2.2">
+        <span class="seg">AB</span>의 대응변: <input class="blank" id="l1sAB"> &nbsp;
+        <span class="seg">BC</span>의 대응변: <input class="blank" id="l1sBC"> &nbsp;
+        <span class="seg">CA</span>의 대응변: <input class="blank" id="l1sCA"><br>
+        <span class="seg">CA</span> : <span class="seg">CD</span> = <input class="blank" id="l1rNum" inputmode="numeric" style="width:40px"> : <input class="blank" id="l1rDen" inputmode="numeric" style="width:40px"><br>
+        <span class="seg">BC</span> : <span class="seg">EC</span> = <input class="blank" id="l1rNum2" inputmode="numeric" style="width:40px"> : <input class="blank" id="l1rDen2" inputmode="numeric" style="width:40px">
+      </div>
+      <div class="btn-row"><button class="btn" id="l1sBtn" onclick="lv1CheckSides()">확인</button></div>
+      <div class="fb-line" id="l1sFb"></div>
+    </div>
+  `);
+  drawSetupCanvas('lv1');
+}
+function lv1CheckSides(){
+  const okAB = sameSeg(document.getElementById('l1sAB').value,'DE');
+  const okBC = sameSeg(document.getElementById('l1sBC').value,'EC');
+  const okCA = sameSeg(document.getElementById('l1sCA').value,'DC');
+  const rN = parseFloat(document.getElementById('l1rNum').value), rD = parseFloat(document.getElementById('l1rDen').value);
+  const okRatio1 = rN>0 && rD>0 && Math.abs(rN/rD - EX1.CA/EX1.CD) < 0.02;
+  const rN2 = parseFloat(document.getElementById('l1rNum2').value), rD2 = parseFloat(document.getElementById('l1rDen2').value);
+  const okRatio2 = rN2>0 && rD2>0 && Math.abs(rN2/rD2 - EX1.CB/EX1.CE) < 0.02;
+  [['l1sAB',okAB],['l1sBC',okBC],['l1sCA',okCA],['l1rNum',okRatio1],['l1rDen',okRatio1],['l1rNum2',okRatio2],['l1rDen2',okRatio2]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('l1sFb');
+  if(okAB&&okBC&&okCA&&okRatio1&&okRatio2){
+    fb.className='fb-line ok'; fb.textContent='정답이에요! 대응변의 길이의 비가 전부 같아요.';
+    document.getElementById('l1sBtn').disabled=true;
+    lv1AppendStep(`
+      <div class="step-block">
+        <div class="qtext"><span class="qnum-badge">2</span>서로 대응하는 꼭짓점을 써보세요.</div>
+        <div style="text-align:center">
+          A ↔ <input class="blank" id="l1vA"> &nbsp; B ↔ <input class="blank" id="l1vB"> &nbsp; C ↔ <input class="blank" id="l1vC">
+        </div>
+        <div class="btn-row"><button class="btn" id="l1vBtn" onclick="lv1CheckVertex()">확인</button></div>
+        <div class="fb-line" id="l1vFb"></div>
+      </div>
+    `);
+  } else {
+    fb.className='fb-line no'; fb.textContent='그림에 나온 길이로 비를 다시 계산해보세요.';
+  }
+}
+function lv1CheckVertex(){
+  const vA=normLetters(document.getElementById('l1vA').value), vB=normLetters(document.getElementById('l1vB').value), vC=normLetters(document.getElementById('l1vC').value);
+  const okA=vA==='D', okB=vB==='E', okC=vC==='C';
+  document.getElementById('l1vA').classList.toggle('correct',okA); document.getElementById('l1vA').classList.toggle('wrong',!okA);
+  document.getElementById('l1vB').classList.toggle('correct',okB); document.getElementById('l1vB').classList.toggle('wrong',!okB);
+  document.getElementById('l1vC').classList.toggle('correct',okC); document.getElementById('l1vC').classList.toggle('wrong',!okC);
+  const fb = document.getElementById('l1vFb');
+  if(okA&&okB&&okC){
+    fb.className='fb-line ok'; fb.textContent='정답이에요! A↔D, B↔E, C↔C예요.';
+    document.getElementById('l1vBtn').disabled=true;
+    lv1AppendStep(`
+      <div class="step-block">
+        <div class="qtext"><span class="qnum-badge">3</span>∠ACB와 크기가 같은 각을 찾고, 그 이유를 써보세요.</div>
+        <div style="text-align:center">
+          ∠ACB = ∠<input class="blank" id="l1aAng" style="width:50px"> &nbsp; (이유: <input class="blank wide" id="l1aReason">)
+        </div>
+        <div class="btn-row"><button class="btn" id="l1aBtn" onclick="lv1CheckAngle()">확인</button></div>
+        <div class="fb-line" id="l1aFb"></div>
+      </div>
+    `);
+  } else {
+    fb.className='fb-line no'; fb.textContent='방금 구한 대응변의 비(1단계에서 쓴 것)의 순서를 떠올려보세요.';
+  }
+}
+function lv1CheckAngle(){
+  const okAng = sameAngle(document.getElementById('l1aAng').value, 'C', 'D', 'E');
+  const reasonV = String(document.getElementById('l1aReason').value||'').trim().replace(/\s+/g,'');
+  const okReason = reasonV==='맞꼭지각';
+  document.getElementById('l1aAng').classList.toggle('correct',okAng); document.getElementById('l1aAng').classList.toggle('wrong',!okAng);
+  document.getElementById('l1aReason').classList.toggle('correct',okReason); document.getElementById('l1aReason').classList.toggle('wrong',!okReason);
+  const fb = document.getElementById('l1aFb');
+  if(okAng&&okReason){
+    fb.className='fb-line ok'; fb.textContent='정답이에요! ∠ACB=∠DCE (맞꼭지각)';
+    document.getElementById('l1aBtn').disabled=true;
+    lv1Render({CA:EX1.CA,CD:EX1.CD,CB:EX1.CB,CE:EX1.CE,AB:EX1.AB}, 'both', false);
+    lv1AppendStep(`
+      <div class="step-block">
+        <div class="qtext"><span class="qnum-badge">4</span>두 삼각형이 닮음인 이유를 고르고, △ABC와 닮음인 삼각형을 닮음 기호로 나타내세요.</div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="lv1PickReason('SSS',this)">SSS닮음</button>
+          <button class="btn btn-outline" onclick="lv1PickReason('SAS',this)">SAS닮음</button>
+          <button class="btn btn-outline" onclick="lv1PickReason('AA',this)">AA닮음</button>
+        </div>
+        <div style="text-align:center;margin-top:8px">△ABC ∽ <input class="blank wide" id="l1symAns" placeholder="△___"></div>
+        <div class="btn-row"><button class="btn" id="l1symBtn" onclick="lv1CheckReasonSym()">확인</button></div>
+        <div class="fb-line" id="l1symFb"></div>
+      </div>
+    `);
+  } else {
+    fb.className='fb-line no'; fb.textContent='AD와 BE가 한 점에서 만날 때 생기는 각 이름을 떠올려보세요.';
+  }
+}
+let lv1ReasonPick = null;
+function lv1PickReason(v, btn){
+  lv1ReasonPick = v;
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function lv1CheckReasonSym(){
+  const okReason = lv1ReasonPick==='SAS';
+  const raw = String(document.getElementById('l1symAns').value||'').replace(/[△\s]/g,'');
+  const okSym = raw.toUpperCase()==='DEC';
+  document.getElementById('l1symAns').classList.toggle('correct',okSym); document.getElementById('l1symAns').classList.toggle('wrong',!okSym);
+  const fb = document.getElementById('l1symFb');
+  if(okReason && okSym){
+    fb.className='fb-line ok'; fb.textContent='정답이에요! △ABC∽△DEC (SAS닮음)';
+    document.getElementById('l1symBtn').disabled=true;
+    lv1AppendStep(`
+      <div class="step-block">
+        <div class="qtext"><span class="qnum-badge">5</span><span class="seg">DE</span>의 길이를 구하세요.</div>
+        <div style="text-align:center"><span class="seg">DE</span> = <input class="blank" id="l1deAns" inputmode="numeric"> cm</div>
+        <div class="btn-row"><button class="btn" id="l1deBtn" onclick="lv1CheckDE()">확인</button></div>
+        <div class="fb-line" id="l1deFb"></div>
+      </div>
+    `);
+  } else if(!okReason){
+    fb.className='fb-line no'; fb.textContent='맞꼭지각(끼인각)과 끼인변 두 쌍의 비가 같다는 걸 떠올려보세요.';
+  } else {
+    fb.className='fb-line no'; fb.textContent='대응점 순서(1단계에서 썼던 것)를 다시 떠올려보세요.';
+  }
+}
+function lv1CheckDE(){
+  const v = parseFloat(document.getElementById('l1deAns').value);
+  const ok = numMatches(v, EX1.DE, 0.05);
+  document.getElementById('l1deAns').classList.toggle('correct',ok); document.getElementById('l1deAns').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('l1deFb');
+  if(ok){
+    fb.className='fb-line ok'; fb.textContent='정답이에요! DE=10cm';
+    document.getElementById('l1deBtn').disabled=true;
+    lv1Render({CA:EX1.CA,CD:EX1.CD,CB:EX1.CB,CE:EX1.CE,AB:EX1.AB,DE:EX1.DE}, 'both', true);
+    lv1AppendStep(`<div class="btn-row"><button class="btn" onclick="goLv2()">다음: 숫자 바꿔 연습하기 →</button></div>`);
+  } else {
+    fb.className='fb-line no'; fb.textContent="CA:CD=AB:DE 비례식을 세워서 다시 풀어보세요.";
+  }
+}
+
+/* ════════════════════════════════
+   레벨2 — 교차형 랜덤 풀, 끼인변 중 하나(x)와 대응변 중 하나(y)를 구하기, 연속 2회 정답 통과
+════════════════════════════════ */
+const LV2_POOL = [
+  {CA:3,CD:4,CB:6,CE:8, ang:75, AB:6,DE:8, xField:'CE', yField:'AB'},
+  {CA:3,CD:4,CB:9,CE:12, ang:80, AB:9,DE:12, xField:'CA', yField:'DE'},
+  {CA:3,CD:5,CB:6,CE:10, ang:75, AB:6,DE:10, xField:'CD', yField:'AB'},
+  {CA:4,CD:5,CB:8,CE:10, ang:75, AB:8,DE:10, xField:'CB', yField:'DE'},
+  {CA:4,CD:3,CB:8,CE:6, ang:75, AB:8,DE:6, xField:'CE', yField:'AB'},
+  {CA:4,CD:3,CB:12,CE:9, ang:80, AB:12,DE:9, xField:'CA', yField:'DE'},
+  {CA:5,CD:3,CB:10,CE:6, ang:75, AB:10,DE:6, xField:'CD', yField:'AB'},
+  {CA:5,CD:4,CB:10,CE:8, ang:75, AB:10,DE:8, xField:'CB', yField:'DE'}
+];
+const st = { streak:0, hadWrong:false };
+const lv2 = { order:[], idx:0, cur:null, geo:null };
+function updatePhaseTabs(cur){
+  ['ptab0','ptab1'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.classList.remove('active','done');
+    if(i<cur) el.classList.add('done'); else if(i===cur) el.classList.add('active');
+  });
+}
+function updateStreak(){
+  ['sd0','sd1'].forEach((id,i)=>document.getElementById(id).className='sdot'+(i<st.streak?' hit':''));
+  const msg=document.getElementById('streakMsg');
+  if(st.streak>=2) msg.textContent='통과! 완료 화면으로 이동해요.';
+  else if(st.hadWrong) msg.innerHTML='<span style="color:#e05a20">⚠️ 오답 이력 있음 — 연속 정답에서 제외</span>';
+  else if(st.streak===1) msg.textContent='1개 완료! 하나 더 맞히면 통과!';
+  else msg.textContent='2문제 연속 정답 → 완료!';
+}
+// 오답을 내도 그 자리에서 바로 streak를 0으로 만들지 않는다 — 학생이 다시 고쳐서 맞힐 기회를 먼저 주고,
+// "이 라운드에 오답 이력이 있었다"는 사실만 기억해뒀다가 최종적으로 정답을 맞혔을 때 반영한다(그래도
+// 연속 정답에는 포함 안 시킴 — hadWrong이면 streak를 0으로).
+function markCorrect(){ if(st.hadWrong) st.streak=0; else st.streak++; updateStreak(); }
+function markWrong(){ st.hadWrong=true; updateStreak(); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+function goLv2(){
+  st.streak=0; st.hadWrong=false;
+  updatePhaseTabs(1); updateStreak();
+  document.getElementById('streakBar').classList.add('show');
+  showScreen('scLv2');
+  drawBindOnce('lv2');
+  lv2Next();
+}
+function lv2Next(){
+  if(lv2.idx>=lv2.order.length) lv2.order = shuffle(LV2_POOL);
+  if(lv2.idx>=lv2.order.length) lv2.idx=0;
+  const r = lv2.order[lv2.idx++];
+  lv2.cur = r;
+  lv2.geo = buildCrossGeo(r.CA,r.CD,r.CB,r.CE,r.ang);
+  const otherField = r.yField==='AB' ? 'DE' : 'AB';
+  // y에 해당하는 변(AB 또는 DE)은 아직 그 질문이 나오기 전이니 그림에 표시하지 않고,
+  // x 질문을 다 풀고 나면(lv2CheckX) 그때 'y' 글자를 그림에 추가로 표시한다.
+  const labels = {CA:r.CA,CD:r.CD,CB:r.CB,CE:r.CE};
+  labels[r.xField] = 'x';
+  labels[otherField] = r[otherField];
+  document.getElementById('lv2Svg').innerHTML = crossSceneSVG(lv2.geo, labels, 'both', false);
+  document.getElementById('lv2Qtext').innerHTML = `△ABC∽△DEC이고, <span class="seg">${otherField}</span>=${r[otherField]}cm일 때, 아래 빈칸을 채우세요.`;
+  document.getElementById('lv2Steps').innerHTML = `
+    <div class="step-block">
+      <div class="qtext"><span class="qnum-badge">x</span>그림에서 <span class="seg">${r.xField}</span>의 값을 구하세요.</div>
+      <div style="text-align:center">x = <input class="blank" id="lv2xAns" inputmode="numeric"> cm</div>
+      <div class="btn-row"><button class="btn" id="lv2xBtn" onclick="lv2CheckX()">확인</button></div>
+      <div class="fb-line" id="lv2xFb"></div>
+    </div>
+  `;
+  drawSetupCanvas('lv2');
+}
+function lv2CheckX(){
+  const v = parseFloat(document.getElementById('lv2xAns').value);
+  const r = lv2.cur;
+  const ok = numMatches(v, r[r.xField], 0.05);
+  document.getElementById('lv2xAns').classList.toggle('correct',ok); document.getElementById('lv2xAns').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('lv2xFb');
+  if(ok){
+    fb.className='fb-line ok'; fb.textContent='정답이에요!';
+    document.getElementById('lv2xBtn').disabled=true;
+    // x를 구했으니 그림에 실제 숫자로 바꿔 표시하고, 이제부터 물어볼 y도 그림에 표시한다
+    const otherField = r.yField==='AB' ? 'DE' : 'AB';
+    const labels = {CA:r.CA,CD:r.CD,CB:r.CB,CE:r.CE};
+    labels[r.xField] = r[r.xField];
+    labels[otherField] = r[otherField];
+    labels[r.yField] = 'y';
+    document.getElementById('lv2Svg').innerHTML = crossSceneSVG(lv2.geo, labels, 'both', false);
+    document.getElementById('lv2Steps').insertAdjacentHTML('beforeend', `
+      <div class="step-block">
+        <div class="qtext"><span class="qnum-badge">y</span><span class="seg">${r.yField}</span>를 y라고 할 때, y의 값을 구하세요.</div>
+        <div style="text-align:center">y = <input class="blank" id="lv2yAns" inputmode="numeric"> cm</div>
+        <div class="btn-row"><button class="btn" id="lv2yBtn" onclick="lv2CheckY()">확인</button></div>
+        <div class="fb-line" id="lv2yFb"></div>
+      </div>
+    `);
+  } else {
+    fb.className='fb-line no'; fb.textContent='대응변의 비(CA:CD 또는 CB:CE)를 이용해 비례식을 세워보세요.';
+    markWrong();
+  }
+}
+function lv2CheckY(){
+  const v = parseFloat(document.getElementById('lv2yAns').value);
+  const r = lv2.cur;
+  const ok = numMatches(v, r[r.yField], 0.05);
+  document.getElementById('lv2yAns').classList.toggle('correct',ok); document.getElementById('lv2yAns').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('lv2yFb');
+  if(ok){
+    fb.className='fb-line ok'; fb.textContent='정답이에요!';
+    document.getElementById('lv2yBtn').disabled=true;
+    const labels = {CA:r.CA,CD:r.CD,CB:r.CB,CE:r.CE,AB:r.AB,DE:r.DE};
+    document.getElementById('lv2Svg').innerHTML = crossSceneSVG(lv2.geo, labels, 'both', false);
+    markCorrect();
+    if(st.streak>=2){ setTimeout(()=>{ showScreen('scDone'); updatePhaseTabs(2); if(window._reportHubComplete) window._reportHubComplete(); }, 1300); return; }
+    setTimeout(lv2Next, 1600);
+  } else {
+    // 오답이면 바로 다음 문제로 넘기지 않는다 — 다시 고쳐서 맞힐 기회를 준다(연속 정답 기록에는 반영됨)
+    fb.className='fb-line no'; fb.textContent='방금 구한 x값과 대응변의 비를 함께 이용해보세요.';
+    markWrong();
+  }
+}
+
+/* ════════════════════════════════
+   시작
+════════════════════════════════ */
+updatePhaseTabs(0);
+drawBindOnce('lv1');
+lv1Start();
+</script>
+</body>
+</html>
