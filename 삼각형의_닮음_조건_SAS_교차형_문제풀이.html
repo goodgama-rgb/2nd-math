@@ -600,6 +600,10 @@ function lv2Next(){
   if(lv2.idx>=lv2.order.length) lv2.idx=0;
   const r = lv2.order[lv2.idx++];
   lv2.cur = r;
+  // hadWrong은 "이번 라운드에 오답이 있었는지"만 추적해야 한다 — 라운드가 바뀔 때마다 반드시 초기화하지
+  // 않으면, Level2 시작 이후 어딘가에서 한 번이라도 오답을 냈을 때 영원히 true로 고정되어 그 뒤로는
+  // 아무리 연속으로 다 맞혀도 streak가 절대 2에 도달하지 못하는(=완료 화면으로 못 넘어가는) 버그가 생긴다.
+  st.hadWrong = false;
   lv2.geo = buildCrossGeo(r.CA,r.CD,r.CB,r.CE,r.ang);
   const otherField = r.yField==='AB' ? 'DE' : 'AB';
   // y에 해당하는 변(AB 또는 DE)은 아직 그 질문이 나오기 전이니 그림에 표시하지 않고,

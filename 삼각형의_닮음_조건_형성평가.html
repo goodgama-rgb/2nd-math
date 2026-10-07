@@ -39,14 +39,35 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .progress{text-align:center;font-weight:800;color:var(--indigo);font-size:13px;margin-bottom:8px}
 .qtext{font-size:14.5px;font-weight:700;line-height:1.7;margin-bottom:10px;text-align:center}
 
-.svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee;margin-bottom:12px}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
 .svg-wrap svg{width:100%;height:auto;display:block}
 
 .tri-a{fill:#4f46e5;fill-opacity:.10;stroke:#4f46e5;stroke-width:2.2}
 .tri-b{fill:#e05a20;fill-opacity:.10;stroke:#e05a20;stroke-width:2.2}
+.tri-copy{fill:#16a34a;fill-opacity:.20;stroke:#16a34a;stroke-width:2.5}
 .vlabel{font-size:15px;font-weight:800;text-anchor:middle}
 .sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
 .edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+
+.draw-wrap{position:relative;margin-bottom:12px}
+.scratch-area{position:relative;height:110px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+
+.act-row{display:flex;gap:10px;justify-content:center;margin:10px 0;flex-wrap:wrap}
+.act-btn{border:none;border-radius:20px;padding:8px 16px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--green);color:#fff;font-family:inherit}
+.act-btn:hover{background:#128a3e}
+.act-btn.outline{background:#fff;color:var(--green);border:1.5px solid var(--green)}
+.act-btn:disabled{opacity:.4;cursor:default}
+.act-hint{font-size:12px;color:var(--ink3);text-align:center;margin-bottom:8px}
 
 .blank{display:inline-block;width:50px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
 .blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
@@ -101,7 +122,30 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
     <div class="card">
       <div class="progress" id="quizProgress">1 / 4</div>
       <div class="qtext" id="quizQtext"></div>
-      <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="draw-toolbar">
+        <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+        <button class="mode-btn" id="quizPenBtn" onclick="drawSetMode('quiz','pen')">✏️ 펜(필기)</button>
+        <button class="mode-btn active" id="quizPointerBtn" onclick="drawSetMode('quiz','pointer')">🖱️ 마우스(도형 조작)</button>
+        <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('quiz','#1a1a2e',this)" title="검정" data-c="#1a1a2e"></button>
+        <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('quiz','#dc2626',this)" title="빨강" data-c="#dc2626"></button>
+        <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('quiz','#2563eb',this)" title="파랑" data-c="#2563eb"></button>
+        <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('quiz','#16a34a',this)" title="초록" data-c="#16a34a"></button>
+        <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('quiz','#eab308',this)" title="노랑" data-c="#eab308"></button>
+        <button class="eraser-btn" id="quizEraserBtn" onclick="drawToggleEraser('quiz')">🧽 지우개</button>
+      </div>
+      <div class="draw-wrap" id="quizDrawWrap">
+        <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 560" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="scratch-area"></div>
+        <canvas id="quizInk" class="ink-canvas"></canvas>
+      </div>
+      <div class="act-hint">원래 그림은 그대로 두고, 닮음인 두 삼각형을 각각의 칸에 따로 떼어내서 비교해볼 수 있어요.</div>
+      <div class="act-row">
+        <button class="act-btn" id="sepBtn" onclick="sepSeparate()">🔍 두 삼각형 분리해서 보기</button>
+        <button class="act-btn outline" id="sepRotBtn" onclick="sepRotate()" style="display:none">🔄 180˚ 회전</button>
+        <button class="act-btn outline" id="sepFlipBtn" onclick="sepFlip()" style="display:none">🪞 뒤집기</button>
+        <button class="act-btn outline" id="sepBackBtn" onclick="sepBack()" style="display:none">↩️ 제자리로</button>
+      </div>
+      <div class="act-hint" id="sepHint" style="display:none">🖱️ 마우스 모드에서 오른쪽(초록) 삼각형 몸통을 끌면 이동, 🟢 초록 손잡이를 끌면 자유롭게 회전, 필요하면 뒤집어서 왼쪽 삼각형과 겹쳐 보세요. 도형 위에 직접 필기하고 싶으면 위의 "펜" 버튼을 눌러 전환하세요.</div>
       <div class="answer-block">
         <div class="answer-line"><span class="answer-label">서로 닮은 삼각형:</span> △<input class="blank" id="qAns1" style="width:60px"> ∽ △<input class="blank" id="qAns2" style="width:60px"></div>
         <div class="answer-line" style="margin-top:6px"><span class="answer-label">닮음 조건:</span>
@@ -188,7 +232,7 @@ function angleBetweenPts(vertex, p1, p2){
   const dot=v1[0]*v2[0]+v1[1]*v2[1], l1=Math.hypot(...v1)||1, l2=Math.hypot(...v2)||1;
   return Math.acos(Math.max(-1,Math.min(1,dot/(l1*l2))))*180/Math.PI;
 }
-function sideLabelSVGAt(p1, p2, centroid, value, bulge, t){
+function sideLabelSVGAt(p1, p2, centroid, value, bulge, t, color){
   t = (t===undefined)?0.5:t;
   const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
   const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
@@ -197,8 +241,14 @@ function sideLabelSVGAt(p1, p2, centroid, value, bulge, t){
   if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
   const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
   const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
-  return `<path class="sidecurve" d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
-    `<text class="edgelen" x="${labelPt[0].toFixed(1)}" y="${labelPt[1].toFixed(1)}">${value}</text>`;
+  // 선·숫자를 소속 삼각형 색으로 칠해서, 값이 우연히 같은 두 변(예: AD=AE=12)이라도
+  // 어느 삼각형의 어느 변인지 색으로 바로 구분되게 한다.
+  // (CSS 클래스의 stroke/fill보다 인라인 style 속성이 우선순위가 높아야 적용되므로
+  //  presentation attribute가 아니라 style="" 로 덮어쓴다.)
+  const strokeAttr = color ? ` style="stroke:${color}"` : '';
+  const fillAttr = color ? ` style="fill:${color}"` : '';
+  return `<path class="sidecurve"${strokeAttr} d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="edgelen"${fillAttr} x="${labelPt[0].toFixed(1)}" y="${labelPt[1].toFixed(1)}">${value}</text>`;
 }
 function angleArcSVG(vertex, dirA, dirB, color, arcR, noLabel){
   arcR = arcR||15;
@@ -240,6 +290,336 @@ function sameTrianglePair(v1, v2, pair){
   const gen = samePairPerm(pair[0], pair[1]);
   return PERM3.some(idx => gen(idx)===input);
 }
+// "△XYZ∽△PQR"와 "△PQR∽△XYZ"는 같은 사실을 반대 순서로 적은 것 뿐이라 둘 다 정답이어야 하는데,
+// sameTrianglePair는 pair[0]/pair[1] 순서를 고정해서만 비교하므로 학생이 두 삼각형을 반대 순서로
+// 적으면 못 맞힌다 — 두 순서를 모두 시도한다.
+function sameTrianglePairAnyOrder(v1, v2, pair){
+  return sameTrianglePair(v1, v2, pair) || sameTrianglePair(v1, v2, [pair[1], pair[0]]);
+}
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+function maxRadius(pts){ let m=0; pts.forEach(([x,y])=>{ m=Math.max(m, Math.hypot(x,y)); }); return m; }
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스) — 형성평가_넓이비_부피비.html Lv.3 방식 재사용
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pointer' }; return drawSt[key]; }
+// 펜/마우스 모드 전환 — 캔버스가 도형 전체를 덮고 있어서(도형 위에도 필기 가능하게),
+// "마우스(도형 조작)" 모드일 때는 캔버스가 클릭을 가로채지 않도록 pointer-events를 꺼서
+// 아래 SVG의 회전 손잡이·드래그가 그대로 눌리게 한다.
+function drawSetMode(key, mode){
+  const d = drawGetSt(key);
+  d.mode = mode;
+  document.getElementById(key+'PenBtn').classList.toggle('active', mode==='pen');
+  document.getElementById(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  document.getElementById(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{
+    if(document.getElementById('scQuiz').classList.contains('active')) drawSetupCanvas(key);
+  });
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false;
+  document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key); d.erasing=true;
+  document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
+  document.getElementById(key+'EraserBtn').classList.add('active');
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   "분리해서 보기" — 원래 그림은 그대로 두고, 그 아래 두 칸에 답(쌍)의 두 삼각형을
+   실제 크기 그대로 떼어내 보여준다. 왼쪽은 고정 전시용, 오른쪽은 드래그/회전/뒤집기 가능한
+   사본(닮음조건_형성평가_문제2_연습.html의 레벨2 방식 재사용) — 4개 유형(A~D) 공용.
+════════════════════════════════ */
+const SLOT_BOX = { w:170, h:170, cy:440, cx1:115, cx2:305 };
+function slotBoxesSVG(){
+  const { w,h,cy,cx1,cx2 } = SLOT_BOX;
+  let html='';
+  [cx1,cx2].forEach(cx=>{
+    html += `<rect x="${cx-w/2}" y="${cy-h/2}" width="${w}" height="${h}" rx="10" fill="#fbfcff" stroke="#c7cdf5" stroke-width="1.6" stroke-dasharray="6 5"></rect>`;
+  });
+  return html;
+}
+// 유형별로 "메인 그림에 실제로 그려진" 두 삼각형의 글자 집합(순서 무관) — 정답 pair의 글자가
+// 어느 순서로 주어지든(예: 'DCA') 색을 정확히 매칭하기 위해 정렬 비교로 판정한다.
+const TYPE_MAIN_SETS = { A:{a:'ABC',b:'ADE'}, B:{a:'ABC',b:'ACD'}, C:{a:'ABC',b:'ADE'}, D:{a:'ABC',b:'ABD'} };
+function sortLetters(s){ return s.split('').sort().join(''); }
+function triClassFor(typeKey, name){
+  const sets = TYPE_MAIN_SETS[typeKey];
+  const sl = sortLetters(name);
+  if(sl===sortLetters(sets.a)) return {cls:'tri-a', color:'#4f46e5'};
+  if(sl===sortLetters(sets.b)) return {cls:'tri-b', color:'#e05a20'};
+  return {cls:'tri-copy', color:'#16a34a'};
+}
+function triPtsFromName(g, name){ return name.split('').map(ch=>g[ch]); }
+const sep = { tx:0, ty:0, angle:0, flipped:false, scale:1, active:false, pointerId:null, startPX:0, startPY:0, startTx:0, startTy:0, animId:null };
+function sepReset(){
+  if(sep.animId){ cancelAnimationFrame(sep.animId); sep.animId=null; }
+  sep.tx=0; sep.ty=0; sep.angle=0; sep.flipped=false; sep.scale=1; sep.active=false;
+  document.getElementById('sepBtn').style.display='';
+  document.getElementById('sepRotBtn').style.display='none';
+  document.getElementById('sepFlipBtn').style.display='none';
+  document.getElementById('sepBackBtn').style.display='none';
+  document.getElementById('sepHint').style.display='none';
+  const c1=document.getElementById('sepCopy1'); if(c1) c1.innerHTML='';
+  const c2=document.getElementById('sepCopy2'); if(c2) c2.setAttribute('opacity','0');
+}
+function sepPts1(){ return triPtsFromName(st.curGeo, st.curAns.pair[0]); }
+function sepPts2Local(){
+  const pts = triPtsFromName(st.curGeo, st.curAns.pair[1]);
+  const cen = bboxCenterOf(pts);
+  return { cen, local: pts.map(p=>[p[0]-cen[0], p[1]-cen[1]]) };
+}
+function sepCurrentPts2(mirrorOverride){
+  const { cen, local } = sepPts2Local();
+  const rad = sep.angle*Math.PI/180;
+  const cosr=Math.cos(rad), sinr=Math.sin(rad);
+  const mirror = mirrorOverride!==undefined ? mirrorOverride : (sep.flipped ? -1 : 1);
+  return local.map(([lx,ly])=>{
+    const mx = mirror*lx*sep.scale, my = ly*sep.scale;
+    const rx = mx*cosr - my*sinr, ry = mx*sinr + my*cosr;
+    return [cen[0]+sep.tx+rx, cen[1]+sep.ty+ry];
+  });
+}
+function sepUpdateCopy2(mirrorOverride){
+  const { cen: cen0, local } = sepPts2Local();
+  const pts = sepCurrentPts2(mirrorOverride);
+  const center = [cen0[0]+sep.tx, cen0[1]+sep.ty];
+  const R = maxRadius(local)*sep.scale + 22;
+  const rad = sep.angle*Math.PI/180;
+  const hx = center[0] + R*Math.sin(rad), hy = center[1] - R*Math.cos(rad);
+  document.getElementById('sepHit2').setAttribute('points', ptsToStr(pts));
+  const names = st.curAns.pair[1].split('');
+  pts.forEach((p,i)=>{
+    const lp = outwardLabel(p, center, 13);
+    const el = document.getElementById('sepLbl2_'+i);
+    el.setAttribute('x', lp[0].toFixed(1)); el.setAttribute('y', lp[1].toFixed(1)); el.textContent = names[i];
+  });
+  document.getElementById('sepRotLine').setAttribute('x1', center[0].toFixed(1));
+  document.getElementById('sepRotLine').setAttribute('y1', center[1].toFixed(1));
+  document.getElementById('sepRotLine').setAttribute('x2', hx.toFixed(1));
+  document.getElementById('sepRotLine').setAttribute('y2', hy.toFixed(1));
+  document.getElementById('sepRotHandle').setAttribute('cx', hx.toFixed(1));
+  document.getElementById('sepRotHandle').setAttribute('cy', hy.toFixed(1));
+  document.getElementById('sepRotIcon').setAttribute('x', hx.toFixed(1));
+  document.getElementById('sepRotIcon').setAttribute('y', hy.toFixed(1));
+}
+function sepSeparate(){
+  document.getElementById('sepBtn').style.display='none';
+  document.getElementById('sepRotBtn').style.display='';
+  document.getElementById('sepFlipBtn').style.display='';
+  document.getElementById('sepBackBtn').style.display='';
+  document.getElementById('sepHint').style.display='';
+  document.getElementById('sepCopy2').setAttribute('opacity','1');
+  const pts1 = sepPts1();
+  const cls1 = triClassFor(st.cur.type.key, st.curAns.pair[0]);
+  const cen1 = bboxCenterOf(pts1);
+  const local1 = pts1.map(p=>[p[0]-cen1[0], p[1]-cen1[1]]);
+  const names1 = st.curAns.pair[0].split('');
+  const { cen: cen2, local: local2 } = sepPts2Local();
+  // 두 삼각형 모두 원본 크기 그대로 보여주는 게 원칙이지만("분리하더라도 도형 크기가 바뀌지 않게"),
+  // 문제 풀(POOL_B/C/D)의 큰 변 길이 조합에서는 실제 크기가 칸(SLOT_BOX)보다 커서 밖으로 삐져나간다
+  // (예: AC=18cm짜리 삼각형 통짜가 170px 칸에 안 들어가 라벨이 화면 밖으로 잘리는 버그).
+  // 그래서 이 문제의 두 삼각형 중 더 큰 쪽이 칸에 꼭 맞을 때까지만, 두 삼각형에 "같은 배율"을
+  // 공통으로 줄인다 — 서로간의 상대적 크기 비율(=닮음비를 눈으로 확인하는 용도)은 그대로 유지된다.
+  function bboxSize(local){ const xs=local.map(p=>p[0]), ys=local.map(p=>p[1]); return { w:Math.max(...xs)-Math.min(...xs), h:Math.max(...ys)-Math.min(...ys) }; }
+  const pad = 20;
+  const innerW = SLOT_BOX.w - pad*2, innerH = SLOT_BOX.h - pad*2;
+  const b1 = bboxSize(local1), b2 = bboxSize(local2);
+  const maxW = Math.max(b1.w, b2.w), maxH = Math.max(b1.h, b2.h);
+  const fitScale = Math.min(1, innerW/maxW, innerH/maxH);
+  const startScale = sep.scale;
+  const target1=[SLOT_BOX.cx1, SLOT_BOX.cy], target2=[SLOT_BOX.cx2, SLOT_BOX.cy];
+  const dx = target2[0]-cen2[0], dy = target2[1]-cen2[1];
+  const t0 = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now-t0)/700);
+    const e = easeInOut(t);
+    sep.scale = startScale + (fitScale-startScale)*e;
+    sep.tx = dx*e; sep.ty = dy*e;
+    sepUpdateCopy2();
+    const pts1now = local1.map(([x,y])=>{
+      const sx=cen1[0]+x, sy=cen1[1]+y, tx=target1[0]+x*fitScale, ty=target1[1]+y*fitScale;
+      return [sx+(tx-sx)*e, sy+(ty-sy)*e];
+    });
+    const cenNow = centroidOf(pts1now);
+    let html1 = `<polygon class="${cls1.cls}" points="${ptsToStr(pts1now)}"></polygon>`;
+    names1.forEach((l,i)=>{ const lp=outwardLabel(pts1now[i],cenNow,13); html1+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${cls1.color}">${l}</text>`; });
+    document.getElementById('sepCopy1').innerHTML = html1;
+    if(t<1) sep.animId=requestAnimationFrame(frame); else { sep.scale=fitScale; sep.animId=null; }
+  }
+  sep.animId=requestAnimationFrame(frame);
+}
+function sepRotate(){
+  if(sep.animId) cancelAnimationFrame(sep.animId);
+  const startAngle=sep.angle, targetAngle=sep.angle+180;
+  const t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/600);
+    sep.angle = startAngle + (targetAngle-startAngle)*easeInOut(t);
+    sepUpdateCopy2();
+    if(t<1) sep.animId=requestAnimationFrame(frame); else sep.animId=null;
+  }
+  sep.animId=requestAnimationFrame(frame);
+}
+function sepFlip(){
+  // 좌우 반전은 미러 배율을 1 -> -1로 매 프레임 직접 재계산해서 부드럽게 바꾼다
+  // (matrix(-1,0,0,-1) 금지 규칙 준수). DOM은 새로 만들지 않고 속성만 갱신하므로
+  // 회전 손잡이의 setPointerCapture도 끊기지 않는다.
+  if(sep.animId) cancelAnimationFrame(sep.animId);
+  const startSign = sep.flipped ? -1 : 1;
+  const t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/500);
+    const mirror = startSign*Math.cos(t*Math.PI);
+    sepUpdateCopy2(mirror);
+    if(t<1){ sep.animId=requestAnimationFrame(frame); } else { sep.flipped=!sep.flipped; sep.animId=null; sepUpdateCopy2(); }
+  }
+  sep.animId=requestAnimationFrame(frame);
+}
+function sepBack(){ sepReset(); }
+function sepBindDrag(){
+  const hit = document.getElementById('sepHit2');
+  hit.addEventListener('pointerdown', evt=>{
+    sep.active=true; sep.pointerId=evt.pointerId;
+    hit.setPointerCapture(evt.pointerId);
+    const svg = document.getElementById('quizSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    sep.startPX=loc.x; sep.startPY=loc.y; sep.startTx=sep.tx; sep.startTy=sep.ty;
+    hit.style.cursor='grabbing';
+  });
+  hit.addEventListener('pointermove', evt=>{
+    if(!sep.active) return;
+    const svg = document.getElementById('quizSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    sep.tx = sep.startTx + (loc.x-sep.startPX);
+    sep.ty = sep.startTy + (loc.y-sep.startPY);
+    sepUpdateCopy2();
+  });
+  ['pointerup','pointercancel'].forEach(evtName=>hit.addEventListener(evtName, ()=>{
+    sep.active=false; hit.style.cursor='grab';
+  }));
+}
+let sepRotateDrag = null;
+function sepBindHandle(){
+  const handle = document.getElementById('sepRotHandle');
+  handle.addEventListener('pointerdown', evt=>{
+    evt.preventDefault(); evt.stopPropagation();
+    handle.setPointerCapture(evt.pointerId);
+    const svg = document.getElementById('quizSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const { cen: cen0 } = sepPts2Local();
+    const center = [cen0[0]+sep.tx, cen0[1]+sep.ty];
+    const startAngleRaw = Math.atan2(loc.y-center[1], loc.x-center[0])*180/Math.PI;
+    sepRotateDrag = { pointerId: evt.pointerId, startAngleRaw, angle0: sep.angle };
+  });
+  handle.addEventListener('pointermove', evt=>{
+    if(!sepRotateDrag || evt.pointerId!==sepRotateDrag.pointerId) return;
+    const svg = document.getElementById('quizSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const { cen: cen0 } = sepPts2Local();
+    const center = [cen0[0]+sep.tx, cen0[1]+sep.ty];
+    const curAngleRaw = Math.atan2(loc.y-center[1], loc.x-center[0])*180/Math.PI;
+    sep.angle = (sepRotateDrag.angle0 + (curAngleRaw-sepRotateDrag.startAngleRaw) + 3600) % 360;
+    sepUpdateCopy2();
+  });
+  ['pointerup','pointercancel'].forEach(evtName=>handle.addEventListener(evtName, evt=>{
+    if(sepRotateDrag && evt.pointerId===sepRotateDrag.pointerId) sepRotateDrag=null;
+  }));
+}
+function sepCopyGroupsSVG(){
+  return `<g id="sepCopy1"></g>`+
+    `<g id="sepCopy2" opacity="0">`+
+      `<polygon class="tri-copy" id="sepHit2" points="" style="cursor:grab"></polygon>`+
+      `<text class="vlabel" id="sepLbl2_0" fill="#16a34a"></text>`+
+      `<text class="vlabel" id="sepLbl2_1" fill="#16a34a"></text>`+
+      `<text class="vlabel" id="sepLbl2_2" fill="#16a34a"></text>`+
+      `<line id="sepRotLine" stroke="#16a34a" stroke-width="2" stroke-dasharray="3 3"></line>`+
+      `<circle id="sepRotHandle" r="11" fill="#fff" stroke="#16a34a" stroke-width="3" cursor="grab"></circle>`+
+      `<text id="sepRotIcon" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#16a34a" style="pointer-events:none">↻</text>`+
+    `</g>`;
+}
 
 /* ════════════════════════════════
    유형 A — AA 겹침형 (△ADE ⊂ △ABC, 공통 꼭짓점 A)
@@ -269,10 +649,10 @@ function drawA(r, mode){
   html += angleLabelSVG(g.B, unitVec(g.B,g.C), unitVec(g.B,g.A), '#4f46e5', r.angB+'°', 9);
   html += angleArcSVG(g.D, unitVec(g.D,g.E), unitVec(g.D,g.A), '#e05a20', 14);
   html += angleLabelSVG(g.D, unitVec(g.D,g.E), unitVec(g.D,g.A), '#e05a20', r.angB+'°', 9);
-  html += sideLabelSVGAt(g.B, g.D, cADE, r.DB, 12, 0.5);
-  html += sideLabelSVGAt(g.A, g.D, cADE, showAD, 11, 0.3);
-  html += sideLabelSVGAt(g.B, g.C, cABC, r.BC, 14, 0.5);
-  html += sideLabelSVGAt(g.D, g.E, cADE, showDE, 11, 0.5);
+  html += sideLabelSVGAt(g.B, g.D, cADE, r.DB, 12, 0.5, '#e05a20');
+  html += sideLabelSVGAt(g.A, g.D, cADE, showAD, 11, 0.3, '#e05a20');
+  html += sideLabelSVGAt(g.B, g.C, cABC, r.BC, 14, 0.5, '#4f46e5');
+  html += sideLabelSVGAt(g.D, g.E, cADE, showDE, 11, 0.5, '#e05a20');
   [['A',g.A,cABC,'#1a1a2e'],['B',g.B,cABC,'#4f46e5'],['C',g.C,cABC,'#4f46e5']].forEach(([l,p,c,col])=>{
     const lp=outwardLabel(p,c,16); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
   });
@@ -290,9 +670,13 @@ function answerA(r, mode){
    유형 B — SSS 대각선형 (사각형 ABCD, 대각선 AC로 나뉜 두 이등변삼각형)
 ════════════════════════════════ */
 // BC는 SSS 닮음(AB:DC=BC:CA=CA:AD)을 실제로 확인하는 데 꼭 필요한 세 번째 변 — 반드시 그림에 표시한다.
+// BC는 "표시용 근사값"이 아니라 SSS 비례식(AB:DC = BC:CA = CA:AD, 즉 BC = a²/b)을 정확히
+// 만족해야 하는 값이다 — 각도를 정수(°)로 반올림해서 그림을 그리다 보니 2a·cosθ로 근사한 값이
+// a²/b의 정확한 비율과 어긋나는 항목이 있었다(눈으로는 안 보여도 학생이 직접 비례식을 검산하면
+// 안 맞는 오류). 네 항목 모두 a²/b를 소수 첫째 자리까지 반올림한 값으로 맞춘다.
 const POOL_B = [
-  {a:6,b:9,angB:70,x:40,BC:4}, {a:6,b:7,angB:65,x:50,BC:5},
-  {a:8,b:10,angB:66,x:48,BC:6.5}, {a:8,b:9,angB:64,x:52,BC:7}
+  {a:6,b:9,angB:70,x:40,BC:4}, {a:6,b:7,angB:65,x:50,BC:5.1},
+  {a:8,b:10,angB:66,x:48,BC:6.4}, {a:8,b:9,angB:64,x:52,BC:7.1}
 ];
 const U_B = 17;
 function geoB(r){
@@ -316,11 +700,11 @@ function drawB(r, mode){
   let html = '';
   html += `<polygon class="tri-a" points="${g.A} ${g.B} ${g.C}"></polygon>`;
   html += `<polygon class="tri-b" points="${g.A} ${g.C} ${g.D}"></polygon>`;
-  html += sideLabelSVGAt(g.A, g.B, cABC, r.a, 12, 0.5);
-  html += sideLabelSVGAt(g.C, g.A, cABC, r.a, 12, 0.5);
-  html += sideLabelSVGAt(g.B, g.C, cABC, r.BC, 14, 0.5);
-  html += sideLabelSVGAt(g.A, g.D, cACD, r.b, 11, 0.5);
-  html += sideLabelSVGAt(g.D, g.C, cACD, r.b, 11, 0.5);
+  html += sideLabelSVGAt(g.A, g.B, cABC, r.a, 12, 0.5, '#4f46e5');
+  html += sideLabelSVGAt(g.C, g.A, cABC, r.a, 12, 0.5, '#4f46e5');
+  html += sideLabelSVGAt(g.B, g.C, cABC, r.BC, 14, 0.5, '#4f46e5');
+  html += sideLabelSVGAt(g.A, g.D, cACD, r.b, 11, 0.5, '#e05a20');
+  html += sideLabelSVGAt(g.D, g.C, cACD, r.b, 11, 0.5, '#e05a20');
   const showAngB = mode==='normal' ? r.angB+'°' : 'x°';
   const showApex = mode==='normal' ? 'x°' : r.x+'°';
   html += angleArcSVG(g.B, unitVec(g.B,g.C), unitVec(g.B,g.A), '#4f46e5', 16);
@@ -335,7 +719,11 @@ function drawB(r, mode){
 }
 function answerB(r, mode){
   const x = mode==='normal' ? r.x : r.angB;
-  return { pair:['ABC','DCA'], cond:'SSS', x };
+  // △ABC는 AB=CA=a인 이등변삼각형(꼭짓점 A), △ACD는 AD=DC=b인 이등변삼각형(꼭짓점 D) —
+  // 두 밑변 꼭짓점(B와, ACD의 A/C) 중 어느 쪽을 대응시켜도(B↔C,C↔A 이거나 B↔A,C↔C) 변의 길이가
+  // 전부 그대로 성립해서 똑같이 정답이다(이등변삼각형이라 밑각 두 개가 항상 같기 때문). 이걸 하나만
+  // 정답으로 고정해두면 모든 문제에서 절반의 정답이 오답 처리되는 버그가 생긴다 — 항상 둘 다 인정한다.
+  return { pair:['ABC','DCA'], altPair:['ABC','DAC'], cond:'SSS', x };
 }
 
 /* ════════════════════════════════
@@ -363,14 +751,14 @@ function drawC(r, mode){
   html += `<polygon class="tri-a" points="${g.A} ${g.B} ${g.C}"></polygon>`;
   html += `<polygon class="tri-b" points="${g.A} ${g.D} ${g.E}"></polygon>`;
   html += `<line x1="${g.D[0].toFixed(1)}" y1="${g.D[1].toFixed(1)}" x2="${g.E[0].toFixed(1)}" y2="${g.E[1].toFixed(1)}" stroke="#e05a20" stroke-width="2.2"></line>`;
-  html += sideLabelSVGAt(g.A, g.D, cADE, r.AD, 10, 0.3);
-  html += sideLabelSVGAt(g.D, g.B, cABC, r.DB, 11, 0.6);
-  html += sideLabelSVGAt(g.A, g.E, cADE, r.AE, 10, 0.3);
-  html += sideLabelSVGAt(g.E, g.C, cABC, r.EC, 11, 0.6);
+  html += sideLabelSVGAt(g.A, g.D, cADE, r.AD, 10, 0.3, '#e05a20');
+  html += sideLabelSVGAt(g.D, g.B, cABC, r.DB, 11, 0.6, '#4f46e5');
+  html += sideLabelSVGAt(g.A, g.E, cADE, r.AE, 10, 0.3, '#e05a20');
+  html += sideLabelSVGAt(g.E, g.C, cABC, r.EC, 11, 0.6, '#4f46e5');
   const showBC = mode==='normal' ? 'x' : r.BC;
   const showDE = mode==='normal' ? r.DE : 'x';
-  html += sideLabelSVGAt(g.B, g.C, cABC, showBC, 16, 0.5);
-  html += sideLabelSVGAt(g.D, g.E, cADE, showDE, 10, 0.5);
+  html += sideLabelSVGAt(g.B, g.C, cABC, showBC, 16, 0.5, '#4f46e5');
+  html += sideLabelSVGAt(g.D, g.E, cADE, showDE, 10, 0.5, '#e05a20');
   [['A',g.A,cABC,'#1a1a2e'],['B',g.B,cABC,'#4f46e5'],['C',g.C,cABC,'#4f46e5']].forEach(([l,p,c,col])=>{
     const lp=outwardLabel(p,c,16); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
   });
@@ -381,7 +769,10 @@ function drawC(r, mode){
 }
 function answerC(r, mode){
   const x = mode==='normal' ? r.BC : r.DE;
-  return { pair:['ADE','ACB'], cond:'SAS', x };
+  // 공통각 A를 낀 SAS 비율은 원래 AD:AC = AE:AB (→ △ADE∽△ACB)지만, AB=AC인 이등변 꼴 항목에서는
+  // AD:AB = AE:AC도 동시에 성립해서 △ADE∽△ABC도 똑같이 정답이 된다(AB≠AC인 항목은 한쪽만 유효).
+  const altPair = Math.abs(r.AB-r.AC)<1e-6 ? ['ADE','ABC'] : null;
+  return { pair:['ADE','ACB'], altPair, cond:'SAS', x };
 }
 
 /* ════════════════════════════════
@@ -412,8 +803,8 @@ function drawD(r, mode){
   // 가독성이 떨어진다 — AC는 훨씬 더 바깥쪽(큰 bulge)으로 밀어내고, 라벨도 D와 안 겹치는 C쪽 끝으로 민다.
   // (DC 구간 자체는 따로 표시할 값이 없으므로 점선을 그리지 않는다 — 괜히 셋째 곡선이 더 겹칠 뿐)
   html += sideLabelSVGAt(g.A, g.B, cABC, r.AB, 13, 0.5);
-  html += sideLabelSVGAt(g.A, g.D, cABC, showAD, 10, 0.3);
-  html += sideLabelSVGAt(g.A, g.C, cABC, showAC, 32, 0.9);
+  html += sideLabelSVGAt(g.A, g.D, cABC, showAD, 10, 0.3, '#e05a20');
+  html += sideLabelSVGAt(g.A, g.C, cABC, showAC, 32, 0.9, '#4f46e5');
   const matchAngle = Math.round(angleBetweenPts(g.B, g.D, g.A));
   html += angleArcSVG(g.B, unitVec(g.B,g.D), unitVec(g.B,g.A), '#e05a20', 13);
   html += angleLabelSVG(g.B, unitVec(g.B,g.D), unitVec(g.B,g.A), '#e05a20', matchAngle+'°', 8);
@@ -434,10 +825,10 @@ function answerD(r, mode){
    문제 조립 — 4가지 유형을 공용 인터페이스로
 ════════════════════════════════ */
 const TYPES = [
-  { key:'A', pool:POOL_A, draw:drawA, answer:answerA, viewBox:'0 0 420 320' },
-  { key:'B', pool:POOL_B, draw:drawB, answer:answerB, viewBox:'0 0 420 320', unit:'°' },
-  { key:'C', pool:POOL_C, draw:drawC, answer:answerC, viewBox:'0 0 420 320' },
-  { key:'D', pool:POOL_D, draw:drawD, answer:answerD, viewBox:'0 0 420 320' }
+  { key:'A', pool:POOL_A, geo:geoA, draw:drawA, answer:answerA, viewBox:'0 0 420 560' },
+  { key:'B', pool:POOL_B, geo:geoB, draw:drawB, answer:answerB, viewBox:'0 0 420 560', unit:'°' },
+  { key:'C', pool:POOL_C, geo:geoC, draw:drawC, answer:answerC, viewBox:'0 0 420 560' },
+  { key:'D', pool:POOL_D, geo:geoD, draw:drawD, answer:answerD, viewBox:'0 0 420 560' }
 ];
 // 레벨2가 레벨1과 같은 숫자 조합을 우연히 또 뽑지 않도록, 유형별로 방금 쓴 항목을 기억해뒀다가 제외한다
 const usedEntryByType = {};
@@ -479,16 +870,22 @@ function quizNext(){
   st.idx++;
   if(st.idx>st.questions.length){ levelFinish(); return; }
   st.cur = st.questions[st.idx-1];
+  st.curGeo = st.cur.type.geo(st.cur.entry);
+  st.curAns = st.cur.type.answer(st.cur.entry, st.cur.mode);
   quizCondPick = null;
   document.getElementById('quizProgress').textContent = `${st.idx} / ${st.questions.length}`;
   document.getElementById('quizQtext').textContent = '다음 그림에서 서로 닮은 삼각형을 찾아 기호 ∽로 나타내고, x의 값을 구하시오.';
   document.getElementById('quizSvg').setAttribute('viewBox', st.cur.type.viewBox);
-  document.getElementById('quizSvg').innerHTML = st.cur.type.draw(st.cur.entry, st.cur.mode);
+  document.getElementById('quizSvg').innerHTML = st.cur.type.draw(st.cur.entry, st.cur.mode) + slotBoxesSVG() + sepCopyGroupsSVG();
+  sepReset();
+  sepBindDrag();
+  sepBindHandle();
   document.getElementById('qUnitLabel').textContent = st.cur.type.unit || 'cm';
   ['qAns1','qAns2','qAnsX'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).classList.remove('correct','wrong'); });
   document.querySelectorAll('#scQuiz .btn-outline').forEach(b=>b.classList.remove('active'));
   document.getElementById('quizCheckBtn').disabled=false;
   document.getElementById('quizFb').textContent='';
+  drawSetupCanvas('quiz');
 }
 function quizPickCond(v, btn){
   quizCondPick = v;
@@ -498,7 +895,7 @@ function quizPickCond(v, btn){
 function quizCheck(){
   const ans = st.cur.type.answer(st.cur.entry, st.cur.mode);
   const v1raw = document.getElementById('qAns1').value, v2raw = document.getElementById('qAns2').value;
-  const okPair = sameTrianglePair(v1raw, v2raw, ans.pair);
+  const okPair = sameTrianglePairAnyOrder(v1raw, v2raw, ans.pair) || (ans.altPair && sameTrianglePairAnyOrder(v1raw, v2raw, ans.altPair));
   const okCond = quizCondPick===ans.cond;
   const xv = parseFloat(document.getElementById('qAnsX').value);
   const okX = numMatches(xv, ans.x, 0.05);
@@ -549,6 +946,7 @@ function lrNext(){
   }
 }
 
+drawBindOnce('quiz');
 startLevel(1);
 </script>
 </body>
