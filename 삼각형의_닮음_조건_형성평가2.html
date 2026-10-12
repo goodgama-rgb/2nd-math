@@ -35,7 +35,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
 .draw-wrap{position:relative;margin-bottom:12px}
 .svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
-.svg-wrap svg{width:100%;height:auto;display:block}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
 .scratch-area{height:100px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
 .ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 .vlabel{font-size:15px;font-weight:800;text-anchor:middle}
@@ -398,7 +398,7 @@ function sep3CopyGroupSVG(key, i){
     `<text class="vlabel-sm" id="${id('lbl1')}"></text>`+
     `<text class="vlabel-sm" id="${id('lbl2')}"></text>`+
     `<line id="${id('rotline')}" stroke="#9098b5" stroke-width="1.6" stroke-dasharray="3 3"></line>`+
-    `<circle id="${id('rothandle')}" r="9" fill="#fff" stroke="#9098b5" stroke-width="2.4" cursor="grab" style="touch-action:none"></circle>`+
+    `<circle id="${id('rothandle')}" r="12" fill="#fff" stroke="#9098b5" stroke-width="2.4" cursor="grab" style="touch-action:none"></circle>`+
     `<text id="${id('roticon')}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#9098b5" style="pointer-events:none">↻</text>`+
     `<circle id="${id('flipbg')}" class="flip-btn-bg" r="6"></circle>`+
     `<text id="${id('flipicon')}" class="flip-btn-icon">🪞</text>`+
@@ -479,6 +479,7 @@ function sep3BindOne(key, i){
   const svgId = 'quizSvg';
   const hit = document.getElementById(id('hit'));
   hit.addEventListener('pointerdown', evt=>{
+    evt.preventDefault();
     const piece = sep3GetSt(key).pieces[i]; const st = piece.st;
     st.active=true; st.pointerId=evt.pointerId;
     hit.setPointerCapture(evt.pointerId);
@@ -491,6 +492,7 @@ function sep3BindOne(key, i){
   hit.addEventListener('pointermove', evt=>{
     const piece = sep3GetSt(key).pieces[i]; const st = piece.st;
     if(!st.active) return;
+    evt.preventDefault();
     const svg = document.getElementById(svgId);
     const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
@@ -517,6 +519,7 @@ function sep3BindOne(key, i){
   });
   handle.addEventListener('pointermove', evt=>{
     if(!rotateDrag || evt.pointerId!==rotateDrag.pointerId) return;
+    evt.preventDefault();
     const piece = sep3GetSt(key).pieces[i]; const st = piece.st;
     const svg = document.getElementById(svgId);
     const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;

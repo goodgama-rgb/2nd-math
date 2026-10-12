@@ -40,7 +40,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .qtext{font-size:14.5px;font-weight:700;line-height:1.7;margin-bottom:10px;text-align:center}
 
 .svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
-.svg-wrap svg{width:100%;height:auto;display:block}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
 
 .tri-a{fill:#4f46e5;fill-opacity:.10;stroke:#4f46e5;stroke-width:2.2}
 .tri-b{fill:#e05a20;fill-opacity:.10;stroke:#e05a20;stroke-width:2.2}
@@ -566,6 +566,7 @@ function sepBack(){ sepReset(); }
 function sepBindDrag(){
   const hit = document.getElementById('sepHit2');
   hit.addEventListener('pointerdown', evt=>{
+    evt.preventDefault();
     sep.active=true; sep.pointerId=evt.pointerId;
     hit.setPointerCapture(evt.pointerId);
     const svg = document.getElementById('quizSvg');
@@ -576,6 +577,7 @@ function sepBindDrag(){
   });
   hit.addEventListener('pointermove', evt=>{
     if(!sep.active) return;
+    evt.preventDefault();
     const svg = document.getElementById('quizSvg');
     const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
@@ -603,6 +605,7 @@ function sepBindHandle(){
   });
   handle.addEventListener('pointermove', evt=>{
     if(!sepRotateDrag || evt.pointerId!==sepRotateDrag.pointerId) return;
+    evt.preventDefault();
     const svg = document.getElementById('quizSvg');
     const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
@@ -624,7 +627,7 @@ function sepCopyGroupsSVG(){
       `<text class="vlabel" id="sepLbl2_1" fill="#16a34a"></text>`+
       `<text class="vlabel" id="sepLbl2_2" fill="#16a34a"></text>`+
       `<line id="sepRotLine" stroke="#16a34a" stroke-width="2" stroke-dasharray="3 3"></line>`+
-      `<circle id="sepRotHandle" r="11" fill="#fff" stroke="#16a34a" stroke-width="3" cursor="grab" style="touch-action:none"></circle>`+
+      `<circle id="sepRotHandle" r="15" fill="#fff" stroke="#16a34a" stroke-width="3" cursor="grab" style="touch-action:none"></circle>`+
       `<text id="sepRotIcon" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#16a34a" style="pointer-events:none">↻</text>`+
     `</g>`;
 }

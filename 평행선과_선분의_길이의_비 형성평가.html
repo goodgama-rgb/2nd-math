@@ -49,7 +49,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
 .draw-wrap{position:relative;margin-bottom:10px}
 .svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
-.svg-wrap svg{width:100%;height:auto;display:block}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
 .scratch-area{height:90px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
 .ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 .vlabel{font-size:14px;font-weight:800;text-anchor:middle}
@@ -789,6 +789,7 @@ function sepBFlip(){
 function sepBBindDrag(){
   const hit=document.getElementById('sepBHit2');
   hit.addEventListener('pointerdown', evt=>{
+    evt.preventDefault();
     sepB.active=true; sepB.pointerId=evt.pointerId;
     hit.setPointerCapture(evt.pointerId);
     const svg=document.getElementById('quizSvg');
@@ -799,6 +800,7 @@ function sepBBindDrag(){
   });
   hit.addEventListener('pointermove', evt=>{
     if(!sepB.active) return;
+    evt.preventDefault();
     const svg=document.getElementById('quizSvg');
     const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
     const loc=pt.matrixTransform(svg.getScreenCTM().inverse());
@@ -823,6 +825,7 @@ function sepBBindHandle(){
   });
   handle.addEventListener('pointermove', evt=>{
     if(!sepBRotateDrag || evt.pointerId!==sepBRotateDrag.pointerId) return;
+    evt.preventDefault();
     const svg=document.getElementById('quizSvg');
     const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
     const loc=pt.matrixTransform(svg.getScreenCTM().inverse());
@@ -849,7 +852,7 @@ function sepBCopyGroupsSVG(){
       `<text class="vlabel-sm" id="sepBLbl2_1" fill="#e05a20"></text>`+
       `<text class="vlabel-sm" id="sepBLbl2_2" fill="#e05a20"></text>`+
       `<line id="sepBRotLine" stroke="#e05a20" stroke-width="2" stroke-dasharray="3 3"></line>`+
-      `<circle id="sepBRotHandle" r="10" fill="#fff" stroke="#e05a20" stroke-width="2.6" cursor="grab" style="touch-action:none"></circle>`+
+      `<circle id="sepBRotHandle" r="14" fill="#fff" stroke="#e05a20" stroke-width="2.6" cursor="grab" style="touch-action:none"></circle>`+
       `<text id="sepBRotIcon" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#e05a20" style="pointer-events:none">↻</text>`+
       `<circle id="sepBFlipBg" class="flip-btn-bg" r="7"></circle>`+
       `<text id="sepBFlipIcon" class="flip-btn-icon">🪞</text>`+
