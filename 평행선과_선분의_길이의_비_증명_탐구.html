@@ -152,7 +152,7 @@ svg{width:100%;height:auto;display:block}
           <button class="eraser-btn" id="proveEraserBtn" onclick="drawToggleEraser('prove')">🧽 지우개</button>
         </div>
         <div class="draw-wrap" id="proveDrawWrap">
-          <div class="svg-wrap"><svg id="proveSvg" viewBox="0 0 650 420" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="svg-wrap"><svg id="proveSvg" viewBox="0 0 650 580" xmlns="http://www.w3.org/2000/svg"></svg></div>
           <div class="scratch-area"></div>
           <canvas id="proveInk" class="ink-canvas"></canvas>
         </div>
@@ -348,15 +348,28 @@ function drawBindOnce(key){
   window.addEventListener('resize', ()=>drawSetupCanvas(key));
   drawSetMode(key, d.mode);
 }
+function drawFindFirstColorSwatch(key){
+  const stage = document.getElementById(key+'DrawWrap').closest('.stage');
+  return [...document.querySelectorAll('.draw-toolbar .color-swatch')].find(b=>b.closest('.stage')===stage);
+}
 function drawSelectColor(key, color, btn){
-  const d=drawGetSt(key); d.color=color; d.erasing=false;
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
   document.querySelectorAll('.draw-toolbar .color-swatch').forEach(b=>{ if(b.closest('.stage')===document.getElementById(key+'DrawWrap').closest('.stage')) b.classList.remove('active'); });
   if(btn) btn.classList.add('active');
   document.getElementById(key+'EraserBtn').classList.remove('active');
   drawUpdateCursor(key);
 }
 function drawToggleEraser(key){
-  const d=drawGetSt(key); d.erasing=true;
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || drawFindFirstColorSwatch(key);
+    if(btn) btn.classList.add('active');
+    drawUpdateCursor(key);
+    return;
+  }
+  d.erasing=true;
   document.querySelectorAll('.draw-toolbar .color-swatch').forEach(b=>{ if(b.closest('.stage')===document.getElementById(key+'DrawWrap').closest('.stage')) b.classList.remove('active'); });
   document.getElementById(key+'EraserBtn').classList.add('active');
   drawUpdateCursor(key);
@@ -510,8 +523,8 @@ function renderSepTriangle(pts, names, color, sideDefs){
   (sideDefs||[]).forEach(sd=>{ html += sideLabelSVGAt(pts[sd.i1],pts[sd.i2],cen,sd.value,sd.bulge||11,sd.t!==undefined?sd.t:0.5); });
   return html;
 }
-function slideOutPair(ptsLeft, namesLeft, colorLeft, sidesLeft, ptsRight, namesRight, colorRight, sidesRight, onDone){
-  const g = document.getElementById('sepGroup');
+function slideOutPair(ptsLeft, namesLeft, colorLeft, sidesLeft, ptsRight, namesRight, colorRight, sidesRight, onDone, groupId){
+  const g = document.getElementById(groupId||'sepGroup');
   const targets = sideBySideTargets(ptsLeft, ptsRight);
   const cenL = bboxCenterArr(ptsLeft), cenR = bboxCenterArr(ptsRight);
   const localL = ptsLeft.map(p=>[p[0]-cenL[0], p[1]-cenL[1]]);
@@ -528,6 +541,30 @@ function slideOutPair(ptsLeft, namesLeft, colorLeft, sidesLeft, ptsRight, namesR
     if(t<1) requestAnimationFrame(frame); else { if(onDone) onDone(); }
   }
   requestAnimationFrame(frame);
+}
+// 분리했던 두 삼각형을 원래 위치(ptsLeft/ptsRight 자체의 좌표)로 되돌리는 역방향 애니메이션
+function slideBackPair(ptsLeft, namesLeft, colorLeft, sidesLeft, ptsRight, namesRight, colorRight, sidesRight, groupId, onDone){
+  const g = document.getElementById(groupId||'sepGroup');
+  const targets = sideBySideTargets(ptsLeft, ptsRight);
+  const cenL = bboxCenterArr(ptsLeft), cenR = bboxCenterArr(ptsRight);
+  const localL = ptsLeft.map(p=>[p[0]-cenL[0], p[1]-cenL[1]]);
+  const localR = ptsRight.map(p=>[p[0]-cenR[0], p[1]-cenR[1]]);
+  const t0 = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now-t0)/700);
+    const ease = t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+    const cxL = targets.left[0]+(cenL[0]-targets.left[0])*ease, cyL = targets.left[1]+(cenL[1]-targets.left[1])*ease;
+    const cxR = targets.right[0]+(cenR[0]-targets.right[0])*ease, cyR = targets.right[1]+(cenR[1]-targets.right[1])*ease;
+    const ptsL = localL.map(([lx,ly])=>[cxL+lx, cyL+ly]);
+    const ptsR = localR.map(([lx,ly])=>[cxR+lx, cyR+ly]);
+    g.innerHTML = renderSepTriangle(ptsL, namesLeft, colorLeft, sidesLeft) + renderSepTriangle(ptsR, namesRight, colorRight, sidesRight);
+    if(t<1) requestAnimationFrame(frame); else { g.innerHTML=''; if(onDone) onDone(); }
+  }
+  requestAnimationFrame(frame);
+}
+function sameSeg(v, correct){
+  const nv = normText(v).toUpperCase();
+  return nv===correct || nv===correct.split('').reverse().join('');
 }
 
 /* ════════════════════════════════
@@ -946,7 +983,7 @@ function proveBaseSVG(){
   return html;
 }
 function proveRender(){
-  document.getElementById('proveSvg').innerHTML = proveBaseSVG() + `<g id="proveAuxGroup"></g>`;
+  document.getElementById('proveSvg').innerHTML = proveBaseSVG() + `<g id="proveAuxGroup"></g><g id="proveSepGroup"></g>`;
 }
 function goToProve(){
   document.getElementById('tanguPage').style.display='none';
@@ -975,7 +1012,7 @@ function pvCheck1a(btn){
     fb.className='feedback success'; fb.textContent='맞아요!';
     btn.disabled = true;
     appendProvePanel(`
-      <div class="proof-block">이므로 △ABC∽△ADE (<input class="blank" id="pv1b" style="width:50px">닮음)이다.<br>따라서 <span class="seg">AB</span>:<span class="seg">AD</span>=<span class="seg">AC</span>:<span class="seg">AE</span>=<span class="seg">BC</span>:<span class="seg">DE</span> &nbsp;&nbsp;……①</div>
+      <div class="proof-block">이므로 △ABC∽△ADE (<input class="blank" id="pv1b" style="width:50px">닮음)이다.</div>
       <div class="btn-row"><button class="btn btn-check" onclick="pvCheck1b(this)">확인</button></div>
       <div class="feedback" id="pvfb1b"></div>
     `);
@@ -988,11 +1025,48 @@ function pvCheck1b(btn){
   document.getElementById('pv1b').classList.toggle('correct',ok); document.getElementById('pv1b').classList.toggle('wrong',!ok);
   const fb = document.getElementById('pvfb1b');
   if(ok){
-    fb.className='feedback success'; fb.textContent='맞아요! ①이 일반적으로 증명됐어요.';
+    fb.className='feedback success'; fb.textContent='맞아요!';
     btn.disabled = true;
-    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="provePanelStep2()">②도 증명해보기 →</button></div>`);
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-check" id="pvSep1Btn" onclick="pvSeparate1()">두 삼각형 분리해서 관찰하기</button></div>`);
   } else {
     fb.className='feedback error'; fb.textContent='두 쌍의 각이 각각 같을 때의 닮음 조건이에요.';
+  }
+}
+function pvSeparate1(){
+  document.getElementById('pvSep1Btn').disabled = true;
+  slideOutPair(
+    [A,B,C], ['A','B','C'], '#4f6fe0', [{i1:0,i2:1,value:AB,bulge:13},{i1:0,i2:2,value:AC,bulge:13}],
+    [A,D,E], ['A','D','E'], '#e05a20', [{i1:0,i2:1,value:AD,bulge:9},{i1:0,i2:2,value:AE,bulge:9}],
+    pvAfterSeparate1, 'proveSepGroup'
+  );
+}
+function pvAfterSeparate1(){
+  appendProvePanel(`
+    <p class="key-q">대응변의 이름을 빈칸에 채워보세요.</p>
+    <div class="proof-block"><span class="seg">AB</span>:(<input class="blank" id="pv1rAD" style="width:40px">) = <span class="seg">AC</span>:(<input class="blank" id="pv1rAE" style="width:40px">) = <span class="seg">BC</span>:(<input class="blank" id="pv1rDE" style="width:40px">) &nbsp;&nbsp;……①</div>
+    <div class="btn-row"><button class="btn btn-check" onclick="pvCheckRatio1(this)">확인</button></div>
+    <div class="feedback" id="pvfbRatio1"></div>
+  `);
+}
+function pvCheckRatio1(btn){
+  const okAD = sameSeg(document.getElementById('pv1rAD').value, 'AD');
+  const okAE = sameSeg(document.getElementById('pv1rAE').value, 'AE');
+  const okDE = sameSeg(document.getElementById('pv1rDE').value, 'DE');
+  document.getElementById('pv1rAD').classList.toggle('correct',okAD); document.getElementById('pv1rAD').classList.toggle('wrong',!okAD);
+  document.getElementById('pv1rAE').classList.toggle('correct',okAE); document.getElementById('pv1rAE').classList.toggle('wrong',!okAE);
+  document.getElementById('pv1rDE').classList.toggle('correct',okDE); document.getElementById('pv1rDE').classList.toggle('wrong',!okDE);
+  const fb = document.getElementById('pvfbRatio1');
+  if(okAD && okAE && okDE){
+    fb.className='feedback success'; fb.textContent='맞아요! ①이 일반적으로 증명됐어요.';
+    btn.disabled = true;
+    slideBackPair(
+      [A,B,C], ['A','B','C'], '#4f6fe0', [{i1:0,i2:1,value:AB,bulge:13},{i1:0,i2:2,value:AC,bulge:13}],
+      [A,D,E], ['A','D','E'], '#e05a20', [{i1:0,i2:1,value:AD,bulge:9},{i1:0,i2:2,value:AE,bulge:9}],
+      'proveSepGroup',
+      ()=>appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="provePanelStep2()">②도 증명해보기 →</button></div>`)
+    );
+  } else {
+    fb.className='feedback error'; fb.textContent='△ABC∽△ADE에서 대응점은 A↔A, B↔D, C↔E예요.';
   }
 }
 function provePanelStep2(){
@@ -1031,31 +1105,66 @@ function pvCheck2ab(btn){
     fb.className='feedback success'; fb.textContent='맞아요!';
     btn.disabled = true;
     appendProvePanel(`
-      <div class="proof-block">이므로 △ADE∽△EFC (<input class="blank" id="pv2c" style="width:50px">닮음)이다.<br>따라서 <span class="seg">AD</span>:<span class="seg">EF</span> = <span class="seg">AE</span>:<span class="seg">EC</span> &nbsp;&nbsp;……②-1</div>
-      <div class="btn-row"><button class="btn btn-check" onclick="pvCheck2c(this)">확인</button></div>
+      <div class="proof-block">이므로 △ADE∽△EFC (<input class="blank" id="pv2c" style="width:50px">닮음)이다.</div>
+      <div class="btn-row"><button class="btn btn-check" onclick="pvCheck2cAA(this)">확인</button></div>
       <div class="feedback" id="pvfb2c"></div>
     `);
   } else {
     fb.className='feedback error'; fb.textContent='두 직선이 평행하고 다른 한 직선이 가로지를 때 생기는 각이에요.';
   }
 }
-function pvCheck2c(btn){
+function pvCheck2cAA(btn){
   const ok = normText(document.getElementById('pv2c').value).toUpperCase()==='AA';
   document.getElementById('pv2c').classList.toggle('correct',ok); document.getElementById('pv2c').classList.toggle('wrong',!ok);
   const fb = document.getElementById('pvfb2c');
   if(ok){
     fb.className='feedback success'; fb.textContent='맞아요!';
     btn.disabled = true;
-    appendProvePanel(`
-      <div class="proof-block">
-        이때 □DBFE는 <span class="seg">DE</span><span class="parasym">∥</span><span class="seg">BF</span>, <span class="seg">EF</span><span class="parasym">∥</span><span class="seg">DB</span>이므로 (<input class="blank" id="pv2d" style="width:70px">)이고,<br>
-        이 사각형의 대변의 길이는 (<input class="blank" id="pv2e" style="width:50px">). 따라서 <span class="seg">EF</span>=<span class="seg">DB</span>이다.
-      </div>
-      <div class="btn-row"><button class="btn btn-check" onclick="pvCheck2de(this)">확인</button></div>
-      <div class="feedback" id="pvfb2de"></div>
-    `);
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-check" id="pvSep2Btn" onclick="pvSeparate2()">두 삼각형 분리해서 관찰하기</button></div>`);
   } else {
     fb.className='feedback error'; fb.textContent='두 쌍의 각이 각각 같을 때의 닮음 조건이에요.';
+  }
+}
+function pvSeparate2(){
+  document.getElementById('pvSep2Btn').disabled = true;
+  slideOutPair(
+    [A,D,E], ['A','D','E'], '#e05a20', [{i1:0,i2:1,value:AD,bulge:9},{i1:0,i2:2,value:AE,bulge:9}],
+    [E,F,C], ['E','F','C'], '#57c6a0', [{i1:0,i2:2,value:EC,bulge:11}],
+    pvAfterSeparate2, 'proveSepGroup'
+  );
+}
+function pvAfterSeparate2(){
+  appendProvePanel(`
+    <p class="key-q">대응변의 이름을 빈칸에 채워보세요.</p>
+    <div class="proof-block"><span class="seg">AD</span>:(<input class="blank" id="pv2rEF" style="width:40px">) = <span class="seg">AE</span>:(<input class="blank" id="pv2rEC" style="width:40px">) &nbsp;&nbsp;……②-1</div>
+    <div class="btn-row"><button class="btn btn-check" onclick="pvCheckRatio2(this)">확인</button></div>
+    <div class="feedback" id="pvfbRatio2"></div>
+  `);
+}
+function pvCheckRatio2(btn){
+  const okEF = sameSeg(document.getElementById('pv2rEF').value, 'EF');
+  const okEC = sameSeg(document.getElementById('pv2rEC').value, 'EC');
+  document.getElementById('pv2rEF').classList.toggle('correct',okEF); document.getElementById('pv2rEF').classList.toggle('wrong',!okEF);
+  document.getElementById('pv2rEC').classList.toggle('correct',okEC); document.getElementById('pv2rEC').classList.toggle('wrong',!okEC);
+  const fb = document.getElementById('pvfbRatio2');
+  if(okEF && okEC){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled = true;
+    slideBackPair(
+      [A,D,E], ['A','D','E'], '#e05a20', [{i1:0,i2:1,value:AD,bulge:9},{i1:0,i2:2,value:AE,bulge:9}],
+      [E,F,C], ['E','F','C'], '#57c6a0', [{i1:0,i2:2,value:EC,bulge:11}],
+      'proveSepGroup',
+      ()=>appendProvePanel(`
+        <div class="proof-block">
+          이때 □DBFE는 <span class="seg">DE</span><span class="parasym">∥</span><span class="seg">BF</span>, <span class="seg">EF</span><span class="parasym">∥</span><span class="seg">DB</span>이므로 (<input class="blank" id="pv2d" style="width:70px">)이고,<br>
+          이 사각형의 대변의 길이는 (<input class="blank" id="pv2e" style="width:50px">). 따라서 <span class="seg">EF</span>=<span class="seg">DB</span>이다.
+        </div>
+        <div class="btn-row"><button class="btn btn-check" onclick="pvCheck2de(this)">확인</button></div>
+        <div class="feedback" id="pvfb2de"></div>
+      `)
+    );
+  } else {
+    fb.className='feedback error'; fb.textContent='△ADE∽△EFC에서 대응점은 A↔E, D↔F, E↔C예요.';
   }
 }
 function pvCheck2de(btn){
@@ -1091,25 +1200,25 @@ function miniTriSVG(kind){
       <text x="112" y="52" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">E</text></svg>`;
   }
   if(kind==='extend'){
-    return `<svg viewBox="0 0 150 110"><polygon points="75,55 55,95 95,95" fill="#6c8bff" fill-opacity=".15" stroke="#4f6fe0" stroke-width="2"></polygon>
-      <line x1="15" y1="15" x2="135" y2="15" stroke="#e05a20" stroke-width="2"></line>
-      <line x1="75" y1="55" x2="15" y2="15" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
-      <line x1="75" y1="55" x2="135" y2="15" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
-      <text x="75" y="68" font-size="11" font-weight="800" text-anchor="middle">A</text>
-      <text x="50" y="104" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">B</text>
-      <text x="100" y="104" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">C</text>
-      <text x="10" y="12" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">D</text>
-      <text x="140" y="12" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">E</text></svg>`;
+    return `<svg viewBox="0 0 150 110"><polygon points="75,15 45,63 105,63" fill="#6c8bff" fill-opacity=".15" stroke="#4f6fe0" stroke-width="2"></polygon>
+      <line x1="45" y1="63" x2="25" y2="95" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
+      <line x1="105" y1="63" x2="125" y2="95" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
+      <line x1="25" y1="95" x2="125" y2="95" stroke="#e05a20" stroke-width="2"></line>
+      <text x="75" y="12" font-size="11" font-weight="800" text-anchor="middle">A</text>
+      <text x="38" y="60" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">B</text>
+      <text x="112" y="60" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">C</text>
+      <text x="16" y="104" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">D</text>
+      <text x="134" y="104" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">E</text></svg>`;
   }
-  return `<svg viewBox="0 0 150 110"><polygon points="75,55 55,15 95,15" fill="#6c8bff" fill-opacity=".15" stroke="#4f6fe0" stroke-width="2"></polygon>
-    <line x1="15" y1="95" x2="135" y2="95" stroke="#e05a20" stroke-width="2"></line>
-    <line x1="75" y1="55" x2="15" y2="95" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
-    <line x1="75" y1="55" x2="135" y2="95" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
+  return `<svg viewBox="0 0 150 110"><polygon points="75,55 110,15 40,15" fill="#e05a20" fill-opacity=".15" stroke="#e05a20" stroke-width="2"></polygon>
+    <line x1="75" y1="55" x2="40" y2="95" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
+    <line x1="75" y1="55" x2="110" y2="95" stroke="#9098b5" stroke-width="1.4" stroke-dasharray="3 2"></line>
+    <line x1="40" y1="95" x2="110" y2="95" stroke="#4f6fe0" stroke-width="2"></line>
     <text x="75" y="48" font-size="11" font-weight="800" text-anchor="middle">A</text>
-    <text x="50" y="12" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">D</text>
-    <text x="100" y="12" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">E</text>
-    <text x="10" y="104" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">B</text>
-    <text x="140" y="104" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">C</text></svg>`;
+    <text x="114" y="12" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">D</text>
+    <text x="36" y="12" font-size="11" font-weight="800" fill="#e05a20" text-anchor="middle">E</text>
+    <text x="36" y="104" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">B</text>
+    <text x="114" y="104" font-size="11" font-weight="800" fill="#4f6fe0" text-anchor="middle">C</text></svg>`;
 }
 function goToSummary(){
   document.getElementById('provePage').style.display='none';
