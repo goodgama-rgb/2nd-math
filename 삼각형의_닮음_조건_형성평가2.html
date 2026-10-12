@@ -97,13 +97,15 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
       <div class="draw-toolbar">
         <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
         <button class="mode-btn" id="quizPenBtn" onclick="drawSetMode('quiz','pen')">✏️ 펜(필기)</button>
-        <button class="mode-btn active" id="quizPointerBtn" onclick="drawSetMode('quiz','pointer')">🖱️ 마우스(도형 조작)</button>
         <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('quiz','#1a1a2e',this)" title="검정"></button>
         <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('quiz','#dc2626',this)" title="빨강"></button>
         <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('quiz','#2563eb',this)" title="파랑"></button>
         <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('quiz','#16a34a',this)" title="초록"></button>
         <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('quiz','#eab308',this)" title="노랑"></button>
+      </div>
+      <div class="draw-toolbar">
         <button class="eraser-btn" id="quizEraserBtn" onclick="drawToggleEraser('quiz')">🧽 지우개</button>
+        <button class="mode-btn active" id="quizPointerBtn" onclick="drawSetMode('quiz','pointer')">🖱️ 마우스(도형 조작)</button>
       </div>
       <div class="draw-wrap" id="quizDrawWrap">
         <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 460" xmlns="http://www.w3.org/2000/svg"></svg></div>

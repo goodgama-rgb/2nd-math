@@ -104,13 +104,15 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
         <div class="draw-toolbar">
           <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
           <button class="mode-btn" id="penBtn" onclick="drawSetMode('1','pen')">✏️ 펜(필기)</button>
-          <button class="mode-btn active" id="pointerBtn" onclick="drawSetMode('1','pointer')">🖱️ 마우스(도형 조작)</button>
           <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('1','#1a1a2e',this)" title="검정"></button>
           <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('1','#dc2626',this)" title="빨강"></button>
           <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('1','#2563eb',this)" title="파랑"></button>
           <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('1','#16a34a',this)" title="초록"></button>
           <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('1','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
           <button class="eraser-btn" id="eraserBtn" onclick="drawToggleEraser('1')">🧽 지우개</button>
+          <button class="mode-btn active" id="pointerBtn" onclick="drawSetMode('1','pointer')">🖱️ 마우스(도형 조작)</button>
         </div>
         <div class="draw-wrap" id="drawWrap">
           <div class="svg-wrap"><svg id="mainSvg" viewBox="0 0 420 460" xmlns="http://www.w3.org/2000/svg"></svg></div>
@@ -162,13 +164,15 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
         <div class="draw-toolbar">
           <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
           <button class="mode-btn" id="penBtn2" onclick="drawSetMode('2','pen')">✏️ 펜(필기)</button>
-          <button class="mode-btn active" id="pointerBtn2" onclick="drawSetMode('2','pointer')">🖱️ 마우스(도형 조작)</button>
           <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('2','#1a1a2e',this)" title="검정"></button>
           <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('2','#dc2626',this)" title="빨강"></button>
           <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('2','#2563eb',this)" title="파랑"></button>
           <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('2','#16a34a',this)" title="초록"></button>
           <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('2','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
           <button class="eraser-btn" id="eraserBtn2" onclick="drawToggleEraser('2')">🧽 지우개</button>
+          <button class="mode-btn active" id="pointerBtn2" onclick="drawSetMode('2','pointer')">🖱️ 마우스(도형 조작)</button>
         </div>
         <div class="draw-wrap" id="drawWrap2">
           <div class="svg-wrap"><svg id="svg2" viewBox="0 0 420 460" xmlns="http://www.w3.org/2000/svg"></svg></div>
@@ -202,13 +206,15 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
         <div class="draw-toolbar">
           <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
           <button class="mode-btn" id="penBtn3" onclick="drawSetMode('3','pen')">✏️ 펜(필기)</button>
-          <button class="mode-btn active" id="pointerBtn3" onclick="drawSetMode('3','pointer')">🖱️ 마우스(도형 조작)</button>
           <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('3','#1a1a2e',this)" title="검정"></button>
           <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('3','#dc2626',this)" title="빨강"></button>
           <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('3','#2563eb',this)" title="파랑"></button>
           <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('3','#16a34a',this)" title="초록"></button>
           <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('3','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
           <button class="eraser-btn" id="eraserBtn3" onclick="drawToggleEraser('3')">🧽 지우개</button>
+          <button class="mode-btn active" id="pointerBtn3" onclick="drawSetMode('3','pointer')">🖱️ 마우스(도형 조작)</button>
         </div>
         <div class="draw-wrap" id="drawWrap3">
           <div class="svg-wrap"><svg id="svg3" viewBox="0 0 420 460" xmlns="http://www.w3.org/2000/svg"></svg></div>

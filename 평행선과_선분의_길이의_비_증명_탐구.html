@@ -112,13 +112,15 @@ svg{width:100%;height:auto;display:block}
         <div class="draw-toolbar">
           <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
           <button class="mode-btn" id="tanguPenBtn" onclick="drawSetMode('tangu','pen')">✏️ 펜(필기)</button>
-          <button class="mode-btn active" id="tanguPointerBtn" onclick="drawSetMode('tangu','pointer')">🖱️ 마우스(도형 조작)</button>
           <button class="color-swatch active" style="background:#2b2f42" onclick="drawSelectColor('tangu','#2b2f42',this)" title="검정"></button>
           <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('tangu','#dc2626',this)" title="빨강"></button>
           <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('tangu','#2563eb',this)" title="파랑"></button>
           <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('tangu','#16a34a',this)" title="초록"></button>
           <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('tangu','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
           <button class="eraser-btn" id="tanguEraserBtn" onclick="drawToggleEraser('tangu')">🧽 지우개</button>
+          <button class="mode-btn active" id="tanguPointerBtn" onclick="drawSetMode('tangu','pointer')">🖱️ 마우스(도형 조작)</button>
         </div>
         <div class="draw-wrap" id="tanguDrawWrap">
           <div class="svg-wrap"><svg id="mainSvg" viewBox="0 0 650 540" xmlns="http://www.w3.org/2000/svg"></svg></div>
@@ -143,13 +145,15 @@ svg{width:100%;height:auto;display:block}
         <div class="draw-toolbar">
           <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
           <button class="mode-btn" id="provePenBtn" onclick="drawSetMode('prove','pen')">✏️ 펜(필기)</button>
-          <button class="mode-btn active" id="provePointerBtn" onclick="drawSetMode('prove','pointer')">🖱️ 마우스(도형 조작)</button>
           <button class="color-swatch active" style="background:#2b2f42" onclick="drawSelectColor('prove','#2b2f42',this)" title="검정"></button>
           <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('prove','#dc2626',this)" title="빨강"></button>
           <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('prove','#2563eb',this)" title="파랑"></button>
           <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('prove','#16a34a',this)" title="초록"></button>
           <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('prove','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
           <button class="eraser-btn" id="proveEraserBtn" onclick="drawToggleEraser('prove')">🧽 지우개</button>
+          <button class="mode-btn active" id="provePointerBtn" onclick="drawSetMode('prove','pointer')">🖱️ 마우스(도형 조작)</button>
         </div>
         <div class="draw-wrap" id="proveDrawWrap">
           <div class="svg-wrap"><svg id="proveSvg" viewBox="0 0 650 580" xmlns="http://www.w3.org/2000/svg"></svg></div>
