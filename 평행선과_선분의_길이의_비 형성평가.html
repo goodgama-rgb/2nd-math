@@ -854,7 +854,7 @@ function sepBStartRotHold(dir){
   function frame(now){
     const dt = now - state.lastT;
     state.lastT = now;
-    sepB.angle = (sepB.angle + dir*10*dt/1000 + 3600) % 360;
+    sepB.angle = (sepB.angle + dir*15*dt/1000 + 3600) % 360;
     sepBUpdateCopy2();
     state.rafId = requestAnimationFrame(frame);
   }

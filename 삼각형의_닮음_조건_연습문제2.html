@@ -555,7 +555,7 @@ function sep3BindOne(key, i){
       const dt = now - state.lastT;
       state.lastT = now;
       const st = sep3GetSt(key).pieces[i].st;
-      st.angle = (st.angle + dir*10*dt/1000 + 3600) % 360;
+      st.angle = (st.angle + dir*15*dt/1000 + 3600) % 360;
       sep3UpdateCopyAttrs(key, i);
       state.rafId = requestAnimationFrame(frame);
     }
