@@ -106,7 +106,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
         <button class="eraser-btn" id="quizEraserBtn" onclick="drawToggleEraser('quiz')">🧽 지우개</button>
       </div>
       <div class="draw-wrap" id="quizDrawWrap">
-        <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 430" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 460" xmlns="http://www.w3.org/2000/svg"></svg></div>
         <div class="scratch-area"></div>
         <canvas id="quizInk" class="ink-canvas"></canvas>
       </div>
@@ -392,6 +392,7 @@ function sep3Init(key, B, C, D, A){
 }
 function sep3CopyGroupSVG(key, i){
   const id = part=>`sep3_${key}_${i}_${part}`;
+  const cx = SLOT_BOX3.cxs[i], btnY = SLOT_BOX3.cy+SLOT_BOX3.h/2+6;
   return `<g id="${id('copy')}" opacity="0">`+
     `<polygon id="${id('hit')}" points="" style="cursor:grab;touch-action:none"></polygon>`+
     `<text class="vlabel-sm" id="${id('lbl0')}"></text>`+
@@ -402,6 +403,10 @@ function sep3CopyGroupSVG(key, i){
     `<text id="${id('roticon')}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#9098b5" style="pointer-events:none">↻</text>`+
     `<circle id="${id('flipbg')}" class="flip-btn-bg" r="6"></circle>`+
     `<text id="${id('flipicon')}" class="flip-btn-icon">🪞</text>`+
+    `<rect id="${id('rotleftbtn')}" x="${cx-53}" y="${btnY}" width="50" height="26" rx="13" fill="#fff" stroke="#9098b5" stroke-width="1.5" style="cursor:pointer;touch-action:none"></rect>`+
+    `<text x="${cx-28}" y="${btnY+18}" text-anchor="middle" font-size="14" fill="#9098b5" style="pointer-events:none">◀</text>`+
+    `<rect id="${id('rotrightbtn')}" x="${cx+3}" y="${btnY}" width="50" height="26" rx="13" fill="#fff" stroke="#9098b5" stroke-width="1.5" style="cursor:pointer;touch-action:none"></rect>`+
+    `<text x="${cx+28}" y="${btnY+18}" text-anchor="middle" font-size="14" fill="#9098b5" style="pointer-events:none">▶</text>`+
   `</g>`;
 }
 function sep3LocalPts(piece){
@@ -536,6 +541,32 @@ function sep3BindOne(key, i){
   const flipBg = document.getElementById(id('flipbg'));
   flipBg.addEventListener('pointerdown', evt=>{ evt.stopPropagation(); });
   flipBg.addEventListener('click', evt=>{ evt.stopPropagation(); sep3Flip(key, i); });
+  let rotHold = null;
+  function stopRotHold(){ if(rotHold){ cancelAnimationFrame(rotHold.rafId); rotHold=null; } }
+  function startRotHold(dir){
+    stopRotHold();
+    const state = { dir, lastT: performance.now(), rafId: null };
+    function frame(now){
+      const dt = now - state.lastT;
+      state.lastT = now;
+      const st = sep3GetSt(key).pieces[i].st;
+      st.angle = (st.angle + dir*10*dt/1000 + 3600) % 360;
+      sep3UpdateCopyAttrs(key, i);
+      state.rafId = requestAnimationFrame(frame);
+    }
+    rotHold = state;
+    state.rafId = requestAnimationFrame(frame);
+  }
+  const leftBtn = document.getElementById(id('rotleftbtn'));
+  const rightBtn = document.getElementById(id('rotrightbtn'));
+  [[leftBtn,-1],[rightBtn,1]].forEach(([btn,dir])=>{
+    btn.addEventListener('pointerdown', evt=>{
+      evt.preventDefault(); evt.stopPropagation();
+      btn.setPointerCapture(evt.pointerId);
+      startRotHold(dir);
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(evtName=>btn.addEventListener(evtName, ()=>stopRotHold()));
+  });
 }
 function sep3BindAll(key){
   const s = sep3GetSt(key);

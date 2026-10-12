@@ -134,7 +134,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
         <button class="eraser-btn" id="quizEraserBtn" onclick="drawToggleEraser('quiz')">🧽 지우개</button>
       </div>
       <div class="draw-wrap" id="quizDrawWrap">
-        <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 560" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 580" xmlns="http://www.w3.org/2000/svg"></svg></div>
         <div class="scratch-area"></div>
         <canvas id="quizInk" class="ink-canvas"></canvas>
       </div>
@@ -448,6 +448,8 @@ function sepReset(){
   document.getElementById('sepHint').style.display='none';
   const c1=document.getElementById('sepCopy1'); if(c1) c1.innerHTML='';
   const c2=document.getElementById('sepCopy2'); if(c2) c2.setAttribute('opacity','0');
+  const rb=document.getElementById('sepRotBtns'); if(rb) rb.setAttribute('opacity','0');
+  sepStopRotHold();
 }
 function sepPts1(){ return triPtsFromName(st.curGeo, st.curAns.pair[0]); }
 function sepPts2Local(){
@@ -496,6 +498,7 @@ function sepSeparate(){
   document.getElementById('sepBackBtn').style.display='';
   document.getElementById('sepHint').style.display='';
   document.getElementById('sepCopy2').setAttribute('opacity','1');
+  document.getElementById('sepRotBtns').setAttribute('opacity','1');
   const pts1 = sepPts1();
   const cls1 = triClassFor(st.cur.type.key, st.curAns.pair[0]);
   const cen1 = bboxCenterOf(pts1);
@@ -619,6 +622,35 @@ function sepBindHandle(){
     if(sepRotateDrag && evt.pointerId===sepRotateDrag.pointerId) sepRotateDrag=null;
   }));
 }
+let sepRotHold = null;
+function sepStartRotHold(dir){
+  sepStopRotHold();
+  const state = { dir, lastT: performance.now(), rafId: null };
+  function frame(now){
+    const dt = now - state.lastT;
+    state.lastT = now;
+    sep.angle = (sep.angle + dir*10*dt/1000 + 3600) % 360;
+    sepUpdateCopy2();
+    state.rafId = requestAnimationFrame(frame);
+  }
+  sepRotHold = state;
+  state.rafId = requestAnimationFrame(frame);
+}
+function sepStopRotHold(){
+  if(sepRotHold){ cancelAnimationFrame(sepRotHold.rafId); sepRotHold=null; }
+}
+function sepBindRotButtons(){
+  const left = document.getElementById('sepRotLeftBtn');
+  const right = document.getElementById('sepRotRightBtn');
+  [[left,-1],[right,1]].forEach(([btn,dir])=>{
+    btn.addEventListener('pointerdown', evt=>{
+      evt.preventDefault(); evt.stopPropagation();
+      btn.setPointerCapture(evt.pointerId);
+      sepStartRotHold(dir);
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(evtName=>btn.addEventListener(evtName, ()=>sepStopRotHold()));
+  });
+}
 function sepCopyGroupsSVG(){
   return `<g id="sepCopy1"></g>`+
     `<g id="sepCopy2" opacity="0">`+
@@ -629,6 +661,12 @@ function sepCopyGroupsSVG(){
       `<line id="sepRotLine" stroke="#16a34a" stroke-width="2" stroke-dasharray="3 3"></line>`+
       `<circle id="sepRotHandle" r="15" fill="#fff" stroke="#16a34a" stroke-width="3" cursor="grab" style="touch-action:none"></circle>`+
       `<text id="sepRotIcon" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#16a34a" style="pointer-events:none">↻</text>`+
+    `</g>`+
+    `<g id="sepRotBtns" opacity="0">`+
+      `<rect id="sepRotLeftBtn" x="${SLOT_BOX.cx2-84}" y="${SLOT_BOX.cy+SLOT_BOX.h/2+8}" width="74" height="30" rx="15" fill="#fff" stroke="#16a34a" stroke-width="1.6" style="cursor:pointer;touch-action:none"></rect>`+
+      `<text x="${SLOT_BOX.cx2-47}" y="${SLOT_BOX.cy+SLOT_BOX.h/2+28}" text-anchor="middle" font-size="13" fill="#16a34a" style="pointer-events:none">◀ 회전</text>`+
+      `<rect id="sepRotRightBtn" x="${SLOT_BOX.cx2+10}" y="${SLOT_BOX.cy+SLOT_BOX.h/2+8}" width="74" height="30" rx="15" fill="#fff" stroke="#16a34a" stroke-width="1.6" style="cursor:pointer;touch-action:none"></rect>`+
+      `<text x="${SLOT_BOX.cx2+47}" y="${SLOT_BOX.cy+SLOT_BOX.h/2+28}" text-anchor="middle" font-size="13" fill="#16a34a" style="pointer-events:none">회전 ▶</text>`+
     `</g>`;
 }
 
@@ -837,10 +875,10 @@ function answerD(r, mode){
    문제 조립 — 4가지 유형을 공용 인터페이스로
 ════════════════════════════════ */
 const TYPES = [
-  { key:'A', pool:POOL_A, geo:geoA, draw:drawA, answer:answerA, viewBox:'0 0 420 560' },
-  { key:'B', pool:POOL_B, geo:geoB, draw:drawB, answer:answerB, viewBox:'0 0 420 560', unit:'°' },
-  { key:'C', pool:POOL_C, geo:geoC, draw:drawC, answer:answerC, viewBox:'0 0 420 560' },
-  { key:'D', pool:POOL_D, geo:geoD, draw:drawD, answer:answerD, viewBox:'0 0 420 560' }
+  { key:'A', pool:POOL_A, geo:geoA, draw:drawA, answer:answerA, viewBox:'0 0 420 580' },
+  { key:'B', pool:POOL_B, geo:geoB, draw:drawB, answer:answerB, viewBox:'0 0 420 580', unit:'°' },
+  { key:'C', pool:POOL_C, geo:geoC, draw:drawC, answer:answerC, viewBox:'0 0 420 580' },
+  { key:'D', pool:POOL_D, geo:geoD, draw:drawD, answer:answerD, viewBox:'0 0 420 580' }
 ];
 // 레벨2가 레벨1과 같은 숫자 조합을 우연히 또 뽑지 않도록, 유형별로 방금 쓴 항목을 기억해뒀다가 제외한다
 const usedEntryByType = {};
@@ -892,6 +930,7 @@ function quizNext(){
   sepReset();
   sepBindDrag();
   sepBindHandle();
+  sepBindRotButtons();
   document.getElementById('qUnitLabel').textContent = st.cur.type.unit || 'cm';
   ['qAns1','qAns2','qAnsX'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).classList.remove('correct','wrong'); });
   document.querySelectorAll('#scQuiz .btn-outline').forEach(b=>b.classList.remove('active'));

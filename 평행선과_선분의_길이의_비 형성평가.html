@@ -128,7 +128,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
           <button class="eraser-btn" id="quizEraserBtn" onclick="drawToggleEraser('quiz')">🧽 지우개</button>
         </div>
         <div class="draw-wrap" id="quizDrawWrap">
-          <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 580" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 420 600" xmlns="http://www.w3.org/2000/svg"></svg></div>
           <div class="scratch-area"></div>
           <canvas id="quizInk" class="ink-canvas"></canvas>
         </div>
@@ -688,6 +688,8 @@ function sepBReset(){
   Object.assign(sepB, { tx:0, ty:0, angle:0, flipped:false, scale:1, active:false, separated:false });
   const c1=document.getElementById('sepBCopy1'); if(c1) c1.innerHTML='';
   const c2=document.getElementById('sepBCopy2'); if(c2) c2.setAttribute('opacity','0');
+  const rb=document.getElementById('sepBRotBtns'); if(rb) rb.setAttribute('opacity','0');
+  sepBStopRotHold();
   document.getElementById('sepBtnB').style.display='';
   document.getElementById('sepRotBtnB').style.display='none';
   document.getElementById('sepFlipBtnB').style.display='none';
@@ -745,6 +747,7 @@ function sepBSeparate(){
   document.getElementById('sepFlipBtnB').style.display='';
   document.getElementById('sepBackBtnB').style.display='';
   document.getElementById('sepBCopy2').setAttribute('opacity','1');
+  document.getElementById('sepBRotBtns').setAttribute('opacity','1');
   const g1=[st.curGeo.A, st.curGeo.B, st.curGeo.C];
   const g2=[st.curGeo.A, st.curGeo.D, st.curGeo.E];
   const fitScale = fitScaleForPair(g1,g2);
@@ -844,6 +847,35 @@ function sepBFlipBind(){
   flipBg.addEventListener('pointerdown', evt=>{ evt.stopPropagation(); });
   flipBg.addEventListener('click', evt=>{ evt.stopPropagation(); sepBFlip(); });
 }
+let sepBRotHold = null;
+function sepBStartRotHold(dir){
+  sepBStopRotHold();
+  const state = { dir, lastT: performance.now(), rafId: null };
+  function frame(now){
+    const dt = now - state.lastT;
+    state.lastT = now;
+    sepB.angle = (sepB.angle + dir*10*dt/1000 + 3600) % 360;
+    sepBUpdateCopy2();
+    state.rafId = requestAnimationFrame(frame);
+  }
+  sepBRotHold = state;
+  state.rafId = requestAnimationFrame(frame);
+}
+function sepBStopRotHold(){
+  if(sepBRotHold){ cancelAnimationFrame(sepBRotHold.rafId); sepBRotHold=null; }
+}
+function sepBBindRotButtons(){
+  const left = document.getElementById('sepBRotLeftBtn');
+  const right = document.getElementById('sepBRotRightBtn');
+  [[left,-1],[right,1]].forEach(([btn,dir])=>{
+    btn.addEventListener('pointerdown', evt=>{
+      evt.preventDefault(); evt.stopPropagation();
+      btn.setPointerCapture(evt.pointerId);
+      sepBStartRotHold(dir);
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(evtName=>btn.addEventListener(evtName, ()=>sepBStopRotHold()));
+  });
+}
 function sepBCopyGroupsSVG(){
   return `<g id="sepBCopy1"></g>`+
     `<g id="sepBCopy2" opacity="0">`+
@@ -856,6 +888,12 @@ function sepBCopyGroupsSVG(){
       `<text id="sepBRotIcon" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#e05a20" style="pointer-events:none">↻</text>`+
       `<circle id="sepBFlipBg" class="flip-btn-bg" r="7"></circle>`+
       `<text id="sepBFlipIcon" class="flip-btn-icon">🪞</text>`+
+    `</g>`+
+    `<g id="sepBRotBtns" opacity="0">`+
+      `<rect id="sepBRotLeftBtn" x="${SEP_CX2-84}" y="${SEP_ROW_Y+SEP_BOX_H/2+8}" width="74" height="30" rx="15" fill="#fff" stroke="#e05a20" stroke-width="1.6" style="cursor:pointer;touch-action:none"></rect>`+
+      `<text x="${SEP_CX2-47}" y="${SEP_ROW_Y+SEP_BOX_H/2+28}" text-anchor="middle" font-size="13" fill="#e05a20" style="pointer-events:none">◀ 회전</text>`+
+      `<rect id="sepBRotRightBtn" x="${SEP_CX2+10}" y="${SEP_ROW_Y+SEP_BOX_H/2+8}" width="74" height="30" rx="15" fill="#fff" stroke="#e05a20" stroke-width="1.6" style="cursor:pointer;touch-action:none"></rect>`+
+      `<text x="${SEP_CX2+47}" y="${SEP_ROW_Y+SEP_BOX_H/2+28}" text-anchor="middle" font-size="13" fill="#e05a20" style="pointer-events:none">회전 ▶</text>`+
     `</g>`;
 }
 
@@ -908,7 +946,7 @@ function renderCurrentQuestion(){
   document.getElementById('sepHintA').style.display = type.sepMode==='A' ? '' : 'none';
   document.getElementById('sepHintB').style.display = 'none';
   if(type.sepMode==='A'){ sepAReset(); }
-  else { sepBReset(); sepBBindDrag(); sepBBindHandle(); sepBFlipBind(); }
+  else { sepBReset(); sepBBindDrag(); sepBBindHandle(); sepBFlipBind(); sepBBindRotButtons(); }
   document.getElementById('qAnsX').value=''; document.getElementById('qAnsX').classList.remove('correct','wrong');
   document.getElementById('qAnsY').value=''; document.getElementById('qAnsY').classList.remove('correct','wrong');
   document.getElementById('quizCheckBtn').disabled=false;
