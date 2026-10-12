@@ -354,16 +354,24 @@ function drawBindOnce(key){
   });
 }
 function drawSelectColor(key, color, btn){
-  const d=drawGetSt(key); d.color=color; d.erasing=false;
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
   document.querySelectorAll('#sc'+(key==='lv1'?'Lv1':'Lv2')+' .color-swatch').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   document.getElementById(key+'EraserBtn').classList.remove('active');
   drawUpdateCursor(key);
 }
 function drawToggleEraser(key){
-  const d=drawGetSt(key); d.erasing=true;
-  document.querySelectorAll('#sc'+(key==='lv1'?'Lv1':'Lv2')+' .color-swatch').forEach(b=>b.classList.remove('active'));
-  document.getElementById(key+'EraserBtn').classList.add('active');
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('#sc'+(key==='lv1'?'Lv1':'Lv2')+' .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll('#sc'+(key==='lv1'?'Lv1':'Lv2')+' .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
   drawUpdateCursor(key);
 }
 function drawMakeCursorURL(draw, size){

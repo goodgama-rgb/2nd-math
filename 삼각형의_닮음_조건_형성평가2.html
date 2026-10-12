@@ -280,16 +280,24 @@ function drawBindOnce(key){
   drawSetMode(key, d.mode);
 }
 function drawSelectColor(key, color, btn){
-  const d=drawGetSt(key); d.color=color; d.erasing=false;
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
   document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   document.getElementById(key+'EraserBtn').classList.remove('active');
   drawUpdateCursor(key);
 }
 function drawToggleEraser(key){
-  const d=drawGetSt(key); d.erasing=true;
-  document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
-  document.getElementById(key+'EraserBtn').classList.add('active');
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('#scQuiz .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
   drawUpdateCursor(key);
 }
 function drawMakeCursorURL(draw, size){
@@ -385,12 +393,12 @@ function sep3Init(key, B, C, D, A){
 function sep3CopyGroupSVG(key, i){
   const id = part=>`sep3_${key}_${i}_${part}`;
   return `<g id="${id('copy')}" opacity="0">`+
-    `<polygon id="${id('hit')}" points="" style="cursor:grab"></polygon>`+
+    `<polygon id="${id('hit')}" points="" style="cursor:grab;touch-action:none"></polygon>`+
     `<text class="vlabel-sm" id="${id('lbl0')}"></text>`+
     `<text class="vlabel-sm" id="${id('lbl1')}"></text>`+
     `<text class="vlabel-sm" id="${id('lbl2')}"></text>`+
     `<line id="${id('rotline')}" stroke="#9098b5" stroke-width="1.6" stroke-dasharray="3 3"></line>`+
-    `<circle id="${id('rothandle')}" r="9" fill="#fff" stroke="#9098b5" stroke-width="2.4" cursor="grab"></circle>`+
+    `<circle id="${id('rothandle')}" r="9" fill="#fff" stroke="#9098b5" stroke-width="2.4" cursor="grab" style="touch-action:none"></circle>`+
     `<text id="${id('roticon')}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#9098b5" style="pointer-events:none">↻</text>`+
     `<circle id="${id('flipbg')}" class="flip-btn-bg" r="6"></circle>`+
     `<text id="${id('flipicon')}" class="flip-btn-icon">🪞</text>`+
@@ -431,7 +439,7 @@ function sep3UpdateCopyAttrs(key, i, mirrorOverride){
   const id = part=>`sep3_${key}_${i}_${part}`;
   const hitEl = document.getElementById(id('hit'));
   hitEl.setAttribute('points', ptsToStr(pts));
-  hitEl.setAttribute('style', `fill:${piece.color};fill-opacity:0.22;stroke:${piece.color};stroke-width:2.2;cursor:grab`);
+  hitEl.setAttribute('style', `fill:${piece.color};fill-opacity:0.22;stroke:${piece.color};stroke-width:2.2;cursor:grab;touch-action:none`);
   const names = piece.name.split('');
   pts.forEach((p,k)=>{
     const lp = outwardLabel(p, center, 10);

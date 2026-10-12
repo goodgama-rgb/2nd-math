@@ -361,16 +361,24 @@ function drawBindOnce(key){
   drawSetMode(key, d.mode);
 }
 function drawSelectColor(key, color, btn){
-  const d=drawGetSt(key); d.color=color; d.erasing=false;
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
   document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   document.getElementById(key+'EraserBtn').classList.remove('active');
   drawUpdateCursor(key);
 }
 function drawToggleEraser(key){
-  const d=drawGetSt(key); d.erasing=true;
-  document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
-  document.getElementById(key+'EraserBtn').classList.add('active');
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('#scQuiz .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
   drawUpdateCursor(key);
 }
 function drawMakeCursorURL(draw, size){
@@ -611,12 +619,12 @@ function sepBindHandle(){
 function sepCopyGroupsSVG(){
   return `<g id="sepCopy1"></g>`+
     `<g id="sepCopy2" opacity="0">`+
-      `<polygon class="tri-copy" id="sepHit2" points="" style="cursor:grab"></polygon>`+
+      `<polygon class="tri-copy" id="sepHit2" points="" style="cursor:grab;touch-action:none"></polygon>`+
       `<text class="vlabel" id="sepLbl2_0" fill="#16a34a"></text>`+
       `<text class="vlabel" id="sepLbl2_1" fill="#16a34a"></text>`+
       `<text class="vlabel" id="sepLbl2_2" fill="#16a34a"></text>`+
       `<line id="sepRotLine" stroke="#16a34a" stroke-width="2" stroke-dasharray="3 3"></line>`+
-      `<circle id="sepRotHandle" r="11" fill="#fff" stroke="#16a34a" stroke-width="3" cursor="grab"></circle>`+
+      `<circle id="sepRotHandle" r="11" fill="#fff" stroke="#16a34a" stroke-width="3" cursor="grab" style="touch-action:none"></circle>`+
       `<text id="sepRotIcon" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#16a34a" style="pointer-events:none">↻</text>`+
     `</g>`;
 }
