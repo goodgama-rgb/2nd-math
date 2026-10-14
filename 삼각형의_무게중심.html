@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼각형의 무게중심</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+.parasym{display:inline-block;transform:skewX(-16deg);font-weight:400}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.key-q{font-size:15.5px;font-weight:800;text-decoration:underline;text-decoration-color:var(--indigo);text-decoration-thickness:2.5px;text-underline-offset:3px}
+.key-term{color:var(--red);font-weight:800;text-decoration:underline;text-decoration-color:var(--red);text-decoration-thickness:2px;text-underline-offset:2px}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 480px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:10px}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.scratch-area{height:70px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+.vlabel-sm{font-size:11.5px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12px;font-weight:700;text-anchor:middle;fill:#4a5568}
+
+.panel-title{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--indigo);color:#fff;font-size:12px;font-weight:800}
+.proof-block{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:14px;margin:10px 0;font-size:14.5px;line-height:2.3}
+.blank{display:inline-block;width:52px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-check:hover{background:#128a3e}
+.btn-primary{background:var(--indigo)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.summary-box{background:var(--indigo-ll);border:1.5px solid var(--indigo-l);border-radius:10px;padding:16px;text-align:center;font-size:15px;font-weight:700;color:var(--indigo);line-height:2}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:420px;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25)}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.modal-btn:hover{background:#4338ca}
+
+/* 도입 파트 전용: 단일 와이드 컬럼 (split-layout 아님) */
+.intro-wide{max-width:900px;margin:0 auto}
+.intro-svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee;margin-bottom:10px}
+.intro-svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.choice-btn{padding:9px 20px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.choice-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">삼각형의 무게중심</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <div class="screen active" id="scIntro">
+    <div class="intro-wide">
+      <div class="card">
+        <div class="intro-svg-wrap"><svg id="introSvg" viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div id="introPanel"></div>
+      </div>
+      <div class="card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn" id="introPenBtn" onclick="drawSetMode('intro','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('intro','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('intro','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('intro','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('intro','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('intro','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="introEraserBtn" onclick="drawToggleEraser('intro')">🧽 지우개</button>
+          <button class="mode-btn active" id="introPointerBtn" onclick="drawSetMode('intro','pointer')">🖱️ 마우스</button>
+        </div>
+        <div class="draw-wrap" id="introDrawWrap" style="height:160px">
+          <div class="scratch-area" style="height:160px;border-radius:10px;border-top:1px dashed #d8ddfb"></div>
+          <canvas id="introInk" class="ink-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scProve">
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn" id="provePenBtn" onclick="drawSetMode('prove','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('prove','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('prove','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('prove','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('prove','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('prove','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="proveEraserBtn" onclick="drawToggleEraser('prove')">🧽 지우개</button>
+          <button class="mode-btn active" id="provePointerBtn" onclick="drawSetMode('prove','pointer')">🖱️ 마우스</button>
+        </div>
+        <div class="draw-wrap" id="proveDrawWrap">
+          <div class="svg-wrap"><svg id="proveSvg" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area"></div>
+          <canvas id="proveInk" class="ink-canvas"></canvas>
+        </div>
+      </div>
+      <div class="split-right card">
+        <div id="provePanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scSummary">
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="svg-wrap"><svg id="summarySvg" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      </div>
+      <div class="split-right card">
+        <div id="summaryPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px">삼각형의 무게중심에 대한 탐구와 증명, 정리를 모두 마쳤어요.</p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;right:16px;width:320px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:40;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<div class="modal-overlay" id="segGateModal">
+  <div class="modal-box">
+    <div class="modal-icon">📏</div>
+    <div class="proof-block" style="text-align:left">선분의 무게중심은 그 선분의 (<input class="blank" id="segGateAns" style="width:60px">)에 있다.</div>
+    <div id="segGateErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkSegGate()">확인</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="barGateModal">
+  <div class="modal-box">
+    <div class="modal-icon">🧭</div>
+    <div class="modal-text">각 막대의 무게중심은 어디에 있을까요?</div>
+    <div class="btn-row" id="barGateRow"></div>
+    <div class="feedback" id="barGateFb"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="gateModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔑</div>
+    <div class="modal-text">증명을 시작하기 전에, 중점연결정리를 다시 확인해볼까요?</div>
+    <div class="proof-block" style="text-align:left">
+      삼각형에서 두 변의 중점을 연결한 선분은 나머지 한 변과 (<input class="blank" id="gate1" style="width:50px">)하고, 그 길이는 나머지 한 변의 (<input class="blank" id="gate2" style="width:50px">)이다.
+    </div>
+    <div id="gateErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkGate()">확인하고 증명 시작</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'triangle-centroid' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function lerp(p,q,t){ return [p[0]+(q[0]-p[0])*t, p[1]+(q[1]-p[1])*t]; }
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function outwardLabel(p, centroid, d){ const dx=p[0]-centroid[0], dy=p[1]-centroid[1], len=Math.hypot(dx,dy)||1; return [p[0]+dx/len*d, p[1]+dy/len*d]; }
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function sameSeg(v, correct){
+  const nv = normText(v).toUpperCase();
+  return nv===correct || nv===correct.split('').reverse().join('');
+}
+function lockRow(selector){ document.querySelectorAll(selector+' .btn').forEach(b=>b.disabled=true); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스) — intro/prove 공용
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pointer' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key);
+  d.mode = mode;
+  document.getElementById(key+'PenBtn').classList.toggle('active', mode==='pen');
+  document.getElementById(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  document.getElementById(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{
+    const scrMap = {intro:'scIntro', prove:'scProve'};
+    if(document.getElementById(scrMap[key]).classList.contains('active')) drawSetupCanvas(key);
+  });
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  const scrMap = {intro:'#scIntro', prove:'#scProve'};
+  document.querySelectorAll(scrMap[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  const scrMap = {intro:'#scIntro', prove:'#scProve'};
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector(scrMap[key]+' .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll(scrMap[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwErr').textContent='';
+  document.getElementById('adminPwModal').classList.add('show');
+  document.getElementById('adminPwInput').focus();
+}
+async function checkAdminPassword(){
+  const v = document.getElementById('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ document.getElementById('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(ok){
+    document.getElementById('adminPwModal').classList.remove('show');
+    document.getElementById('adminPanelBody').innerHTML =
+      '<div style="margin-bottom:6px"><strong>게이트 팝업 정답</strong></div>'+
+      '<div>평행, 1/2(=0.5 인정)</div>'+
+      '<div style="margin-top:10px"><strong>증명 1단계(G, AD·BE)</strong></div>'+
+      '<div>①: BC, AC, DE, AB, DE, AB</div>'+
+      '<div>②: D, E, AA, 2, 1, GD, GE, 1</div>'+
+      '<div style="margin-top:10px"><strong>증명 2단계(G′, AD·CF)</strong></div>'+
+      '<div>①: BC, AB, DF, AC, DF, AC</div>'+
+      '<div>②: C, A, F, D, AA, 2, 1, AG\', G\'D, CG\', G\'F</div>'+
+      '<div style="margin-top:10px"><strong>결론</strong></div>'+
+      '<div>G\', 2, 1, 한</div>'+
+      '<div style="margin-top:10px"><strong>정리</strong></div>'+
+      '<div>중선, 무게중심, 2, 1</div>'+
+      '<div class="btn-row" style="margin-top:8px">'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="showScreen(\'scIntro\')">도입으로</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoProve()">증명으로</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoSummary()">정리로</button>'+
+      '</div>';
+    document.getElementById('adminPanel').style.display='block';
+  } else {
+    document.getElementById('adminPwErr').textContent='비밀번호가 틀렸어요.';
+  }
+}
+function adminGoProve(){ showScreen('scProve'); document.getElementById('gateModal').classList.remove('show'); drawBindOnce('prove'); drawSetupCanvas('prove'); proveStage1(); }
+function adminGoSummary(){ showScreen('scSummary'); renderSummary(); }
+
+/* ════════════════════════════════
+   삼각형 ABC(∠A=80°,∠B=60°,∠C=40°) 로컬 좌표 (도형 중심이 원점, SVG y축 기준)
+   D=BC중점, E=AC중점, F=AB중점, G=무게중심
+════════════════════════════════ */
+const TRI = {
+  A:[-34.7,-56.5], B:[-100.0,56.5], C:[100.0,56.5],
+  D:[0.0,56.5], E:[32.6,0.0], F:[-67.4,0.0], G:[-11.6,18.8]
+};
+function triAt(cx,cy){
+  const out={};
+  Object.keys(TRI).forEach(k=>{ out[k]=[TRI[k][0]+cx, TRI[k][1]+cy]; });
+  return out;
+}
+function triOutlineSVG(g, color){
+  return `<polygon points="${ptsToStr([g.A,g.B,g.C])}" fill="${color}" fill-opacity="0.06" stroke="${color}" stroke-width="2"></polygon>`;
+}
+function vlabelsSVG(g, keys, color){
+  const cen = bboxCenterOf([g.A,g.B,g.C]);
+  let html='';
+  keys.forEach(k=>{
+    const lp = outwardLabel(g[k], cen, 14);
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${color}">${k}</text>`;
+  });
+  return html;
+}
+function dotSVG(p, color, r){ return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${r||3}" fill="${color}"></circle>`; }
+function barSVG(p1,p2,color){ return `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${color}" stroke-width="5" stroke-linecap="round" opacity="0.8"></line>`; }
+function medianSVG(p1,p2,color){ return `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${color}" stroke-width="2.4"></line>`; }
+function tickSVG(p1,p2,color){
+  const mid=lerp(p1,p2,0.5), dir=unitVec(p1,p2);
+  const perp=[-dir[1]*4, dir[0]*4];
+  return `<line x1="${(mid[0]-perp[0]).toFixed(1)}" y1="${(mid[1]-perp[1]).toFixed(1)}" x2="${(mid[0]+perp[0]).toFixed(1)}" y2="${(mid[1]+perp[1]).toFixed(1)}" stroke="${color}" stroke-width="1.8"></line>`;
+}
+function barMidpoints(apex, left, right, n){
+  const mids=[];
+  for(let i=1;i<=n;i++){ const t=i/n; mids.push(lerp(lerp(apex,left,t), lerp(apex,right,t), 0.5)); }
+  return mids;
+}
+function barsBetween(apex, left, right, n){
+  const bars=[];
+  for(let i=1;i<=n;i++){ const t=i/n; bars.push([lerp(apex,left,t), lerp(apex,right,t)]); }
+  return bars;
+}
+
+/* ════════════════════════════════
+   도입 파트 (탐구)
+════════════════════════════════ */
+const introSt = { step:0, seg:[], triBOverlapped:false };
+function introPanel(html){ document.getElementById('introPanel').innerHTML = html; }
+function appendIntroPanel(html){ document.getElementById('introPanel').insertAdjacentHTML('beforeend', html); }
+function setIntroVB(w,h){ document.getElementById('introSvg').setAttribute('viewBox', `0 0 ${w} ${h}`); }
+function introSvgHTML(html){ document.getElementById('introSvg').innerHTML = html; }
+
+/* --- 스텝0: 선분 3개의 무게중심 찾기 --- */
+const SEG_DEFS = [
+  { len:140, thick:14, y:55, initT:0.22 },
+  { len:220, thick:24, y:140, initT:0.74 },
+  { len:170, thick:32, y:225, initT:0.33 }
+];
+function introStep0(){
+  introSt.step=0;
+  setIntroVB(500,280);
+  introSt.seg = SEG_DEFS.map(d=>({ ...d, cx:250, x1:250-d.len/2, x2:250+d.len/2, t:d.initT, correct:false }));
+  renderIntroStep0();
+  introPanel(`
+    <p>선분(막대) 3개가 있어요. 각 막대를 손으로 잡고, <span class="key-term">무게중심</span>이라고 생각하는 위치로 점을 옮긴 뒤 "확인"을 눌러보세요.</p>
+    <div class="btn-row" id="seg0Row"><button class="btn btn-check" onclick="checkSeg(0)">① 확인</button></div>
+    <div class="btn-row" id="seg1Row"><button class="btn btn-check" onclick="checkSeg(1)">② 확인</button></div>
+    <div class="btn-row" id="seg2Row"><button class="btn btn-check" onclick="checkSeg(2)">③ 확인</button></div>
+    <div class="feedback" id="seg0fb"></div>
+  `);
+}
+function renderIntroStep0(){
+  let html='';
+  introSt.seg.forEach((s,i)=>{
+    const color = s.correct ? '#16a34a' : '#4f46e5';
+    html += `<line x1="${s.x1}" y1="${s.y}" x2="${s.x2}" y2="${s.y}" stroke="${color}" stroke-width="${s.thick}" stroke-linecap="round" opacity="0.85"></line>`;
+    const hx = s.x1 + (s.x2-s.x1)*s.t;
+    html += `<circle id="segHandle${i}" cx="${hx}" cy="${s.y}" r="13" fill="#fff" stroke="${color}" stroke-width="3" style="cursor:grab;touch-action:none"></circle>`;
+    if(s.correct) html += `<text x="${s.x2+28}" y="${s.y+5}" font-size="18" fill="#16a34a">✓</text>`;
+  });
+  introSvgHTML(html);
+  introSt.seg.forEach((s,i)=>bindSegHandle(i));
+}
+function bindSegHandle(i){
+  const handle = document.getElementById('segHandle'+i);
+  if(!handle || handle._bound) return;
+  handle._bound = true;
+  handle.addEventListener('pointerdown', evt=>{
+    if(introSt.seg[i].correct) return;
+    evt.preventDefault();
+    handle.setPointerCapture(evt.pointerId);
+    handle._dragging = true;
+  });
+  handle.addEventListener('pointermove', evt=>{
+    if(!handle._dragging) return;
+    evt.preventDefault();
+    const svg = document.getElementById('introSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const s = introSt.seg[i];
+    let t = (loc.x - s.x1) / (s.x2 - s.x1);
+    t = Math.max(0, Math.min(1, t));
+    s.t = t;
+    handle.setAttribute('cx', (s.x1+(s.x2-s.x1)*t).toFixed(1));
+  });
+  ['pointerup','pointercancel'].forEach(evtName=>handle.addEventListener(evtName, ()=>{ handle._dragging=false; }));
+}
+function checkSeg(i){
+  const s = introSt.seg[i];
+  const ok = Math.abs(s.t - 0.5) <= 0.08;
+  const fb = document.getElementById('seg0fb');
+  if(ok){
+    s.correct = true; s.t = 0.5;
+    renderIntroStep0();
+    document.getElementById('seg'+i+'Row').querySelector('button').disabled = true;
+    fb.className='feedback success'; fb.textContent='맞아요! 중점이 무게중심이에요.';
+    if(introSt.seg.every(x=>x.correct)){
+      openSegGate();
+    }
+  } else {
+    fb.className='feedback error'; fb.textContent='아직 중점에서 좀 떨어져 있어요. 막대를 다시 잡고 가운데로 옮겨보세요.';
+  }
+}
+function openSegGate(){
+  document.getElementById('segGateAns').value='';
+  document.getElementById('segGateAns').classList.remove('correct','wrong');
+  document.getElementById('segGateErr').textContent='';
+  document.getElementById('segGateModal').classList.add('show');
+}
+function checkSegGate(){
+  const ok = normText(document.getElementById('segGateAns').value)==='중점';
+  document.getElementById('segGateAns').classList.toggle('correct',ok);
+  document.getElementById('segGateAns').classList.toggle('wrong',!ok);
+  if(ok){
+    document.getElementById('segGateModal').classList.remove('show');
+    introStep1();
+  } else {
+    document.getElementById('segGateErr').textContent='다시 확인해보세요.';
+  }
+}
+
+/* --- 스텝1: 막대 10개로 삼각형 근사 (BC와 평행, 끝점은 AB,AC) --- */
+function introStep1(){
+  introSt.step=1;
+  setIntroVB(400,300);
+  const g = triAt(150,150);
+  introSvgHTML(triOutlineSVG(g,'#9098b5') + vlabelsSVG(g,['A','B','C'],'#4a4a6a'));
+  introPanel(`
+    <p>예각삼각형 ABC을 BC와 평행한 막대 10개로 쌓아서 비슷한 모양으로 채워볼까요?</p>
+    <div class="btn-row"><button class="btn btn-primary" id="barBtn1" onclick="revealBars1()">막대 10개 그리기</button></div>
+    <div id="step1next"></div>
+  `);
+}
+function revealBars1(){
+  document.getElementById('barBtn1').disabled = true;
+  const g = triAt(150,150);
+  const bars = barsBetween(g.A, g.B, g.C, 10);
+  let i=0;
+  function next(){
+    if(i>=bars.length){
+      openBarGate();
+      return;
+    }
+    document.getElementById('introSvg').insertAdjacentHTML('beforeend', barSVG(bars[i][0], bars[i][1], '#4f46e5'));
+    i++;
+    setTimeout(next, 110);
+  }
+  next();
+}
+function openBarGate(){
+  const opts = shuffle([{label:'막대의 끝', ok:false},{label:'막대의 중점', ok:true}]);
+  document.getElementById('barGateRow').innerHTML = opts.map(o=>`<button class="choice-btn" onclick="pickBarGate(${o.ok},this)">${o.label}</button>`).join('');
+  document.getElementById('barGateFb').textContent='';
+  document.getElementById('barGateModal').classList.add('show');
+}
+function pickBarGate(ok, btn){
+  document.querySelectorAll('#barGateRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('barGateFb');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    setTimeout(()=>{ document.getElementById('barGateModal').classList.remove('show'); introStep2(); }, 500);
+  } else {
+    fb.className='feedback error'; fb.textContent='막대도 하나의 선분이라는 걸 떠올려보세요.';
+  }
+}
+
+/* --- 스텝2: 막대 중점 표시 → 중선 AD 그리기 (제자리 유지) --- */
+function introStep2(){
+  introSt.step=2;
+  introPanel(`
+    <p>이제 각 막대의 무게중심을 표시해볼까요?</p>
+    <div class="btn-row"><button class="btn btn-primary" id="dotBtn1" onclick="revealDots1()">막대 10개의 무게중심 표시하기</button></div>
+    <div id="step2next"></div>
+  `);
+}
+function revealDots1(){
+  document.getElementById('dotBtn1').disabled = true;
+  const g = triAt(150,150);
+  const mids = barMidpoints(g.A, g.B, g.C, 10);
+  let i=0;
+  function next(){
+    if(i>=mids.length){
+      appendIntroPanel(`<div class="btn-row"><button class="btn btn-primary" id="lineBtn1" onclick="revealMedian1()">점들을 연결해보기</button></div>`);
+      return;
+    }
+    document.getElementById('introSvg').insertAdjacentHTML('beforeend', dotSVG(mids[i], '#dc2626', 3));
+    i++;
+    setTimeout(next, 110);
+  }
+  next();
+}
+function revealMedian1(){
+  document.getElementById('lineBtn1').disabled = true;
+  const g = triAt(150,150);
+  const t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/700);
+    const cur = lerp(g.A, g.D, easeInOut(t));
+    const prevLine = document.getElementById('medianAD1');
+    const lineHTML = `<line id="medianAD1" x1="${g.A[0].toFixed(1)}" y1="${g.A[1].toFixed(1)}" x2="${cur[0].toFixed(1)}" y2="${cur[1].toFixed(1)}" stroke="#dc2626" stroke-width="2.6"></line>`;
+    if(prevLine) prevLine.outerHTML = lineHTML;
+    else document.getElementById('introSvg').insertAdjacentHTML('beforeend', lineHTML);
+    if(t<1) requestAnimationFrame(frame);
+    else {
+      document.getElementById('introSvg').insertAdjacentHTML('beforeend', vlabelsSVG(g,['D'],'#dc2626'));
+      appendIntroPanel(`
+        <div class="proof-block">이 선분 AD는 꼭짓점 A와 변 BC의 (<input class="blank" id="m1_1" style="width:50px">)를 연결한 선분이에요.</div>
+        <div class="btn-row"><button class="btn btn-check" onclick="checkMid1(this)">확인</button></div>
+        <div class="feedback" id="m1fb"></div>
+      `);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+function checkMid1(btn){
+  const ok = normText(document.getElementById('m1_1').value)==='중점';
+  document.getElementById('m1_1').classList.toggle('correct',ok);
+  document.getElementById('m1_1').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('m1fb');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled=true;
+    appendIntroPanel(`
+      <div class="proof-block">선분 AD처럼 꼭짓점과 그 대변의 중점을 연결한 선분을 (<input class="blank" id="m2_1" style="width:60px">)이라고 해요.</div>
+      <div class="btn-row"><button class="btn btn-check" onclick="checkMedianTerm(this)">확인</button></div>
+      <div class="feedback" id="m2fb"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='A에서 변 BC까지 그은 선분이 BC를 어떻게 나누고 있는지 다시 살펴보세요.';
+  }
+}
+function checkMedianTerm(btn){
+  const ok = normText(document.getElementById('m2_1').value)==='중선';
+  document.getElementById('m2_1').classList.toggle('correct',ok);
+  document.getElementById('m2_1').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('m2fb');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요! "중선"이라는 용어를 배웠어요.';
+    btn.disabled=true;
+    appendIntroPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="introStep3()">다음 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='방금 배운 용어를 다시 떠올려보세요.';
+  }
+}
+
+/* --- 스텝3: 새 자리에 같은 삼각형, AC와 평행한 막대(끝점 AB,BC)로 중선 BE 만들기 → 겹쳐보기 --- */
+function introStep3(){
+  introSt.step=3;
+  setIntroVB(680,300);
+  const gA = triAt(150,150);
+  // 기존(스텝2) 삼각형은 그대로 두고, 오른쪽에 새 삼각형 추가
+  const gB = triAt(520,150);
+  let html = document.getElementById('introSvg').innerHTML;
+  html += triOutlineSVG(gB,'#9098b5') + vlabelsSVG(gB,['A','B','C'],'#4a4a6a');
+  introSvgHTML(html);
+  introPanel(`
+    <p>이번엔 막대의 끝점을 AB, BC에 놓고(AC와 평행하게) 똑같이 반복해볼까요?</p>
+    <div class="btn-row"><button class="btn btn-primary" id="barBtn2" onclick="revealBars2()">막대 10개 그리기</button></div>
+    <div id="step3next"></div>
+  `);
+}
+function revealBars2(){
+  document.getElementById('barBtn2').disabled = true;
+  const gB = triAt(520,150);
+  const bars = barsBetween(gB.B, gB.A, gB.C, 10);
+  let i=0;
+  function next(){
+    if(i>=bars.length){
+      appendIntroPanel(`<div class="btn-row"><button class="btn btn-primary" id="dotBtn2" onclick="revealDots2()">막대 10개의 무게중심 표시하기</button></div>`);
+      return;
+    }
+    document.getElementById('introSvg').insertAdjacentHTML('beforeend', barSVG(bars[i][0], bars[i][1], '#e05a20'));
+    i++;
+    setTimeout(next, 110);
+  }
+  next();
+}
+function revealDots2(){
+  document.getElementById('dotBtn2').disabled = true;
+  const gB = triAt(520,150);
+  const mids = barMidpoints(gB.B, gB.A, gB.C, 10);
+  let i=0;
+  function next(){
+    if(i>=mids.length){
+      appendIntroPanel(`<div class="btn-row"><button class="btn btn-primary" id="lineBtn2" onclick="revealMedian2()">점들을 연결해보기</button></div>`);
+      return;
+    }
+    document.getElementById('introSvg').insertAdjacentHTML('beforeend', dotSVG(mids[i], '#1a1a2e', 3));
+    i++;
+    setTimeout(next, 110);
+  }
+  next();
+}
+function revealMedian2(){
+  document.getElementById('lineBtn2').disabled = true;
+  const gB = triAt(520,150);
+  const t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/700);
+    const cur = lerp(gB.B, gB.E, easeInOut(t));
+    const prevLine = document.getElementById('medianBE2');
+    const lineHTML = `<line id="medianBE2" x1="${gB.B[0].toFixed(1)}" y1="${gB.B[1].toFixed(1)}" x2="${cur[0].toFixed(1)}" y2="${cur[1].toFixed(1)}" stroke="#1a1a2e" stroke-width="2.6"></line>`;
+    if(prevLine) prevLine.outerHTML = lineHTML;
+    else document.getElementById('introSvg').insertAdjacentHTML('beforeend', lineHTML);
+    if(t<1) requestAnimationFrame(frame);
+    else {
+      document.getElementById('introSvg').insertAdjacentHTML('beforeend', vlabelsSVG(gB,['E'],'#1a1a2e'));
+      appendIntroPanel(`
+        <p>이번엔 중선 BE가 만들어졌어요. 이제 두 삼각형을 겹쳐서 비교해볼까요?</p>
+        <div class="btn-row"><button class="btn btn-primary" id="overlapBtn" onclick="overlapTriangles()">두 삼각형 겹쳐보기</button></div>
+      `);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+function overlapTriangles(){
+  document.getElementById('overlapBtn').disabled = true;
+  const svg = document.getElementById('introSvg');
+  // 오른쪽 삼각형(스텝3) 관련 요소를 하나의 그룹으로 모아 이동 애니메이션
+  const gB0 = triAt(520,150);
+  const gA0 = triAt(150,150);
+  const dx = gA0.A[0]-gB0.A[0]===undefined?0:(150-520);
+  // 오른쪽 삼각형과 겹치는 모든 요소를 다시 그려서 그룹화
+  const bars = barsBetween(gB0.B, gB0.A, gB0.C, 10);
+  const mids = barMidpoints(gB0.B, gB0.A, gB0.C, 10);
+  let moveHTML = triOutlineSVG(gB0,'#9098b5') + vlabelsSVG(gB0,['A','B','C'],'#4a4a6a');
+  bars.forEach(b=>{ moveHTML += barSVG(b[0],b[1],'#e05a20'); });
+  mids.forEach(m=>{ moveHTML += dotSVG(m,'#1a1a2e',3); });
+  moveHTML += medianSVG(gB0.B, gB0.E, '#1a1a2e') + vlabelsSVG(gB0,['E'],'#1a1a2e');
+  svg.insertAdjacentHTML('beforeend', `<g id="moveGroup">${moveHTML}</g>`);
+  // 기존(겹치기 전) 오른쪽 삼각형 전체를 지우기 위해, introStep3 이후 추가된 모든 요소 중 오른쪽 자리 것들을 숨김 처리하는 대신
+  // 전체를 다시 그리는 방식: 왼쪽(스텝2) 결과 보존 + moveGroup만 애니메이션
+  const t0 = performance.now();
+  const shiftX = 150-520;
+  function frame(now){
+    const t=Math.min(1,(now-t0)/800);
+    const e = easeInOut(t);
+    document.getElementById('moveGroup').setAttribute('transform', `translate(${(shiftX*e).toFixed(1)},0)`);
+    if(t<1) requestAnimationFrame(frame);
+    else {
+      setIntroVB(400,300);
+      introSt.triBOverlapped = true;
+      appendIntroPanel(`
+        <p class="key-q">두 중선 AD, BE가 한 삼각형 안에서 서로 교차하는 모습이 보이나요?</p>
+        <div class="btn-row"><button class="btn btn-primary" onclick="introStep4()">다음 →</button></div>
+      `);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* --- 스텝4(가볍게): 중선 개수 질문 → 세 번째 중선 CF 바로 추가 --- */
+function introStep4(){
+  introSt.step=4;
+  const opts = shuffle([{v:2,c:false},{v:3,c:true},{v:4,c:false}]);
+  introPanel(`
+    <p class="key-q">삼각형에는 중선이 몇 개 있을까요?</p>
+    <div class="btn-row" id="medCountRow">${opts.map(o=>`<button class="choice-btn" onclick="pickMedCount(${o.c},this)">${o.v}개</button>`).join('')}</div>
+    <div class="feedback" id="medCountFb"></div>
+  `);
+}
+function pickMedCount(ok, btn){
+  document.querySelectorAll('#medCountRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('medCountFb');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요, 3개예요! 나머지 하나(CF)도 그어볼게요.';
+    lockRow('#medCountRow');
+    const g = triAt(150,150);
+    document.getElementById('introSvg').insertAdjacentHTML('beforeend', medianSVG(g.C,g.F,'#16a34a') + vlabelsSVG(g,['F'],'#16a34a'));
+    appendIntroPanel(`<div class="btn-row"><button class="btn btn-primary" onclick="introStep5()">다음 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='삼각형의 꼭짓점 개수를 다시 떠올려보세요.';
+  }
+}
+
+/* --- 스텝5: 최종 추론 + 의문 제기 --- */
+function introStep5(){
+  introSt.step=5;
+  introPanel(`
+    <p>지금까지 본 걸 정리하면, 무게중심은 중선 AD 위에도, 중선 BE 위에도 있어야 해요. 그렇다면 삼각형 ABC의 무게중심은 어디에 있다고 추론할 수 있을까요?</p>
+    <div class="proof-block" style="text-align:center">삼각형 ABC의 무게중심은 세 중선의 (<input class="blank" id="inferAns" style="width:70px">)에 있다.</div>
+    <div class="btn-row"><button class="btn btn-check" onclick="checkInfer(this)">확인</button></div>
+    <div class="feedback" id="inferFb"></div>
+  `);
+}
+function checkInfer(btn){
+  const ok = normText(document.getElementById('inferAns').value)==='교점';
+  document.getElementById('inferAns').classList.toggle('correct',ok);
+  document.getElementById('inferAns').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('inferFb');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled = true;
+    appendIntroPanel(`
+      <p class="key-q">그런데… 세 중선 AD, BE, CF가 정말로 한 점에서 만난다는 게 보장될까요? 혹시 세 선이 서로 다른 점에서 어긋나게 교차하는 건 아닐까요?</p>
+      <div class="btn-row"><button class="btn btn-primary" onclick="goToProve()">이걸 확인하려면? 증명 시작하기 →</button></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='방금 두 중선 AD, BE가 겹쳐진 그림에서 무엇을 보았는지 다시 떠올려보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   증명 파트 — 게이트(중점연결정리) → 1단계(G) → 2단계(G′) → 결론
+════════════════════════════════ */
+function goToProve(){
+  showScreen('scProve');
+  window.scrollTo({top:0, behavior:'smooth'});
+  drawBindOnce('prove'); drawSetupCanvas('prove');
+  document.getElementById('gate1').value=''; document.getElementById('gate2').value='';
+  document.getElementById('gate1').classList.remove('correct','wrong');
+  document.getElementById('gate2').classList.remove('correct','wrong');
+  document.getElementById('gateErr').textContent='';
+  document.getElementById('gateModal').classList.add('show');
+  provePanel('');
+  document.getElementById('proveSvg').innerHTML = '';
+}
+function checkGate(){
+  const ok1 = normText(document.getElementById('gate1').value)==='평행';
+  const v2 = normText(document.getElementById('gate2').value);
+  const ok2 = v2==='1/2' || v2==='0.5';
+  document.getElementById('gate1').classList.toggle('correct',ok1); document.getElementById('gate1').classList.toggle('wrong',!ok1);
+  document.getElementById('gate2').classList.toggle('correct',ok2); document.getElementById('gate2').classList.toggle('wrong',!ok2);
+  if(ok1&&ok2){
+    document.getElementById('gateModal').classList.remove('show');
+    proveStage1();
+  } else {
+    document.getElementById('gateErr').textContent='다시 확인해보세요.';
+  }
+}
+function provePanel(html){ document.getElementById('provePanel').innerHTML = html; }
+function appendProvePanel(html){ document.getElementById('provePanel').insertAdjacentHTML('beforeend', html); }
+function proveDrawBase(extraPts, extraColor){
+  const g = triAt(210,160);
+  let html = triOutlineSVG(g,'#9098b5') + vlabelsSVG(g,['A','B','C'],'#4a4a6a');
+  html += dotSVG(g.D,'#9098b5',2.6) + vlabelsSVG(g,['D'],'#9098b5');
+  html += dotSVG(g.E,'#9098b5',2.6) + vlabelsSVG(g,['E'],'#9098b5');
+  html += dotSVG(g.F,'#9098b5',2.6) + vlabelsSVG(g,['F'],'#9098b5');
+  document.getElementById('proveSvg').innerHTML = html;
+  return g;
+}
+function proveStage1(){
+  const g = proveDrawBase();
+  g.G = TRI.G; // 실제 사용은 triAt 결과의 G 사용
+  const gg = triAt(210,160);
+  let html = document.getElementById('proveSvg').innerHTML;
+  html += medianSVG(gg.A,gg.D,'#4f46e5') + medianSVG(gg.B,gg.E,'#e05a20');
+  html += dotSVG(gg.G,'#16a34a',3.4) + `<text class="vlabel" x="${(gg.G[0]-12).toFixed(1)}" y="${(gg.G[1]-8).toFixed(1)}" fill="#16a34a">G</text>`;
+  document.getElementById('proveSvg').innerHTML = html;
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">1</span>중선 AD, BE의 교점 G</div>
+    <p class="key-q">△ABC에서 두 중선 AD, BE의 교점을 G라 하면, 빈칸을 채워 AG:GD=BG:GE=2:1을 보여보세요.</p>
+    <div class="proof-block">
+      두 점 D, E는 각각 (<input class="blank" id="p1_1" style="width:40px">), (<input class="blank" id="p1_2" style="width:40px">)의 중점이므로 삼각형의 중점연결정리에 의해<br>
+      (<input class="blank" id="p1_3" style="width:40px">)<span class="parasym">∥</span>(<input class="blank" id="p1_4" style="width:40px">), (<input class="blank" id="p1_5" style="width:40px">)=(1/2)(<input class="blank" id="p1_6" style="width:40px">)이 성립한다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="pvCheck1a(this)">확인</button></div>
+    <div class="feedback" id="p1fb_a"></div>
+  `);
+}
+function pvCheck1a(btn){
+  const ok1 = sameSeg(document.getElementById('p1_1').value,'BC');
+  const ok2 = sameSeg(document.getElementById('p1_2').value,'AC');
+  const ok3 = sameSeg(document.getElementById('p1_3').value,'DE');
+  const ok4 = sameSeg(document.getElementById('p1_4').value,'AB');
+  const ok5 = sameSeg(document.getElementById('p1_5').value,'DE');
+  const ok6 = sameSeg(document.getElementById('p1_6').value,'AB');
+  [['p1_1',ok1],['p1_2',ok2],['p1_3',ok3],['p1_4',ok4],['p1_5',ok5],['p1_6',ok6]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('p1fb_a');
+  if(ok1&&ok2&&ok3&&ok4&&ok5&&ok6){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled=true;
+    appendProvePanel(`
+      <div class="proof-block">
+        따라서 △GAB∽△G(<input class="blank" id="p1_7" style="width:34px">)(<input class="blank" id="p1_8" style="width:34px">)((<input class="blank" id="p1_9" style="width:34px">)닮음)이고 닮음비는 (<input class="blank" id="p1_10" style="width:30px">):(<input class="blank" id="p1_11" style="width:30px">)이므로<br>
+        AG:(<input class="blank" id="p1_12" style="width:40px">)=BG:(<input class="blank" id="p1_13" style="width:40px">)=2:(<input class="blank" id="p1_14" style="width:30px">)이다. …… ①
+      </div>
+      <div class="btn-row"><button class="btn btn-check" onclick="pvCheck1b(this)">확인</button></div>
+      <div class="feedback" id="p1fb_b"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='D, E가 각각 어느 변의 중점인지, 중점연결정리의 결론이 무엇인지 다시 확인해보세요.';
+  }
+}
+function pvCheck1b(btn){
+  const ok7 = sameSeg(document.getElementById('p1_7').value,'D');
+  const ok8 = sameSeg(document.getElementById('p1_8').value,'E');
+  const ok9 = normText(document.getElementById('p1_9').value).toUpperCase()==='AA';
+  const ok10 = normText(document.getElementById('p1_10').value)==='2';
+  const ok11 = normText(document.getElementById('p1_11').value)==='1';
+  const ok12 = sameSeg(document.getElementById('p1_12').value,'GD');
+  const ok13 = sameSeg(document.getElementById('p1_13').value,'GE');
+  const ok14 = normText(document.getElementById('p1_14').value)==='1';
+  const all = [['p1_7',ok7],['p1_8',ok8],['p1_9',ok9],['p1_10',ok10],['p1_11',ok11],['p1_12',ok12],['p1_13',ok13],['p1_14',ok14]];
+  all.forEach(([id,ok])=>{ document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok); });
+  const fb = document.getElementById('p1fb_b');
+  if(all.every(([,ok])=>ok)){
+    fb.className='feedback success'; fb.textContent='맞아요! ①번이 완성됐어요.';
+    btn.disabled=true;
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="proveStage2()">2단계로(중선 AD, CF) →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='△GAB에서 G,A,B에 각각 대응하는 △G□□의 꼭짓점, 그리고 AA닮음의 두 각을 다시 생각해보세요.';
+  }
+}
+function proveStage2(){
+  const gg = triAt(210,160);
+  let html = triOutlineSVG(gg,'#9098b5') + vlabelsSVG(gg,['A','B','C'],'#4a4a6a');
+  html += dotSVG(gg.D,'#9098b5',2.6) + vlabelsSVG(gg,['D'],'#9098b5');
+  html += dotSVG(gg.F,'#9098b5',2.6) + vlabelsSVG(gg,['F'],'#9098b5');
+  html += medianSVG(gg.A,gg.D,'#4f46e5') + medianSVG(gg.C,gg.F,'#e05a20');
+  html += dotSVG(gg.G,'#16a34a',3.4) + `<text class="vlabel" x="${(gg.G[0]-12).toFixed(1)}" y="${(gg.G[1]-8).toFixed(1)}" fill="#16a34a">G′</text>`;
+  document.getElementById('proveSvg').innerHTML = html;
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">2</span>중선 AD, CF의 교점 G′</div>
+    <p class="key-q">같은 방법으로, 중선 AD, CF의 교점을 G′이라 하고 빈칸을 채워보세요.</p>
+    <div class="proof-block">
+      두 점 D, F는 각각 (<input class="blank" id="p2_1" style="width:40px">), (<input class="blank" id="p2_2" style="width:40px">)의 중점이므로 삼각형의 중점연결정리에 의해<br>
+      (<input class="blank" id="p2_3" style="width:40px">)<span class="parasym">∥</span>(<input class="blank" id="p2_4" style="width:40px">), (<input class="blank" id="p2_5" style="width:40px">)=(1/2)(<input class="blank" id="p2_6" style="width:40px">)이 성립한다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="pvCheck2a(this)">확인</button></div>
+    <div class="feedback" id="p2fb_a"></div>
+  `);
+}
+function pvCheck2a(btn){
+  const ok1 = sameSeg(document.getElementById('p2_1').value,'BC');
+  const ok2 = sameSeg(document.getElementById('p2_2').value,'AB');
+  const ok3 = sameSeg(document.getElementById('p2_3').value,'DF');
+  const ok4 = sameSeg(document.getElementById('p2_4').value,'AC');
+  const ok5 = sameSeg(document.getElementById('p2_5').value,'DF');
+  const ok6 = sameSeg(document.getElementById('p2_6').value,'AC');
+  [['p2_1',ok1],['p2_2',ok2],['p2_3',ok3],['p2_4',ok4],['p2_5',ok5],['p2_6',ok6]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('p2fb_a');
+  if(ok1&&ok2&&ok3&&ok4&&ok5&&ok6){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled=true;
+    appendProvePanel(`
+      <div class="proof-block">
+        따라서 △G′(<input class="blank" id="p2_7" style="width:34px">)(<input class="blank" id="p2_8" style="width:34px">)∽△G′(<input class="blank" id="p2_9" style="width:34px">)(<input class="blank" id="p2_10" style="width:34px">)((<input class="blank" id="p2_11" style="width:34px">)닮음)이고 닮음비는 (<input class="blank" id="p2_12" style="width:30px">):(<input class="blank" id="p2_13" style="width:30px">)이므로<br>
+        (<input class="blank" id="p2_14" style="width:40px">):(<input class="blank" id="p2_15" style="width:40px">)=(<input class="blank" id="p2_16" style="width:40px">):(<input class="blank" id="p2_17" style="width:40px">)=2:1이다. …… ②
+      </div>
+      <div class="btn-row"><button class="btn btn-check" onclick="pvCheck2b(this)">확인</button></div>
+      <div class="feedback" id="p2fb_b"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='D, F가 각각 어느 변의 중점인지, 중점연결정리의 결론이 무엇인지 다시 확인해보세요.';
+  }
+}
+function pvCheck2b(btn){
+  const checks = [
+    ['p2_7','C'], ['p2_8','A'], ['p2_9','F'], ['p2_10','D']
+  ];
+  const segOks = checks.map(([id,c])=>sameSeg(document.getElementById(id).value,c));
+  const ok11 = normText(document.getElementById('p2_11').value).toUpperCase()==='AA';
+  const ok12 = normText(document.getElementById('p2_12').value)==='2';
+  const ok13 = normText(document.getElementById('p2_13').value)==='1';
+  const ok14 = sameSeg(document.getElementById('p2_14').value,"AG'") || sameSeg(document.getElementById('p2_14').value,'AG′');
+  const ok15 = sameSeg(document.getElementById('p2_15').value,"G'D") || sameSeg(document.getElementById('p2_15').value,'G′D');
+  const ok16 = sameSeg(document.getElementById('p2_16').value,"CG'") || sameSeg(document.getElementById('p2_16').value,'CG′');
+  const ok17 = sameSeg(document.getElementById('p2_17').value,"G'F") || sameSeg(document.getElementById('p2_17').value,'G′F');
+  const all = [['p2_7',segOks[0]],['p2_8',segOks[1]],['p2_9',segOks[2]],['p2_10',segOks[3]],['p2_11',ok11],['p2_12',ok12],['p2_13',ok13],['p2_14',ok14],['p2_15',ok15],['p2_16',ok16],['p2_17',ok17]];
+  all.forEach(([id,ok])=>{ document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok); });
+  const fb = document.getElementById('p2fb_b');
+  if(all.every(([,ok])=>ok)){
+    fb.className='feedback success'; fb.textContent='맞아요! ②번이 완성됐어요.';
+    btn.disabled=true;
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="proveConclusion()">결론으로 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='△G′CA에서 G′,C,A에 각각 대응하는 △G′□□의 꼭짓점을 다시 생각해보세요.';
+  }
+}
+function proveConclusion(){
+  appendProvePanel(`
+    <div class="panel-title"><span class="step-badge">결론</span>세 중선은 한 점에서 만난다</div>
+    <div class="proof-block">
+      ①, ②에 의해 두 점 G, (<input class="blank" id="p3_1" style="width:40px">)은 모두 중선 AD를 (<input class="blank" id="p3_2" style="width:30px">):(<input class="blank" id="p3_3" style="width:30px">)로 나누는 점이므로 일치한다.<br>
+      그러므로 △ABC의 세 중선은 (<input class="blank" id="p3_4" style="width:40px">) 점에서 만난다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="pvCheck3(this)">확인</button></div>
+    <div class="feedback" id="p3fb"></div>
+  `);
+}
+function pvCheck3(btn){
+  const ok1 = sameSeg(document.getElementById('p3_1').value,"G'") || sameSeg(document.getElementById('p3_1').value,'G′');
+  const ok2 = normText(document.getElementById('p3_2').value)==='2';
+  const ok3 = normText(document.getElementById('p3_3').value)==='1';
+  const ok4 = normText(document.getElementById('p3_4').value)==='한';
+  [['p3_1',ok1],['p3_2',ok2],['p3_3',ok3],['p3_4',ok4]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('p3fb');
+  if(ok1&&ok2&&ok3&&ok4){
+    fb.className='feedback success'; fb.textContent='맞아요! 증명이 완성됐어요.';
+    btn.disabled=true;
+    const gg = triAt(210,160);
+    document.getElementById('proveSvg').innerHTML += medianSVG(gg.B,gg.E,'#e05a20')+medianSVG(gg.C,gg.F,'#16a34a');
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goToSummary()">정리로 넘어가기 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='①, ②에서 G와 G′이 AD 위에서 각각 어떤 비율의 점이었는지 다시 확인해보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   정리 파트
+════════════════════════════════ */
+function goToSummary(){
+  showScreen('scSummary');
+  window.scrollTo({top:0, behavior:'smooth'});
+  renderSummary();
+}
+function renderSummary(){
+  const gg = triAt(210,160);
+  let html = triOutlineSVG(gg,'#4f46e5') + vlabelsSVG(gg,['A','B','C'],'#1a1a2e');
+  html += dotSVG(gg.D,'#9098b5',2.6) + vlabelsSVG(gg,['D'],'#9098b5');
+  html += dotSVG(gg.E,'#9098b5',2.6) + vlabelsSVG(gg,['E'],'#9098b5');
+  html += dotSVG(gg.F,'#9098b5',2.6) + vlabelsSVG(gg,['F'],'#9098b5');
+  html += medianSVG(gg.A,gg.D,'#4f46e5') + medianSVG(gg.B,gg.E,'#e05a20') + medianSVG(gg.C,gg.F,'#16a34a');
+  html += tickSVG(gg.A,gg.G,'#4f46e5') + tickSVG(gg.B,gg.G,'#e05a20') + tickSVG(gg.C,gg.G,'#16a34a');
+  html += dotSVG(gg.G,'#1a1a2e',3.4) + `<text class="vlabel" x="${(gg.G[0]-12).toFixed(1)}" y="${(gg.G[1]-8).toFixed(1)}" fill="#1a1a2e">G</text>`;
+  document.getElementById('summarySvg').innerHTML = html;
+  document.getElementById('summaryPanel').innerHTML = `
+    <div class="panel-title"><span class="step-badge">정리</span>삼각형의 무게중심</div>
+    <div class="proof-block">
+      삼각형의 세 (<input class="blank" id="s_1" style="width:50px">)은 한 점에서 만나고, 이 점을 삼각형의 (<input class="blank" id="s_2" style="width:70px">)이라고 한다.<br>
+      이때 이 점은 세 중선을 각 꼭짓점으로부터 그 길이가 각각 (<input class="blank" id="s_3" style="width:30px">):(<input class="blank" id="s_4" style="width:30px">)이 되도록 나눈다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="summaryCheck(this)">확인</button></div>
+    <div class="feedback" id="sfb"></div>
+  `;
+}
+function summaryCheck(btn){
+  const ok1 = normText(document.getElementById('s_1').value)==='중선';
+  const ok2 = normText(document.getElementById('s_2').value)==='무게중심';
+  const ok3 = normText(document.getElementById('s_3').value)==='2';
+  const ok4 = normText(document.getElementById('s_4').value)==='1';
+  [['s_1',ok1],['s_2',ok2],['s_3',ok3],['s_4',ok4]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('sfb');
+  if(ok1&&ok2&&ok3&&ok4){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled=true;
+    document.getElementById('summaryPanel').insertAdjacentHTML('beforeend', `
+      <div class="summary-box">
+        삼각형의 세 중선은 한 점(무게중심)에서 만나고,<br>이 점은 세 중선을 각 꼭짓점으로부터 그 길이가 각각 2:1이 되도록 나눈다.<br>
+        <span class="seg">AG</span>:<span class="seg">GD</span>=<span class="seg">BG</span>:<span class="seg">GE</span>=<span class="seg">CG</span>:<span class="seg">GF</span>=2:1
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="showScreen('scDone')">학습 마무리 →</button></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='교과서 정리 박스 문장을 다시 떠올려보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   초기 실행
+════════════════════════════════ */
+drawBindOnce('intro'); drawSetupCanvas('intro');
+introStep0();
+</script>
+</body>
+</html>

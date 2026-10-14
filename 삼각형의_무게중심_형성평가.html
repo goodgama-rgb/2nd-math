@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼각형의 무게중심 형성평가</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.key-q{font-size:15.5px;font-weight:800;text-decoration:underline;text-decoration-color:var(--indigo);text-decoration-thickness:2.5px;text-underline-offset:3px}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 440px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:10px}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.scratch-area{height:70px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12px;font-weight:700;text-anchor:middle;fill:#4a5568}
+
+.blank{display:inline-block;width:52px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+
+.stage-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.stage-tab{flex:1;max-width:150px;padding:9px 6px;border-radius:10px;text-align:center;font-size:12.5px;font-weight:800;color:var(--ink3);background:#fff;border:1.5px solid #e0e7ff}
+.stage-tab.active{color:#fff;background:var(--indigo);border-color:var(--indigo)}
+.stage-tab.done{color:#fff;background:var(--green);border-color:var(--green)}
+.progress{text-align:center;font-weight:800;color:var(--indigo);font-size:13px;margin-bottom:8px}
+.qtext{font-size:14.5px;font-weight:700;line-height:1.7;margin-bottom:10px;text-align:center}
+.answer-block{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:13.5px;line-height:2.4;text-align:center}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.done-score{font-size:30px;font-weight:800;color:var(--indigo);margin:8px 0}
+.done-score.fail{color:var(--red)}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:360px;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25)}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.modal-btn:hover{background:#4338ca}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">삼각형의 무게중심 형성평가</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <div class="screen active" id="scQuiz">
+    <div class="concept" style="background:#fff;border-left:3px solid var(--indigo);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--ink);line-height:1.8">
+      <strong>무게중심:</strong> 세 중선의 교점 G는 각 중선을 꼭짓점에서부터 2:1로 나누고, 세 중선은 삼각형을 넓이가 같은 작은 삼각형 6개로 나눠요.
+    </div>
+    <div class="stage-tabs" id="stageTabs"></div>
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn active" id="quizPenBtn" onclick="drawSetMode('quiz','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('quiz','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('quiz','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('quiz','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('quiz','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('quiz','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="quizEraserBtn" onclick="drawToggleEraser('quiz')">🧽 지우개</button>
+          <button class="mode-btn" id="quizPointerBtn" onclick="drawSetMode('quiz','pointer')">🖱️ 마우스</button>
+        </div>
+        <div class="draw-wrap" id="quizDrawWrap">
+          <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 380 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area"></div>
+          <canvas id="quizInk" class="ink-canvas"></canvas>
+        </div>
+      </div>
+      <div class="split-right card">
+        <div class="progress" id="quizProgress">유형1 · 1 / 3</div>
+        <div class="qtext" id="quizQtext"></div>
+        <div class="answer-block" id="quizAnsBlock">
+          x = <input class="blank" id="qAnsX" inputmode="numeric"> &nbsp;&nbsp; y = <input class="blank" id="qAnsY" inputmode="numeric">
+        </div>
+        <div class="btn-row"><button class="btn" id="quizCheckBtn" onclick="quizCheck()">확인</button></div>
+        <div class="feedback" id="quizFb"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scStageResult">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon" id="srIcon">🎉</div>
+        <div id="srTitle" style="font-weight:800;font-size:16px"></div>
+        <div class="done-score" id="srScore"></div>
+        <div id="srMsg" style="color:var(--ink2)"></div>
+        <button class="primary-btn" id="srNextBtn" onclick="srNext()">다음으로</button>
+        <button class="restart-btn" id="srRetryBtn" onclick="srRetry()" style="display:none">🔄 이 유형 다시 풀기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px">삼각형의 무게중심 형성평가(유형1·2·3)를 모두 통과했어요.</p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;right:16px;width:320px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:40;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'triangle-centroid-assessment' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function lerp(p,q,t){ return [p[0]+(q[0]-p[0])*t, p[1]+(q[1]-p[1])*t]; }
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function outwardLabel(p, centroid, d){ const dx=p[0]-centroid[0], dy=p[1]-centroid[1], len=Math.hypot(dx,dy)||1; return [p[0]+dx/len*d, p[1]+dy/len*d]; }
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.05); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function sideLabelSVGAt(p1, p2, centroid, value, bulge, t, color){
+  t = (t===undefined)?0.5:t;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-centroid[0], mid[1]-centroid[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+12), mid[1]+dy*(bulge+12)];
+  const strokeAttr = color ? ` style="stroke:${color}"` : '';
+  const fillAttr = color ? ` style="fill:${color}"` : '';
+  return `<path class="sidecurve"${strokeAttr} d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="edgelen"${fillAttr} x="${labelPt[0].toFixed(1)}" y="${labelPt[1].toFixed(1)}">${value}</text>`;
+}
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스)
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pen' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key);
+  d.mode = mode;
+  document.getElementById(key+'PenBtn').classList.toggle('active', mode==='pen');
+  document.getElementById(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  document.getElementById(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{
+    if(document.getElementById('scQuiz').classList.contains('active')) drawSetupCanvas(key);
+  });
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('#scQuiz .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll('#scQuiz .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwErr').textContent='';
+  document.getElementById('adminPwModal').classList.add('show');
+  document.getElementById('adminPwInput').focus();
+}
+async function checkAdminPassword(){
+  const v = document.getElementById('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ document.getElementById('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(ok){
+    document.getElementById('adminPwModal').classList.remove('show');
+    buildAdminPanelContent();
+    document.getElementById('adminPanel').style.display='block';
+  } else {
+    document.getElementById('adminPwErr').textContent='비밀번호가 틀렸어요.';
+  }
+}
+function buildAdminPanelContent(){
+  let html='';
+  TYPES.forEach((t,ti)=>{
+    html += `<div style="margin-top:8px;margin-bottom:4px"><strong>${t.label}</strong></div>`;
+    t.pool.forEach((e,i)=>{
+      const a = t.answer(e);
+      html += `<div style="margin-bottom:4px">#${i+1}(모드${e.mode}): x=${a.x}, y=${a.y} `+
+        `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminPreview(${ti},${i})">보기</button></div>`;
+    });
+  });
+  document.getElementById('adminPanelBody').innerHTML = html;
+}
+function adminPreview(typeIdx, entryIdx){
+  showScreen('scQuiz');
+  st.stageIdx = typeIdx;
+  const type = TYPES[typeIdx];
+  st.cur = { type, entry: type.pool[entryIdx] };
+  st.idx = 1; st.questions = [st.cur];
+  renderCurrentQuestion();
+  updateStageTabs();
+}
+
+/* ════════════════════════════════
+   삼각형 ABC 로컬 좌표 (중점연결정리 파일과 동일 비율) — D=BC중점,E=AC중점,F=AB중점,G=무게중심
+════════════════════════════════ */
+const TRI = {
+  A:[-34.7,-56.5], B:[-100.0,56.5], C:[100.0,56.5],
+  D:[0.0,56.5], E:[32.6,0.0], F:[-67.4,0.0], G:[-11.6,18.8]
+};
+function triAt(cx,cy){
+  const out={};
+  Object.keys(TRI).forEach(k=>{ out[k]=[TRI[k][0]+cx, TRI[k][1]+cy]; });
+  return out;
+}
+function triOutlineSVG(g, color){
+  return `<polygon points="${ptsToStr([g.A,g.B,g.C])}" fill="${color}" fill-opacity="0.06" stroke="${color}" stroke-width="2"></polygon>`;
+}
+function vlabelsSVG(g, keys, color){
+  const cen = bboxCenterOf([g.A,g.B,g.C]);
+  let html='';
+  keys.forEach(k=>{
+    const lp = outwardLabel(g[k], cen, 14);
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${color}">${k}</text>`;
+  });
+  return html;
+}
+function dotSVG(p, color, r){ return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${r||3}" fill="${color}"></circle>`; }
+function medianSVG(p1,p2,color){ return `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${color}" stroke-width="2.2"></line>`; }
+
+/* ════════════════════════════════
+   유형1 — 중선 AD 하나, AG↔GD / BD↔DC
+════════════════════════════════ */
+function mk1(AG,BD){
+  const GD=AG/2, DC=BD;
+  return [
+    { mode:1, AG,BD,GD,DC },
+    { mode:2, AG,BD,GD,DC }
+  ];
+}
+const T1_BASE = [[6,3],[8,5],[10,7],[12,9],[14,4]];
+const POOL1 = T1_BASE.flatMap(([ag,bd])=>mk1(ag,bd));
+function geo1(){ return triAt(170,150); }
+function draw1(e){
+  const g = geo1();
+  const cen = bboxCenterOf([g.A,g.B,g.C]);
+  let html = triOutlineSVG(g,'#4f46e5') + medianSVG(g.A,g.D,'#4f46e5');
+  html += dotSVG(g.G,'#16a34a',3.2) + dotSVG(g.D,'#9098b5',2.6);
+  html += vlabelsSVG(g,['A','B','C','D'],'#1a1a2e') + `<text class="vlabel" x="${(g.G[0]-12).toFixed(1)}" y="${(g.G[1]-8).toFixed(1)}" fill="#16a34a">G</text>`;
+  const agVal = e.mode===1 ? e.AG : 'x', gdVal = e.mode===1 ? 'y' : e.GD;
+  const bdVal = e.mode===1 ? e.BD : 'y', dcVal = e.mode===1 ? 'x' : e.DC;
+  html += sideLabelSVGAt(g.A,g.G,cen,agVal,10,0.5,'#4f46e5');
+  html += sideLabelSVGAt(g.G,g.D,cen,gdVal,10,0.5,'#16a34a');
+  html += sideLabelSVGAt(g.B,g.D,cen,bdVal,12,0.5,'#4f46e5');
+  html += sideLabelSVGAt(g.D,g.C,cen,dcVal,12,0.5,'#16a34a');
+  return html;
+}
+function answer1(e){ return e.mode===1 ? {x:e.GD,y:e.DC} : {x:e.AG,y:e.BD}; }
+
+/* ════════════════════════════════
+   유형2 — 중선 AD,CE 둘 다, BD↔BC / CE↔GE
+════════════════════════════════ */
+function mk2(BD,CE){
+  const BC=2*BD, GE=CE/3;
+  return [
+    { mode:1, BD,CE,BC,GE },
+    { mode:2, BD,CE,BC,GE }
+  ];
+}
+const T2_BASE = [[5,9],[7,15],[8,12],[10,18],[6,21]];
+const POOL2 = T2_BASE.flatMap(([bd,ce])=>mk2(bd,ce));
+function geo2(){ return triAt(170,150); }
+function draw2(e){
+  const g = geo2();
+  const cen = bboxCenterOf([g.A,g.B,g.C]);
+  // 문제의 점 E는 "AB의 중점" — TRI 좌표계에서는 F 키로 저장된 점이므로, 좌표는 g.F를 쓰고 라벨 텍스트만 "E"로 표시한다
+  let html = triOutlineSVG(g,'#4f46e5') + medianSVG(g.A,g.D,'#9098b5') + medianSVG(g.C,g.F,'#e05a20');
+  html += dotSVG(g.G,'#16a34a',3.2) + dotSVG(g.D,'#9098b5',2.6) + dotSVG(g.F,'#e05a20',2.6);
+  html += vlabelsSVG(g,['A','B','C','D'],'#1a1a2e') + `<text class="vlabel" x="${(g.G[0]-12).toFixed(1)}" y="${(g.G[1]-8).toFixed(1)}" fill="#16a34a">G</text>`;
+  const ep = outwardLabel(g.F, cen, 14);
+  html += `<text class="vlabel" x="${ep[0].toFixed(1)}" y="${ep[1].toFixed(1)}" fill="#e05a20">E</text>`;
+  const bdVal = e.mode===1 ? e.BD : 'x', bcVal = e.mode===1 ? 'x' : e.BC;
+  const ceVal = e.mode===1 ? e.CE : 'y', geVal = e.mode===1 ? 'y' : e.GE;
+  html += sideLabelSVGAt(g.B,g.D,cen,bdVal,10,0.5,'#4f46e5');
+  html += sideLabelSVGAt(g.B,g.C,cen,bcVal,26,0.5,'#1a1a2e');
+  html += sideLabelSVGAt(g.G,g.F,cen,geVal,10,0.5,'#e05a20');
+  html += sideLabelSVGAt(g.C,g.F,cen,ceVal,32,0.15,'#9098b5');
+  return html;
+}
+function answer2(e){ return e.mode===1 ? {x:e.BC,y:e.GE} : {x:e.BD,y:e.CE}; }
+
+/* ════════════════════════════════
+   유형3 — 넓이 6등분, small↔pair↔full
+════════════════════════════════ */
+function mk3(k){
+  const pair=2*k, full=6*k;
+  return [
+    { mode:1, k,pair,full },
+    { mode:2, k,pair,full },
+    { mode:3, k,pair,full }
+  ];
+}
+const T3_BASE = [3,4,5,6,7];
+const POOL3 = T3_BASE.flatMap(k=>mk3(k));
+function geo3(){ return triAt(170,150); }
+function draw3(e){
+  const g = geo3();
+  let html = triOutlineSVG(g,'#9098b5');
+  html += medianSVG(g.A,g.D,'#9098b5') + medianSVG(g.B,g.E,'#9098b5') + medianSVG(g.C,g.F,'#9098b5');
+  let givenPts, givenVal, fillColor;
+  if(e.mode===1){ givenPts=[g.G,g.B,g.D]; givenVal=e.k; fillColor='#4f46e5'; }
+  else if(e.mode===2){ givenPts=[g.A,g.B,g.C]; givenVal=e.full; fillColor='#4f46e5'; }
+  else { givenPts=[g.G,g.B,g.C]; givenVal=e.pair; fillColor='#4f46e5'; }
+  const gc = bboxCenterOf(givenPts);
+  html += `<polygon points="${ptsToStr(givenPts)}" fill="${fillColor}" fill-opacity="0.22" stroke="none"></polygon>`;
+  html += `<text class="vlabel" x="${gc[0].toFixed(1)}" y="${gc[1].toFixed(1)}" fill="${fillColor}">${givenVal}</text>`;
+  html += dotSVG(g.G,'#16a34a',3) + dotSVG(g.D,'#9098b5',2.4) + dotSVG(g.E,'#9098b5',2.4) + dotSVG(g.F,'#9098b5',2.4);
+  html += vlabelsSVG(g,['A','B','C','D','E','F'],'#1a1a2e') + `<text class="vlabel" x="${(g.G[0]-12).toFixed(1)}" y="${(g.G[1]-8).toFixed(1)}" fill="#16a34a">G</text>`;
+  return html;
+}
+function answer3(e){
+  if(e.mode===1) return {x:e.pair,y:e.full};
+  if(e.mode===2) return {x:e.k,y:e.pair};
+  return {x:e.k,y:e.full};
+}
+function qtext3(e){
+  if(e.mode===1) return `색칠된 △GBD의 넓이가 ${e.k}cm²일 때, △GBC의 넓이 x cm², △ABC의 넓이 y cm²를 구하시오.`;
+  if(e.mode===2) return `색칠된 △ABC의 넓이가 ${e.full}cm²일 때, △GBD의 넓이 x cm², △GBC의 넓이 y cm²를 구하시오.`;
+  return `색칠된 △GBC의 넓이가 ${e.pair}cm²일 때, △GBD의 넓이 x cm², △ABC의 넓이 y cm²를 구하시오.`;
+}
+
+const TYPES = [
+  { key:'1', label:'유형1', pool:POOL1, draw:draw1, answer:answer1, qtext:()=>'다음 그림에서 점 G가 △ABC의 무게중심일 때, x, y의 값을 각각 구하시오.' },
+  { key:'2', label:'유형2', pool:POOL2, draw:draw2, answer:answer2, qtext:()=>'다음 그림에서 점 G가 △ABC의 무게중심일 때, x, y의 값을 각각 구하시오.' },
+  { key:'3', label:'유형3', pool:POOL3, draw:draw3, answer:answer3, qtext:qtext3 }
+];
+
+/* ════════════════════════════════
+   레벨-C 진행 — 유형1→2→3 순차 통과, 유형마다 3문제 중 2개 이상, 떨어진 유형만 재도전
+════════════════════════════════ */
+const st = { stageIdx:0, idx:0, correct:0, questions:[], cur:null, curAns:null, stageScores:[null,null,null] };
+function updateStageTabs(){
+  const labels=['유형1','유형2','유형3'];
+  let html='';
+  labels.forEach((l,i)=>{
+    let cls='stage-tab';
+    if(st.stageScores[i] && st.stageScores[i].pass) cls+=' done';
+    else if(i===st.stageIdx) cls+=' active';
+    html+=`<div class="${cls}">${l}</div>`;
+  });
+  document.getElementById('stageTabs').innerHTML = html;
+}
+function buildStageQuestions(stageIdx){
+  const type = TYPES[stageIdx];
+  const picks = shuffle(type.pool).slice(0,3);
+  return picks.map(entry=>({ type, entry }));
+}
+function startStage(stageIdx){
+  st.stageIdx = stageIdx; st.idx=0; st.correct=0;
+  st.questions = buildStageQuestions(stageIdx);
+  updateStageTabs();
+  showScreen('scQuiz');
+  quizNext();
+}
+function quizNext(){
+  st.idx++;
+  if(st.idx>st.questions.length){ stageFinish(); return; }
+  st.cur = st.questions[st.idx-1];
+  renderCurrentQuestion();
+}
+function renderCurrentQuestion(){
+  const type = st.cur.type, entry = st.cur.entry;
+  st.curAns = type.answer(entry);
+  document.getElementById('quizProgress').textContent = `${type.label} · ${st.idx||1} / ${st.questions?st.questions.length:3}`;
+  document.getElementById('quizQtext').textContent = type.qtext(entry);
+  document.getElementById('quizSvg').innerHTML = type.draw(entry);
+  document.getElementById('qAnsX').value=''; document.getElementById('qAnsX').classList.remove('correct','wrong');
+  document.getElementById('qAnsY').value=''; document.getElementById('qAnsY').classList.remove('correct','wrong');
+  document.getElementById('quizCheckBtn').disabled=false;
+  document.getElementById('quizFb').textContent='';
+  drawSetupCanvas('quiz');
+}
+function quizCheck(){
+  const vx = parseFloat(document.getElementById('qAnsX').value);
+  const vy = parseFloat(document.getElementById('qAnsY').value);
+  const okX = numMatches(vx, st.curAns.x, 0.05), okY = numMatches(vy, st.curAns.y, 0.05);
+  document.getElementById('qAnsX').classList.toggle('correct',okX); document.getElementById('qAnsX').classList.toggle('wrong',!okX);
+  document.getElementById('qAnsY').classList.toggle('correct',okY); document.getElementById('qAnsY').classList.toggle('wrong',!okY);
+  const ok = okX && okY;
+  const fb = document.getElementById('quizFb');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='정답이에요!';
+    st.correct++;
+    document.getElementById('quizCheckBtn').disabled=true;
+    setTimeout(quizNext, 1300);
+  } else {
+    fb.className='feedback error';
+    const parts=[]; if(!okX) parts.push('x값'); if(!okY) parts.push('y값');
+    fb.textContent = '❌ '+parts.join(', ')+'이(가) 틀렸어요. 다시 확인해서 고쳐보세요.';
+  }
+}
+function stageFinish(){
+  const total = st.questions.length, pass = st.correct>=2;
+  st.stageScores[st.stageIdx] = { correct:st.correct, total, pass };
+  updateStageTabs();
+  const type = TYPES[st.stageIdx];
+  document.getElementById('srIcon').textContent = pass?'🎉':'💪';
+  document.getElementById('srTitle').textContent = `${type.label} 결과`;
+  document.getElementById('srScore').textContent = `${st.correct} / ${total}`;
+  document.getElementById('srScore').classList.toggle('fail', !pass);
+  document.getElementById('srMsg').textContent = pass ? '통과했어요!' : '3문제 중 2문제 이상 맞아야 통과해요.';
+  document.getElementById('srRetryBtn').style.display = pass ? 'none' : 'inline-block';
+  document.getElementById('srNextBtn').textContent = !pass ? '다시 도전하기' : (st.stageIdx<TYPES.length-1 ? `${TYPES[st.stageIdx+1].label}로 →` : '결과 보기 →');
+  showScreen('scStageResult');
+}
+function srRetry(){ startStage(st.stageIdx); }
+function srNext(){
+  if(!st.stageScores[st.stageIdx].pass){ startStage(st.stageIdx); return; }
+  if(st.stageIdx < TYPES.length-1){ startStage(st.stageIdx+1); }
+  else {
+    showScreen('scDone');
+    if(window._reportHubComplete) window._reportHubComplete();
+  }
+}
+
+/* ════════════════════════════════
+   초기 실행
+════════════════════════════════ */
+drawBindOnce('quiz'); drawSetupCanvas('quiz');
+startStage(0);
+</script>
+</body>
+</html>

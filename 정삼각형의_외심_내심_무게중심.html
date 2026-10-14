@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정삼각형의 외심, 내심, 무게중심</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --purple:#9333ea;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+.key-term{color:var(--red);font-weight:800;text-decoration:underline;text-decoration-color:var(--red);text-decoration-thickness:2px;text-underline-offset:2px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.key-q{font-size:15.5px;font-weight:800;text-decoration:underline;text-decoration-color:var(--indigo);text-decoration-thickness:2.5px;text-underline-offset:3px}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 440px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+.wide{max-width:900px;margin:0 auto}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:10px}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.scratch-area{height:70px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+
+.panel-title{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--indigo);color:#fff;font-size:12px;font-weight:800}
+.proof-block{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:14px;margin:10px 0;font-size:14.5px;line-height:2.3}
+.blank{display:inline-block;width:62px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-primary{background:var(--indigo)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.tab-bar{display:flex;gap:8px;margin-bottom:12px}
+.tab-btn{flex:1;padding:10px 6px;border-radius:10px;text-align:center;font-size:13px;font-weight:800;color:var(--ink3);background:#fff;border:1.5px solid #e0e7ff;cursor:pointer;font-family:inherit}
+.tab-btn.active{color:#fff;background:var(--indigo);border-color:var(--indigo)}
+.toggle-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.toggle-sw{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit}
+.toggle-sw .dot{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;background:transparent}
+.toggle-sw.on .dot{background:currentColor}
+.stamp{display:inline-block;padding:4px 10px;border-radius:8px;font-size:12.5px;font-weight:800;margin:2px}
+.stamp.pass{background:var(--green-l);color:#14532d}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.summary-box{background:var(--indigo-ll);border:1.5px solid var(--indigo-l);border-radius:10px;padding:16px;text-align:center;font-size:15px;font-weight:700;color:var(--indigo);line-height:2}
+
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:360px;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25)}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">정삼각형의 외심, 내심, 무게중심</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<div class="main">
+
+  <div class="screen active" id="scInsight">
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn" id="insightPenBtn" onclick="drawSetMode('insight','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('insight','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('insight','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('insight','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('insight','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('insight','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="insightEraserBtn" onclick="drawToggleEraser('insight')">🧽 지우개</button>
+          <button class="mode-btn active" id="insightPointerBtn" onclick="drawSetMode('insight','pointer')">🖱️ 마우스</button>
+        </div>
+        <div class="draw-wrap" id="insightDrawWrap">
+          <div class="svg-wrap"><svg id="insightSvg" viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area"></div>
+          <canvas id="insightInk" class="ink-canvas"></canvas>
+        </div>
+      </div>
+      <div class="split-right card">
+        <div class="tab-bar" id="insightTabs">
+          <button class="tab-btn active" onclick="switchTab(1)">① 선이 겹치나요?</button>
+          <button class="tab-btn" onclick="switchTab(2)">② 점이 세 조건을 다 만족하나요?</button>
+        </div>
+        <div id="insightPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scProve">
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn" id="provePenBtn" onclick="drawSetMode('prove','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('prove','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('prove','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('prove','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('prove','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('prove','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="proveEraserBtn" onclick="drawToggleEraser('prove')">🧽 지우개</button>
+          <button class="mode-btn active" id="provePointerBtn" onclick="drawSetMode('prove','pointer')">🖱️ 마우스</button>
+        </div>
+        <div class="draw-wrap" id="proveDrawWrap">
+          <div class="svg-wrap"><svg id="proveSvg" viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area"></div>
+          <canvas id="proveInk" class="ink-canvas"></canvas>
+        </div>
+      </div>
+      <div class="split-right card">
+        <div id="provePanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scSummary">
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="svg-wrap"><svg id="summarySvg" viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      </div>
+      <div class="split-right card">
+        <div id="summaryPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px">정삼각형의 외심, 내심, 무게중심이 일치한다는 사실을 탐구하고 증명해봤어요.</p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;right:16px;width:320px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:40;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'equilateral-centers-coincide' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function lerp(p,q,t){ return [p[0]+(q[0]-p[0])*t, p[1]+(q[1]-p[1])*t]; }
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function bboxSizeOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return { w:Math.max(...xs)-Math.min(...xs), h:Math.max(...ys)-Math.min(...ys) }; }
+function outwardLabel(p, centroid, d){ const dx=p[0]-centroid[0], dy=p[1]-centroid[1], len=Math.hypot(dx,dy)||1; return [p[0]+dx/len*d, p[1]+dy/len*d]; }
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function sameSeg(v, correct){
+  const nv = normText(v).toUpperCase();
+  return nv===correct || nv===correct.split('').reverse().join('');
+}
+function lockRow(selector){ document.querySelectorAll(selector+' .btn').forEach(b=>b.disabled=true); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function centroidOf(A,B,C){ return [(A[0]+B[0]+C[0])/3, (A[1]+B[1]+C[1])/3]; }
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스) — insight/prove 공용
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pointer' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key);
+  d.mode = mode;
+  document.getElementById(key+'PenBtn').classList.toggle('active', mode==='pen');
+  document.getElementById(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  document.getElementById(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{
+    const scrMap = {insight:'scInsight', prove:'scProve'};
+    if(document.getElementById(scrMap[key]).classList.contains('active')) drawSetupCanvas(key);
+  });
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  const scrMap = {insight:'#scInsight', prove:'#scProve'};
+  document.querySelectorAll(scrMap[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  const scrMap = {insight:'#scInsight', prove:'#scProve'};
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector(scrMap[key]+' .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll(scrMap[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwErr').textContent='';
+  document.getElementById('adminPwModal').classList.add('show');
+  document.getElementById('adminPwInput').focus();
+}
+async function checkAdminPassword(){
+  const v = document.getElementById('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ document.getElementById('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(ok){
+    document.getElementById('adminPwModal').classList.remove('show');
+    document.getElementById('adminPanelBody').innerHTML =
+      '<div><strong>증명 빈칸 정답</strong></div>'+
+      '<div>① 이등변삼각형</div>'+
+      '<div>② 각이등분선, 수직이등분선</div>'+
+      '<div>③ 내심, 외심, 중선, 무게중심</div>'+
+      '<div class="btn-row" style="margin-top:8px">'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="showScreen(\'scInsight\');goToInsight()">통찰</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="showScreen(\'scProve\');goToProve()">증명</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="showScreen(\'scSummary\');goToSummary()">정리</button>'+
+      '</div>';
+    document.getElementById('adminPanel').style.display='block';
+  } else {
+    document.getElementById('adminPwErr').textContent='비밀번호가 틀렸어요.';
+  }
+}
+
+/* ════════════════════════════════
+   삼각형 좌표 — 정삼각형
+════════════════════════════════ */
+const EQ_R = 95;
+const TRI_END = {
+  A:[0,-EQ_R],
+  B:[-EQ_R*Math.sin(60*Math.PI/180), EQ_R*Math.cos(60*Math.PI/180)],
+  C:[EQ_R*Math.sin(60*Math.PI/180), EQ_R*Math.cos(60*Math.PI/180)]
+};
+function triOutlineSVG(g, color){
+  return `<polygon points="${ptsToStr([g.A,g.B,g.C])}" fill="${color}" fill-opacity="0.06" stroke="${color}" stroke-width="2"></polygon>`;
+}
+function vlabelsSVG(g, color){
+  const cen = bboxCenterOf([g.A,g.B,g.C]);
+  let html='';
+  [['A',g.A],['B',g.B],['C',g.C]].forEach(([k,p])=>{
+    const lp = outwardLabel(p, cen, 14);
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${color}">${k}</text>`;
+  });
+  return html;
+}
+function centerDotSVG(p, color, label, lx, ly){
+  return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${color}"></circle>`+
+    `<text class="vlabel" x="${(p[0]+lx).toFixed(1)}" y="${(p[1]+ly).toFixed(1)}" fill="${color}">${label}</text>`;
+}
+
+/* ════════════════════════════════
+   통찰 — 탭1(3색 레이어 포개기) / 탭2(3중 자격 검증기)
+════════════════════════════════ */
+function triAtEQ(cx,cy){ return { A:[TRI_END.A[0]+cx,TRI_END.A[1]+cy], B:[TRI_END.B[0]+cx,TRI_END.B[1]+cy], C:[TRI_END.C[0]+cx,TRI_END.C[1]+cy] }; }
+function medianSVG(p1,p2,color,w){ return `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${color}" stroke-width="${w||2.6}"></line>`; }
+const INS_CX=180, INS_CY=150;
+const insightSt = { tab:1, on:{median:false,bisector:false,perp:false}, verified:{circum:false,in:false,centroid:false} };
+
+function medianEndpoints(g){
+  const D=lerp(g.B,g.C,0.5), E=lerp(g.A,g.C,0.5), F=lerp(g.A,g.B,0.5);
+  return [[g.A,D],[g.B,E],[g.C,F]];
+}
+function perpBisectorEndpoints(g){
+  function one(V1,V2,Opp){
+    const M = lerp(V1,V2,0.5);
+    const d = unitVec(V1,V2);
+    let pd=[-d[1],d[0]];
+    const toward=unitVec(M,Opp);
+    if(pd[0]*toward[0]+pd[1]*toward[1]<0) pd=[-pd[0],-pd[1]];
+    const len = dist(Opp,M);
+    return [M,[M[0]+pd[0]*len, M[1]+pd[1]*len]];
+  }
+  return [one(g.B,g.C,g.A), one(g.A,g.C,g.B), one(g.A,g.B,g.C)];
+}
+function angleBisectorEndpoints(g){
+  function one(V,P1,P2,OppMid){
+    const h1=unitVec(V,P1), h2=unitVec(V,P2);
+    const bd=unitVec([0,0],[h1[0]+h2[0],h1[1]+h2[1]]);
+    const len = dist(V,OppMid);
+    return [V,[V[0]+bd[0]*len, V[1]+bd[1]*len]];
+  }
+  const D=lerp(g.B,g.C,0.5), E=lerp(g.A,g.C,0.5), F=lerp(g.A,g.B,0.5);
+  return [one(g.A,g.B,g.C,D), one(g.B,g.A,g.C,E), one(g.C,g.A,g.B,F)];
+}
+
+function goToInsight(){
+  showScreen('scInsight');
+  window.scrollTo({top:0, behavior:'smooth'});
+  drawBindOnce('insight'); drawSetupCanvas('insight');
+  insightSt.tab=1;
+  insightSt.on = {median:false,bisector:false,perp:false};
+  insightSt.verified = {circum:false,in:false,centroid:false};
+  document.getElementById('insightSvg').setAttribute('viewBox','0 0 360 300');
+  document.querySelectorAll('#insightTabs .tab-btn').forEach((b,i)=>b.classList.toggle('active', i===0));
+  renderTab1();
+}
+function switchTab(n){
+  insightSt.tab = n;
+  document.querySelectorAll('#insightTabs .tab-btn').forEach((b,i)=>b.classList.toggle('active', i===n-1));
+  if(n===1) renderTab1(); else renderTab2();
+}
+
+/* ---- 탭1: 3색 레이어 포개기 ---- */
+function renderTab1(){
+  const g = triAtEQ(INS_CX,INS_CY);
+  let base = triOutlineSVG(g,'#4f46e5') + vlabelsSVG(g,'#1a1a2e');
+  document.getElementById('insightSvg').innerHTML = base + `<g id="layerMedian"></g><g id="layerBisector"></g><g id="layerPerp"></g><g id="layerFuse"></g>`;
+  updateLayers();
+  document.getElementById('insightPanel').innerHTML = `
+    <p>세 가지 서로 다른 방법(중선 / 각의 이등분선 / 수직이등분선)으로 그은 선이 사실은 같은 선일까요? 스위치를 하나씩 켜서 확인해보세요.</p>
+    <div class="toggle-row">
+      <button class="toggle-sw ${insightSt.on.median?'on':''}" id="swMedian" style="color:#dc2626" onclick="toggleLine('median')"><span class="dot"></span>중선</button>
+      <button class="toggle-sw ${insightSt.on.bisector?'on':''}" id="swBisector" style="color:#2563eb" onclick="toggleLine('bisector')"><span class="dot"></span>각의 이등분선</button>
+      <button class="toggle-sw ${insightSt.on.perp?'on':''}" id="swPerp" style="color:#16a34a" onclick="toggleLine('perp')"><span class="dot"></span>수직이등분선</button>
+    </div>
+    <div class="feedback" id="tab1Fb"></div>
+    <div id="tab1Next"></div>
+  `;
+  checkTab1Fuse();
+}
+function toggleLine(kind){
+  insightSt.on[kind] = !insightSt.on[kind];
+  const idMap = {median:'swMedian',bisector:'swBisector',perp:'swPerp'};
+  document.getElementById(idMap[kind]).classList.toggle('on', insightSt.on[kind]);
+  updateLayers();
+  checkTab1Fuse();
+}
+function updateLayers(){
+  const g = triAtEQ(INS_CX,INS_CY);
+  const meds = medianEndpoints(g), bis = angleBisectorEndpoints(g), perps = perpBisectorEndpoints(g);
+  document.getElementById('layerMedian').innerHTML = insightSt.on.median ? meds.map(([p1,p2])=>medianSVG(p1,p2,'#dc2626',3)).join('') : '';
+  document.getElementById('layerBisector').innerHTML = insightSt.on.bisector ? bis.map(([p1,p2])=>medianSVG(p1,p2,'#2563eb',3)).join('') : '';
+  document.getElementById('layerPerp').innerHTML = insightSt.on.perp ? perps.map(([p1,p2])=>medianSVG(p1,p2,'#16a34a',3)).join('') : '';
+}
+function checkTab1Fuse(){
+  const g = triAtEQ(INS_CX,INS_CY);
+  const allOn = insightSt.on.median && insightSt.on.bisector && insightSt.on.perp;
+  const fb = document.getElementById('tab1Fb');
+  if(allOn){
+    const meds = medianEndpoints(g);
+    const G = centroidOf(g.A,g.B,g.C);
+    document.getElementById('layerFuse').innerHTML = meds.map(([p1,p2])=>medianSVG(p1,p2,'#fff',1.3)).join('') +
+      `<circle cx="${G[0].toFixed(1)}" cy="${G[1].toFixed(1)}" r="6" fill="none" stroke="#eab308" stroke-width="2.5"><animate attributeName="r" values="5;9;5" dur="1.1s" repeatCount="indefinite"/></circle>`;
+    fb.className='feedback success'; fb.textContent='세 선이 완전히 겹쳐서 하나로 보여요!';
+    document.getElementById('tab1Next').innerHTML = `<div class="btn-row"><button class="btn btn-primary" onclick="switchTab(2)">②번 탭에서 점도 확인해보기 →</button></div>`;
+  } else {
+    document.getElementById('layerFuse').innerHTML = '';
+    fb.textContent='';
+    document.getElementById('tab1Next').innerHTML = '';
+  }
+}
+
+/* ---- 탭2: 3중 자격 검증기 ---- */
+function renderTab2(){
+  const g = triAtEQ(INS_CX,INS_CY);
+  const P = centroidOf(g.A,g.B,g.C);
+  let base = triOutlineSVG(g,'#4f46e5') + vlabelsSVG(g,'#1a1a2e');
+  base += `<circle cx="${P[0].toFixed(1)}" cy="${P[1].toFixed(1)}" r="4" fill="#1a1a2e"></circle><text class="vlabel" x="${(P[0]-14).toFixed(1)}" y="${(P[1]-8).toFixed(1)}" fill="#1a1a2e">P</text>`;
+  document.getElementById('insightSvg').innerHTML = base + `<g id="verifyLayer"></g>`;
+  document.getElementById('insightPanel').innerHTML = `
+    <p>삼각형 한가운데 의문의 점 P가 있어요. 버튼을 눌러서 이 점의 "신원"을 조사해볼까요?</p>
+    <div class="btn-row">
+      <button class="btn" id="btnCircum" onclick="verifyCircum()" ${insightSt.verified.circum?'disabled':''}>외심 검증</button>
+      <button class="btn" id="btnIn" onclick="verifyIn()" ${insightSt.verified.in?'disabled':''}>내심 검증</button>
+      <button class="btn" id="btnCentroid" onclick="verifyCentroid()" ${insightSt.verified.centroid?'disabled':''}>무게중심 검증</button>
+    </div>
+    <div id="stamps"></div>
+    <div id="tab2Next"></div>
+  `;
+  if(insightSt.verified.circum) redrawVerify('circum');
+  if(insightSt.verified.in) redrawVerify('in');
+  if(insightSt.verified.centroid) redrawVerify('centroid');
+  [['circum','외심 합격 — 세 꼭짓점까지 거리가 같아요'],['in','내심 합격 — 세 변까지 거리가 같아요'],['centroid','무게중심 합격 — 2:1로 나눠요']].forEach(([k,t])=>{
+    if(insightSt.verified[k]) document.getElementById('stamps').insertAdjacentHTML('beforeend', `<span class="stamp pass">✓ ${t}</span>`);
+  });
+  checkAllVerified();
+}
+function redrawVerify(kind){
+  const g = triAtEQ(INS_CX,INS_CY), P = centroidOf(g.A,g.B,g.C);
+  if(kind==='circum'){
+    const R = dist(P,g.A);
+    const lines = [g.A,g.B,g.C].map(V=>`<line x1="${P[0].toFixed(1)}" y1="${P[1].toFixed(1)}" x2="${V[0].toFixed(1)}" y2="${V[1].toFixed(1)}" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="4 3"></line>`).join('');
+    document.getElementById('verifyLayer').insertAdjacentHTML('beforeend', lines+`<circle cx="${P[0].toFixed(1)}" cy="${P[1].toFixed(1)}" r="${R.toFixed(1)}" fill="none" stroke="#2563eb" stroke-width="2"></circle>`);
+  } else if(kind==='in'){
+    const feet=[footOf(P,g.B,g.C),footOf(P,g.A,g.C),footOf(P,g.A,g.B)];
+    const r = dist(P,feet[0]);
+    const lines = feet.map(F=>`<line x1="${P[0].toFixed(1)}" y1="${P[1].toFixed(1)}" x2="${F[0].toFixed(1)}" y2="${F[1].toFixed(1)}" stroke="#e05a20" stroke-width="1.6" stroke-dasharray="4 3"></line>`).join('');
+    document.getElementById('verifyLayer').insertAdjacentHTML('beforeend', lines+`<circle cx="${P[0].toFixed(1)}" cy="${P[1].toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#e05a20" stroke-width="2"></circle>`);
+  } else {
+    const D=lerp(g.B,g.C,0.5);
+    document.getElementById('verifyLayer').insertAdjacentHTML('beforeend', medianSVG(g.A,D,'#16a34a',2));
+  }
+}
+function footOf(P,V1,V2){
+  const d=unitVec(V1,V2);
+  const t=(P[0]-V1[0])*d[0]+(P[1]-V1[1])*d[1];
+  return [V1[0]+d[0]*t, V1[1]+d[1]*t];
+}
+function addStamp(text){
+  document.getElementById('stamps').insertAdjacentHTML('beforeend', `<span class="stamp pass">✓ ${text}</span>`);
+  checkAllVerified();
+}
+function checkAllVerified(){
+  if(insightSt.verified.circum && insightSt.verified.in && insightSt.verified.centroid){
+    document.getElementById('tab2Next').innerHTML = `<div class="btn-row"><button class="btn btn-primary" onclick="goToProve()">왜 그런지 증명해보기 →</button></div>`;
+  }
+}
+function verifyCircum(){
+  document.getElementById('btnCircum').disabled = true;
+  const g = triAtEQ(INS_CX,INS_CY), P = centroidOf(g.A,g.B,g.C);
+  const R = dist(P,g.A);
+  const lines = [g.A,g.B,g.C].map(V=>`<line x1="${P[0].toFixed(1)}" y1="${P[1].toFixed(1)}" x2="${V[0].toFixed(1)}" y2="${V[1].toFixed(1)}" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="4 3"></line>`).join('');
+  document.getElementById('verifyLayer').insertAdjacentHTML('beforeend', lines+`<circle id="circumCircle" cx="${P[0].toFixed(1)}" cy="${P[1].toFixed(1)}" r="0" fill="none" stroke="#2563eb" stroke-width="2"></circle>`);
+  const t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/600);
+    document.getElementById('circumCircle').setAttribute('r', (R*easeInOut(t)).toFixed(1));
+    if(t<1) requestAnimationFrame(frame);
+    else { insightSt.verified.circum=true; addStamp('외심 합격 — 세 꼭짓점까지 거리가 같아요'); }
+  }
+  requestAnimationFrame(frame);
+}
+function verifyIn(){
+  document.getElementById('btnIn').disabled = true;
+  const g = triAtEQ(INS_CX,INS_CY), P = centroidOf(g.A,g.B,g.C);
+  const feet=[footOf(P,g.B,g.C),footOf(P,g.A,g.C),footOf(P,g.A,g.B)];
+  const r = dist(P,feet[0]);
+  const lines = feet.map(F=>`<line x1="${P[0].toFixed(1)}" y1="${P[1].toFixed(1)}" x2="${F[0].toFixed(1)}" y2="${F[1].toFixed(1)}" stroke="#e05a20" stroke-width="1.6" stroke-dasharray="4 3"></line>`).join('');
+  document.getElementById('verifyLayer').insertAdjacentHTML('beforeend', lines+`<circle id="inCircle" cx="${P[0].toFixed(1)}" cy="${P[1].toFixed(1)}" r="0" fill="none" stroke="#e05a20" stroke-width="2"></circle>`);
+  const t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/600);
+    document.getElementById('inCircle').setAttribute('r', (r*easeInOut(t)).toFixed(1));
+    if(t<1) requestAnimationFrame(frame);
+    else { insightSt.verified.in=true; addStamp('내심 합격 — 세 변까지 거리가 같아요'); }
+  }
+  requestAnimationFrame(frame);
+}
+function verifyCentroid(){
+  document.getElementById('btnCentroid').disabled = true;
+  const g = triAtEQ(INS_CX,INS_CY), P = centroidOf(g.A,g.B,g.C);
+  const D=lerp(g.B,g.C,0.5);
+  const m1=lerp(g.A,P,0.5), m2=lerp(P,D,0.5);
+  document.getElementById('verifyLayer').insertAdjacentHTML('beforeend',
+    medianSVG(g.A,D,'#16a34a',2)+
+    `<text class="vlabel" x="${m1[0].toFixed(1)}" y="${(m1[1]-6).toFixed(1)}" fill="#16a34a" style="font-size:11px">2</text>`+
+    `<text class="vlabel" x="${m2[0].toFixed(1)}" y="${(m2[1]-6).toFixed(1)}" fill="#16a34a" style="font-size:11px">1</text>`);
+  insightSt.verified.centroid=true;
+  addStamp('무게중심 합격 — 2:1로 나눠요');
+}
+
+/* ════════════════════════════════
+   증명 — 이등변삼각형 성질을 세 꼭짓점에 적용
+════════════════════════════════ */
+function provePanel(html){ document.getElementById('provePanel').innerHTML = html; }
+function appendProvePanel(html){ document.getElementById('provePanel').insertAdjacentHTML('beforeend', html); }
+function proveDrawTri(){
+  const g = triAtEQ(180,150);
+  const D=lerp(g.B,g.C,0.5), E=lerp(g.A,g.C,0.5), F=lerp(g.A,g.B,0.5);
+  let html = triOutlineSVG(g,'#4f46e5') + vlabelsSVG(g,'#1a1a2e');
+  html += medianSVG(g.A,D,'#4f46e5') + medianSVG(g.B,E,'#4f46e5') + medianSVG(g.C,F,'#4f46e5');
+  const G = centroidOf(g.A,g.B,g.C);
+  html += centerDotSVG(G,'#16a34a','O=I=G',10,-8);
+  document.getElementById('proveSvg').innerHTML = html;
+}
+function goToProve(){
+  showScreen('scProve');
+  window.scrollTo({top:0, behavior:'smooth'});
+  drawBindOnce('prove'); drawSetupCanvas('prove');
+  proveDrawTri();
+  provePanel(`
+    <div class="panel-title"><span class="step-badge">1</span>정삼각형은 어디서 봐도 이등변삼각형</div>
+    <p class="key-q">정삼각형 ABC는 세 변의 길이가 모두 같아요. 그렇다면 꼭짓점 A에서 바라볼 때, △ABC는 어떤 삼각형일까요?</p>
+    <div class="proof-block">AB=AC이므로, △ABC는 꼭짓점 A를 꼭지각으로 하는 (<input class="blank" id="pf1" style="width:90px">)이다.</div>
+    <div class="btn-row"><button class="btn btn-check" onclick="pvCheck1(this)">확인</button></div>
+    <div class="feedback" id="pvfb1"></div>
+  `);
+}
+function pvCheck1(btn){
+  const ok = normText(document.getElementById('pf1').value)==='이등변삼각형';
+  document.getElementById('pf1').classList.toggle('correct',ok); document.getElementById('pf1').classList.toggle('wrong',!ok);
+  const fb = document.getElementById('pvfb1');
+  if(ok){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled=true;
+    appendProvePanel(`
+      <div class="panel-title"><span class="step-badge">2</span>이등변삼각형의 성질 적용</div>
+      <p class="key-q">이등변삼각형에서 꼭지각의 이등분선은 밑변을 수직이등분한다는 사실, 배웠었죠? 세 꼭짓점 A, B, C에 각각 적용해볼까요?</p>
+      <div class="proof-block">
+        정삼각형 ABC는 꼭짓점 A, B, C 중 어디서 봐도 이등변삼각형이므로, 각 꼭짓점에서 그은 (<input class="blank" id="pf2" style="width:100px">)은 대변을 수직이등분한다.<br>
+        즉, 세 (<input class="blank" id="pf2b" style="width:100px">)은 각각 대변의 (<input class="blank" id="pf3" style="width:110px">)이기도 하다.
+      </div>
+      <div class="btn-row"><button class="btn btn-check" onclick="pvCheck2(this)">확인</button></div>
+      <div class="feedback" id="pvfb2"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='두 변의 길이가 같은 삼각형을 무엇이라고 하는지 떠올려보세요.';
+  }
+}
+function pvCheck2(btn){
+  const ok2 = sameSeg(document.getElementById('pf2').value,'각이등분선') || normText(document.getElementById('pf2').value)==='각의이등분선';
+  const ok2b = sameSeg(document.getElementById('pf2b').value,'각이등분선') || normText(document.getElementById('pf2b').value)==='각의이등분선';
+  const ok3 = normText(document.getElementById('pf3').value)==='수직이등분선';
+  [['pf2',ok2],['pf2b',ok2b],['pf3',ok3]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('pvfb2');
+  if(ok2&&ok2b&&ok3){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled=true;
+    appendProvePanel(`
+      <div class="panel-title"><span class="step-badge">3</span>결론</div>
+      <div class="proof-block">
+        세 각이등분선이 만나는 점은 (<input class="blank" id="pf4" style="width:70px">)이고, 세 수직이등분선이 만나는 점은 (<input class="blank" id="pf5" style="width:70px">)이다.<br>
+        그런데 두 종류의 선이 서로 같은 선이므로, 두 점도 같은 점이다.<br>
+        또한 이 선들은 동시에 (<input class="blank" id="pf6" style="width:70px">)이기도 하므로, 그 교점인 (<input class="blank" id="pf7" style="width:90px">)도 같은 점이다.
+      </div>
+      <div class="btn-row"><button class="btn btn-check" onclick="pvCheck3(this)">확인</button></div>
+      <div class="feedback" id="pvfb3"></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='각 꼭짓점에서 그은 선이 어떤 두 가지 역할을 동시에 하는지 다시 살펴보세요.';
+  }
+}
+function pvCheck3(btn){
+  const ok4 = normText(document.getElementById('pf4').value)==='내심';
+  const ok5 = normText(document.getElementById('pf5').value)==='외심';
+  const ok6 = sameSeg(document.getElementById('pf6').value,'중선');
+  const ok7 = normText(document.getElementById('pf7').value)==='무게중심';
+  [['pf4',ok4],['pf5',ok5],['pf6',ok6],['pf7',ok7]].forEach(([id,ok])=>{
+    document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
+  });
+  const fb = document.getElementById('pvfb3');
+  if(ok4&&ok5&&ok6&&ok7){
+    fb.className='feedback success'; fb.textContent='맞아요! 증명이 완성됐어요.';
+    btn.disabled=true;
+    appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" onclick="goToSummary()">정리로 넘어가기 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='각이등분선의 교점, 수직이등분선의 교점, 그리고 이 선들이 동시에 어떤 선이기도 한지 다시 떠올려보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   정리
+════════════════════════════════ */
+function goToSummary(){
+  showScreen('scSummary');
+  window.scrollTo({top:0, behavior:'smooth'});
+  const g = triAtEQ(180,150);
+  const D=lerp(g.B,g.C,0.5), E=lerp(g.A,g.C,0.5), F=lerp(g.A,g.B,0.5);
+  let html = triOutlineSVG(g,'#4f46e5') + vlabelsSVG(g,'#1a1a2e');
+  html += medianSVG(g.A,D,'#4f46e5') + medianSVG(g.B,E,'#4f46e5') + medianSVG(g.C,F,'#4f46e5');
+  const G = centroidOf(g.A,g.B,g.C);
+  html += centerDotSVG(G,'#16a34a','O=I=G',10,-8);
+  document.getElementById('summarySvg').innerHTML = html;
+  document.getElementById('summaryPanel').innerHTML = `
+    <div class="panel-title"><span class="step-badge">정리</span>정삼각형의 외심, 내심, 무게중심</div>
+    <div class="proof-block">
+      정삼각형에서는 각 꼭짓점에서 그은 중선, 각의 이등분선, 대변의 수직이등분선이 모두 (<input class="blank" id="s1" style="width:60px">) 선이다.<br>
+      따라서 정삼각형의 외심, 내심, 무게중심은 모두 (<input class="blank" id="s2" style="width:60px">) 점이다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" onclick="summaryCheck(this)">확인</button></div>
+    <div class="feedback" id="sfb"></div>
+  `;
+}
+function summaryCheck(btn){
+  const ok1 = normText(document.getElementById('s1').value)==='같은';
+  const ok2 = normText(document.getElementById('s2').value)==='같은';
+  document.getElementById('s1').classList.toggle('correct',ok1); document.getElementById('s1').classList.toggle('wrong',!ok1);
+  document.getElementById('s2').classList.toggle('correct',ok2); document.getElementById('s2').classList.toggle('wrong',!ok2);
+  const fb = document.getElementById('sfb');
+  if(ok1&&ok2){
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    btn.disabled=true;
+    document.getElementById('summaryPanel').insertAdjacentHTML('beforeend', `
+      <div class="summary-box">정삼각형의 외심, 내심, 무게중심은 모두 일치한다.</div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="showScreen('scDone')">학습 마무리 →</button></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='바로 앞에서 확인한 "선이 같다"는 사실이 "점"에 대해 어떤 결론으로 이어지는지 다시 생각해보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   초기 실행
+════════════════════════════════ */
+goToInsight();
+</script>
+</body>
+</html>
