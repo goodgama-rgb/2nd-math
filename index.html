@@ -81,6 +81,8 @@
   .calendar-day{margin-bottom:20px;}
   .calendar-date{font-family:var(--disp);font-size:16px;color:var(--lav-ink);margin-bottom:6px;}
   .calendar-item{font-size:13.5px;padding:3px 0;color:var(--ink);}
+  .calendar-stat{font-size:11.5px;font-weight:700;color:var(--mint-ink);}
+  .calendar-stat.zero{color:var(--coral-ink);}
   .unit-card{
     display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:16px 18px;margin-bottom:12px;
     text-decoration:none;color:var(--ink);box-shadow:0 3px 0 rgba(46,42,34,.08);
@@ -340,6 +342,7 @@
       <h3 class="modal-title" id="admin-calendar-modal-title">진도 캘린더</h3>
       <button class="modal-close" type="button" onclick="closeAdminCalendarModal()">✕</button>
     </div>
+    <p class="admin-hint" style="margin-top:-6px;">N/M명 완료 = 지금까지 한 번이라도 접속한 학생 M명 중 실제로 그 항목을 완료한 학생 수</p>
     <div id="admin-calendar-modal-content"></div>
   </div>
 </div>
@@ -863,7 +866,9 @@ function renderRecommend(){
 }
 
 // ---- 진도 캘린더 ----
-function renderCalendarInto(wrapId, unlockedAtMap){
+// students를 주면(관리자용) 항목마다 "접속한 학생 중 몇 명이 실제로 풀었는지"도 같이 표시 —
+// 배포(잠금 해제)만 하고 실제 수업은 못 한 날을 한눈에 구분하기 위함(0명 완료는 빨간색으로 강조)
+function renderCalendarInto(wrapId, unlockedAtMap, students){
   const wrap = document.getElementById(wrapId);
   if(!wrap) return;
   const byDate = {};
@@ -881,7 +886,15 @@ function renderCalendarInto(wrapId, unlockedAtMap){
   dates.forEach(d=>{
     const day = document.createElement('div');
     day.className = 'calendar-day';
-    const itemsHtml = byDate[d].map(it=>`<div class="calendar-item">${it.type==='문제'?'✏️':'🔍'} ${it.title} <span class="card-meta">(${it.subunitName})</span></div>`).join('');
+    const itemsHtml = byDate[d].map(it=>{
+      let statHtml = '';
+      if(students){
+        const doneCount = students.filter(s=> (s.itemsOpened||[]).includes(it.id)).length;
+        const statClass = 'calendar-stat' + (doneCount===0 ? ' zero' : '');
+        statHtml = ` <span class="${statClass}">${doneCount}/${students.length}명 완료</span>`;
+      }
+      return `<div class="calendar-item">${it.type==='문제'?'✏️':'🔍'} ${it.title} <span class="card-meta">(${it.subunitName})</span>${statHtml}</div>`;
+    }).join('');
     day.innerHTML = `<div class="calendar-date">${d}</div>${itemsHtml}`;
     wrap.appendChild(day);
   });
@@ -891,7 +904,7 @@ function renderCalendar(){ renderCalendarInto('calendar-content', unlockedAt); }
 window.openAdminCalendarModal = function(){
   if(!selectedAdminClass) return;
   document.getElementById('admin-calendar-modal-title').textContent = `${selectedAdminClass}반 진도 캘린더`;
-  renderCalendarInto('admin-calendar-modal-content', adminUnlockedAt);
+  renderCalendarInto('admin-calendar-modal-content', adminUnlockedAt, adminStudentsCache);
   document.getElementById('admin-calendar-modal').style.display = 'flex';
 };
 window.closeAdminCalendarModal = function(){
@@ -1036,7 +1049,7 @@ function selectAdminClass(cls){
     }
     renderAdminList();
     if(document.getElementById('admin-calendar-modal').style.display === 'flex'){
-      renderCalendarInto('admin-calendar-modal-content', adminUnlockedAt);
+      renderCalendarInto('admin-calendar-modal-content', adminUnlockedAt, adminStudentsCache);
     }
   });
 
@@ -1046,12 +1059,17 @@ function selectAdminClass(cls){
 // 예전엔 onSnapshot(실시간 구독)이라 이 반 학생들 활동이 있을 때마다 관리자 화면도 계속
 // 다시 읽어와서 Firestore 사용량을 키우는 원인 중 하나였음 — 탭 선택 시 한 번만 불러오고,
 // 새로고침 버튼 또는 학생 삭제 후에만 다시 불러오도록 변경(2026-09-08).
+let adminStudentsCache = []; // 진도 캘린더 팝업에서 "실제로 몇 명이 풀었는지" 계산할 때 재사용
 async function loadAdminStudents(cls){
   try{
     const snap = await getDocs(collection(db, 'classStudents', String(cls), 'students'));
     const students = [];
     snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
+    adminStudentsCache = students;
     renderAdminStudents(students);
+    if(document.getElementById('admin-calendar-modal').style.display === 'flex'){
+      renderCalendarInto('admin-calendar-modal-content', adminUnlockedAt, adminStudentsCache);
+    }
   }catch(err){
     console.warn('admin students load failed', err);
     document.getElementById('admin-students').innerHTML = '<p class="student-empty">불러오기 실패 — 새로고침을 눌러주세요</p>';
