@@ -245,9 +245,20 @@ function outwardLabel(p, centroid, d){ const dx=p[0]-centroid[0], dy=p[1]-centro
 function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
 function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
 function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function tokenizeSeg(s){
+  const tokens = [];
+  for(let i=0;i<s.length;i++){
+    let tok = s[i];
+    if(s[i+1]==="'"){ tok+="'"; i++; }
+    tokens.push(tok);
+  }
+  return tokens;
+}
 function sameSeg(v, correct){
-  const nv = normText(v).toUpperCase();
-  return nv===correct || nv===correct.split('').reverse().join('');
+  const nv = normText(v).toUpperCase().replace(/′/g,"'");
+  const nc = normText(correct).toUpperCase().replace(/′/g,"'");
+  if(nv===nc) return true;
+  return tokenizeSeg(nv).slice().reverse().join('')===nc;
 }
 function lockRow(selector){ document.querySelectorAll(selector+' .btn').forEach(b=>b.disabled=true); }
 function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }

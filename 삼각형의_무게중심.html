@@ -275,9 +275,23 @@ function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}
 function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
 function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function tokenizeSeg(s){
+  const tokens = [];
+  for(let i=0;i<s.length;i++){
+    let tok = s[i];
+    if(s[i+1]==="'"){ tok+="'"; i++; }
+    tokens.push(tok);
+  }
+  return tokens;
+}
 function sameSeg(v, correct){
-  const nv = normText(v).toUpperCase();
-  return nv===correct || nv===correct.split('').reverse().join('');
+  const nv = normText(v).toUpperCase().replace(/′/g,"'");
+  const nc = normText(correct).toUpperCase().replace(/′/g,"'");
+  if(nv===nc) return true;
+  return tokenizeSeg(nv).slice().reverse().join('')===nc;
+}
+function samePairEitherOrder(v1, v2, a, b){
+  return (sameSeg(v1,a) && sameSeg(v2,b)) || (sameSeg(v1,b) && sameSeg(v2,a));
 }
 function lockRow(selector){ document.querySelectorAll(selector+' .btn').forEach(b=>b.disabled=true); }
 function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -416,7 +430,7 @@ async function checkAdminPassword(){
     document.getElementById('adminPwModal').classList.remove('show');
     document.getElementById('adminPanelBody').innerHTML =
       '<div style="margin-bottom:6px"><strong>게이트 팝업 정답</strong></div>'+
-      '<div>평행, 1/2(=0.5 인정)</div>'+
+      '<div>평행, 1/2(=0.5, 1/2배, 0.5배 인정)</div>'+
       '<div style="margin-top:10px"><strong>증명 1단계(G, AD·BE)</strong></div>'+
       '<div>①: BC, AC, DE, AB, DE, AB</div>'+
       '<div>②: D, E, AA, 2, 1, GD, GE, 1</div>'+
@@ -883,7 +897,7 @@ function goToProve(){
 function checkGate(){
   const ok1 = normText(document.getElementById('gate1').value)==='평행';
   const v2 = normText(document.getElementById('gate2').value);
-  const ok2 = v2==='1/2' || v2==='0.5';
+  const ok2 = ['1/2','0.5','1/2배','0.5배'].includes(v2);
   document.getElementById('gate1').classList.toggle('correct',ok1); document.getElementById('gate1').classList.toggle('wrong',!ok1);
   document.getElementById('gate2').classList.toggle('correct',ok2); document.getElementById('gate2').classList.toggle('wrong',!ok2);
   if(ok1&&ok2){
@@ -926,8 +940,8 @@ function proveStage1(){
 function pvCheck1a(btn){
   const ok1 = sameSeg(document.getElementById('p1_1').value,'BC');
   const ok2 = sameSeg(document.getElementById('p1_2').value,'AC');
-  const ok3 = sameSeg(document.getElementById('p1_3').value,'DE');
-  const ok4 = sameSeg(document.getElementById('p1_4').value,'AB');
+  const pair34 = samePairEitherOrder(document.getElementById('p1_3').value, document.getElementById('p1_4').value, 'DE', 'AB');
+  const ok3 = pair34, ok4 = pair34;
   const ok5 = sameSeg(document.getElementById('p1_5').value,'DE');
   const ok6 = sameSeg(document.getElementById('p1_6').value,'AB');
   [['p1_1',ok1],['p1_2',ok2],['p1_3',ok3],['p1_4',ok4],['p1_5',ok5],['p1_6',ok6]].forEach(([id,ok])=>{
@@ -991,8 +1005,8 @@ function proveStage2(){
 function pvCheck2a(btn){
   const ok1 = sameSeg(document.getElementById('p2_1').value,'BC');
   const ok2 = sameSeg(document.getElementById('p2_2').value,'AB');
-  const ok3 = sameSeg(document.getElementById('p2_3').value,'DF');
-  const ok4 = sameSeg(document.getElementById('p2_4').value,'AC');
+  const pair34 = samePairEitherOrder(document.getElementById('p2_3').value, document.getElementById('p2_4').value, 'DF', 'AC');
+  const ok3 = pair34, ok4 = pair34;
   const ok5 = sameSeg(document.getElementById('p2_5').value,'DF');
   const ok6 = sameSeg(document.getElementById('p2_6').value,'AC');
   [['p2_1',ok1],['p2_2',ok2],['p2_3',ok3],['p2_4',ok4],['p2_5',ok5],['p2_6',ok6]].forEach(([id,ok])=>{
@@ -1022,10 +1036,10 @@ function pvCheck2b(btn){
   const ok11 = normText(document.getElementById('p2_11').value).toUpperCase()==='AA';
   const ok12 = normText(document.getElementById('p2_12').value)==='2';
   const ok13 = normText(document.getElementById('p2_13').value)==='1';
-  const ok14 = sameSeg(document.getElementById('p2_14').value,"AG'") || sameSeg(document.getElementById('p2_14').value,'AG′');
-  const ok15 = sameSeg(document.getElementById('p2_15').value,"G'D") || sameSeg(document.getElementById('p2_15').value,'G′D');
-  const ok16 = sameSeg(document.getElementById('p2_16').value,"CG'") || sameSeg(document.getElementById('p2_16').value,'CG′');
-  const ok17 = sameSeg(document.getElementById('p2_17').value,"G'F") || sameSeg(document.getElementById('p2_17').value,'G′F');
+  const ok14 = sameSeg(document.getElementById('p2_14').value,"AG'");
+  const ok15 = sameSeg(document.getElementById('p2_15').value,"G'D");
+  const ok16 = sameSeg(document.getElementById('p2_16').value,"CG'");
+  const ok17 = sameSeg(document.getElementById('p2_17').value,"G'F");
   const all = [['p2_7',segOks[0]],['p2_8',segOks[1]],['p2_9',segOks[2]],['p2_10',segOks[3]],['p2_11',ok11],['p2_12',ok12],['p2_13',ok13],['p2_14',ok14],['p2_15',ok15],['p2_16',ok16],['p2_17',ok17]];
   all.forEach(([id,ok])=>{ document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok); });
   const fb = document.getElementById('p2fb_b');
@@ -1049,7 +1063,7 @@ function proveConclusion(){
   `);
 }
 function pvCheck3(btn){
-  const ok1 = sameSeg(document.getElementById('p3_1').value,"G'") || sameSeg(document.getElementById('p3_1').value,'G′');
+  const ok1 = sameSeg(document.getElementById('p3_1').value,"G'");
   const ok2 = normText(document.getElementById('p3_2').value)==='2';
   const ok3 = normText(document.getElementById('p3_3').value)==='1';
   const ok4 = normText(document.getElementById('p3_4').value)==='한';

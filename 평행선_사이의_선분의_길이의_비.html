@@ -283,9 +283,20 @@ function sideLabelSVGAt(p1, p2, centroid, value, bulge, t, color){
 function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.05); }
 function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function tokenizeSeg(s){
+  const tokens = [];
+  for(let i=0;i<s.length;i++){
+    let tok = s[i];
+    if(s[i+1]==="'"){ tok+="'"; i++; }
+    tokens.push(tok);
+  }
+  return tokens;
+}
 function sameSeg(v, correct){
-  const nv = normText(v).toUpperCase();
-  return nv===correct || nv===correct.split('').reverse().join('');
+  const nv = normText(v).toUpperCase().replace(/′/g,"'");
+  const nc = normText(correct).toUpperCase().replace(/′/g,"'");
+  if(nv===nc) return true;
+  return tokenizeSeg(nv).slice().reverse().join('')===nc;
 }
 function fitGeoToCanvas(g, targetCx, targetCy, maxW, maxH){
   const keys = Object.keys(g).filter(k=>Array.isArray(g[k]));
@@ -630,16 +641,17 @@ function proveStep2(){
     <div class="feedback" id="pvfb2"></div>
   `);
 }
-function sameSegPrime(v, correctBase){
-  const nv = normText(v).toUpperCase().replace(/[′']/g,'');
-  return nv===correctBase || nv===correctBase.split('').reverse().join('');
+function matchLineOrSeg(v, letter, segName){
+  return normText(v).toLowerCase()===letter || sameSeg(v, segName);
 }
 function pvCheckS2(btn){
   const v1 = document.getElementById('ps2_1').value, v2 = document.getElementById('ps2_2').value;
-  const ok1 = normText(v1).toLowerCase()==='m' || sameSegPrime(v1,'BE');
-  const ok2 = normText(v2).toLowerCase()==='n' || sameSegPrime(v2,'CF');
-  const ok3 = sameSeg(document.getElementById('ps2_3').value, "AE'") || sameSeg(document.getElementById('ps2_3').value,'AE′');
-  const ok4 = sameSeg(document.getElementById('ps2_4').value, "E'F'") || sameSeg(document.getElementById('ps2_4').value,'E′F′');
+  const v1m = matchLineOrSeg(v1,'m','BE'), v1n = matchLineOrSeg(v1,'n','CF');
+  const v2m = matchLineOrSeg(v2,'m','BE'), v2n = matchLineOrSeg(v2,'n','CF');
+  const pairOk = (v1m && v2n) || (v1n && v2m);
+  const ok1 = pairOk, ok2 = pairOk;
+  const ok3 = sameSeg(document.getElementById('ps2_3').value, "AE'");
+  const ok4 = sameSeg(document.getElementById('ps2_4').value, "E'F'");
   [['ps2_1',ok1],['ps2_2',ok2],['ps2_3',ok3],['ps2_4',ok4]].forEach(([id,ok])=>{
     document.getElementById(id).classList.toggle('correct',ok); document.getElementById(id).classList.toggle('wrong',!ok);
   });
