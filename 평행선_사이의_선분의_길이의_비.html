@@ -503,7 +503,7 @@ async function checkAdminPassword(){
 }
 function buildAdminPanelContent(){
   let html = '<div style="margin-bottom:6px"><strong>증명 빈칸 정답(케이스1·2 공통 틀)</strong></div>'+
-    '<div>① m(=BE\', BE), n(=CF\', CF), AE\', E\'F\'</div>'+
+    '<div>① m(=BE\'), n(=CF\'), AE\', E\'F\'</div>'+
     '<div>② 평행, 평행사변형, DE, EF</div>'+
     '<div>③ DE, EF</div>'+
     '<div class="btn-row" style="margin-top:6px"><button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoTo(\'prove\')">증명으로 이동</button></div>';
@@ -646,8 +646,8 @@ function matchLineOrSeg(v, letter, segName){
 }
 function pvCheckS2(btn){
   const v1 = document.getElementById('ps2_1').value, v2 = document.getElementById('ps2_2').value;
-  const v1m = matchLineOrSeg(v1,'m','BE'), v1n = matchLineOrSeg(v1,'n','CF');
-  const v2m = matchLineOrSeg(v2,'m','BE'), v2n = matchLineOrSeg(v2,'n','CF');
+  const v1m = matchLineOrSeg(v1,'m',"BE'"), v1n = matchLineOrSeg(v1,'n',"CF'");
+  const v2m = matchLineOrSeg(v2,'m',"BE'"), v2n = matchLineOrSeg(v2,'n',"CF'");
   const pairOk = (v1m && v2n) || (v1n && v2m);
   const ok1 = pairOk, ok2 = pairOk;
   const ok3 = sameSeg(document.getElementById('ps2_3').value, "AE'");

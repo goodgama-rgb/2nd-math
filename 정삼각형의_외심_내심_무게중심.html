@@ -754,8 +754,9 @@ function goToSummary(){
   `;
 }
 function summaryCheck(btn){
-  const ok1 = normText(document.getElementById('s1').value)==='같은';
-  const ok2 = normText(document.getElementById('s2').value)==='같은';
+  const okWords = ['같은','일치하는','한'];
+  const ok1 = okWords.includes(normText(document.getElementById('s1').value));
+  const ok2 = okWords.includes(normText(document.getElementById('s2').value));
   document.getElementById('s1').classList.toggle('correct',ok1); document.getElementById('s1').classList.toggle('wrong',!ok1);
   document.getElementById('s2').classList.toggle('correct',ok2); document.getElementById('s2').classList.toggle('wrong',!ok2);
   const fb = document.getElementById('sfb');
