@@ -289,6 +289,10 @@
       </div>
     </div>
 
+    <div class="admin-group-title">📅 이 반 진도 캘린더</div>
+    <p class="admin-hint">날짜별로 이 반에서 무엇을 열어줬는지 모아봤어요</p>
+    <div id="admin-calendar-content"></div>
+
     <div class="admin-group-title">🧹 학생 기록 관리</div>
     <p class="admin-hint">테스트로 접속한 기록 삭제 등</p>
     <button class="calendar-btn" onclick="refreshAdminStudents()">🔄 새로고침</button>
@@ -843,12 +847,12 @@ function renderRecommend(){
 }
 
 // ---- 진도 캘린더 ----
-function renderCalendar(){
-  const wrap = document.getElementById('calendar-content');
+function renderCalendarInto(wrapId, unlockedAtMap){
+  const wrap = document.getElementById(wrapId);
   if(!wrap) return;
   const byDate = {};
   allRealItems().forEach(it=>{
-    const d = unlockedAt[it.id];
+    const d = unlockedAtMap[it.id];
     if(!d) return;
     (byDate[d] = byDate[d] || []).push(it);
   });
@@ -866,6 +870,8 @@ function renderCalendar(){
     wrap.appendChild(day);
   });
 }
+function renderCalendar(){ renderCalendarInto('calendar-content', unlockedAt); }
+function renderAdminCalendar(){ renderCalendarInto('admin-calendar-content', adminUnlockedAt); }
 
 // ---- 반별 Top10 랭킹 ----
 // 예전엔 onSnapshot(실시간 구독)이라 반 안의 누군가가 뭘 풀 때마다 그 반 전원 화면에 즉시 다시
@@ -1004,6 +1010,7 @@ function selectAdminClass(cls){
       document.getElementById('admin-notice').value = '';
     }
     renderAdminList();
+    renderAdminCalendar();
   });
 
   loadAdminStudents(cls);
