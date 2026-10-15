@@ -140,6 +140,29 @@
   .student-empty{color:var(--ink-dim);font-size:13px;padding:6px 4px;}
   footer.foot{margin-top:36px;font-family:var(--disp);font-size:14px;color:var(--ink-dim);text-align:center;}
   .credit{font-family:var(--sans);font-size:11px;color:var(--ink-dim);opacity:.7;margin-top:8px;font-weight:400;}
+  .struct-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .struct-toolbar .btn{margin-bottom:0;padding:10px 16px;font-size:15px;}
+  .struct-dirty-flag{font-size:12.5px;color:var(--coral-ink);font-weight:700;}
+  .struct-unplaced{background:#fff;border:2px dashed var(--peach);border-radius:16px;padding:14px 16px;margin-bottom:24px;}
+  .struct-item-list{display:flex;flex-direction:column;gap:6px;min-height:12px;}
+  .struct-unit{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:16px;box-shadow:0 3px 0 rgba(46,42,34,.08);}
+  .struct-unit-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .struct-handle{cursor:grab;color:var(--ink-dim);font-size:16px;flex-shrink:0;padding:2px 3px;user-select:none;}
+  .struct-handle:active{cursor:grabbing;}
+  .struct-name-input{flex:1;min-width:120px;font-family:var(--disp);font-size:17px;border:none;border-bottom:1.5px dashed var(--line);background:transparent;padding:4px 2px;color:var(--ink);}
+  .struct-name-input:focus{outline:none;border-color:var(--mint-dark);}
+  .struct-mini-btn{background:none;border:1.5px solid var(--line);border-radius:8px;font-size:11px;padding:4px 9px;cursor:pointer;color:var(--ink-dim);font-family:var(--sans);white-space:nowrap;}
+  .struct-mini-btn.danger{color:var(--coral-ink);border-color:var(--coral);}
+  .struct-ready-label{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-dim);white-space:nowrap;}
+  .struct-subunit{background:var(--paper);border-radius:12px;padding:10px 12px;margin:0 0 10px 22px;border:1.5px solid var(--line);}
+  .struct-subunit-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .struct-item-row{display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 2px 0 rgba(46,42,34,.08);}
+  .struct-item-row.dragging{opacity:.35;}
+  .struct-item-row .icon{width:26px;height:26px;font-size:12px;flex-shrink:0;}
+  .struct-item-title-input{flex:1;min-width:80px;border:none;background:transparent;font-size:13.5px;font-weight:700;color:var(--ink);padding:3px 2px;border-bottom:1px dashed transparent;}
+  .struct-item-title-input:focus{outline:none;border-bottom-color:var(--mint-dark);}
+  .struct-item-title-input:disabled{color:var(--ink-dim);font-weight:500;}
+  .struct-item-meta{font-size:11px;color:var(--ink-dim);flex-shrink:0;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -229,6 +252,7 @@
   <section class="view" id="view-admin">
     <div class="admin-topbar">
       <button class="backlink pill-coral" onclick="teacherLogout()">← 로그아웃</button>
+      <button class="backlink pill-lav" id="structEditorNavBtn" onclick="openStructureEditor()" style="display:none;">🗂 단원 구조 편집</button>
       <a class="backlink pill-lav" href="https://claude.ai/code/artifact/a5e4cd6e-0048-4bdb-9217-e725b22e0030" target="_blank" rel="noopener">📖 관리자 페이지 사용법</a>
     </div>
     <h2 class="mid">오늘의 학습 설정</h2>
@@ -269,6 +293,30 @@
     <p class="admin-hint">테스트로 접속한 기록 삭제 등</p>
     <button class="calendar-btn" onclick="refreshAdminStudents()">🔄 새로고침</button>
     <div id="admin-students"></div>
+  </section>
+
+  <!-- 7. 단원 구조 편집 (반별 아님 — 전체 학생 화면에 공통 적용) -->
+  <section class="view" id="view-structure-editor">
+    <div class="admin-topbar">
+      <button class="backlink pill-coral" onclick="go('admin')">← 관리자 페이지로</button>
+    </div>
+    <h2 class="mid">🗂 단원 구조 편집</h2>
+    <p class="sub">여기서 바꾸면 13개 반 전체 학생 화면에 똑같이 적용돼요. ⠿ 손잡이를 끌어서 순서/소속을 바꾸고, 제목을 눌러 직접 수정하세요.</p>
+    <div class="struct-toolbar">
+      <button class="btn mint" id="structAddUnitBtn" style="width:auto;">+ 새 대단원</button>
+      <button class="btn lav" id="structSaveBtn" style="width:auto;">💾 변경사항 저장</button>
+      <button class="calendar-btn" id="structRevertBtn">↺ 편집 취소(되돌리기)</button>
+      <span class="struct-dirty-flag" id="structDirtyFlag"></span>
+    </div>
+    <p class="msg" id="struct-msg"></p>
+
+    <div class="struct-unplaced" id="struct-unplaced-box">
+      <div class="admin-group-title" style="margin-top:0;">🧳 미배치 항목 (여기로 끌어오면 배치 해제돼요)</div>
+      <p class="admin-hint">새로 등록된 파일이나 소단원에서 빼낸 항목이 모여요 — 아래로 끌어서 배치하세요</p>
+      <div id="struct-unplaced-list" class="struct-item-list"></div>
+    </div>
+
+    <div id="struct-units"></div>
   </section>
 
   <footer class="foot">화이팅! 모르는 건 손 들고 물어보기 🙋
@@ -337,99 +385,208 @@ window.handleInstallClick = async function(){
   setInterval(check, 60000);
 })();
 
-// ---- 콘텐츠 데이터: 새 단원/문제 추가할 땐 이 배열만 수정하면 됩니다 ----
-const CONTENT = [
-  {
-    id: "isosceles", name: "삼각형의 성질", ready: true,
-    subunits: [
-      { name: "이등변삼각형의 성질", items: [
-        { id:"iso-proof", title:"성질 증명 탐구", type:"탐구", meta:"증명 활동", file:"이등변삼각형_성질_증명_탐구.html" },
-        { id:"iso-144-1", title:"문제 1", type:"문제", meta:"교과서 144p", file:"isosceles_triangle_quiz(144-1).html" },
-        { id:"iso-144-2", title:"문제 2", type:"문제", meta:"교과서 144p", file:"isosceles_triangle_bisector_quiz(144-2).html" }
-      ]},
-      { name: "이등변삼각형이 되는 조건", items: [
-        { id:"cond-proof", title:"조건 증명 탐구", type:"탐구", meta:"증명 활동", file:"이등변삼각형이_되는_조건_증명_탐구.html" },
-        { id:"cond-146-3", title:"문제 3", type:"문제", meta:"교과서 146p", file:"isosceles_triangle_converse_quiz(146-3).html" },
-        { id:"cond-146-4", title:"문제 4", type:"문제", meta:"교과서 146p", file:"isosceles_triangle_golden_quiz(146-4).html" }
-      ]},
-      { name: "직각삼각형의 합동 조건", items: [
-        { id:"rha-proof", title:"RHA 합동 조건 증명 탐구", type:"탐구", meta:"증명 활동", file:"직각삼각형의_합동조건_RHA_증명_탐구.html" },
-        { id:"rhs-proof", title:"RHS 합동 조건 증명 탐구", type:"탐구", meta:"증명 활동", file:"직각삼각형의_합동조건_RHS_증명_탐구.html" },
-        { id:"rha-149-1", title:"문제 1", type:"문제", meta:"교과서 149p", file:"right_triangle_congruence_quiz(149-1).html" }
-      ]},
-      { name: "삼각형의 외심", items: [
-        { id:"circum-proof", title:"외심 증명 탐구", type:"탐구", meta:"증명 활동", file:"삼각형의_외심_증명_탐구.html" },
-        { id:"circum-152-1", title:"문제 1", type:"문제", meta:"교과서 152p", file:"circumcenter_quiz(152-1).html" },
-        { id:"circum-152-2", title:"문제 2", type:"문제", meta:"교과서 152p", file:"circumcenter_central_quiz(152-2).html" },
-        { id:"circum-152-3", title:"문제 3", type:"문제", meta:"교과서 152p", file:"circumcenter_inscribed_angle_quiz(152-3).html" },
-        { id:"circum-shape-proof", title:"삼각형의 모양에 따른 외심의 위치 탐구", type:"탐구", meta:"증명 활동", file:"삼각형의_모양에_따른_외심의_위치_탐구.html" },
-        { id:"circum-153-4", title:"문제 4", type:"문제", meta:"교과서 153p", file:"circumcenter_right_triangle_quiz(153-4).html" }
-      ]},
-      { name: "삼각형의 내심", items: [
-        { id:"incenter-proof", title:"내심 증명 탐구", type:"탐구", meta:"증명 활동", file:"삼각형의_내심_증명_탐구.html" },
-        { id:"incenter-156-5", title:"문제 5", type:"문제", meta:"교과서 156p", file:"incenter_quiz(156-5).html" },
-        { id:"incenter-156-6", title:"문제 6", type:"문제", meta:"교과서 156p", file:"incenter_central_quiz(156-6).html" },
-        { id:"incenter-156-7", title:"문제 7", type:"문제", meta:"교과서 156p", file:"incenter_bic_quiz(156-7).html" },
-        { id:"equilateral-oi-proof", title:"정삼각형의 외심과 내심의 위치 탐구", type:"탐구", meta:"증명 활동", file:"정삼각형의_외심과_내심의_위치_탐구.html" },
-        { id:"oi-compare", title:"내심·외심 비교 정리", type:"탐구", meta:"복습 정리", file:"내심_외심_비교정리.html" }
-      ] }
-    ]
-  },
-  { id:"quad",        name:"사각형의 성질",     ready:true, subunits:[
-      { name: "평행사변형", items: [
-        { id:"para-proof", title:"평행사변형의 성질 증명 탐구", type:"탐구", meta:"증명 활동", file:"평행사변형의_성질_증명_탐구.html" },
-        { id:"para-diag-proof", title:"평행사변형의 대각선 성질 탐구", type:"탐구", meta:"증명 활동", file:"평행사변형의_대각선_증명_탐구.html" },
-        { id:"para-166-2", title:"문제 1", type:"문제", meta:"교과서 166p", file:"parallelogram_quiz(166-2).html" },
-        { id:"para-166-3", title:"문제 2", type:"문제", meta:"교과서 166p", file:"parallelogram_diagonal_quiz(166-3).html" }
+// ---- 콘텐츠 등록소: 실제 파일과 묶인 기술적 사실(종류/메타/파일명) — 새 파일 추가할 때만 여기 등록 ----
+// 배치(어느 대단원/소단원, 순서, 제목)는 더 이상 여기 없음 — siteConfig/contentStructure 문서로 이동, 관리자 페이지 '단원 구조 편집'에서 드래그로 편집
+const ITEM_REGISTRY = {
+  "iso-proof": { type:"탐구", meta:"증명 활동", file:"이등변삼각형_성질_증명_탐구.html", defaultTitle:"성질 증명 탐구" },
+  "iso-144-1": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_quiz(144-1).html", defaultTitle:"문제 1" },
+  "iso-144-2": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_bisector_quiz(144-2).html", defaultTitle:"문제 2" },
+  "cond-proof": { type:"탐구", meta:"증명 활동", file:"이등변삼각형이_되는_조건_증명_탐구.html", defaultTitle:"조건 증명 탐구" },
+  "cond-146-3": { type:"문제", meta:"교과서 146p", file:"isosceles_triangle_converse_quiz(146-3).html", defaultTitle:"문제 3" },
+  "cond-146-4": { type:"문제", meta:"교과서 146p", file:"isosceles_triangle_golden_quiz(146-4).html", defaultTitle:"문제 4" },
+  "rha-proof": { type:"탐구", meta:"증명 활동", file:"직각삼각형의_합동조건_RHA_증명_탐구.html", defaultTitle:"RHA 합동 조건 증명 탐구" },
+  "rhs-proof": { type:"탐구", meta:"증명 활동", file:"직각삼각형의_합동조건_RHS_증명_탐구.html", defaultTitle:"RHS 합동 조건 증명 탐구" },
+  "rha-149-1": { type:"문제", meta:"교과서 149p", file:"right_triangle_congruence_quiz(149-1).html", defaultTitle:"문제 1" },
+  "circum-proof": { type:"탐구", meta:"증명 활동", file:"삼각형의_외심_증명_탐구.html", defaultTitle:"외심 증명 탐구" },
+  "circum-152-1": { type:"문제", meta:"교과서 152p", file:"circumcenter_quiz(152-1).html", defaultTitle:"문제 1" },
+  "circum-152-2": { type:"문제", meta:"교과서 152p", file:"circumcenter_central_quiz(152-2).html", defaultTitle:"문제 2" },
+  "circum-152-3": { type:"문제", meta:"교과서 152p", file:"circumcenter_inscribed_angle_quiz(152-3).html", defaultTitle:"문제 3" },
+  "circum-shape-proof": { type:"탐구", meta:"증명 활동", file:"삼각형의_모양에_따른_외심의_위치_탐구.html", defaultTitle:"삼각형의 모양에 따른 외심의 위치 탐구" },
+  "circum-153-4": { type:"문제", meta:"교과서 153p", file:"circumcenter_right_triangle_quiz(153-4).html", defaultTitle:"문제 4" },
+  "incenter-proof": { type:"탐구", meta:"증명 활동", file:"삼각형의_내심_증명_탐구.html", defaultTitle:"내심 증명 탐구" },
+  "incenter-156-5": { type:"문제", meta:"교과서 156p", file:"incenter_quiz(156-5).html", defaultTitle:"문제 5" },
+  "incenter-156-6": { type:"문제", meta:"교과서 156p", file:"incenter_central_quiz(156-6).html", defaultTitle:"문제 6" },
+  "incenter-156-7": { type:"문제", meta:"교과서 156p", file:"incenter_bic_quiz(156-7).html", defaultTitle:"문제 7" },
+  "equilateral-oi-proof": { type:"탐구", meta:"증명 활동", file:"정삼각형의_외심과_내심의_위치_탐구.html", defaultTitle:"정삼각형의 외심과 내심의 위치 탐구" },
+  "oi-compare": { type:"탐구", meta:"복습 정리", file:"내심_외심_비교정리.html", defaultTitle:"내심·외심 비교 정리" },
+  "para-proof": { type:"탐구", meta:"증명 활동", file:"평행사변형의_성질_증명_탐구.html", defaultTitle:"평행사변형의 성질 증명 탐구" },
+  "para-diag-proof": { type:"탐구", meta:"증명 활동", file:"평행사변형의_대각선_증명_탐구.html", defaultTitle:"평행사변형의 대각선 성질 탐구" },
+  "para-166-2": { type:"문제", meta:"교과서 166p", file:"parallelogram_quiz(166-2).html", defaultTitle:"문제 1" },
+  "para-166-3": { type:"문제", meta:"교과서 166p", file:"parallelogram_diagonal_quiz(166-3).html", defaultTitle:"문제 2" },
+  "para-cond-side-proof": { type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_대변_증명_탐구.html", defaultTitle:"평행사변형이 되는 조건 1" },
+  "para-cond-angle-proof": { type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_대각_증명_탐구.html", defaultTitle:"평행사변형이 되는 조건 2" },
+  "para-cond-oneside-proof": { type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_한쌍대변_증명_탐구.html", defaultTitle:"평행사변형이 되는 조건 3" },
+  "para-cond-diag-proof": { type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_대각선_증명_탐구.html", defaultTitle:"평행사변형이 되는 조건 4" },
+  "para-cond-171-1": { type:"문제", meta:"교과서 171p", file:"parallelogram_condition_quiz(171-1).html", defaultTitle:"문제 1" },
+  "para-cond-171-2": { type:"문제", meta:"교과서 171p", file:"parallelogram_statements_quiz(171-2).html", defaultTitle:"문제 2" },
+  "rect-proof": { type:"탐구", meta:"증명 활동", file:"직사각형의_대각선_증명_탐구.html", defaultTitle:"직사각형의 성질 증명 탐구" },
+  "rect-quiz-1": { type:"문제", meta:"직사각형", file:"rectangle_diagonal_quiz.html", defaultTitle:"문제 1" },
+  "rect-quiz-2": { type:"문제", meta:"직사각형", file:"rectangle_angle_quiz.html", defaultTitle:"문제 2" },
+  "rhombus-proof": { type:"탐구", meta:"증명 활동", file:"마름모의_대각선_증명_탐구.html", defaultTitle:"마름모의 성질 증명 탐구" },
+  "rhombus-quiz-3": { type:"문제", meta:"마름모", file:"rhombus_quiz.html", defaultTitle:"문제 3" },
+  "quad-shapes-summary": { type:"탐구", meta:"복습 정리", file:"여러가지_사각형의_성질_정리.html", defaultTitle:"여러 가지 사각형의 성질 정리" },
+  "quad-relation-speedquiz": { type:"문제", meta:"사각형 관계 복습", file:"여러가지_사각형의_관계_스피드퀴즈.html", defaultTitle:"5분 스피드 퀴즈대결" },
+  "quad-relation-minigames": { type:"문제", meta:"사각형 관계 복습", file:"여러가지_사각형의_관계_미니게임.html", defaultTitle:"여러 가지 사각형 미니게임 4종" },
+  "parallel-area-relation": { type:"문제", meta:"관찰+퀴즈", file:"평행선과_넓이의_관계.html", defaultTitle:"평행선과 넓이의 관계" },
+  "shape-similarity": { type:"탐구", meta:"개념 탐구", file:"도형의_닮음.html", defaultTitle:"도형의 닮음" },
+  "shape-similarity-assessment": { type:"문제", meta:"형성평가", file:"형성평가_도형의_닮음.html", defaultTitle:"형성평가(도형의 닮음)" },
+  "similarity-properties": { type:"탐구", meta:"증명 활동", file:"닮음의_성질_증명_탐구.html", defaultTitle:"평면도형에서 닮음의 성질" },
+  "solid-similarity-properties": { type:"탐구", meta:"증명 활동", file:"입체도형의_닮음_증명_탐구.html", defaultTitle:"입체도형에서 닮음의 성질" },
+  "similar-figure-properties-assessment": { type:"문제", meta:"형성평가", file:"형성평가_닮은_도형의_성질.html", defaultTitle:"형성평가(닮음의 성질)" },
+  "similarity-area-volume-ratio": { type:"탐구", meta:"증명 활동", file:"닮음_넓이비_부피비_증명_탐구.html", defaultTitle:"닮음비와 넓이의 비, 부피의 비" },
+  "area-volume-ratio-assessment": { type:"문제", meta:"형성평가", file:"형성평가_넓이비_부피비.html", defaultTitle:"형성평가(닮음비와 넓이의 비, 부피의 비)" },
+  "triangle-similarity-condition-exploration": { type:"탐구", meta:"탐구+증명+정리", file:"삼각형의_닮음_조건_증명_탐구.html", defaultTitle:"삼각형의 닮음 조건" },
+  "triangle-similarity-cross-sas": { type:"문제", meta:"연습문제", file:"삼각형의_닮음_조건_SAS_교차형_문제풀이.html", defaultTitle:"삼각형의 닮음 조건 연습문제 1" },
+  "triangle-similarity-condition-assessment": { type:"문제", meta:"형성평가", file:"삼각형의_닮음_조건_형성평가.html", defaultTitle:"삼각형의 닮음 조건 형성평가 1" },
+  "triangle-similarity-altitude-practice2": { type:"문제", meta:"연습문제", file:"삼각형의_닮음_조건_연습문제2.html", defaultTitle:"삼각형의 닮음 조건 연습문제 2" },
+  "triangle-similarity-altitude-assessment2": { type:"문제", meta:"형성평가", file:"삼각형의_닮음_조건_형성평가2.html", defaultTitle:"삼각형의 닮음 조건 형성평가 2" },
+  "triangle-parallel-segment-ratio-exploration": { type:"탐구", meta:"증명 활동", file:"평행선과_선분의_길이의_비_증명_탐구.html", defaultTitle:"평행선과 선분의 길이의 비 증명 탐구" },
+  "triangle-parallel-ratio-assessment": { type:"문제", meta:"형성평가", file:"평행선과_선분의_길이의_비 형성평가.html", defaultTitle:"평행선과 선분의 길이의 비 형성평가" },
+  "midpoint-connector-theorem": { type:"탐구", meta:"증명+문제풀이", file:"삼각형의_두_변의_중점을_연결한_선분의_성질.html", defaultTitle:"삼각형의 중점연결정리" },
+  "parallel-lines-segment-ratio": { type:"탐구", meta:"증명+문제풀이", file:"평행선_사이의_선분의_길이의_비.html", defaultTitle:"평행선 사이의 선분의 길이의 비" },
+  "triangle-centroid": { type:"탐구", meta:"탐구+증명+정리", file:"삼각형의_무게중심.html", defaultTitle:"삼각형의 무게중심" },
+  "triangle-centroid-assessment": { type:"문제", meta:"형성평가", file:"삼각형의_무게중심_형성평가.html", defaultTitle:"삼각형의 무게중심 형성평가" },
+  "equilateral-centers-coincide": { type:"탐구", meta:"통찰+증명+정리", file:"정삼각형의_외심_내심_무게중심.html", defaultTitle:"정삼각형의 외심, 내심, 무게중심" },
+};
+
+// ---- 기본 단원 구성: Firestore에 siteConfig/contentStructure 문서가 아직 없을 때 쓰는 대체값(=지금까지의 고정 배치) ----
+const DEFAULT_STRUCTURE = { units: [
+  { id:"isosceles", name:"삼각형의 성질", ready:true, subunits:[
+      { name:"이등변삼각형의 성질", items:[
+        { id:"iso-proof", title:"성질 증명 탐구" },
+        { id:"iso-144-1", title:"문제 1" },
+        { id:"iso-144-2", title:"문제 2" }
       ] },
-      { name: "평행사변형이 되는 조건", items: [
-        { id:"para-cond-side-proof", title:"평행사변형이 되는 조건 1", type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_대변_증명_탐구.html" },
-        { id:"para-cond-angle-proof", title:"평행사변형이 되는 조건 2", type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_대각_증명_탐구.html" },
-        { id:"para-cond-oneside-proof", title:"평행사변형이 되는 조건 3", type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_한쌍대변_증명_탐구.html" },
-        { id:"para-cond-diag-proof", title:"평행사변형이 되는 조건 4", type:"탐구", meta:"증명 활동", file:"평행사변형이_되는_조건_대각선_증명_탐구.html" },
-        { id:"para-cond-171-1", title:"문제 1", type:"문제", meta:"교과서 171p", file:"parallelogram_condition_quiz(171-1).html" },
-        { id:"para-cond-171-2", title:"문제 2", type:"문제", meta:"교과서 171p", file:"parallelogram_statements_quiz(171-2).html" }
+      { name:"이등변삼각형이 되는 조건", items:[
+        { id:"cond-proof", title:"조건 증명 탐구" },
+        { id:"cond-146-3", title:"문제 3" },
+        { id:"cond-146-4", title:"문제 4" }
       ] },
-      { name: "여러 가지 사각형", items: [
-        { id:"rect-proof", title:"직사각형의 성질 증명 탐구", type:"탐구", meta:"증명 활동", file:"직사각형의_대각선_증명_탐구.html" },
-        { id:"rect-quiz-1", title:"문제 1", type:"문제", meta:"직사각형", file:"rectangle_diagonal_quiz.html" },
-        { id:"rect-quiz-2", title:"문제 2", type:"문제", meta:"직사각형", file:"rectangle_angle_quiz.html" },
-        { id:"rhombus-proof", title:"마름모의 성질 증명 탐구", type:"탐구", meta:"증명 활동", file:"마름모의_대각선_증명_탐구.html" },
-        { id:"rhombus-quiz-3", title:"문제 3", type:"문제", meta:"마름모", file:"rhombus_quiz.html" },
-        { id:"quad-shapes-summary", title:"여러 가지 사각형의 성질 정리", type:"탐구", meta:"복습 정리", file:"여러가지_사각형의_성질_정리.html" },
-        { id:"quad-relation-speedquiz", title:"5분 스피드 퀴즈대결", type:"문제", meta:"사각형 관계 복습", file:"여러가지_사각형의_관계_스피드퀴즈.html" },
-        { id:"quad-relation-minigames", title:"여러 가지 사각형 미니게임 4종", type:"문제", meta:"사각형 관계 복습", file:"여러가지_사각형의_관계_미니게임.html" },
-        { id:"parallel-area-relation", title:"평행선과 넓이의 관계", type:"문제", meta:"관찰+퀴즈", file:"평행선과_넓이의_관계.html" }
+      { name:"직각삼각형의 합동 조건", items:[
+        { id:"rha-proof", title:"RHA 합동 조건 증명 탐구" },
+        { id:"rhs-proof", title:"RHS 합동 조건 증명 탐구" },
+        { id:"rha-149-1", title:"문제 1" }
+      ] },
+      { name:"삼각형의 외심", items:[
+        { id:"circum-proof", title:"외심 증명 탐구" },
+        { id:"circum-152-1", title:"문제 1" },
+        { id:"circum-152-2", title:"문제 2" },
+        { id:"circum-152-3", title:"문제 3" },
+        { id:"circum-shape-proof", title:"삼각형의 모양에 따른 외심의 위치 탐구" },
+        { id:"circum-153-4", title:"문제 4" }
+      ] },
+      { name:"삼각형의 내심", items:[
+        { id:"incenter-proof", title:"내심 증명 탐구" },
+        { id:"incenter-156-5", title:"문제 5" },
+        { id:"incenter-156-6", title:"문제 6" },
+        { id:"incenter-156-7", title:"문제 7" },
+        { id:"equilateral-oi-proof", title:"정삼각형의 외심과 내심의 위치 탐구" },
+        { id:"oi-compare", title:"내심·외심 비교 정리" }
       ] }
-    ]
-  },
-  { id:"similarity",  name:"도형의 닮음",       ready:true, subunits:[
-      { name: "닮음의 뜻과 성질", items: [
-        { id:"shape-similarity", title:"도형의 닮음", type:"탐구", meta:"개념 탐구", file:"도형의_닮음.html" },
-        { id:"shape-similarity-assessment", title:"형성평가(도형의 닮음)", type:"문제", meta:"형성평가", file:"형성평가_도형의_닮음.html" },
-        { id:"similarity-properties", title:"평면도형에서 닮음의 성질", type:"탐구", meta:"증명 활동", file:"닮음의_성질_증명_탐구.html" },
-        { id:"solid-similarity-properties", title:"입체도형에서 닮음의 성질", type:"탐구", meta:"증명 활동", file:"입체도형의_닮음_증명_탐구.html" },
-        { id:"similar-figure-properties-assessment", title:"형성평가(닮음의 성질)", type:"문제", meta:"형성평가", file:"형성평가_닮은_도형의_성질.html" },
-        { id:"similarity-area-volume-ratio", title:"닮음비와 넓이의 비, 부피의 비", type:"탐구", meta:"증명 활동", file:"닮음_넓이비_부피비_증명_탐구.html" },
-        { id:"area-volume-ratio-assessment", title:"형성평가(닮음비와 넓이의 비, 부피의 비)", type:"문제", meta:"형성평가", file:"형성평가_넓이비_부피비.html" },
-        { id:"triangle-similarity-condition-exploration", title:"삼각형의 닮음 조건", type:"탐구", meta:"탐구+증명+정리", file:"삼각형의_닮음_조건_증명_탐구.html" },
-        { id:"triangle-similarity-cross-sas", title:"삼각형의 닮음 조건 연습문제 1", type:"문제", meta:"연습문제", file:"삼각형의_닮음_조건_SAS_교차형_문제풀이.html" },
-        { id:"triangle-similarity-condition-assessment", title:"삼각형의 닮음 조건 형성평가 1", type:"문제", meta:"형성평가", file:"삼각형의_닮음_조건_형성평가.html" },
-        { id:"triangle-similarity-altitude-practice2", title:"삼각형의 닮음 조건 연습문제 2", type:"문제", meta:"연습문제", file:"삼각형의_닮음_조건_연습문제2.html" },
-        { id:"triangle-similarity-altitude-assessment2", title:"삼각형의 닮음 조건 형성평가 2", type:"문제", meta:"형성평가", file:"삼각형의_닮음_조건_형성평가2.html" },
-        { id:"triangle-parallel-segment-ratio-exploration", title:"평행선과 선분의 길이의 비 증명 탐구", type:"탐구", meta:"증명 활동", file:"평행선과_선분의_길이의_비_증명_탐구.html" },
-        { id:"triangle-parallel-ratio-assessment", title:"평행선과 선분의 길이의 비 형성평가", type:"문제", meta:"형성평가", file:"평행선과_선분의_길이의_비 형성평가.html" },
-        { id:"midpoint-connector-theorem", title:"삼각형의 중점연결정리", type:"탐구", meta:"증명+문제풀이", file:"삼각형의_두_변의_중점을_연결한_선분의_성질.html" },
-        { id:"parallel-lines-segment-ratio", title:"평행선 사이의 선분의 길이의 비", type:"탐구", meta:"증명+문제풀이", file:"평행선_사이의_선분의_길이의_비.html" },
-        { id:"triangle-centroid", title:"삼각형의 무게중심", type:"탐구", meta:"탐구+증명+정리", file:"삼각형의_무게중심.html" },
-        { id:"triangle-centroid-assessment", title:"삼각형의 무게중심 형성평가", type:"문제", meta:"형성평가", file:"삼각형의_무게중심_형성평가.html" },
-        { id:"equilateral-centers-coincide", title:"정삼각형의 외심, 내심, 무게중심", type:"탐구", meta:"통찰+증명+정리", file:"정삼각형의_외심_내심_무게중심.html" }
+  ] },
+  { id:"quad", name:"사각형의 성질", ready:true, subunits:[
+      { name:"평행사변형", items:[
+        { id:"para-proof", title:"평행사변형의 성질 증명 탐구" },
+        { id:"para-diag-proof", title:"평행사변형의 대각선 성질 탐구" },
+        { id:"para-166-2", title:"문제 1" },
+        { id:"para-166-3", title:"문제 2" }
+      ] },
+      { name:"평행사변형이 되는 조건", items:[
+        { id:"para-cond-side-proof", title:"평행사변형이 되는 조건 1" },
+        { id:"para-cond-angle-proof", title:"평행사변형이 되는 조건 2" },
+        { id:"para-cond-oneside-proof", title:"평행사변형이 되는 조건 3" },
+        { id:"para-cond-diag-proof", title:"평행사변형이 되는 조건 4" },
+        { id:"para-cond-171-1", title:"문제 1" },
+        { id:"para-cond-171-2", title:"문제 2" }
+      ] },
+      { name:"여러 가지 사각형", items:[
+        { id:"rect-proof", title:"직사각형의 성질 증명 탐구" },
+        { id:"rect-quiz-1", title:"문제 1" },
+        { id:"rect-quiz-2", title:"문제 2" },
+        { id:"rhombus-proof", title:"마름모의 성질 증명 탐구" },
+        { id:"rhombus-quiz-3", title:"문제 3" },
+        { id:"quad-shapes-summary", title:"여러 가지 사각형의 성질 정리" },
+        { id:"quad-relation-speedquiz", title:"5분 스피드 퀴즈대결" },
+        { id:"quad-relation-minigames", title:"여러 가지 사각형 미니게임 4종" },
+        { id:"parallel-area-relation", title:"평행선과 넓이의 관계" }
       ] }
-    ]
-  },
-  { id:"pythagoras",  name:"피타고라스 정리",   ready:false, subunits:[] },
-  { id:"probability", name:"경우의 수와 확률",  ready:false, subunits:[] }
-];
+  ] },
+  { id:"similarity", name:"도형의 닮음", ready:true, subunits:[
+      { name:"닮음의 뜻과 성질", items:[
+        { id:"shape-similarity", title:"도형의 닮음" },
+        { id:"shape-similarity-assessment", title:"형성평가(도형의 닮음)" },
+        { id:"similarity-properties", title:"평면도형에서 닮음의 성질" },
+        { id:"solid-similarity-properties", title:"입체도형에서 닮음의 성질" },
+        { id:"similar-figure-properties-assessment", title:"형성평가(닮음의 성질)" },
+        { id:"similarity-area-volume-ratio", title:"닮음비와 넓이의 비, 부피의 비" },
+        { id:"area-volume-ratio-assessment", title:"형성평가(닮음비와 넓이의 비, 부피의 비)" },
+        { id:"triangle-similarity-condition-exploration", title:"삼각형의 닮음 조건" },
+        { id:"triangle-similarity-cross-sas", title:"삼각형의 닮음 조건 연습문제 1" },
+        { id:"triangle-similarity-condition-assessment", title:"삼각형의 닮음 조건 형성평가 1" },
+        { id:"triangle-similarity-altitude-practice2", title:"삼각형의 닮음 조건 연습문제 2" },
+        { id:"triangle-similarity-altitude-assessment2", title:"삼각형의 닮음 조건 형성평가 2" },
+        { id:"triangle-parallel-segment-ratio-exploration", title:"평행선과 선분의 길이의 비 증명 탐구" },
+        { id:"triangle-parallel-ratio-assessment", title:"평행선과 선분의 길이의 비 형성평가" },
+        { id:"midpoint-connector-theorem", title:"삼각형의 중점연결정리" },
+        { id:"parallel-lines-segment-ratio", title:"평행선 사이의 선분의 길이의 비" },
+        { id:"triangle-centroid", title:"삼각형의 무게중심" },
+        { id:"triangle-centroid-assessment", title:"삼각형의 무게중심 형성평가" },
+        { id:"equilateral-centers-coincide", title:"정삼각형의 외심, 내심, 무게중심" }
+      ] }
+  ] },
+  { id:"pythagoras", name:"피타고라스 정리", ready:false, subunits:[
+  ] },
+  { id:"probability", name:"경우의 수와 확률", ready:false, subunits:[
+  ] },
+]};
+
+// ---- 등록소 + 구성 → 화면 렌더에 쓰는 CONTENT 형태로 합치기 ----
+function buildContentFromStructure(structure){
+  return structure.units.map(u=>({
+    id: u.id, name: u.name, ready: !!u.ready,
+    subunits: (u.subunits||[]).map(su=>({
+      name: su.name,
+      items: (su.items||[]).map(it=>{
+        const reg = ITEM_REGISTRY[it.id];
+        if(!reg) return null; // 등록소에 없는 id는 화면에서 조용히 제외(안전장치)
+        return { id: it.id, title: it.title, type: reg.type, meta: reg.meta, file: reg.file };
+      }).filter(Boolean)
+    }))
+  }));
+}
+
+let contentStructure = DEFAULT_STRUCTURE;
+let CONTENT = buildContentFromStructure(DEFAULT_STRUCTURE);
+
+// ---- 단원 구성을 Firestore에서 불러오기: 관리자가 '단원 구조 편집'에서 저장한 배치가 있으면 그걸 쓰고,
+// 문서가 없거나 응답이 느리면(3초) 위 기본 배치(=지금까지의 고정 배치)로 그대로 진행 ----
+async function loadContentStructure(){
+  try{
+    const snap = await Promise.race([
+      getDoc(doc(db, 'siteConfig', 'contentStructure')),
+      new Promise((_, reject)=> setTimeout(()=> reject(new Error('timeout')), 3000))
+    ]);
+    if(snap.exists() && Array.isArray(snap.data().units)){
+      contentStructure = snap.data();
+      CONTENT = buildContentFromStructure(contentStructure);
+    }
+  }catch(err){
+    console.warn('콘텐츠 구성 불러오기 실패, 기본 배치로 진행', err);
+  }
+}
+// 블로킹 await 아님 — window.go 등 아래 정의들이 이 네트워크 요청 때문에 잠깐 비는 일이
+// 없도록 백그라운드로 불러오고, 끝나면 이미 떠 있는 화면만 새 구성으로 다시 그림
+loadContentStructure().then(()=>{
+  if(studentInfo){
+    renderUnitList();
+    renderToday();
+    renderRecommend();
+    renderCalendar();
+    if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
+      openUnit(currentUnitId);
+    }
+  }
+});
 
 // ---- 담당 선생님 → 담당 반 매핑 (계정 늘어나면 여기만 수정) ----
 const TEACHER_CLASSES = {
@@ -797,6 +954,7 @@ onAuthStateChanged(auth, (user)=>{
   }
   renderClassTabs();
   selectAdminClass(currentTeacher.classes[0]);
+  document.getElementById('structEditorNavBtn').style.display = currentTeacher.admin ? '' : 'none';
   go('admin');
 });
 
@@ -1011,6 +1169,410 @@ window.saveToday = function(){
     msg.className = 'msg error';
   }
 };
+
+// ==================================================================
+// 단원 구조 편집 (반별 아님 — 전체 학생 화면에 공통 적용)
+// siteConfig/contentStructure 문서 하나를 전체 13개 반이 공유해서 읽음.
+// 쓰기는 goodgama@goedu.kr(전체관리) 계정만 가능하도록 Firestore 보안규칙에서 제한.
+// ==================================================================
+let editStructure = null; // 편집 중인 임시 복사본(저장 전까지 Firestore에 안 반영됨)
+let structDirty = false;
+let dragPayload = null; // { kind:'unit', id } | { kind:'subunit', eid } | { kind:'item', id }
+
+function markStructDirty(){
+  structDirty = true;
+  updateStructDirtyFlag();
+}
+function updateStructDirtyFlag(){
+  const el = document.getElementById('structDirtyFlag');
+  if(el) el.textContent = structDirty ? '• 저장 안 한 변경사항 있어요' : '';
+}
+
+function cloneStructureForEdit(src){
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.units.forEach(u=>{
+    (u.subunits||[]).forEach(su=>{ su._eid = 'su_' + Math.random().toString(36).slice(2); });
+  });
+  return copy;
+}
+
+window.openStructureEditor = function(){
+  editStructure = cloneStructureForEdit(contentStructure);
+  structDirty = false;
+  updateStructDirtyFlag();
+  document.getElementById('struct-msg').textContent = '';
+  renderStructureEditor();
+  go('structure-editor');
+};
+
+window.revertStructureEditsConfirm = function(){
+  if(structDirty && !confirm('편집 중인 내용을 취소하고 마지막 저장 상태로 되돌릴까요?')) return;
+  editStructure = cloneStructureForEdit(contentStructure);
+  structDirty = false;
+  updateStructDirtyFlag();
+  document.getElementById('struct-msg').textContent = '';
+  renderStructureEditor();
+};
+
+window.addUnitPrompt = function(){
+  const name = prompt('새 대단원 이름을 입력하세요');
+  if(!name || !name.trim()) return;
+  const id = 'unit_' + Math.random().toString(36).slice(2, 9);
+  editStructure.units.push({ id, name: name.trim(), ready: false, subunits: [] });
+  markStructDirty();
+  renderStructureEditor();
+};
+
+function addSubunitPrompt(unitId){
+  const name = prompt('새 소단원 이름을 입력하세요');
+  if(!name || !name.trim()) return;
+  const u = editStructure.units.find(x=> x.id === unitId);
+  if(!u) return;
+  u.subunits.push({ name: name.trim(), items: [], _eid: 'su_' + Math.random().toString(36).slice(2) });
+  markStructDirty();
+  renderStructureEditor();
+}
+
+function deleteUnitConfirm(unitId){
+  if(!confirm('이 대단원을 삭제할까요? 안의 항목들은 "미배치"로 이동할 뿐, 실제 콘텐츠 파일은 지워지지 않아요.')) return;
+  const idx = editStructure.units.findIndex(x=> x.id === unitId);
+  if(idx >= 0) editStructure.units.splice(idx, 1);
+  markStructDirty();
+  renderStructureEditor();
+}
+
+function deleteSubunitConfirm(eid){
+  if(!confirm('이 소단원을 삭제할까요? 안의 항목들은 "미배치"로 이동할 뿐, 실제 콘텐츠 파일은 지워지지 않아요.')) return;
+  removeSubunitByEid(eid);
+  markStructDirty();
+  renderStructureEditor();
+}
+
+// ---- 조회/제거 헬퍼: 항상 id/eid로 "지금 당장" 다시 찾음 (인덱스를 들고 있다가 쓰지 않음 — 삭제로 인한 인덱스 꼬임 방지) ----
+function findItemLocation(itemId){
+  for(let ui=0; ui<editStructure.units.length; ui++){
+    const subs = editStructure.units[ui].subunits;
+    for(let si=0; si<subs.length; si++){
+      const items = subs[si].items;
+      for(let ii=0; ii<items.length; ii++){
+        if(items[ii].id === itemId) return { ui, si, ii };
+      }
+    }
+  }
+  return null;
+}
+function removeItemById(itemId){
+  const loc = findItemLocation(itemId);
+  if(!loc){
+    const reg = ITEM_REGISTRY[itemId];
+    return { id: itemId, title: reg ? reg.defaultTitle : itemId };
+  }
+  return editStructure.units[loc.ui].subunits[loc.si].items.splice(loc.ii, 1)[0];
+}
+function findSubunitLocationByEid(eid){
+  for(let ui=0; ui<editStructure.units.length; ui++){
+    const subs = editStructure.units[ui].subunits;
+    for(let si=0; si<subs.length; si++){
+      if(subs[si]._eid === eid) return { ui, si };
+    }
+  }
+  return null;
+}
+function removeSubunitByEid(eid){
+  const loc = findSubunitLocationByEid(eid);
+  if(!loc) return null;
+  return editStructure.units[loc.ui].subunits.splice(loc.si, 1)[0];
+}
+
+// ---- 렌더 ----
+function renderStructureEditor(){
+  const placedIds = new Set();
+  editStructure.units.forEach(u=> u.subunits.forEach(su=> su.items.forEach(it=> placedIds.add(it.id))));
+  const unplacedIds = Object.keys(ITEM_REGISTRY).filter(id=> !placedIds.has(id));
+
+  const unplacedWrap = document.getElementById('struct-unplaced-list');
+  unplacedWrap.innerHTML = '';
+  unplacedIds.forEach(id=>{
+    const reg = ITEM_REGISTRY[id];
+    unplacedWrap.appendChild(buildItemRow({ id, title: reg.defaultTitle }, reg, true));
+  });
+
+  const unitsWrap = document.getElementById('struct-units');
+  unitsWrap.innerHTML = '';
+  editStructure.units.forEach(u=> unitsWrap.appendChild(buildUnitBlock(u)));
+}
+
+function buildItemRow(it, reg, isUnplaced){
+  const row = document.createElement('div');
+  row.className = 'struct-item-row';
+  row.dataset.itemId = it.id;
+
+  const handle = document.createElement('span');
+  handle.className = 'struct-handle';
+  handle.textContent = '⠿';
+  handle.draggable = true;
+  handle.addEventListener('dragstart', ()=>{
+    dragPayload = { kind:'item', id: it.id };
+    row.classList.add('dragging');
+  });
+  handle.addEventListener('dragend', ()=> row.classList.remove('dragging'));
+
+  const icon = document.createElement('span');
+  const known = !!reg;
+  icon.className = 'icon ' + (known ? (reg.type==='문제' ? 'quiz' : 'explore') : '');
+  icon.style.background = known ? '' : 'var(--coral)';
+  icon.textContent = known ? (reg.type==='문제' ? '✏️' : '🔍') : '⚠️';
+
+  const titleInput = document.createElement('input');
+  titleInput.className = 'struct-item-title-input';
+  titleInput.value = it.title;
+  titleInput.disabled = isUnplaced; // 미배치 상태에선 백업할 곳이 없어 수정 비허용 — 배치 후 수정 가능
+  if(isUnplaced) titleInput.title = '소단원에 배치한 뒤에 제목을 수정할 수 있어요';
+  titleInput.addEventListener('input', ()=>{ it.title = titleInput.value; markStructDirty(); });
+
+  const meta = document.createElement('span');
+  meta.className = 'struct-item-meta';
+  meta.textContent = known ? reg.meta : ('등록소에 없음: ' + it.id);
+
+  row.append(handle, icon, titleInput, meta);
+
+  row.addEventListener('dragover', (e)=>{ if(dragPayload && dragPayload.kind==='item') e.preventDefault(); });
+  row.addEventListener('drop', (e)=>{
+    if(!dragPayload || dragPayload.kind !== 'item' || dragPayload.id === it.id) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const obj = removeItemById(dragPayload.id);
+    const suEid = row.parentElement ? row.parentElement.dataset.subunitEid : null;
+    if(suEid){
+      const loc = findSubunitLocationByEid(suEid);
+      if(loc){
+        const items = editStructure.units[loc.ui].subunits[loc.si].items;
+        const idx = items.findIndex(x=> x.id === it.id);
+        items.splice(idx < 0 ? items.length : idx, 0, obj);
+      }
+    }
+    // suEid가 없다 = 미배치 트레이의 행 위에 드롭 → 그냥 제거된 상태로 둠(= 미배치로 남음)
+    markStructDirty();
+    renderStructureEditor();
+  });
+
+  return row;
+}
+
+function buildUnitBlock(u){
+  const block = document.createElement('div');
+  block.className = 'struct-unit';
+  block.dataset.unitId = u.id;
+
+  const head = document.createElement('div');
+  head.className = 'struct-unit-head';
+
+  const handle = document.createElement('span');
+  handle.className = 'struct-handle';
+  handle.textContent = '⠿⠿';
+  handle.draggable = true;
+  handle.addEventListener('dragstart', ()=>{ dragPayload = { kind:'unit', id: u.id }; });
+
+  const nameInput = document.createElement('input');
+  nameInput.className = 'struct-name-input';
+  nameInput.value = u.name;
+  nameInput.addEventListener('input', ()=>{ u.name = nameInput.value; markStructDirty(); });
+
+  const readyLabel = document.createElement('label');
+  readyLabel.className = 'struct-ready-label';
+  const readyCb = document.createElement('input');
+  readyCb.type = 'checkbox';
+  readyCb.checked = !!u.ready;
+  readyCb.addEventListener('change', ()=>{ u.ready = readyCb.checked; markStructDirty(); });
+  readyLabel.append(readyCb, document.createTextNode(' 공개'));
+
+  const addSuBtn = document.createElement('button');
+  addSuBtn.type = 'button';
+  addSuBtn.className = 'struct-mini-btn';
+  addSuBtn.textContent = '+ 소단원';
+  addSuBtn.addEventListener('click', ()=> addSubunitPrompt(u.id));
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'struct-mini-btn danger';
+  delBtn.textContent = '대단원 삭제';
+  delBtn.addEventListener('click', ()=> deleteUnitConfirm(u.id));
+
+  head.append(handle, nameInput, readyLabel, addSuBtn, delBtn);
+  block.appendChild(head);
+
+  u.subunits.forEach(su=> block.appendChild(buildSubunitBlock(u, su)));
+
+  block.addEventListener('dragover', (e)=>{ if(dragPayload && dragPayload.kind==='unit') e.preventDefault(); });
+  block.addEventListener('drop', (e)=>{
+    if(!dragPayload || dragPayload.kind !== 'unit' || dragPayload.id === u.id) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const fromIdx = editStructure.units.findIndex(x=> x.id === dragPayload.id);
+    if(fromIdx < 0) return;
+    const obj = editStructure.units.splice(fromIdx, 1)[0];
+    const targetIdx = editStructure.units.findIndex(x=> x.id === u.id);
+    editStructure.units.splice(targetIdx < 0 ? editStructure.units.length : targetIdx, 0, obj);
+    markStructDirty();
+    renderStructureEditor();
+  });
+
+  return block;
+}
+
+function buildSubunitBlock(unit, su){
+  const block = document.createElement('div');
+  block.className = 'struct-subunit';
+  block.dataset.subunitEid = su._eid;
+
+  const head = document.createElement('div');
+  head.className = 'struct-subunit-head';
+
+  const handle = document.createElement('span');
+  handle.className = 'struct-handle';
+  handle.textContent = '⠿';
+  handle.draggable = true;
+  handle.addEventListener('dragstart', ()=>{ dragPayload = { kind:'subunit', eid: su._eid }; });
+
+  const nameInput = document.createElement('input');
+  nameInput.className = 'struct-name-input';
+  nameInput.style.fontSize = '14.5px';
+  nameInput.value = su.name;
+  nameInput.addEventListener('input', ()=>{ su.name = nameInput.value; markStructDirty(); });
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'struct-mini-btn danger';
+  delBtn.textContent = '소단원 삭제';
+  delBtn.addEventListener('click', ()=> deleteSubunitConfirm(su._eid));
+
+  head.append(handle, nameInput, delBtn);
+  block.appendChild(head);
+
+  const itemList = document.createElement('div');
+  itemList.className = 'struct-item-list';
+  itemList.dataset.subunitEid = su._eid;
+  su.items.forEach(it=> itemList.appendChild(buildItemRow(it, ITEM_REGISTRY[it.id], false)));
+  block.appendChild(itemList);
+
+  itemList.addEventListener('dragover', (e)=>{ if(dragPayload && dragPayload.kind==='item') e.preventDefault(); });
+  itemList.addEventListener('drop', (e)=>{
+    if(!dragPayload || dragPayload.kind !== 'item') return;
+    e.preventDefault();
+    e.stopPropagation();
+    const obj = removeItemById(dragPayload.id);
+    const loc = findSubunitLocationByEid(su._eid);
+    if(loc) editStructure.units[loc.ui].subunits[loc.si].items.push(obj);
+    markStructDirty();
+    renderStructureEditor();
+  });
+
+  block.addEventListener('dragover', (e)=>{
+    if(dragPayload && (dragPayload.kind==='item' || dragPayload.kind==='subunit')) e.preventDefault();
+  });
+  block.addEventListener('drop', (e)=>{
+    if(!dragPayload) return;
+    if(dragPayload.kind === 'item'){
+      e.preventDefault();
+      e.stopPropagation();
+      const obj = removeItemById(dragPayload.id);
+      const loc = findSubunitLocationByEid(su._eid);
+      if(loc) editStructure.units[loc.ui].subunits[loc.si].items.push(obj);
+      markStructDirty();
+      renderStructureEditor();
+    }else if(dragPayload.kind === 'subunit' && dragPayload.eid !== su._eid){
+      e.preventDefault();
+      e.stopPropagation();
+      const obj = removeSubunitByEid(dragPayload.eid);
+      if(!obj) return;
+      const uIdx = editStructure.units.findIndex(x=> x.id === unit.id);
+      const subs = editStructure.units[uIdx].subunits;
+      const targetIdx = subs.findIndex(x=> x._eid === su._eid);
+      subs.splice(targetIdx < 0 ? subs.length : targetIdx, 0, obj);
+      markStructDirty();
+      renderStructureEditor();
+    }
+  });
+
+  return block;
+}
+
+// 컨테이너 레벨 드롭존(빈 공간에 놓으면 끝에 추가/미배치로) — DOM이 다시 안 만들어지는 고정 요소라 한 번만 등록
+function initStructureEditorContainers(){
+  const unitsWrap = document.getElementById('struct-units');
+  unitsWrap.addEventListener('dragover', (e)=>{ if(dragPayload && dragPayload.kind==='unit') e.preventDefault(); });
+  unitsWrap.addEventListener('drop', (e)=>{
+    if(!dragPayload || dragPayload.kind !== 'unit') return;
+    e.preventDefault();
+    const idx = editStructure.units.findIndex(x=> x.id === dragPayload.id);
+    if(idx < 0) return;
+    const obj = editStructure.units.splice(idx, 1)[0];
+    editStructure.units.push(obj);
+    markStructDirty();
+    renderStructureEditor();
+  });
+
+  const unplacedWrap = document.getElementById('struct-unplaced-list');
+  unplacedWrap.addEventListener('dragover', (e)=>{ if(dragPayload && dragPayload.kind==='item') e.preventDefault(); });
+  unplacedWrap.addEventListener('drop', (e)=>{
+    if(!dragPayload || dragPayload.kind !== 'item') return;
+    e.preventDefault();
+    removeItemById(dragPayload.id); // 꺼내기만 하면 자동으로 미배치 트레이에 보임(파생 목록)
+    markStructDirty();
+    renderStructureEditor();
+  });
+
+  document.getElementById('structAddUnitBtn').addEventListener('click', addUnitPrompt);
+  document.getElementById('structSaveBtn').addEventListener('click', saveStructure);
+  document.getElementById('structRevertBtn').addEventListener('click', revertStructureEditsConfirm);
+}
+
+function saveStructure(){
+  const msg = document.getElementById('struct-msg');
+  msg.textContent = '저장 중...';
+  msg.className = 'msg';
+  try{
+    const toSave = {
+      units: editStructure.units.map(u=>({
+        id: u.id, name: u.name, ready: !!u.ready,
+        subunits: u.subunits.map(su=>({
+          name: su.name,
+          items: su.items.map(it=>({ id: it.id, title: it.title }))
+        }))
+      }))
+    };
+    const timeoutId = setTimeout(()=>{
+      msg.textContent = '저장이 오래 걸리고 있어요. 인터넷 연결을 확인하고 다시 시도해주세요.';
+      msg.className = 'msg error';
+    }, 8000);
+    setDoc(doc(db, 'siteConfig', 'contentStructure'), { ...toSave, updatedAt: serverTimestamp() })
+      .then(()=>{
+        clearTimeout(timeoutId);
+        contentStructure = toSave;
+        CONTENT = buildContentFromStructure(contentStructure);
+        structDirty = false;
+        updateStructDirtyFlag();
+        msg.textContent = '저장했어요! 전체 반 학생 화면에 바로 반영돼요.';
+        msg.className = 'msg ok';
+      })
+      .catch(err=>{
+        clearTimeout(timeoutId);
+        console.error('saveStructure failed', err);
+        msg.textContent = err.code === 'resource-exhausted'
+          ? '오늘 하루 사용량 한도를 다 썼어요. 내일 다시 시도해주세요.'
+          : (err.code === 'permission-denied'
+            ? '저장 권한이 없어요 — 전체관리 계정(준형T)으로 로그인했는지 확인해주세요.'
+            : '저장 실패: ' + err.message);
+        msg.className = 'msg error';
+      });
+  }catch(err){
+    console.error('saveStructure sync error', err);
+    msg.textContent = '저장 중 오류가 났어요: ' + err.message;
+    msg.className = 'msg error';
+  }
+}
+
+initStructureEditorContainers();
 </script>
 </body>
 </html>
