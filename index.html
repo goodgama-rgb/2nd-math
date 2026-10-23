@@ -411,6 +411,8 @@ window.handleInstallClick = async function(){
 // ---- 콘텐츠 등록소: 실제 파일과 묶인 기술적 사실(종류/메타/파일명) — 새 파일 추가할 때만 여기 등록 ----
 // 배치(어느 대단원/소단원, 순서, 제목)는 더 이상 여기 없음 — siteConfig/contentStructure 문서로 이동, 관리자 페이지 '단원 구조 편집'에서 드래그로 편집
 const ITEM_REGISTRY = {
+  "pythagorean-theorem": { type:"탐구", meta:"증명 활동", file:"피타고라스_정리.html", defaultTitle:"피타고라스 정리 증명 탐구" },
+  "pythagorean-theorem-assessment": { type:"문제", meta:"형성평가", file:"피타고라스_정리_형성평가.html", defaultTitle:"피타고라스 정리 형성평가" },
   "iso-proof": { type:"탐구", meta:"증명 활동", file:"이등변삼각형_성질_증명_탐구.html", defaultTitle:"성질 증명 탐구" },
   "iso-144-1": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_quiz(144-1).html", defaultTitle:"문제 1" },
   "iso-144-2": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_bisector_quiz(144-2).html", defaultTitle:"문제 2" },
@@ -557,7 +559,11 @@ const DEFAULT_STRUCTURE = { units: [
         { id:"equilateral-centers-coincide", title:"정삼각형의 외심, 내심, 무게중심" }
       ] }
   ] },
-  { id:"pythagoras", name:"피타고라스 정리", ready:false, subunits:[
+  { id:"pythagoras", name:"피타고라스 정리", ready:true, subunits:[
+      { name:"피타고라스 정리", items:[
+        { id:"pythagorean-theorem", title:"피타고라스 정리 증명 탐구" },
+        { id:"pythagorean-theorem-assessment", title:"피타고라스 정리 형성평가" }
+      ] }
   ] },
   { id:"probability", name:"경우의 수와 확률", ready:false, subunits:[
   ] },

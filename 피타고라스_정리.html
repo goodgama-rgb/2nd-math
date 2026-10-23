@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>피타고라스 정리 증명 탐구</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.intro-wide{max-width:760px;margin:0 auto}
+.intro-svg-wrap{background:#fbfcff;border-radius:10px;border:1px solid #eee;margin-bottom:10px}
+.intro-svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.choice-btn{padding:9px 20px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.choice-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.done-wrap{text-align:center;padding:24px 10px}
+.done-icon{font-size:48px;margin-bottom:10px}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+.key-q{font-size:15.5px;font-weight:800;text-decoration:underline;text-decoration-color:var(--indigo);text-decoration-thickness:2.5px;text-underline-offset:3px}
+.key-term{color:var(--red);font-weight:800;text-decoration:underline;text-decoration-color:var(--red);text-decoration-thickness:2px;text-underline-offset:2px}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 420px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:10px}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.scratch-area{height:70px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.vlabel{font-size:15px;font-weight:800;text-anchor:middle}
+.vlabel-sm{font-size:12px;font-weight:800;text-anchor:middle}
+.sidelabel{font-size:13.5px;font-weight:800;font-style:italic;text-anchor:middle}
+.sidecurve{fill:none;stroke-width:1.4;stroke-dasharray:4 3}
+
+.panel-title{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--indigo);color:#fff;font-size:12px;font-weight:800;flex-shrink:0}
+.proof-block{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:14px;margin:10px 0;font-size:14.5px;line-height:2.3}
+.blank{display:inline-block;width:52px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-check:hover{background:#128a3e}
+.btn-primary{background:var(--indigo)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px;margin-bottom:6px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.summary-box{background:var(--indigo-ll);border:1.5px solid var(--indigo-l);border-radius:10px;padding:16px;text-align:center;font-size:16px;font-weight:700;color:var(--indigo);line-height:2;margin-top:14px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:420px;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25)}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.modal-btn:hover{background:#4338ca}
+.s1-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+.s1-table th,.s1-table td{border:1px solid #d8ddfb;padding:8px;text-align:center}
+.s1-table th{background:var(--indigo-ll);color:var(--indigo);font-weight:800}
+.s1-table td:first-child{background:var(--indigo-ll);font-weight:800;color:var(--ink2)}
+.s1-table input.blank{width:44px}
+.pz-piece{cursor:grab;touch-action:none}
+.pz-piece.pz-locked{cursor:default;opacity:.55}
+.pz-piece.pz-placed{cursor:default}
+.pz-progress-row{display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0;font-weight:700;font-size:13px;color:var(--ink2)}
+.pz-dot{width:11px;height:11px;border-radius:50%;background:#d8ddfb}
+.pz-dot.on{background:var(--green)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">피타고라스 정리 증명 탐구</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'pythagorean-theorem' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+
+  <div class="screen active" id="scIntro">
+    <div class="intro-wide">
+      <div class="card" id="s1Card">
+        <div class="panel-title"><span class="step-badge">1</span> 세 직각삼각형으로 확인하기</div>
+        <p>한 칸의 가로, 세로의 길이가 각각 1인 모눈종이 위에 ∠C=90°인 직각삼각형 ABC와 그 세 변을 각각 한 변으로 하는 세 정사각형 ㉠, ㉡, ㉢을 나타낸 것이에요. (세 삼각형은 서로 닮음이 아니에요.)</p>
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 필기:</span>
+          <button class="mode-btn" id="introPenBtn" onclick="drawSetMode('intro','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('intro','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('intro','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('intro','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('intro','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('intro','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="introEraserBtn" onclick="drawToggleEraser('intro')">🧽 지우개</button>
+          <button class="mode-btn active" id="introPointerBtn" onclick="drawSetMode('intro','pointer')">🖱️ 마우스</button>
+        </div>
+        <div class="draw-wrap" id="introDrawWrap">
+          <div class="svg-wrap"><svg id="s1Svg" viewBox="0 0 615 250" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area" style="height:50px"></div>
+          <canvas id="introInk" class="ink-canvas"></canvas>
+        </div>
+        <p class="key-q">세 정사각형 ㉠, ㉡, ㉢의 넓이를 각각 구하여 표의 빈칸을 알맞게 채워 봅시다.</p>
+        <div id="s1TableWrap"></div>
+        <div class="btn-row"><button class="btn btn-check" id="s1CheckBtn" onclick="checkS1Table()">확인</button></div>
+        <div class="feedback" id="s1TableFb"></div>
+        <div id="s1RelArea"></div>
+      </div>
+
+      <div class="card" id="s2Card" style="display:none">
+        <div class="panel-title"><span class="step-badge">2</span> 퍼즐로 직접 확인하기</div>
+        <p id="s2Intro">직각삼각형 위에 그린 정사각형 세 개예요. 아래 질문에 먼저 답해볼까요?</p>
+        <div class="intro-svg-wrap"><svg id="pzSvg" viewBox="0 0 330 305" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div id="s2QaArea"></div>
+        <div id="s2PuzzleArea" style="display:none">
+          <p class="note" style="font-size:13px;color:var(--ink2);text-align:center">🧩 파란 정사각형(a²)은 1조각, 주황 정사각형(b²)은 4조각 — 조각을 <b>돌리지 않고 밀기만</b> 해서 점선 틀(c²) 안에 맞춰보세요.</p>
+          <div class="pz-progress-row" id="pzProgressRow"></div>
+          <div class="btn-row">
+            <button class="btn" id="pzHintBtn" onclick="pzDoHint()" style="background:var(--orange)">💡 힌트</button>
+            <button class="btn" id="pzResetBtn" onclick="pzDoReset()" style="background:#9090b0">🔄 다시</button>
+          </div>
+          <div id="s2FinalArea"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="screen" id="scProve">
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn" id="provePenBtn" onclick="drawSetMode('prove','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('prove','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('prove','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('prove','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('prove','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('prove','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="proveEraserBtn" onclick="drawToggleEraser('prove')">🧽 지우개</button>
+          <button class="mode-btn active" id="provePointerBtn" onclick="drawSetMode('prove','pointer')">🖱️ 마우스(도형 조작)</button>
+        </div>
+        <div class="draw-wrap" id="proveDrawWrap">
+          <div class="svg-wrap"><svg id="proveSvg" viewBox="0 0 380 520" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area"></div>
+          <canvas id="proveInk" class="ink-canvas"></canvas>
+        </div>
+      </div>
+      <div class="split-right card">
+        <div id="provePanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scSummary">
+    <div class="intro-wide">
+      <div class="card">
+        <div class="intro-svg-wrap"><svg id="summarySvg" viewBox="20 30 285 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div id="summaryPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px">피타고라스 정리의 증명(교과서 닮음 증명)을 모두 마쳤어요.</p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;right:16px;width:320px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:40;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function lerp(p,q,t){ return [p[0]+(q[0]-p[0])*t, p[1]+(q[1]-p[1])*t]; }
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function bboxSizeOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return { w:Math.max(...xs)-Math.min(...xs), h:Math.max(...ys)-Math.min(...ys) }; }
+function maxRadius(pts){ let m=0; pts.forEach(([x,y])=>{ m=Math.max(m, Math.hypot(x,y)); }); return m; }
+function outwardLabel(p, centroid, d){ const dx=p[0]-centroid[0], dy=p[1]-centroid[1], len=Math.hypot(dx,dy)||1; return [p[0]+dx/len*d, p[1]+dy/len*d]; }
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function tokenizeSeg(s){
+  const tokens = [];
+  for(let i=0;i<s.length;i++){
+    let tok = s[i];
+    if(s[i+1]==="'"){ tok+="'"; i++; }
+    tokens.push(tok);
+  }
+  return tokens;
+}
+function sameSeg(v, correct){
+  const nv = normText(v).toUpperCase().replace(/′/g,"'");
+  const nc = normText(correct).toUpperCase().replace(/′/g,"'");
+  if(nv===nc) return true;
+  return tokenizeSeg(nv).slice().reverse().join('')===nc;
+}
+function samePairEitherOrder(v1, v2, a, b){
+  return (sameSeg(v1,a) && sameSeg(v2,b)) || (sameSeg(v1,b) && sameSeg(v2,a));
+}
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스)
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pointer' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key);
+  d.mode = mode;
+  document.getElementById(key+'PenBtn').classList.toggle('active', mode==='pen');
+  document.getElementById(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  document.getElementById(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{
+    if(document.querySelector(DRAW_SCR_MAP[key]).classList.contains('active')) drawSetupCanvas(key);
+  });
+  drawSetMode(key, d.mode);
+}
+const DRAW_SCR_MAP = { intro:'#scIntro', prove:'#scProve' };
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  document.querySelectorAll(DRAW_SCR_MAP[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector(DRAW_SCR_MAP[key]+' .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll(DRAW_SCR_MAP[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwErr').textContent='';
+  document.getElementById('adminPwModal').classList.add('show');
+  document.getElementById('adminPwInput').focus();
+}
+async function checkAdminPassword(){
+  const v = document.getElementById('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ document.getElementById('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(ok){
+    document.getElementById('adminPwModal').classList.remove('show');
+    document.getElementById('adminPanelBody').innerHTML =
+      '<div><strong>1단계 (△ABC∽△CBD)</strong></div>'+
+      '<div>닮음조건: 90, B, AA</div>'+
+      '<div>비례식: a, BD(=DB), BD(=DB)</div>'+
+      '<div style="margin-top:10px"><strong>2단계 (△ABC∽△ACD)</strong></div>'+
+      '<div>닮음조건: 90, A, AA</div>'+
+      '<div>비례식: b, AD(=DA), AD(=DA)</div>'+
+      '<div style="margin-top:10px"><strong>3단계 (합)</strong></div>'+
+      '<div>b, BD(=DB), c, {BD,AD}(순서 무관, 각각 DB/DA도 인정), c, c, c, c, 피타고라스</div>'+
+      '<div style="margin-top:10px"><strong>정리(적용)</strong></div>'+
+      '<div>100, 10</div>'+
+      '<div class="btn-row" style="margin-top:8px">'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoStage(1)">1단계로</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoStage(2)">2단계로</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoStage(3)">3단계로</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoScreen(\'summary\')">정리로</button>'+
+      '</div>'+
+      '<div style="margin-top:10px"><strong>도입 1단계(그림2/3)</strong></div>'+
+      '<div>4,4,8 / 9,4,13, 관계=㉢</div>'+
+      '<div style="margin-top:6px"><strong>도입 2단계(질문)</strong></div>'+
+      '<div>a, b, c (괄호 안 글자만, ²는 괄호 밖에 고정 표시) / 완성 후: a²+b²=c²</div>'+
+      '<div class="btn-row" style="margin-top:6px">'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoScreen(\'intro\')">도입으로</button>'+
+      '</div>';
+    document.getElementById('adminPanel').style.display='block';
+  } else {
+    document.getElementById('adminPwErr').textContent='비밀번호가 틀렸어요.';
+  }
+}
+function adminGoScreen(name){
+  if(name==='summary'){ showScreen('scSummary'); summaryInit(); }
+  else if(name==='intro'){ showScreen('scIntro'); drawBindOnce('intro'); drawSetupCanvas('intro'); introInit(); }
+}
+function adminGoStage(stage){
+  showScreen('scProve');
+  drawBindOnce('prove'); drawSetupCanvas('prove');
+  if(stage===1) proveInit();
+  else if(stage===2) proveStage2();
+  else proveStage3();
+}
+
+/* ════════════════════════════════
+   직각삼각형 ABC(∠C=90°) 좌표, D=C에서 AB에 내린 수선의 발
+════════════════════════════════ */
+const A=[65,45], B=[290,185], C=[65,185];
+const D = (function(){
+  const d=[B[0]-A[0],B[1]-A[1]], len2=d[0]*d[0]+d[1]*d[1];
+  const t=((C[0]-A[0])*d[0]+(C[1]-A[1])*d[1])/len2;
+  return [A[0]+d[0]*t, A[1]+d[1]*t];
+})();
+
+/* 길이 라벨: 변 위가 아니라, 바깥으로 볼록한 점선 호 + 호의 끝에 값 — 변 길이 라벨의 표준 표기(점선호) */
+function sideLabelSVGAt(p1, p2, centroid, value, bulge, color, t){
+  t = (t===undefined) ? 0.5 : t;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-centroid[0], mid[1]-centroid[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" style="stroke:${color}" d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="sidelabel" style="fill:${color}" x="${labelPt[0].toFixed(1)}" y="${(labelPt[1]+4).toFixed(1)}">${value}</text>`;
+}
+function rightAngleMarkHTML(vertex, u1, u2, size, color){
+  const p1=[vertex[0]+u1[0]*size, vertex[1]+u1[1]*size];
+  const p2=[p1[0]+u2[0]*size, p1[1]+u2[1]*size];
+  const p3=[vertex[0]+u2[0]*size, vertex[1]+u2[1]*size];
+  return `<polyline points="${ptsToStr([p1,p2,p3])}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
+}
+function arcPathHTML(center, u1, u2, r, color){
+  const a1=Math.atan2(u1[1],u1[0]), a2=Math.atan2(u2[1],u2[0]);
+  let diff=a2-a1;
+  while(diff>Math.PI) diff-=2*Math.PI;
+  while(diff<-Math.PI) diff+=2*Math.PI;
+  const x1=center[0]+r*Math.cos(a1), y1=center[1]+r*Math.sin(a1);
+  const x2=center[0]+r*Math.cos(a1+diff), y2=center[1]+r*Math.sin(a1+diff);
+  const sweep = diff>0 ? 1 : 0;
+  return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 0 ${sweep} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2"></path>`;
+}
+
+/* ════════════════════════════════
+   정리 화면용 간단한 삼각형(각 a,b,c만 표시, 수선 D 없음)
+════════════════════════════════ */
+function summaryTriangleSVG(){
+  const cen=bboxCenterOf([A,B,C]);
+  let html = `<polygon points="${ptsToStr([A,B,C])}" fill="#4f46e5" fill-opacity="0.07" stroke="#4f46e5" stroke-width="2.2"></polygon>`;
+  html += rightAngleMarkHTML(C, [1,0], [0,-1], 14, '#4a4a6a');
+  html += sideLabelSVGAt(B, C, A, 'a', 16, '#1a1a2e');
+  html += sideLabelSVGAt(C, A, B, 'b', 16, '#1a1a2e');
+  html += sideLabelSVGAt(A, B, C, 'c', 16, '#1a1a2e');
+  [['A',A],['B',B],['C',C]].forEach(([nm,p])=>{
+    const lp=outwardLabel(p,cen,16);
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${(lp[1]+5).toFixed(1)}" fill="#1a1a2e">${nm}</text>`;
+  });
+  return html;
+}
+
+function mainFigureSVG(stage){
+  let html = '';
+  const cen=bboxCenterOf([A,B,C]);
+  // 기본 삼각형 ABC
+  html += `<polygon points="${ptsToStr([A,B,C])}" fill="${'#4f46e5'}" fill-opacity="0.05" stroke="#4f46e5" stroke-width="2.2"></polygon>`;
+  // 수선 CD (구조선: 항상 실선)
+  html += `<line x1="${C[0]}" y1="${C[1]}" x2="${D[0].toFixed(1)}" y2="${D[1].toFixed(1)}" stroke="#4a4a6a" stroke-width="2"></line>`;
+  // 꼭짓점 C의 직각 표시 (BC는 수평, CA는 수직)
+  html += rightAngleMarkHTML(C, [1,0], [0,-1], 14, '#4a4a6a');
+  // D의 직각 표시 (DC, DA 방향)
+  html += rightAngleMarkHTML(D, unitVec(D,C), unitVec(D,A), 13, '#4a4a6a');
+
+  if(stage===1){
+    // 강조는 "선 재채색"이 아니라 반투명 면 음영으로만 — 빗변 AB의 색이 중간에서 갈라져
+    // "c가 BD만 가리키는 것처럼" 보이는 착시를 막기 위함
+    html += `<polygon points="${ptsToStr([C,B,D])}" fill="#e05a20" fill-opacity="0.14" stroke="none"></polygon>`;
+    html += arcPathHTML(B, unitVec(B,C), unitVec(B,A), 26, '#e05a20');
+  } else if(stage===2){
+    html += `<polygon points="${ptsToStr([A,C,D])}" fill="#e05a20" fill-opacity="0.14" stroke="none"></polygon>`;
+    html += arcPathHTML(A, unitVec(A,C), unitVec(A,B), 26, '#e05a20');
+  } else if(stage===3){
+    // 이 단계는 c = BD+AD로 쪼개 보여주는 것이 목적이므로, 여기서 빗변을 BD(주황)/AD(초록)로 나눠 칠하고
+    // BD/AD는 가까이, c는 그보다 더 바깥쪽에 점선으로 — "BD+AD가 곧 c(=AB)"라는 연결을 같이 보여준다
+    html += `<line x1="${D[0].toFixed(1)}" y1="${D[1].toFixed(1)}" x2="${B[0]}" y2="${B[1]}" stroke="#e05a20" stroke-width="4" stroke-linecap="round" opacity="0.85"></line>`;
+    html += `<line x1="${A[0]}" y1="${A[1]}" x2="${D[0].toFixed(1)}" y2="${D[1].toFixed(1)}" stroke="#16a34a" stroke-width="4" stroke-linecap="round" opacity="0.85"></line>`;
+    html += sideLabelSVGAt(D, B, C, 'BD', 14, '#e05a20');
+    html += sideLabelSVGAt(A, D, C, 'AD', 14, '#16a34a');
+    html += sideLabelSVGAt(A, B, C, 'c', 34, '#1a1a2e');
+  }
+
+  // 변 이름 a(BC), b(CA), c(AB) — "바깥쪽" 판정은 삼각형 bbox중심이 아니라 반드시 마주보는 꼭짓점 기준으로
+  // (이 삼각형은 bbox중심이 AB의 중점과 정확히 겹쳐서, bbox중심 기준으로는 방향을 못 고르는 경우가 있었음)
+  html += sideLabelSVGAt(B, C, A, 'a', 16, '#1a1a2e');
+  html += sideLabelSVGAt(C, A, B, 'b', 16, '#1a1a2e');
+  if(stage!==3) html += sideLabelSVGAt(A, B, C, 'c', 16, '#1a1a2e');
+
+  // 꼭짓점 라벨
+  [['A',A],['B',B],['C',C]].forEach(([nm,p])=>{
+    const lp=outwardLabel(p,cen,16);
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${(lp[1]+5).toFixed(1)}" fill="#1a1a2e">${nm}</text>`;
+  });
+  const dLabelDir = unitVec(bboxCenterOf([A,B,C]), D);
+  const dLp = [D[0]+dLabelDir[0]*16, D[1]+dLabelDir[1]*16-6];
+  html += `<text class="vlabel" x="${dLp[0].toFixed(1)}" y="${dLp[1].toFixed(1)}" fill="#1a1a2e">D</text>`;
+
+  return html;
+}
+
+/* ════════════════════════════════
+   분리-B: △ABC(고정, 왼쪽 슬롯) vs 작은 삼각형(오른쪽 슬롯, 드래그+회전+뒤집기)
+════════════════════════════════ */
+const QSEP_BOX_W=140, QSEP_BOX_H=140, QSEP_PAD=10, QSEP_ROW_Y=380, QSEP_CX1=105, QSEP_CX2=275;
+function qSlotBoxesSVG(){
+  return [QSEP_CX1,QSEP_CX2].map(cx=>
+    `<rect x="${(cx-QSEP_BOX_W/2).toFixed(1)}" y="${(QSEP_ROW_Y-QSEP_BOX_H/2).toFixed(1)}" width="${QSEP_BOX_W}" height="${QSEP_BOX_H}" rx="10" fill="#fbfcff" stroke="#c7cdf5" stroke-width="1.6" stroke-dasharray="6 5"></rect>`
+  ).join('');
+}
+function qFitScaleForPair(pts1, pts2){
+  const b1=bboxSizeOf(pts1), b2=bboxSizeOf(pts2);
+  const innerW=QSEP_BOX_W-QSEP_PAD*2, innerH=QSEP_BOX_H-QSEP_PAD*2;
+  const maxW=Math.max(b1.w,b2.w), maxH=Math.max(b1.h,b2.h);
+  return Math.min(1, innerW/maxW, innerH/maxH);
+}
+function qRenderSepTriangle(pts, names, color){
+  const cen = bboxCenterOf(pts);
+  let html = `<polygon points="${ptsToStr(pts)}" style="fill:${color};fill-opacity:0.2;stroke:${color};stroke-width:2.4"></polygon>`;
+  names.forEach((nm,i)=>{ const lp=outwardLabel(pts[i],cen,12); html+=`<text class="vlabel-sm" x="${lp[0].toFixed(1)}" y="${(lp[1]+4).toFixed(1)}" fill="${color}">${nm}</text>`; });
+  return html;
+}
+const sepB = { tx:0, ty:0, angle:0, flipped:false, scale:1, active:false, pointerId:null, startPX:0, startPY:0, startTx:0, startTy:0, animId:null, separated:false, stage:1, btnPrefix:'' };
+function sepBGeo(){
+  if(sepB.stage===2) return { g1pts:[A,B,C], g1names:['A','B','C'], g2pts:[A,C,D], g2names:['A','C','D'] };
+  return { g1pts:[A,B,C], g1names:['A','B','C'], g2pts:[C,B,D], g2names:['C','B','D'] };
+}
+function sepBReset(){
+  if(sepB.animId){ cancelAnimationFrame(sepB.animId); sepB.animId=null; }
+  Object.assign(sepB, { tx:0, ty:0, angle:0, flipped:false, scale:1, active:false, separated:false });
+  const c1=document.getElementById('sepBCopy1'); if(c1) c1.innerHTML='';
+  const c2=document.getElementById('sepBCopy2'); if(c2) c2.setAttribute('opacity','0');
+  const rb=document.getElementById('sepBRotBtns'); if(rb) rb.setAttribute('opacity','0');
+  sepBStopRotHold();
+  const p = sepB.btnPrefix;
+  if(p && document.getElementById(p+'SepBtn')){
+    document.getElementById(p+'SepBtn').style.display='';
+    document.getElementById(p+'RotBtn').style.display='none';
+    document.getElementById(p+'FlipBtn').style.display='none';
+    document.getElementById(p+'BackBtn').style.display='none';
+  }
+}
+function sepBPts2Local(){
+  const g2 = sepBGeo().g2pts;
+  const cen = bboxCenterOf(g2);
+  return { cen, local: g2.map(p=>[p[0]-cen[0], p[1]-cen[1]]) };
+}
+function sepBCurrentPts2(mirrorOverride){
+  const { cen, local } = sepBPts2Local();
+  const rad = sepB.angle*Math.PI/180, cosr=Math.cos(rad), sinr=Math.sin(rad);
+  const mirror = mirrorOverride!==undefined ? mirrorOverride : (sepB.flipped?-1:1);
+  return local.map(([lx,ly])=>{
+    const mx=mirror*lx*sepB.scale, my=ly*sepB.scale;
+    const rx=mx*cosr-my*sinr, ry=mx*sinr+my*cosr;
+    return [cen[0]+sepB.tx+rx, cen[1]+sepB.ty+ry];
+  });
+}
+function sepBUpdateCopy2(mirrorOverride){
+  const { cen:cen0, local } = sepBPts2Local();
+  const pts = sepBCurrentPts2(mirrorOverride);
+  const center=[cen0[0]+sepB.tx, cen0[1]+sepB.ty];
+  const R = maxRadius(local)*sepB.scale + 16;
+  const rad = sepB.angle*Math.PI/180;
+  const hx=center[0]+R*Math.sin(rad), hy=center[1]-R*Math.cos(rad);
+  const flipRad = rad + 26*Math.PI/180;
+  const fx=center[0]+R*Math.sin(flipRad), fy=center[1]-R*Math.cos(flipRad);
+  document.getElementById('sepBHit2').setAttribute('points', ptsToStr(pts));
+  const names=sepBGeo().g2names;
+  pts.forEach((p,i)=>{
+    const lp=outwardLabel(p,center,11);
+    const el=document.getElementById('sepBLbl2_'+i);
+    el.setAttribute('x',lp[0].toFixed(1)); el.setAttribute('y',(lp[1]+4).toFixed(1)); el.textContent=names[i];
+  });
+  document.getElementById('sepBRotLine').setAttribute('x1',center[0].toFixed(1));
+  document.getElementById('sepBRotLine').setAttribute('y1',center[1].toFixed(1));
+  document.getElementById('sepBRotLine').setAttribute('x2',hx.toFixed(1));
+  document.getElementById('sepBRotLine').setAttribute('y2',hy.toFixed(1));
+  document.getElementById('sepBRotHandle').setAttribute('cx',hx.toFixed(1));
+  document.getElementById('sepBRotHandle').setAttribute('cy',hy.toFixed(1));
+  document.getElementById('sepBRotIcon').setAttribute('x',hx.toFixed(1));
+  document.getElementById('sepBRotIcon').setAttribute('y',hy.toFixed(1));
+  document.getElementById('sepBFlipBg').setAttribute('cx',fx.toFixed(1));
+  document.getElementById('sepBFlipBg').setAttribute('cy',fy.toFixed(1));
+  document.getElementById('sepBFlipIcon').setAttribute('x',fx.toFixed(1));
+  document.getElementById('sepBFlipIcon').setAttribute('y',fy.toFixed(1));
+}
+function sepBSeparate(){
+  if(sepB.separated) return;
+  sepB.separated=true;
+  const p = sepB.btnPrefix;
+  document.getElementById(p+'SepBtn').style.display='none';
+  document.getElementById(p+'RotBtn').style.display='';
+  document.getElementById(p+'FlipBtn').style.display='';
+  document.getElementById(p+'BackBtn').style.display='';
+  document.getElementById('sepBCopy2').setAttribute('opacity','1');
+  document.getElementById('sepBRotBtns').setAttribute('opacity','1');
+  const { g1pts:g1, g1names:names1, g2pts:g2 } = sepBGeo();
+  const fitScale = qFitScaleForPair(g1,g2);
+  const cen1=bboxCenterOf(g1), local1=g1.map(p=>[p[0]-cen1[0],p[1]-cen1[1]]);
+  const { cen:cen2 } = sepBPts2Local();
+  const dx=QSEP_CX2-cen2[0], dy=QSEP_ROW_Y-cen2[1];
+  const t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/700), e=easeInOut(t);
+    sepB.scale = 1+(fitScale-1)*e;
+    sepB.tx = dx*e; sepB.ty = dy*e;
+    sepBUpdateCopy2();
+    const pts1 = local1.map(([lx,ly])=>[cen1[0]+(QSEP_CX1-cen1[0])*e+lx*(1+(fitScale-1)*e), cen1[1]+(QSEP_ROW_Y-cen1[1])*e+ly*(1+(fitScale-1)*e)]);
+    document.getElementById('sepBCopy1').innerHTML = qRenderSepTriangle(pts1, names1, '#4f46e5');
+    if(t<1) sepB.animId=requestAnimationFrame(frame); else { sepB.scale=fitScale; sepB.animId=null; }
+  }
+  sepB.animId=requestAnimationFrame(frame);
+}
+function sepBRotate(){
+  if(sepB.animId) cancelAnimationFrame(sepB.animId);
+  const startA=sepB.angle, targetA=sepB.angle+180, t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/600);
+    sepB.angle = startA+(targetA-startA)*easeInOut(t);
+    sepBUpdateCopy2();
+    if(t<1) sepB.animId=requestAnimationFrame(frame); else sepB.animId=null;
+  }
+  sepB.animId=requestAnimationFrame(frame);
+}
+function sepBFlip(){
+  if(sepB.animId) cancelAnimationFrame(sepB.animId);
+  const startSign=sepB.flipped?-1:1, t0=performance.now();
+  function frame(now){
+    const t=Math.min(1,(now-t0)/500);
+    const mirror=startSign*Math.cos(t*Math.PI);
+    sepBUpdateCopy2(mirror);
+    if(t<1){ sepB.animId=requestAnimationFrame(frame); } else { sepB.flipped=!sepB.flipped; sepB.animId=null; sepBUpdateCopy2(); }
+  }
+  sepB.animId=requestAnimationFrame(frame);
+}
+function sepBBindDrag(){
+  const hit=document.getElementById('sepBHit2');
+  hit.addEventListener('pointerdown', evt=>{
+    evt.preventDefault();
+    sepB.active=true; sepB.pointerId=evt.pointerId;
+    hit.setPointerCapture(evt.pointerId);
+    const svg=document.getElementById('proveSvg');
+    const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc=pt.matrixTransform(svg.getScreenCTM().inverse());
+    sepB.startPX=loc.x; sepB.startPY=loc.y; sepB.startTx=sepB.tx; sepB.startTy=sepB.ty;
+    hit.style.cursor='grabbing';
+  });
+  hit.addEventListener('pointermove', evt=>{
+    if(!sepB.active) return;
+    evt.preventDefault();
+    const svg=document.getElementById('proveSvg');
+    const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc=pt.matrixTransform(svg.getScreenCTM().inverse());
+    sepB.tx = sepB.startTx+(loc.x-sepB.startPX); sepB.ty = sepB.startTy+(loc.y-sepB.startPY);
+    sepBUpdateCopy2();
+  });
+  ['pointerup','pointercancel'].forEach(evtName=>hit.addEventListener(evtName, ()=>{ sepB.active=false; hit.style.cursor='grab'; }));
+}
+let sepBRotateDrag=null;
+function sepBBindHandle(){
+  const handle=document.getElementById('sepBRotHandle');
+  handle.addEventListener('pointerdown', evt=>{
+    evt.preventDefault(); evt.stopPropagation();
+    handle.setPointerCapture(evt.pointerId);
+    const svg=document.getElementById('proveSvg');
+    const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc=pt.matrixTransform(svg.getScreenCTM().inverse());
+    const { cen:cen0 } = sepBPts2Local();
+    const center=[cen0[0]+sepB.tx, cen0[1]+sepB.ty];
+    const startAngleRaw=Math.atan2(loc.y-center[1], loc.x-center[0])*180/Math.PI;
+    sepBRotateDrag={ pointerId:evt.pointerId, startAngleRaw, angle0:sepB.angle };
+  });
+  handle.addEventListener('pointermove', evt=>{
+    if(!sepBRotateDrag || evt.pointerId!==sepBRotateDrag.pointerId) return;
+    evt.preventDefault();
+    const svg=document.getElementById('proveSvg');
+    const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc=pt.matrixTransform(svg.getScreenCTM().inverse());
+    const { cen:cen0 } = sepBPts2Local();
+    const center=[cen0[0]+sepB.tx, cen0[1]+sepB.ty];
+    const curAngleRaw=Math.atan2(loc.y-center[1], loc.x-center[0])*180/Math.PI;
+    sepB.angle=(sepBRotateDrag.angle0+(curAngleRaw-sepBRotateDrag.startAngleRaw)+3600)%360;
+    sepBUpdateCopy2();
+  });
+  ['pointerup','pointercancel'].forEach(evtName=>handle.addEventListener(evtName, evt=>{
+    if(sepBRotateDrag && evt.pointerId===sepBRotateDrag.pointerId) sepBRotateDrag=null;
+  }));
+}
+function sepBFlipBind(){
+  const flipBg=document.getElementById('sepBFlipBg');
+  flipBg.addEventListener('pointerdown', evt=>{ evt.stopPropagation(); });
+  flipBg.addEventListener('click', evt=>{ evt.stopPropagation(); sepBFlip(); });
+}
+let sepBRotHold = null;
+function sepBStartRotHold(dir){
+  sepBStopRotHold();
+  const state = { dir, lastT: performance.now(), rafId: null };
+  function frame(now){
+    const dt = now - state.lastT;
+    state.lastT = now;
+    sepB.angle = (sepB.angle + dir*15*dt/1000 + 3600) % 360;
+    sepBUpdateCopy2();
+    state.rafId = requestAnimationFrame(frame);
+  }
+  sepBRotHold = state;
+  state.rafId = requestAnimationFrame(frame);
+}
+function sepBStopRotHold(){
+  if(sepBRotHold){ cancelAnimationFrame(sepBRotHold.rafId); sepBRotHold=null; }
+}
+function sepBBindRotButtons(){
+  const left = document.getElementById('sepBRotLeftBtn');
+  const right = document.getElementById('sepBRotRightBtn');
+  [[left,-1],[right,1]].forEach(([btn,dir])=>{
+    btn.addEventListener('pointerdown', evt=>{
+      evt.preventDefault(); evt.stopPropagation();
+      btn.setPointerCapture(evt.pointerId);
+      sepBStartRotHold(dir);
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(evtName=>btn.addEventListener(evtName, ()=>sepBStopRotHold()));
+  });
+}
+function sepBCopyGroupsSVG(){
+  return `<g id="sepBCopy1"></g>`+
+    `<g id="sepBCopy2" opacity="0">`+
+      `<polygon id="sepBHit2" points="" style="fill:#e05a20;fill-opacity:0.16;stroke:#e05a20;stroke-width:2.4;cursor:grab;touch-action:none"></polygon>`+
+      `<text class="vlabel-sm" id="sepBLbl2_0" fill="#e05a20"></text>`+
+      `<text class="vlabel-sm" id="sepBLbl2_1" fill="#e05a20"></text>`+
+      `<text class="vlabel-sm" id="sepBLbl2_2" fill="#e05a20"></text>`+
+      `<line id="sepBRotLine" stroke="#e05a20" stroke-width="2" stroke-dasharray="3 3"></line>`+
+      `<circle id="sepBRotHandle" r="14" fill="#fff" stroke="#e05a20" stroke-width="2.6" cursor="grab" style="touch-action:none"></circle>`+
+      `<text id="sepBRotIcon" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#e05a20" style="pointer-events:none">↻</text>`+
+      `<circle id="sepBFlipBg" class="flip-btn-bg" r="7" fill="#fff" stroke="#9098b5" stroke-width="1.3" style="cursor:pointer"></circle>`+
+      `<text id="sepBFlipIcon" font-size="11" text-anchor="middle" dominant-baseline="central" style="pointer-events:none">🪞</text>`+
+    `</g>`+
+    `<g id="sepBRotBtns" opacity="0">`+
+      `<rect id="sepBRotLeftBtn" x="${QSEP_CX2-84}" y="${QSEP_ROW_Y+QSEP_BOX_H/2+8}" width="74" height="30" rx="15" fill="#fff" stroke="#e05a20" stroke-width="1.6" style="cursor:pointer;touch-action:none"></rect>`+
+      `<text x="${QSEP_CX2-47}" y="${QSEP_ROW_Y+QSEP_BOX_H/2+28}" text-anchor="middle" font-size="13" fill="#e05a20" style="pointer-events:none">◀ 회전</text>`+
+      `<rect id="sepBRotRightBtn" x="${QSEP_CX2+10}" y="${QSEP_ROW_Y+QSEP_BOX_H/2+8}" width="74" height="30" rx="15" fill="#fff" stroke="#e05a20" stroke-width="1.6" style="cursor:pointer;touch-action:none"></rect>`+
+      `<text x="${QSEP_CX2+47}" y="${QSEP_ROW_Y+QSEP_BOX_H/2+28}" text-anchor="middle" font-size="13" fill="#e05a20" style="pointer-events:none">회전 ▶</text>`+
+    `</g>`;
+}
+
+/* ════════════════════════════════
+   도입 1단계: 세 직각삼각형(서로 닮음 아님)에서 ㉠,㉡,㉢ 넓이 확인
+════════════════════════════════ */
+function s1OutwardSquare(P1,P2,awayFrom){
+  const d=[P2[0]-P1[0],P2[1]-P1[1]]; let perp=[-d[1],d[0]];
+  const mid=[(P1[0]+P2[0])/2,(P1[1]+P2[1])/2];
+  const toAway=[awayFrom[0]-mid[0],awayFrom[1]-mid[1]];
+  if(perp[0]*toAway[0]+perp[1]*toAway[1]>0) perp=[-perp[0],-perp[1]];
+  return [P1,P2,[P2[0]+perp[0],P2[1]+perp[1]],[P1[0]+perp[0],P1[1]+perp[1]]];
+}
+const S1_GRID=20, S1_PGW=9, S1_PGH=10, S1_GAP=24, S1_SHX=10, S1_SHY=25;
+const S1_TRIS = [ {bc:2, ac:1}, {bc:2, ac:2}, {bc:3, ac:2} ];
+function s1Panel(idx, bc, ac){
+  const C=[0,0], B=[-bc,0], A=[0,-ac];
+  const aSq=[B,C,[0,bc],[-bc,bc]];
+  const bSq=[A,C,[ac,0],[ac,-ac]];
+  const cSq=s1OutwardSquare(A,B,C);
+  const all=[A,B,C,...aSq,...bSq,...cSq];
+  const xs=all.map(p=>p[0]), ys=all.map(p=>p[1]);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  // 정수 좌표(꼭짓점이 전부 정수)가 모눈 선 위에 정확히 찍히도록, 중앙 정렬값을 정수 칸 단위로 반올림한다
+  // (단순히 (PGW-폭)/2로 중앙정렬하면 폭의 홀/짝 여부에 따라 .5칸 어긋나는 경우가 생김 — 그림1·2에서 실제로 발생했던 문제)
+  const offX=Math.round((S1_PGW-(maxX-minX))/2-minX), offY=Math.round((S1_PGH-(maxY-minY))/2-minY);
+  const origin=[S1_SHX+idx*(S1_PGW*S1_GRID+S1_GAP), S1_SHY];
+  function toPx(p){ return [origin[0]+(p[0]+offX)*S1_GRID, origin[1]+(p[1]+offY)*S1_GRID]; }
+  return { C:toPx(C), B:toPx(B), A:toPx(A), aSq:aSq.map(toPx), bSq:bSq.map(toPx), cSq:cSq.map(toPx), origin };
+}
+function s1GridLinesSVG(origin){
+  let html='';
+  for(let i=0;i<=S1_PGW;i++){
+    const x=origin[0]+i*S1_GRID;
+    html+=`<line x1="${x}" y1="${origin[1]}" x2="${x}" y2="${origin[1]+S1_PGH*S1_GRID}" stroke="#e5e9fb" stroke-width="1"></line>`;
+  }
+  for(let j=0;j<=S1_PGH;j++){
+    const y=origin[1]+j*S1_GRID;
+    html+=`<line x1="${origin[0]}" y1="${y}" x2="${origin[0]+S1_PGW*S1_GRID}" y2="${y}" stroke="#e5e9fb" stroke-width="1"></line>`;
+  }
+  return html;
+}
+function s1PanelSVG(idx, bc, ac, label){
+  const p = s1Panel(idx, bc, ac);
+  let html = s1GridLinesSVG(p.origin);
+  html += `<polygon points="${ptsToStr(p.cSq)}" fill="#fde68a" fill-opacity="0.4" stroke="#b45309" stroke-width="1.6"></polygon>`;
+  html += `<polygon points="${ptsToStr(p.aSq)}" fill="#f9a8c4" fill-opacity="0.4" stroke="#be185d" stroke-width="1.6"></polygon>`;
+  html += `<polygon points="${ptsToStr(p.bSq)}" fill="#c7b8f0" fill-opacity="0.4" stroke="#6d28d9" stroke-width="1.6"></polygon>`;
+  html += `<polygon points="${ptsToStr([p.A,p.B,p.C])}" fill="none" stroke="#1a1a2e" stroke-width="2"></polygon>`;
+  const triCen = bboxCenterOf([p.A,p.B,p.C]);
+  [['A',p.A],['B',p.B],['C',p.C]].forEach(([nm,pt])=>{
+    const dir = unitVec(triCen,pt);
+    const lp=[pt[0]+dir[0]*13, pt[1]+dir[1]*13-2];
+    html += `<text class="vlabel-sm" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#1a1a2e">${nm}</text>`;
+  });
+  html += `<text class="vlabel-sm" x="${bboxCenterOf(p.aSq)[0].toFixed(1)}" y="${(bboxCenterOf(p.aSq)[1]+4).toFixed(1)}" fill="#be185d">㉠</text>`;
+  html += `<text class="vlabel-sm" x="${bboxCenterOf(p.bSq)[0].toFixed(1)}" y="${(bboxCenterOf(p.bSq)[1]+4).toFixed(1)}" fill="#6d28d9">㉡</text>`;
+  html += `<text class="vlabel-sm" x="${bboxCenterOf(p.cSq)[0].toFixed(1)}" y="${(bboxCenterOf(p.cSq)[1]+4).toFixed(1)}" fill="#b45309">㉢</text>`;
+  html += `<text class="vlabel-sm" x="${(p.origin[0]+S1_PGW*S1_GRID/2).toFixed(1)}" y="${(p.origin[1]+S1_PGH*S1_GRID+16).toFixed(1)}" fill="#4a4a6a">그림 ${label}</text>`;
+  return html;
+}
+function s1Render(){
+  let html='';
+  S1_TRIS.forEach((t,i)=>{ html += s1PanelSVG(i,t.bc,t.ac,i+1); });
+  document.getElementById('s1Svg').innerHTML = html;
+  document.getElementById('s1TableWrap').innerHTML = `
+    <table class="s1-table">
+      <tr><th></th><th>그림 1</th><th>그림 2</th><th>그림 3</th></tr>
+      <tr><td>㉠의 넓이</td><td>4</td><td><input class="blank" id="s1g2a" inputmode="numeric"></td><td><input class="blank" id="s1g3a" inputmode="numeric"></td></tr>
+      <tr><td>㉡의 넓이</td><td>1</td><td><input class="blank" id="s1g2b" inputmode="numeric"></td><td><input class="blank" id="s1g3b" inputmode="numeric"></td></tr>
+      <tr><td>㉢의 넓이</td><td>5</td><td><input class="blank" id="s1g2c" inputmode="numeric"></td><td><input class="blank" id="s1g3c" inputmode="numeric"></td></tr>
+    </table>
+  `;
+}
+function checkS1Table(){
+  const ids=['s1g2a','s1g2b','s1g2c','s1g3a','s1g3b','s1g3c'];
+  const answers=[4,4,8,9,4,13];
+  const vals = ids.map(id=>document.getElementById(id).value);
+  const oks = vals.map((v,i)=> normText(v)===String(answers[i]));
+  ids.forEach((id,i)=>{ const el=document.getElementById(id); el.classList.toggle('correct',oks[i]); el.classList.toggle('wrong',!oks[i]); });
+  const fb=document.getElementById('s1TableFb');
+  if(oks.every(Boolean)){
+    document.getElementById('s1CheckBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    s1ShowRelation();
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 세어보세요.';
+  }
+}
+function s1ShowRelation(){
+  document.getElementById('s1RelArea').innerHTML = `
+    <p class="key-q" style="margin-top:12px">탐구2. 위의 표에서 세 정사각형 ㉠, ㉡, ㉢의 넓이 사이에는 어떤 관계가 있을까요?</p>
+    <div class="proof-block" style="text-align:center">㉠의 넓이 + ㉡의 넓이 = (<span id="s1RelBlank" style="display:inline-block;min-width:34px;border-bottom:2px solid var(--indigo);color:var(--indigo);font-weight:800">?</span>)의 넓이</div>
+    <div class="btn-row" id="s1RelChoices">
+      <button class="choice-btn" onclick="s1PickRel('㉠',this)">㉠</button>
+      <button class="choice-btn" onclick="s1PickRel('㉡',this)">㉡</button>
+      <button class="choice-btn" onclick="s1PickRel('㉢',this)">㉢</button>
+    </div>
+    <div class="feedback" id="s1RelFb"></div>
+  `;
+}
+function s1PickRel(choice, btn){
+  document.querySelectorAll('#s1RelChoices .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('s1RelFb');
+  if(choice==='㉢'){
+    document.getElementById('s1RelBlank').textContent='㉢';
+    document.querySelectorAll('#s1RelChoices .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='맞아요! 직각이 아닌 두 변 위의 정사각형 넓이의 합은, 빗변 위의 정사각형 넓이와 같아요. 다른 모양의 직각삼각형에서도 그런지, 조각을 직접 옮겨서 확인해볼까요?';
+    appendS1RelNext();
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요.';
+  }
+}
+function appendS1RelNext(){
+  document.getElementById('s1RelArea').insertAdjacentHTML('beforeend', `<div class="btn-row" style="margin-top:10px"><button class="btn btn-primary" onclick="goToS2()">다음: 퍼즐로 확인하기 →</button></div>`);
+}
+
+/* ════════════════════════════════
+   도입 2단계: 페리갈의 조각 맞추기 퍼즐 (+ 안내 질문)
+   — 피타고라스_정리_페리갈_퍼즐.html에서 검증을 마친 로직을 그대로 가져옴(이름만 pz 접두어로 충돌 방지)
+════════════════════════════════ */
+function pzSub(p,q){return [p[0]-q[0],p[1]-q[1]];}
+function pzAdd(p,q){return [p[0]+q[0],p[1]+q[1]];}
+function pzDot(p,q){return p[0]*q[0]+p[1]*q[1];}
+function pzNorm(p){return Math.hypot(p[0],p[1]);}
+function pzApproxEq(p,q,eps){ eps=eps||1e-6; return Math.abs(p[0]-q[0])<eps && Math.abs(p[1]-q[1])<eps; }
+function pzPointInPoly(pt, poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0], yi=poly[i][1], xj=poly[j][0], yj=poly[j][1];
+    const intersect = ((yi>pt[1])!==(yj>pt[1])) && (pt[0] < (xj-xi)*(pt[1]-yi)/(yj-yi)+xi);
+    if(intersect) inside=!inside;
+  }
+  return inside;
+}
+function pzSolvePerigal(a, b){
+  if(a>=b) throw new Error('pzSolvePerigal(a,b): b는 a보다 긴 변이어야 합니다 (a=b인 경우도 미지원).');
+  const C=[0,0], B=[a,0], A=[0,b];
+  const aSq=[[0,0],[a,0],[a,-a],[0,-a]];
+  const bSq=[[0,0],[0,b],[-b,b],[-b,0]];
+  function outwardSquare(P1,P2,awayFrom){
+    const d=pzSub(P2,P1); let perp=[-d[1],d[0]];
+    const mid=[(P1[0]+P2[0])/2,(P1[1]+P2[1])/2];
+    const toAway=pzSub(awayFrom,mid);
+    if(pzDot(perp,toAway)>0) perp=[-perp[0],-perp[1]];
+    return [P1,P2,pzAdd(P2,perp),pzAdd(P1,perp)];
+  }
+  const cSq = outwardSquare(A,B,C);
+  const O = [-b/2, b/2];
+  const hypDir = pzSub(B,A); const hypLen=pzNorm(hypDir);
+  const uHyp = [hypDir[0]/hypLen, hypDir[1]/hypLen];
+  const uPerp = [-uHyp[1], uHyp[0]];
+  function lineIntersectSeg(P, dir, S1, S2){
+    const d2 = pzSub(S2,S1);
+    const denom = dir[0]*d2[1]-dir[1]*d2[0];
+    if(Math.abs(denom)<1e-9) return null;
+    const diff = pzSub(S1,P);
+    const s = (diff[0]*dir[1]-diff[1]*dir[0])/denom;
+    const t = (diff[0]*d2[1]-diff[1]*d2[0])/denom;
+    if(s<-1e-9||s>1+1e-9) return null;
+    return pzAdd(P, [dir[0]*t, dir[1]*t]);
+  }
+  function boundaryWalkWithCrossings(){
+    const allCross=[];
+    for(let i=0;i<4;i++){
+      const e=[bSq[i],bSq[(i+1)%4]];
+      [uHyp,uPerp].forEach(dir=>{
+        const pt=lineIntersectSeg(O,dir,e[0],e[1]);
+        if(pt){
+          const d2=pzSub(e[1],e[0]); const dp=pzSub(pt,e[0]);
+          const t = Math.abs(d2[0])>Math.abs(d2[1]) ? dp[0]/d2[0] : dp[1]/d2[1];
+          if(t>1e-6 && t<1-1e-6) allCross.push({edge:i,t,pt});
+        }
+      });
+    }
+    const items=[];
+    for(let i=0;i<4;i++){
+      items.push({type:'corner', pt:bSq[i]});
+      allCross.filter(cc=>cc.edge===i).sort((x,y)=>x.t-y.t).forEach(cc=>items.push({type:'cross', pt:cc.pt}));
+    }
+    return items;
+  }
+  const walk = boundaryWalkWithCrossings();
+  const crossIdx = walk.map((w,i)=>w.type==='cross'?i:-1).filter(i=>i>=0);
+  const piecesFull=[];
+  for(let k=0;k<4;k++){
+    const startI=crossIdx[k], endI=crossIdx[(k+1)%4];
+    const poly=[walk[startI].pt];
+    let i=startI;
+    while(i!==endI){ i=(i+1)%walk.length; poly.push(walk[i].pt); }
+    poly.push(O);
+    piecesFull.push({poly, diag:[walk[startI].pt, walk[endI].pt]});
+  }
+  const mids=[0,1,2,3].map(i=>[(cSq[i][0]+cSq[(i+1)%4][0])/2,(cSq[i][1]+cSq[(i+1)%4][1])/2]);
+  const candidates = piecesFull.map(pc=>{
+    const out=[];
+    for(let i=0;i<4;i++) for(let j=0;j<4;j++){
+      if(i===j) continue;
+      const T=pzSub(mids[i],pc.diag[0]);
+      if(pzApproxEq(pzAdd(pc.diag[1],T), mids[j],1e-6)) out.push({i,j,T});
+    }
+    return out;
+  });
+  const xs=cSq.map(p=>p[0]), ys=cSq.map(p=>p[1]);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  function sampleCheck(polys, N){
+    let bad=0,total=0;
+    for(let i=0;i<=N;i++) for(let j=0;j<=N;j++){
+      const x=minX+i*(maxX-minX)/N+0.0001317, y=minY+j*(maxY-minY)/N+0.0001719;
+      const pt=[x,y];
+      if(!pzPointInPoly(pt,cSq)) continue;
+      total++;
+      let count=0;
+      polys.forEach(p=>{ if(pzPointInPoly(pt,p)) count++; });
+      if(count!==1) bad++;
+    }
+    return {bad,total};
+  }
+  let found=null;
+  outer:
+  for(const c0 of candidates[0]) for(const c1 of candidates[1]) for(const c2 of candidates[2]) for(const c3 of candidates[3]){
+    const Ts=[c0.T,c1.T,c2.T,c3.T];
+    const keys=Ts.map(T=>T[0].toFixed(4)+','+T[1].toFixed(4));
+    if(new Set(keys).size<4) continue;
+    const touch=[0,0,0,0];
+    [c0,c1,c2,c3].forEach(cc=>{ touch[cc.i]++; touch[cc.j]++; });
+    if(!touch.every(t=>t===2)) continue;
+    const cPieceIdx = piecesFull.findIndex(pc=>pc.poly.some(v=>pzApproxEq(v,[0,0],1e-6)));
+    if(cPieceIdx<0) continue;
+    const TaExact = pzAdd(Ts[cPieceIdx], [0,a]);
+    const aSqT = aSq.map(p=>pzAdd(p,TaExact));
+    const translated = piecesFull.map((pc,i)=>pc.poly.map(p=>pzAdd(p,Ts[i])));
+    const chk = sampleCheck([...translated, aSqT], 50);
+    if(chk.bad===0){ found = {Ts, TaExact}; break outer; }
+  }
+  return { A,B,C, aSq, bSq, cSq, piecesFull, Ts:found.Ts, TaExact:found.TaExact };
+}
+
+const PZ_UNIT=28;
+const PZ_GEO = pzSolvePerigal(3*PZ_UNIT, 4*PZ_UNIT);
+const PZ_OFF=[120,95];
+function pzSh(p){ return [p[0]+PZ_OFF[0], p[1]+PZ_OFF[1]]; }
+function pzShAll(pts){ return pts.map(pzSh); }
+const PZ_A=pzSh(PZ_GEO.A), PZ_B=pzSh(PZ_GEO.B), PZ_C=pzSh(PZ_GEO.C);
+const PZ_CSQ = pzShAll(PZ_GEO.cSq);
+const PZ_PIECES = [
+  { id:'a', color:'#4f46e5', source: pzShAll(PZ_GEO.aSq), correctT: PZ_GEO.TaExact, tx:0, ty:0, placed:false },
+  { id:'p0', color:'#e05a20', source: pzShAll(PZ_GEO.piecesFull[0].poly), correctT: PZ_GEO.Ts[0], tx:0, ty:0, placed:false },
+  { id:'p1', color:'#e05a20', source: pzShAll(PZ_GEO.piecesFull[1].poly), correctT: PZ_GEO.Ts[1], tx:0, ty:0, placed:false },
+  { id:'p2', color:'#e05a20', source: pzShAll(PZ_GEO.piecesFull[2].poly), correctT: PZ_GEO.Ts[2], tx:0, ty:0, placed:false },
+  { id:'p3', color:'#e05a20', source: pzShAll(PZ_GEO.piecesFull[3].poly), correctT: PZ_GEO.Ts[3], tx:0, ty:0, placed:false }
+];
+const PZ_SNAP_TOL = 16;
+let pzUnlocked = false;
+
+function pzWorldPts(piece){ return piece.source.map(p=>[p[0]+piece.tx, p[1]+piece.ty]); }
+function pzStaticSVG(){
+  let html = '';
+  html += `<polygon points="${ptsToStr([PZ_A,PZ_B,PZ_C])}" fill="none" stroke="#9098b5" stroke-width="1.6"></polygon>`;
+  html += `<polygon points="${ptsToStr(PZ_CSQ)}" fill="none" stroke="#4a4a6a" stroke-width="2" stroke-dasharray="6 5"></polygon>`;
+  html += sideLabelSVGAt(PZ_B, PZ_C, PZ_A, 'a', 14, '#1a1a2e');
+  html += sideLabelSVGAt(PZ_A, PZ_C, PZ_B, 'b', 14, '#1a1a2e');
+  html += sideLabelSVGAt(PZ_A, PZ_B, PZ_C, 'c', 14, '#1a1a2e');
+  const triCen=[(PZ_A[0]+PZ_B[0]+PZ_C[0])/3,(PZ_A[1]+PZ_B[1]+PZ_C[1])/3];
+  ['A','B','C'].forEach((nm,i)=>{
+    const pt=[PZ_A,PZ_B,PZ_C][i];
+    const lp = [pt[0]+(pt[0]<triCen[0]?-14:(pt[0]>triCen[0]?14:0)), pt[1]+(pt[1]<triCen[1]?-10:(pt[1]>triCen[1]?14:0))];
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#1a1a2e">${nm}</text>`;
+  });
+  return html;
+}
+function pzRenderAll(){
+  const svg = document.getElementById('pzSvg');
+  svg.innerHTML = `<g id="pzStaticLayer">${pzStaticSVG()}</g><g id="pzPieceLayer"></g>`;
+  const layer = document.getElementById('pzPieceLayer');
+  PZ_PIECES.forEach(piece=>{
+    const el = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    el.setAttribute('class','pz-piece'+(piece.placed?' pz-placed':(pzUnlocked?'':' pz-locked')));
+    el.setAttribute('data-id', piece.id);
+    el.setAttribute('points', ptsToStr(pzWorldPts(piece)));
+    el.setAttribute('fill', piece.color);
+    el.setAttribute('fill-opacity', piece.placed?'0.55':'0.78');
+    el.setAttribute('stroke', '#ffffff');
+    el.setAttribute('stroke-width', '2');
+    layer.appendChild(el);
+    piece.el = el;
+    pzBindPieceDrag(piece);
+  });
+}
+function pzRenderProgress(){
+  const row = document.getElementById('pzProgressRow');
+  if(!row) return;
+  const placedCount = PZ_PIECES.filter(p=>p.placed).length;
+  row.innerHTML = `<span>${placedCount} / ${PZ_PIECES.length} 조각</span>` +
+    PZ_PIECES.map(p=>`<span class="pz-dot${p.placed?' on':''}"></span>`).join('');
+}
+function pzUpdatePieceEl(piece){
+  if(!piece.el) return;
+  piece.el.setAttribute('points', ptsToStr(pzWorldPts(piece)));
+  piece.el.setAttribute('class','pz-piece'+(piece.placed?' pz-placed':(pzUnlocked?'':' pz-locked')));
+  piece.el.setAttribute('fill-opacity', piece.placed?'0.55':'0.78');
+}
+let pzDragSt = null;
+function pzBindPieceDrag(piece){
+  const el = piece.el;
+  el.addEventListener('pointerdown', evt=>{
+    if(!pzUnlocked || piece.placed) return;
+    evt.preventDefault();
+    const svg = document.getElementById('pzSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    pzDragSt = { piece, pointerId:evt.pointerId, startX:loc.x, startY:loc.y, startTx:piece.tx, startTy:piece.ty };
+    try{ el.setPointerCapture(evt.pointerId); }catch(e){}
+    el.style.cursor='grabbing';
+  });
+  el.addEventListener('pointermove', evt=>{
+    if(!pzDragSt || pzDragSt.piece!==piece || evt.pointerId!==pzDragSt.pointerId) return;
+    evt.preventDefault();
+    const svg = document.getElementById('pzSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    piece.tx = pzDragSt.startTx + (loc.x-pzDragSt.startX);
+    piece.ty = pzDragSt.startTy + (loc.y-pzDragSt.startY);
+    pzUpdatePieceEl(piece);
+  });
+  function endDrag(){
+    if(!pzDragSt || pzDragSt.piece!==piece) return;
+    el.style.cursor='grab';
+    pzCheckSnap(piece);
+    pzDragSt=null;
+  }
+  ['pointerup','pointercancel','lostpointercapture'].forEach(evtName=>el.addEventListener(evtName, endDrag));
+}
+function pzCheckSnap(piece){
+  const dx = piece.tx-piece.correctT[0], dy = piece.ty-piece.correctT[1];
+  if(Math.hypot(dx,dy) <= PZ_SNAP_TOL){
+    piece.tx = piece.correctT[0]; piece.ty = piece.correctT[1];
+    piece.placed = true;
+    pzUpdatePieceEl(piece);
+    pzRenderProgress();
+    if(PZ_PIECES.every(p=>p.placed)) pzOnAllPlaced();
+  }
+}
+function pzOnAllPlaced(){
+  document.getElementById('pzHintBtn').disabled = true;
+  setTimeout(()=>{
+    pzLaunchConfetti();
+    s2ShowFinal();
+  }, 250);
+}
+function pzDoHint(){
+  if(!pzUnlocked) return;
+  const piece = PZ_PIECES.find(p=>!p.placed);
+  if(!piece) return;
+  document.getElementById('pzHintBtn').disabled = true;
+  const startTx=piece.tx, startTy=piece.ty;
+  const t0 = performance.now();
+  function frame(now){
+    const t = Math.min(1,(now-t0)/650);
+    const e = easeInOut(t);
+    piece.tx = startTx + (piece.correctT[0]-startTx)*e;
+    piece.ty = startTy + (piece.correctT[1]-startTy)*e;
+    pzUpdatePieceEl(piece);
+    if(t<1) requestAnimationFrame(frame);
+    else {
+      piece.tx = piece.correctT[0]; piece.ty = piece.correctT[1];
+      piece.placed = true;
+      pzUpdatePieceEl(piece);
+      pzRenderProgress();
+      document.getElementById('pzHintBtn').disabled = PZ_PIECES.every(p=>p.placed);
+      if(PZ_PIECES.every(p=>p.placed)) pzOnAllPlaced();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+function pzDoReset(){
+  PZ_PIECES.forEach(p=>{ p.tx=0; p.ty=0; p.placed=false; });
+  document.getElementById('pzHintBtn').disabled=false;
+  pzRenderAll();
+  pzRenderProgress();
+}
+function pzLaunchConfetti(){
+  const svg = document.getElementById('pzSvg');
+  const colors = ['#4f46e5','#e05a20','#16a34a','#eab308','#dc2626'];
+  const cx = (PZ_CSQ[0][0]+PZ_CSQ[2][0])/2, cy=(PZ_CSQ[0][1]+PZ_CSQ[2][1])/2;
+  let html = '<g id="pzConfettiLayer">';
+  for(let i=0;i<28;i++){
+    const color = colors[i%colors.length];
+    const size = 4+Math.random()*4;
+    const dur = (500+Math.random()*400).toFixed(0);
+    html += `<rect x="${(cx-size/2).toFixed(1)}" y="${(cy-size/2).toFixed(1)}" width="${size.toFixed(1)}" height="${size.toFixed(1)}" fill="${color}" opacity="1" style="transition:transform ${dur}ms ease-out, opacity ${dur}ms ease-out" transform="translate(0,0)"></rect>`;
+  }
+  html += '</g>';
+  svg.insertAdjacentHTML('beforeend', html);
+  const rects = document.querySelectorAll('#pzConfettiLayer rect');
+  requestAnimationFrame(()=>{
+    rects.forEach(r=>{
+      const ang = Math.random()*Math.PI*2;
+      const dist = 60+Math.random()*100;
+      const ex = Math.cos(ang)*dist, ey = Math.sin(ang)*dist;
+      r.setAttribute('transform', `translate(${ex.toFixed(1)},${ey.toFixed(1)}) rotate(${(Math.random()*360).toFixed(0)})`);
+      r.setAttribute('opacity','0');
+    });
+  });
+  setTimeout(()=>{ const layer=document.getElementById('pzConfettiLayer'); if(layer) layer.remove(); }, 1200);
+}
+
+/* --- 2단계 안내 질문(퍼즐 앞/뒤) --- */
+function goToS2(){
+  document.getElementById('s2Card').style.display='';
+  document.getElementById('s2Card').scrollIntoView({behavior:'smooth', block:'start'});
+  pzRenderAll();
+  s2ShowQa();
+}
+function s2ShowQa(){
+  document.getElementById('s2QaArea').innerHTML = `
+    <div class="proof-block" style="text-align:left">
+      1) 파란 정사각형의 넓이는 무엇일까요? (<input class="blank" id="s2q1" style="width:40px">)²<br>
+      2) 주황색 정사각형의 넓이는 무엇일까요? (<input class="blank" id="s2q2" style="width:40px">)²<br>
+      3) 큰 정사각형의 넓이는 무엇일까요? (<input class="blank" id="s2q3" style="width:40px">)²
+    </div>
+    <div class="btn-row"><button class="btn btn-check" id="s2QaBtn" onclick="checkS2Qa()">확인</button></div>
+    <div class="feedback" id="s2QaFb"></div>
+  `;
+}
+function normPow(v){ return normText(v).toLowerCase().replace(/\^/g,'').replace(/²/g,'2'); }
+function checkS2Qa(){
+  const ids=['s2q1','s2q2','s2q3'];
+  const answers=['a','b','c'];
+  const vals = ids.map(id=>document.getElementById(id).value);
+  const oks = vals.map((v,i)=>normText(v).toLowerCase()===answers[i]);
+  ids.forEach((id,i)=>{ const el=document.getElementById(id); el.classList.toggle('correct',oks[i]); el.classList.toggle('wrong',!oks[i]); });
+  const fb=document.getElementById('s2QaFb');
+  if(oks.every(Boolean)){
+    document.getElementById('s2QaBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='맞아요! 이제 직접 조각을 옮겨서 확인해볼까요?';
+    pzUnlocked = true;
+    document.getElementById('s2PuzzleArea').style.display='';
+    PZ_PIECES.forEach(p=>pzUpdatePieceEl(p));
+    pzRenderProgress();
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요.';
+  }
+}
+const s2fcChoice = {1:null, 2:null};
+function s2ShowFinal(){
+  s2fcChoice[1]=null; s2fcChoice[2]=null;
+  document.getElementById('s2FinalArea').innerHTML = `
+    <p class="key-q" style="margin-top:12px">작은 두 정사각형을 잘라 옮겼더니, 큰 정사각형이 꼭 채워졌어요. 이것은 무엇을 의미할까요?</p>
+    <div class="proof-block" style="text-align:center;line-height:2.6">
+      작은 두 정사각형의 (<span id="s2fc1row"><button class="choice-btn" onclick="s2PickFc(1,'둘레',this)">둘레</button><button class="choice-btn" onclick="s2PickFc(1,'넓이',this)">넓이</button></span>)의 합은<br>
+      가장 큰 정사각형의 (<span id="s2fc2row"><button class="choice-btn" onclick="s2PickFc(2,'둘레',this)">둘레</button><button class="choice-btn" onclick="s2PickFc(2,'넓이',this)">넓이</button></span>)의 합과 같다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" id="s2FcBtn" onclick="checkS2Fc()">확인</button></div>
+    <div class="feedback" id="s2FcFb"></div>
+    <div id="s2EqArea"></div>
+  `;
+}
+function s2PickFc(slot, value, btn){
+  s2fcChoice[slot] = value;
+  document.querySelectorAll('#s2fc'+slot+'row .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function checkS2Fc(){
+  const ok = s2fcChoice[1]==='넓이' && s2fcChoice[2]==='넓이';
+  const fb = document.getElementById('s2FcFb');
+  if(ok){
+    document.getElementById('s2FcBtn').disabled=true;
+    document.querySelectorAll('#s2fc1row .choice-btn').forEach(b=>b.disabled=true);
+    document.querySelectorAll('#s2fc2row .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    s2ShowEq();
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요. (둘레일까요, 넓이일까요?)';
+  }
+}
+function s2ShowEq(){
+  document.getElementById('s2EqArea').innerHTML = `
+    <p class="key-q" style="margin-top:12px">2) 이를 수식으로 나타내면,</p>
+    <div class="proof-block" style="text-align:center">(<input class="blank" id="s2finalA" style="width:34px">)² + (<input class="blank" id="s2finalB" style="width:34px">)² = (<input class="blank" id="s2finalC" style="width:34px">)²이다.</div>
+    <div class="btn-row"><button class="btn btn-check" id="s2FinalBtn" onclick="checkS2Final()">확인</button></div>
+    <div class="feedback" id="s2FinalFb"></div>
+  `;
+}
+function checkS2Final(){
+  const ids = ['s2finalA','s2finalB','s2finalC'];
+  const vals = ids.map(id=>document.getElementById(id).value);
+  const oks = samePairEitherOrder(vals[0],vals[1],'a','b') ? [true,true] : [false,false];
+  oks.push(normText(vals[2]).toLowerCase()==='c');
+  ids.forEach((id,i)=>{ const el=document.getElementById(id); el.classList.toggle('correct',oks[i]); el.classList.toggle('wrong',!oks[i]); });
+  const fb = document.getElementById('s2FinalFb');
+  if(oks.every(Boolean)){
+    document.getElementById('s2FinalBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='맞아요! a²+b²=c² — 이것이 바로 피타고라스 정리예요.';
+    document.getElementById('s2EqArea').insertAdjacentHTML('beforeend', `<div class="btn-row" style="margin-top:10px"><button class="btn btn-primary" onclick="goToProve()">직접 증명해보기 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요.';
+  }
+}
+function goToProve(){
+  showScreen('scProve');
+  drawBindOnce('prove'); drawSetupCanvas('prove');
+  proveInit();
+}
+function introInit(){
+  s1Render();
+}
+
+/* ════════════════════════════════
+   증명 흐름
+════════════════════════════════ */
+function provePanel(html){ document.getElementById('provePanel').innerHTML = html; }
+function appendProvePanel(html){ document.getElementById('provePanel').insertAdjacentHTML('beforeend', html); }
+function renderStageFigure(stage){
+  document.getElementById('proveSvg').innerHTML = mainFigureSVG(stage) + qSlotBoxesSVG() + sepBCopyGroupsSVG();
+  sepB.stage = stage;
+  sepBReset();
+  if(stage===1 || stage===2){
+    sepBBindDrag(); sepBBindHandle(); sepBFlipBind(); sepBBindRotButtons();
+  }
+}
+const SIM_CFG = {
+  1:{ commonAngle:'B', triName:'CBD', letter:'a', seg:'BD', ratioNote:'ACB와 △CDB' },
+  2:{ commonAngle:'A', triName:'ACD', letter:'b', seg:'AD', ratioNote:'ACB와 △ADC' }
+};
+function simBlockHTML(stage){
+  const cfg = SIM_CFG[stage];
+  return `
+    <div class="panel-title"><span class="step-badge">${stage}</span> △ABC ∽ △${cfg.triName}</div>
+    <div class="proof-block">
+      △ABC와 △${cfg.triName}에서<br>
+      <span class="key-q">∠ACB = ∠${stage===1?'CDB':'ADC'} = (<input class="blank" id="s${stage}_ang90" style="width:40px" inputmode="numeric">)°</span>,<br>
+      ∠(<input class="blank" id="s${stage}_angCommon" style="width:36px">)는 공통이므로<br>
+      △ABC ∽ △${cfg.triName} (<input class="blank" id="s${stage}_sim" style="width:40px">닮음)이다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" id="s${stage}SimBtn" onclick="proveCheckSim(${stage})">확인</button></div>
+    <div class="feedback" id="s${stage}SimFb"></div>`;
+}
+function sepUIHTML(stage){
+  const cfg = SIM_CFG[stage];
+  return `
+    <div class="panel-title" style="margin-top:14px">🔍 두 삼각형을 분리해서 비교해보기</div>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:6px">원래 그림은 그대로 두고, △${cfg.triName}를 떼어내서 자유롭게 움직여 보세요. 대응변과 대응점의 위치를 맞춰볼 수 있어요.</p>
+    <div class="btn-row">
+      <button class="btn" id="s${stage}SepBtn" onclick="proveDoSeparate(${stage})" style="background:var(--orange)">🔍 △${cfg.triName} 분리하기</button>
+      <button class="btn" id="s${stage}RotBtn" onclick="sepBRotate()" style="display:none;background:#fff;color:var(--orange);border:1.5px solid var(--orange)">🔄 180° 회전</button>
+      <button class="btn" id="s${stage}FlipBtn" onclick="sepBFlip()" style="display:none;background:#fff;color:var(--orange);border:1.5px solid var(--orange)">🪞 뒤집기</button>
+      <button class="btn" id="s${stage}BackBtn" onclick="sepBReset()" style="display:none;background:#fff;color:var(--orange);border:1.5px solid var(--orange)">↩️ 제자리로</button>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" id="s${stage}NextBtn" onclick="proveStage${stage}Prop()" disabled>다음: 비례식 세우기 →</button></div>`;
+}
+function propBlockHTML(stage){
+  const cfg = SIM_CFG[stage];
+  const markNum = stage===1 ? '①' : '②';
+  return `
+    <div class="panel-title" style="margin-top:14px"><span class="step-badge">${stage}</span> 비례식으로 ${cfg.letter}² 표현하기</div>
+    <div class="proof-block">
+      두 삼각형 △${cfg.ratioNote}에서 대응하는 변의 길이의 비는 같다.<br>
+      따라서 c : (<input class="blank" id="s${stage}_prop1" style="width:40px">) = ${cfg.letter} : (<input class="blank" id="s${stage}_prop2" style="width:46px">)이므로<br>
+      <span class="key-q">${cfg.letter}² = c × (<input class="blank" id="s${stage}_prop3" style="width:46px">)</span>이다. &nbsp;···${markNum}
+    </div>
+    <div class="btn-row"><button class="btn btn-check" id="s${stage}PropBtn" onclick="proveCheckProp(${stage})">확인</button></div>
+    <div class="feedback" id="s${stage}PropFb"></div>`;
+}
+/* 완료된 단계는 '접기'로 접어서, 결론 하나만 네모 박스로 남긴다 */
+function appendStageDetail(stage, html){ document.getElementById('s'+stage+'Detail').insertAdjacentHTML('beforeend', html); }
+function toggleStageDetail(stage){
+  const d = document.getElementById('s'+stage+'Detail');
+  const collapsed = d.style.display==='none';
+  d.style.display = collapsed ? '' : 'none';
+  const arrow = document.getElementById('s'+stage+'ConclArrow');
+  if(arrow) arrow.textContent = collapsed ? '▾ 과정 접기' : '▸ 과정 다시 보기';
+}
+function stageConclHTML(stage){
+  const cfg = SIM_CFG[stage];
+  const markNum = stage===1 ? '①' : '②';
+  return `
+    <div class="proof-block" style="text-align:center">
+      <div style="font-weight:800;font-size:15.5px;color:var(--indigo)">
+        <span class="step-badge">${stage}</span> ${cfg.letter}² = c × <span class="seg">${cfg.seg}</span> &nbsp;···${markNum}
+      </div>
+      <div id="s${stage}ConclArrow" onclick="toggleStageDetail(${stage})" style="font-size:11px;color:var(--ink3);margin-top:4px;cursor:pointer;text-decoration:underline">▸ 과정 다시 보기</div>
+    </div>`;
+}
+function proveInit(){
+  sepB.btnPrefix = 's1';
+  renderStageFigure(1);
+  sepB.btnPrefix = 's1';
+  provePanel(`
+    <p>직각삼각형 ABC에서 ∠C=90°이다. 꼭짓점 C에서 빗변 AB에 내린 수선의 발을 D라고 하자.</p>
+    <div id="s1Detail">${simBlockHTML(1)}</div>
+  `);
+}
+function proveCheckSim(stage){
+  const cfg = SIM_CFG[stage];
+  const ids = ['s'+stage+'_ang90','s'+stage+'_angCommon','s'+stage+'_sim'];
+  const vals = ids.map(id=>document.getElementById(id).value);
+  const oks = [
+    normText(vals[0])==='90',
+    normText(vals[1]).toUpperCase()===cfg.commonAngle,
+    normText(vals[2]).toUpperCase()==='AA'
+  ];
+  ids.forEach((id,i)=>{ const el=document.getElementById(id); el.classList.toggle('correct',oks[i]); el.classList.toggle('wrong',!oks[i]); });
+  const fb = document.getElementById('s'+stage+'SimFb');
+  if(oks.every(Boolean)){
+    fb.className='feedback success'; fb.textContent='맞아요! AA 닮음이 성립해요.';
+    document.getElementById('s'+stage+'SimBtn').disabled=true;
+    sepB.btnPrefix = 's'+stage;
+    appendStageDetail(stage, sepUIHTML(stage));
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요.';
+  }
+}
+function proveDoSeparate(stage){
+  sepBSeparate();
+  document.getElementById('s'+stage+'NextBtn').disabled=false;
+}
+function proveStage1Prop(){
+  document.getElementById('s1NextBtn').disabled=true;
+  appendStageDetail(1, propBlockHTML(1));
+}
+function proveStage2Prop(){
+  document.getElementById('s2NextBtn').disabled=true;
+  appendStageDetail(2, propBlockHTML(2));
+}
+function proveCheckProp(stage){
+  const cfg = SIM_CFG[stage];
+  const ids = ['s'+stage+'_prop1','s'+stage+'_prop2','s'+stage+'_prop3'];
+  const vals = ids.map(id=>document.getElementById(id).value);
+  const oks = [
+    normText(vals[0]).toLowerCase()===cfg.letter,
+    sameSeg(vals[1], cfg.seg),
+    sameSeg(vals[2], cfg.seg)
+  ];
+  ids.forEach((id,i)=>{ const el=document.getElementById(id); el.classList.toggle('correct',oks[i]); el.classList.toggle('wrong',!oks[i]); });
+  const fb = document.getElementById('s'+stage+'PropFb');
+  if(oks.every(Boolean)){
+    document.getElementById('s'+stage+'PropBtn').disabled=true;
+    fb.className='feedback success'; fb.innerHTML='맞아요! '+cfg.letter+'² = c × <span class="seg">'+cfg.seg+'</span> 가 유도되었어요.';
+    document.getElementById('s'+stage+'Detail').style.display='none';
+    appendProvePanel(stageConclHTML(stage));
+    if(stage===1){
+      appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" id="goStage2Btn" onclick="proveStage2()">다음 단계로 →</button></div>`);
+    } else {
+      appendProvePanel(`<div class="btn-row"><button class="btn btn-primary" id="goStage3Btn" onclick="proveStage3()">①, ②를 더해서 마무리하기 →</button></div>`);
+    }
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요.';
+  }
+}
+function proveStage2(){
+  const btn = document.getElementById('goStage2Btn'); if(btn) btn.disabled=true;
+  renderStageFigure(2);
+  sepB.btnPrefix='s2';
+  appendProvePanel(`<div id="s2Detail">${simBlockHTML(2)}</div>`);
+}
+function proveStage3(){
+  const btn = document.getElementById('goStage3Btn'); if(btn) btn.disabled=true;
+  renderStageFigure(3);
+  appendProvePanel(`
+    <div class="panel-title" style="margin-top:14px"><span class="step-badge">3</span> ①, ②를 더해서 피타고라스 정리 완성하기</div>
+    <div class="proof-block">
+      ①과 ②를 변끼리 더하면<br>
+      a² + (<input class="blank" id="s3_1" style="width:30px">)² = c×(<input class="blank" id="s3_2" style="width:42px">) + (<input class="blank" id="s3_3" style="width:30px">)×<span class="seg">AD</span> = c×{(<input class="blank" id="s3_4" style="width:42px">)+(<input class="blank" id="s3_5" style="width:42px">)}이고<br>
+      이때 <span class="seg">BD</span>+<span class="seg">AD</span> = (<input class="blank" id="s3_6" style="width:30px">)이므로<br>
+      a² + b² = c×{<span class="seg">BD</span>+<span class="seg">AD</span>} = c×(<input class="blank" id="s3_7" style="width:30px">) = (<input class="blank" id="s3_8" style="width:30px">)²이다.<br>
+      <span class="key-q">즉, a² + b² = (<input class="blank" id="s3_9" style="width:30px">)²</span>이다.<br>
+      이를 (<input class="blank" id="s3_10" style="width:90px">)정리라고 한다.
+    </div>
+    <div class="btn-row"><button class="btn btn-check" id="s3Btn" onclick="proveCheckStage3()">확인</button></div>
+    <div class="feedback" id="s3Fb"></div>
+  `);
+}
+function proveCheckStage3(){
+  const ids = ['s3_1','s3_2','s3_3','s3_4','s3_5','s3_6','s3_7','s3_8','s3_9','s3_10'];
+  const vals = ids.map(id=>document.getElementById(id).value);
+  const oks = [
+    normText(vals[0]).toLowerCase()==='b',
+    sameSeg(vals[1],'BD'),
+    normText(vals[2]).toLowerCase()==='c',
+    samePairEitherOrder(vals[3],vals[4],'BD','AD'),
+    samePairEitherOrder(vals[3],vals[4],'BD','AD'),
+    (normText(vals[5]).toLowerCase()==='c' || sameSeg(vals[5],'AB')),
+    normText(vals[6]).toLowerCase()==='c',
+    normText(vals[7]).toLowerCase()==='c',
+    normText(vals[8]).toLowerCase()==='c',
+    normText(vals[9])==='피타고라스'
+  ];
+  ids.forEach((id,i)=>{ const el=document.getElementById(id); el.classList.toggle('correct',oks[i]); el.classList.toggle('wrong',!oks[i]); });
+  const fb = document.getElementById('s3Fb');
+  if(oks.every(Boolean)){
+    document.getElementById('s3Btn').disabled=true;
+    fb.className='feedback success'; fb.textContent='완성했어요!';
+    appendProvePanel(`
+      <div class="summary-box">
+        🎉 피타고라스 정리<br>
+        직각삼각형에서 직각을 낀 두 변의 길이를 각각 a, b,<br>빗변의 길이를 c라고 하면<br>
+        <span style="font-size:20px">a² + b² = c²</span>
+      </div>
+      <div class="btn-row" style="margin-top:12px"><button class="btn btn-primary" onclick="goToSummary()">정리로 넘어가기 →</button></div>
+    `);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요.';
+  }
+}
+
+/* ════════════════════════════════
+   정리 흐름
+════════════════════════════════ */
+function summaryPanel(html){ document.getElementById('summaryPanel').innerHTML = html; }
+function appendSummaryPanel(html){ document.getElementById('summaryPanel').insertAdjacentHTML('beforeend', html); }
+function goToSummary(){
+  showScreen('scSummary');
+  summaryInit();
+}
+function summaryInit(){
+  document.getElementById('summarySvg').innerHTML = summaryTriangleSVG();
+  summaryPanel(`
+    <div class="summary-box">📐 피타고라스 정리<br>직각삼각형에서 직각을 낀 두 변의 길이를 각각 a, b,<br>빗변의 길이를 c라고 하면<br><span style="font-size:20px">a² + b² = c²</span></div>
+    <p style="margin-top:14px">방금 증명한 정리를 활용해볼까요? 직각을 낀 두 변의 길이가 각각 6, 8인 직각삼각형의 빗변의 길이를 구해보세요.</p>
+    <div class="proof-block" style="text-align:left">6² + 8² = (<input class="blank" id="sum_1" style="width:56px" inputmode="numeric">)이므로<br>빗변의 길이는 (<input class="blank" id="sum_2" style="width:46px" inputmode="numeric">)이다.</div>
+    <div class="btn-row"><button class="btn btn-check" id="summaryCheckBtn" onclick="summaryCheck()">확인</button></div>
+    <div class="feedback" id="summaryFb"></div>
+  `);
+}
+function summaryCheck(){
+  const ids=['sum_1','sum_2'];
+  const vals = ids.map(id=>document.getElementById(id).value);
+  const oks=[normText(vals[0])==='100', normText(vals[1])==='10'];
+  ids.forEach((id,i)=>{ const el=document.getElementById(id); el.classList.toggle('correct',oks[i]); el.classList.toggle('wrong',!oks[i]); });
+  const fb=document.getElementById('summaryFb');
+  if(oks.every(Boolean)){
+    document.getElementById('summaryCheckBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='맞아요! 6-8-10도 피타고라스 정리를 만족하는 세 수예요.';
+    appendSummaryPanel(`<div class="btn-row" style="margin-top:10px"><button class="btn btn-primary" onclick="goToDone()">학습 마치기 →</button></div>`);
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 확인해보세요.';
+  }
+}
+function goToDone(){
+  showScreen('scDone');
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+drawBindOnce('intro');
+drawSetupCanvas('intro');
+introInit();
+</script>
+</body>
+</html>

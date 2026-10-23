@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>피타고라스 정리 형성평가</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+
+.stage-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.stage-tab{padding:7px 16px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink2)}
+.stage-tab.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.stage-tab.done{background:var(--green-l);color:#14532d;border-color:var(--green)}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 420px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:10px}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.scratch-area{height:60px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+.sidelabel{font-size:13.5px;font-weight:800;font-style:italic;text-anchor:middle}
+.sidecurve{fill:none;stroke-width:1.4;stroke-dasharray:4 3}
+
+.progress{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:6px}
+.qtext{font-size:15px;font-weight:700;text-align:center;margin-bottom:12px}
+.answer-block{text-align:center;font-size:15px;font-weight:700;margin-bottom:14px}
+.blank{display:inline-block;width:70px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:15px;font-family:inherit;padding:2px 4px;margin:0 4px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+
+.result-wrap{text-align:center;padding:24px 10px}
+.result-icon{font-size:48px;margin-bottom:10px}
+.result-score{font-size:22px;font-weight:800;color:var(--indigo);margin:8px 0}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:420px;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25)}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.modal-btn:hover{background:#4338ca}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">피타고라스 정리 형성평가</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'pythagorean-theorem-assessment' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+
+  <div class="screen active" id="scQuiz">
+    <div class="stage-tabs" id="stageTabs"></div>
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn" id="quizPenBtn" onclick="drawSetMode('quiz','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('quiz','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('quiz','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('quiz','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('quiz','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('quiz','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="quizEraserBtn" onclick="drawToggleEraser('quiz')">🧽 지우개</button>
+          <button class="mode-btn active" id="quizPointerBtn" onclick="drawSetMode('quiz','pointer')">🖱️ 마우스</button>
+        </div>
+        <div class="draw-wrap" id="quizDrawWrap">
+          <div class="svg-wrap"><svg id="quizSvg" viewBox="0 0 300 260" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area"></div>
+          <canvas id="quizInk" class="ink-canvas"></canvas>
+        </div>
+      </div>
+      <div class="split-right card">
+        <div class="progress" id="quizProgress">유형1 · 1 / 3</div>
+        <div class="qtext" id="quizQtext">다음 직각삼각형에서 x의 값을 구하시오.</div>
+        <div class="answer-block">x = <input class="blank" id="qAnsX" inputmode="numeric"> cm</div>
+        <div class="btn-row"><button class="btn" id="quizCheckBtn" onclick="quizCheck()">확인</button></div>
+        <div class="feedback" id="quizFb"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scStageResult">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon" id="srIcon">🎉</div>
+        <h2 id="srTitle">통과했어요!</h2>
+        <div class="result-score" id="srScore">3 / 3</div>
+        <p id="srMsg" style="color:var(--ink2)"></p>
+        <button class="restart-btn" id="srRetryBtn" onclick="srRetry()" style="display:none">🔄 다시 도전하기</button>
+        <button class="primary-btn" id="srNextBtn" onclick="srNext()">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px">피타고라스 정리 형성평가를 모두 통과했어요.</p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;right:16px;width:320px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:40;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function numMatches(v, expected, tol){ return isFinite(v) && Math.abs(v-expected) < (tol||0.05); }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+/* 길이 라벨: 바깥으로 볼록한 점선 호 + 호 끝에 값 (마주보는 꼭짓점 기준으로 바깥쪽 판정 — bbox중심 기준은 특수한 경우 방향을 못 고르는 버그가 있었음) */
+function sideLabelSVGAt(p1, p2, away, value, bulge, color, t){
+  t = (t===undefined) ? 0.5 : t;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-away[0], mid[1]-away[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" style="stroke:${color}" d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="sidelabel" style="fill:${color}" x="${labelPt[0].toFixed(1)}" y="${(labelPt[1]+4).toFixed(1)}">${value}</text>`;
+}
+function rightAngleMarkHTML(vertex, u1, u2, size, color){
+  const p1=[vertex[0]+u1[0]*size, vertex[1]+u1[1]*size];
+  const p2=[p1[0]+u2[0]*size, p1[1]+u2[1]*size];
+  const p3=[vertex[0]+u2[0]*size, vertex[1]+u2[1]*size];
+  return `<polyline points="${ptsToStr([p1,p2,p3])}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
+}
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function centerOffset(pts, boxW, boxH){
+  const c = bboxCenterOf(pts);
+  return [boxW/2-c[0], boxH/2-c[1]];
+}
+function translatePts(pts, T){ return pts.map(p=>[p[0]+T[0], p[1]+T[1]]); }
+/* 실제 cm 값과 무관하게, 삼각형마다 캔버스를 꽉 채우도록 매번 개별 확대/축소한다
+   (문제마다 다른 삼각형을 번갈아 "하나씩" 보여주는 퀴즈라 — 여러 그림을 한 화면에 나란히 비교하는 경우와 달리
+   서로 다른 문제 사이의 실제 크기 비율을 유지할 이유가 없고, 작은 값(3,4,5 등)이 화면에 작게 찍히면 안 보기 힘들다) */
+function fitScaleFor(pts, boxW, boxH, margin){
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  const w = Math.max(...xs)-Math.min(...xs), h = Math.max(...ys)-Math.min(...ys);
+  const availW = boxW - 2*margin, availH = boxH - 2*margin;
+  return Math.min(availW/(w||1), availH/(h||1));
+}
+function scalePts(pts, s){ return pts.map(p=>[p[0]*s, p[1]*s]); }
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스)
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pointer' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key);
+  d.mode = mode;
+  document.getElementById(key+'PenBtn').classList.toggle('active', mode==='pen');
+  document.getElementById(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  document.getElementById(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{ if(document.getElementById('scQuiz').classList.contains('active')) drawSetupCanvas(key); });
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  document.querySelectorAll('.split-left .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('.split-left .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll('.split-left .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwErr').textContent='';
+  document.getElementById('adminPwModal').classList.add('show');
+  document.getElementById('adminPwInput').focus();
+}
+async function checkAdminPassword(){
+  const v = document.getElementById('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ document.getElementById('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(ok){
+    document.getElementById('adminPwModal').classList.remove('show');
+    let body = '<div><strong>유형1 (두 변 → 빗변 x)</strong></div>';
+    POOL1.forEach((e,i)=>{ body += `<div>#${i}: a=${e.a}, b=${e.b} → x=${e.c} <button class="modal-btn" style="padding:1px 6px;font-size:10px" onclick="adminPreview(0,${i})">보기</button></div>`; });
+    body += '<div style="margin-top:8px"><strong>유형2 (빗변+한 변 → 나머지 변 x)</strong></div>';
+    POOL2.forEach((e,i)=>{ body += `<div>#${i}: given=${e.given}, hyp=${e.hyp} → x=${e.unknown} <button class="modal-btn" style="padding:1px 6px;font-size:10px" onclick="adminPreview(1,${i})">보기</button></div>`; });
+    document.getElementById('adminPanelBody').innerHTML = body;
+    document.getElementById('adminPanel').style.display='block';
+  } else {
+    document.getElementById('adminPwErr').textContent='비밀번호가 틀렸어요.';
+  }
+}
+function adminPreview(typeIdx, entryIdx){
+  st.typeIdx = typeIdx;
+  st.order = [TYPES[typeIdx].pool[entryIdx]];
+  st.idx = 0; st.correct = 0;
+  showScreen('scQuiz');
+  updateStageTabs();
+  renderQuestion();
+}
+
+/* ════════════════════════════════
+   유형별 문제 풀 (모두 피타고라스 수(정수 직각삼각형)만 사용)
+════════════════════════════════ */
+function type1Geo(a,b){
+  const TH=32*Math.PI/180;
+  const T=[0,0];
+  const dirL=[-Math.sin(TH),Math.cos(TH)], dirR=[Math.cos(TH),Math.sin(TH)];
+  const L=[T[0]+a*dirL[0], T[1]+a*dirL[1]];
+  const R=[T[0]+b*dirR[0], T[1]+b*dirR[1]];
+  return {T,L,R};
+}
+function type2Geo(legKnown,legUnknown){
+  const R=[0,0];
+  const dir1=[-Math.SQRT1_2, -Math.SQRT1_2];
+  const dir2=[-Math.SQRT1_2, Math.SQRT1_2];
+  const P1=[R[0]+legKnown*dir1[0], R[1]+legKnown*dir1[1]];
+  const P2=[R[0]+legUnknown*dir2[0], R[1]+legUnknown*dir2[1]];
+  return {R,P1,P2};
+}
+const TRIPLES = [[3,4,5],[6,8,10],[5,12,13],[9,12,15],[8,15,17],[7,24,25]];
+const POOL1 = TRIPLES.map(([a,b,c])=>({a,b,c}));
+const POOL2 = TRIPLES.flatMap(([a,b,c])=>[
+  {given:a, unknown:b, hyp:c},
+  {given:b, unknown:a, hyp:c}
+]);
+const QBOXW=300, QBOXH=260, QMARGIN=48;
+
+function draw1(e){
+  const g = type1Geo(e.a, e.b);
+  const raw = [g.T,g.L,g.R];
+  const s = fitScaleFor(raw, QBOXW, QBOXH, QMARGIN);
+  const scaled = scalePts(raw, s);
+  const T0 = centerOffset(scaled, QBOXW, QBOXH);
+  const [T,L,R] = translatePts(scaled, T0);
+  let html = `<polygon points="${ptsToStr([T,L,R])}" fill="#4f46e5" fill-opacity="0.06" stroke="#4f46e5" stroke-width="2"></polygon>`;
+  html += rightAngleMarkHTML(T, unitVec(T,L), unitVec(T,R), 13, '#4a4a6a');
+  html += sideLabelSVGAt(T,L,R,String(e.a),10,'#1a1a2e');
+  html += sideLabelSVGAt(T,R,L,String(e.b),10,'#1a1a2e');
+  html += sideLabelSVGAt(L,R,T,'x',10,'#e05a20');
+  return html;
+}
+function answer1(e){ return e.c; }
+
+function draw2(e){
+  const g = type2Geo(e.given, e.unknown);
+  const raw = [g.R, g.P1, g.P2];
+  const s = fitScaleFor(raw, QBOXW, QBOXH, QMARGIN);
+  const scaled = scalePts(raw, s);
+  const T0 = centerOffset(scaled, QBOXW, QBOXH);
+  const [R,P1,P2] = translatePts(scaled, T0);
+  let html = `<polygon points="${ptsToStr([R,P1,P2])}" fill="#4f46e5" fill-opacity="0.06" stroke="#4f46e5" stroke-width="2"></polygon>`;
+  html += rightAngleMarkHTML(R, unitVec(R,P1), unitVec(R,P2), 13, '#4a4a6a');
+  html += sideLabelSVGAt(P1,P2,R,String(e.hyp),10,'#1a1a2e');
+  html += sideLabelSVGAt(R,P1,P2,String(e.given),10,'#1a1a2e');
+  html += sideLabelSVGAt(R,P2,P1,'x',10,'#e05a20');
+  return html;
+}
+function answer2(e){ return e.unknown; }
+
+const TYPES = [
+  { key:'1', label:'유형1', pool:POOL1, draw:draw1, answer:answer1, qtext:'다음 직각삼각형에서 x의 값을 구하시오. (두 변이 주어졌을 때, 빗변 구하기)' },
+  { key:'2', label:'유형2', pool:POOL2, draw:draw2, answer:answer2, qtext:'다음 직각삼각형에서 x의 값을 구하시오. (빗변과 한 변이 주어졌을 때, 나머지 변 구하기)' }
+];
+const N_PER_STAGE = 3;
+const PASS_THRESHOLD = 2;
+
+/* ════════════════════════════════
+   퀴즈 진행
+════════════════════════════════ */
+const st = { typeIdx:0, idx:0, correct:0, order:[] };
+function updateStageTabs(){
+  document.getElementById('stageTabs').innerHTML = TYPES.map((t,i)=>{
+    let cls='stage-tab';
+    if(i===st.typeIdx) cls+=' active';
+    else if(i<st.typeIdx || (i===st.typeIdx && st.passedStages && st.passedStages[i])) cls+=' done';
+    return `<div class="${cls}">${t.label}</div>`;
+  }).join('');
+}
+function startStage(typeIdx){
+  st.typeIdx = typeIdx;
+  st.idx = 0;
+  st.correct = 0;
+  const type = TYPES[typeIdx];
+  st.order = shuffle(type.pool).slice(0, N_PER_STAGE);
+  showScreen('scQuiz');
+  updateStageTabs();
+  renderQuestion();
+}
+function renderQuestion(){
+  const type = TYPES[st.typeIdx];
+  const entry = st.order[st.idx];
+  document.getElementById('quizProgress').textContent = `${type.label} · ${st.idx+1} / ${st.order.length}`;
+  document.getElementById('quizQtext').textContent = type.qtext;
+  document.getElementById('quizSvg').innerHTML = type.draw(entry);
+  const ans = document.getElementById('qAnsX');
+  ans.value=''; ans.classList.remove('correct','wrong');
+  document.getElementById('quizFb').textContent='';
+  document.getElementById('quizCheckBtn').disabled=false;
+}
+function quizCheck(){
+  const type = TYPES[st.typeIdx];
+  const entry = st.order[st.idx];
+  const v = Number(normText(document.getElementById('qAnsX').value));
+  const ok = numMatches(v, type.answer(entry));
+  const el = document.getElementById('qAnsX');
+  el.classList.toggle('correct', ok);
+  el.classList.toggle('wrong', !ok);
+  const fb = document.getElementById('quizFb');
+  if(ok){
+    st.correct++;
+    document.getElementById('quizCheckBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='✅ 정답이에요!';
+    setTimeout(quizNext, 1300);
+  } else {
+    fb.className='feedback error'; fb.textContent='❌ 틀렸어요. 다시 확인해서 고쳐보세요.';
+  }
+}
+function quizNext(){
+  st.idx++;
+  if(st.idx < st.order.length){ renderQuestion(); }
+  else { stageFinish(); }
+}
+function stageFinish(){
+  const pass = st.correct >= PASS_THRESHOLD;
+  st.passedStages = st.passedStages || {};
+  if(pass) st.passedStages[st.typeIdx] = true;
+  showScreen('scStageResult');
+  document.getElementById('srIcon').textContent = pass ? '🎉' : '💪';
+  document.getElementById('srTitle').textContent = pass ? `${TYPES[st.typeIdx].label} 통과!` : `${TYPES[st.typeIdx].label} 아쉬워요`;
+  document.getElementById('srScore').textContent = `${st.correct} / ${st.order.length}`;
+  document.getElementById('srMsg').textContent = pass ? '잘했어요! 다음으로 넘어가볼까요?' : `${PASS_THRESHOLD}개 이상 맞혀야 통과예요. 다시 도전해볼까요?`;
+  document.getElementById('srRetryBtn').style.display = pass ? 'none' : '';
+  document.getElementById('srNextBtn').style.display = pass ? '' : 'none';
+  document.getElementById('srNextBtn').textContent = (st.typeIdx < TYPES.length-1) ? '다음 유형 →' : '결과 보기 →';
+}
+function srRetry(){ startStage(st.typeIdx); }
+function srNext(){
+  if(st.typeIdx < TYPES.length-1){ startStage(st.typeIdx+1); }
+  else { showScreen('scDone'); if(window._reportHubComplete) window._reportHubComplete(); }
+}
+
+drawBindOnce('quiz');
+drawSetupCanvas('quiz');
+startStage(0);
+</script>
+</body>
+</html>
