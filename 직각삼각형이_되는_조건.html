@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>직각삼각형이 되는 조건</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.key-q{font-size:15.5px;font-weight:800;text-decoration:underline;text-decoration-color:var(--indigo);text-decoration-thickness:2.5px;text-underline-offset:3px}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 420px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:10px}
+.svg-wrap{background:#fbfcff;border-radius:10px 10px 0 0;border:1px solid #eee;border-bottom:none}
+.svg-wrap svg{width:100%;height:auto;display:block;touch-action:none}
+.scratch-area{height:50px;background:#fbfcff;border:1px dashed #d8ddfb;border-top:none;border-radius:0 0 10px 10px}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+.sidelabel{font-size:13.5px;font-weight:800;font-style:italic;text-anchor:middle}
+.sidecurve{fill:none;stroke-width:1.4;stroke-dasharray:4 3}
+
+.readout{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:13.5px;font-weight:700}
+.readout .rbox{background:var(--indigo-ll);border-radius:8px;padding:6px 12px;color:var(--indigo)}
+.readout .rbox.live{background:var(--green-ll);color:#14532d}
+
+.panel-title{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--indigo);color:#fff;font-size:12px;font-weight:800;flex-shrink:0}
+.proof-block{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:14px;margin:10px 0;font-size:14.5px;line-height:2.3}
+.blank{display:inline-block;width:52px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:14px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.choice-btn{padding:8px 18px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.choice-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.choice-btn.correct{background:var(--green);color:#fff;border-color:var(--green)}
+.choice-btn.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.choice-btn:disabled{opacity:.55;cursor:default}
+.sym-blank{display:inline-flex;gap:4px;vertical-align:middle}
+.sym-blank .choice-btn{padding:4px 12px;font-size:14px;min-width:38px}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-primary{background:var(--indigo)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.summary-box{background:var(--indigo-ll);border:1.5px solid var(--indigo-l);border-radius:10px;padding:16px;text-align:center;font-size:15px;font-weight:700;color:var(--indigo);line-height:2;margin-top:14px}
+
+.progress{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:6px}
+.level-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.level-tab{padding:7px 16px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink2)}
+.level-tab.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.level-tab.done{background:var(--green-l);color:#14532d;border-color:var(--green)}
+
+.calc-toggle{border:none;border-radius:20px;padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--ink);color:#fff;font-family:inherit}
+.calc-toggle.active{background:var(--indigo)}
+.calc-panel{display:none;width:230px;margin:10px auto 0;background:#fbfcff;border-radius:14px;border:1.5px solid #d8ddfb;box-shadow:var(--shadow);padding:12px}
+.calc-panel.show{display:block}
+.calc-display{background:#1a1a2e;color:#fff;border-radius:8px;padding:10px 12px;text-align:right;font-size:20px;font-weight:700;margin-bottom:8px;min-height:30px;overflow-x:auto;white-space:nowrap}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.calc-btn{border:none;border-radius:8px;padding:10px 0;font-size:14px;font-weight:700;cursor:pointer;background:var(--indigo-ll);color:var(--ink);font-family:inherit}
+.calc-btn:hover{background:var(--indigo-l)}
+.calc-btn.op{background:var(--indigo);color:#fff}
+.calc-btn.op:hover{background:#4338ca}
+.calc-btn.fn{background:#f3f0ff;color:#6d28d9}
+.calc-btn.eq{background:var(--green);color:#fff}
+.calc-btn.clear{background:var(--red-l);color:var(--red)}
+
+.result-wrap{text-align:center;padding:24px 10px}
+.result-icon{font-size:48px;margin-bottom:10px}
+.result-score{font-size:22px;font-weight:800;color:var(--indigo);margin:8px 0}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:420px;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25)}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">직각삼각형이 되는 조건</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'right-triangle-condition' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+
+  <div class="screen active" id="scActivity">
+    <div class="split-layout">
+      <div class="split-left card">
+        <div class="draw-toolbar">
+          <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+          <button class="mode-btn" id="actPenBtn" onclick="drawSetMode('act','pen')">✏️ 펜(필기)</button>
+          <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('act','#1a1a2e',this)" title="검정"></button>
+          <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('act','#dc2626',this)" title="빨강"></button>
+          <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('act','#2563eb',this)" title="파랑"></button>
+          <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('act','#16a34a',this)" title="초록"></button>
+          <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('act','#eab308',this)" title="노랑"></button>
+        </div>
+        <div class="draw-toolbar">
+          <button class="eraser-btn" id="actEraserBtn" onclick="drawToggleEraser('act')">🧽 지우개</button>
+          <button class="mode-btn active" id="actPointerBtn" onclick="drawSetMode('act','pointer')">🖱️ 마우스(도형 조작)</button>
+        </div>
+        <div class="draw-wrap" id="actDrawWrap">
+          <div class="svg-wrap"><svg id="actSvg" viewBox="0 0 340 260" xmlns="http://www.w3.org/2000/svg"></svg></div>
+          <div class="scratch-area"></div>
+          <canvas id="actInk" class="ink-canvas"></canvas>
+        </div>
+        <div class="readout">
+          <span class="rbox"><span class="seg">BC</span>²+<span class="seg">CA</span>² = 25</span>
+          <span class="rbox live"><span class="seg">AB</span>² ≈ <span id="rbAB2val">0</span></span>
+          <span class="rbox live" id="rbAngle">∠C ≈ 0°</span>
+        </div>
+      </div>
+      <div class="split-right card">
+        <div id="actPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scSummary">
+    <div class="card" style="max-width:720px;margin:0 auto">
+      <div id="summaryArea"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scPractice">
+    <div class="level-tabs" id="levelTabs"></div>
+    <div class="card" style="max-width:720px;margin:0 auto">
+      <div class="progress" id="pgProgress"></div>
+      <div id="pgArea"></div>
+    </div>
+    <div class="card" style="max-width:720px;margin:0 auto">
+      <div class="draw-toolbar">
+        <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+        <button class="mode-btn" id="pgPenBtn" onclick="drawSetMode('pg','pen')">✏️ 펜(필기)</button>
+        <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('pg','#1a1a2e',this)" title="검정"></button>
+        <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('pg','#dc2626',this)" title="빨강"></button>
+        <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('pg','#2563eb',this)" title="파랑"></button>
+        <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('pg','#16a34a',this)" title="초록"></button>
+        <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('pg','#eab308',this)" title="노랑"></button>
+      </div>
+      <div class="draw-toolbar">
+        <button class="eraser-btn" id="pgEraserBtn" onclick="drawToggleEraser('pg')">🧽 지우개</button>
+        <button class="mode-btn active" id="pgPointerBtn" onclick="drawSetMode('pg','pointer')">🖱️ 마우스</button>
+        <button class="calc-toggle" id="calcToggleBtn" onclick="calcToggle()">🧮 계산기</button>
+      </div>
+      <div class="draw-wrap" id="pgDrawWrap">
+        <div class="scratch-area" style="height:140px;border-radius:10px;border-top:1px dashed #d8ddfb"></div>
+        <canvas id="pgInk" class="ink-canvas"></canvas>
+      </div>
+      <div class="calc-panel" id="calcPanel">
+        <div class="calc-display" id="calcDisplay">0</div>
+        <div class="calc-grid">
+          <button class="calc-btn clear" onclick="calcClear()">C</button>
+          <button class="calc-btn fn" onclick="calcBackspace()">⌫</button>
+          <button class="calc-btn fn" onclick="calcSquare()">x²</button>
+          <button class="calc-btn op" onclick="calcOp('÷')">÷</button>
+          <button class="calc-btn" onclick="calcDigit('7')">7</button>
+          <button class="calc-btn" onclick="calcDigit('8')">8</button>
+          <button class="calc-btn" onclick="calcDigit('9')">9</button>
+          <button class="calc-btn op" onclick="calcOp('×')">×</button>
+          <button class="calc-btn" onclick="calcDigit('4')">4</button>
+          <button class="calc-btn" onclick="calcDigit('5')">5</button>
+          <button class="calc-btn" onclick="calcDigit('6')">6</button>
+          <button class="calc-btn op" onclick="calcOp('-')">−</button>
+          <button class="calc-btn" onclick="calcDigit('1')">1</button>
+          <button class="calc-btn" onclick="calcDigit('2')">2</button>
+          <button class="calc-btn" onclick="calcDigit('3')">3</button>
+          <button class="calc-btn op" onclick="calcOp('+')">+</button>
+          <button class="calc-btn" onclick="calcDigit('0')" style="grid-column:span 2">0</button>
+          <button class="calc-btn" onclick="calcDigit('.')">.</button>
+          <button class="calc-btn eq" onclick="calcEquals()">=</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scLevelResult">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon" id="lrIcon">🎉</div>
+        <h2 id="lrTitle">통과했어요!</h2>
+        <div class="result-score" id="lrScore">3 / 4</div>
+        <p id="lrMsg" style="color:var(--ink2)"></p>
+        <button class="restart-btn" id="lrRetryBtn" onclick="lrRetry()" style="display:none">🔄 다시 도전하기</button>
+        <button class="primary-btn" id="lrNextBtn" onclick="lrNext()">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px">직각삼각형이 되는 조건에 대한 탐구와 정리, 문제풀이를 모두 마쳤어요.</p>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:320px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:46;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function normText(v){ return String(v||'').trim().replace(/\s+/g,''); }
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function sideLabelSVGAt(p1, p2, away, value, bulge, color, t){
+  t = (t===undefined) ? 0.5 : t;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-away[0], mid[1]-away[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return `<path class="sidecurve" style="stroke:${color}" d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="sidelabel" style="fill:${color}" x="${labelPt[0].toFixed(1)}" y="${(labelPt[1]+4).toFixed(1)}">${value}</text>`;
+}
+function rightAngleMarkHTML(vertex, u1, u2, size, color){
+  const p1=[vertex[0]+u1[0]*size, vertex[1]+u1[1]*size];
+  const p2=[p1[0]+u2[0]*size, p1[1]+u2[1]*size];
+  const p3=[vertex[0]+u2[0]*size, vertex[1]+u2[1]*size];
+  return `<polyline points="${ptsToStr([p1,p2,p3])}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
+}
+function arcPathHTML(center, u1, u2, r, color){
+  const a1=Math.atan2(u1[1],u1[0]), a2=Math.atan2(u2[1],u2[0]);
+  let diff=a2-a1;
+  while(diff>Math.PI) diff-=2*Math.PI;
+  while(diff<-Math.PI) diff+=2*Math.PI;
+  const x1=center[0]+r*Math.cos(a1), y1=center[1]+r*Math.sin(a1);
+  const x2=center[0]+r*Math.cos(a1+diff), y2=center[1]+r*Math.sin(a1+diff);
+  const sweep = diff>0 ? 1 : 0;
+  return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 0 ${sweep} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2"></path>`;
+}
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스)
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pointer' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key);
+  d.mode = mode;
+  document.getElementById(key+'PenBtn').classList.toggle('active', mode==='pen');
+  document.getElementById(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  document.getElementById(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = document.getElementById(key+'DrawWrap');
+  const canvas = document.getElementById(key+'Ink');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr));
+  canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){
+  const canvas = document.getElementById(key+'Ink');
+  const rect = canvas.getBoundingClientRect();
+  return { x: evt.clientX-rect.left, y: evt.clientY-rect.top };
+}
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = document.getElementById(key+'Ink');
+  const d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{
+    d.drawing=true; canvas.setPointerCapture(evt.pointerId);
+    const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y;
+  });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt);
+    const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke();
+    d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(evtName=>canvas.addEventListener(evtName, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{ if(document.querySelector(DRAW_SCR_MAP[key]).classList.contains('active')) drawSetupCanvas(key); });
+  drawSetMode(key, d.mode);
+}
+const DRAW_SCR_MAP = { act:'#scActivity', pg:'#scPractice' };
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  document.querySelectorAll(DRAW_SCR_MAP[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false;
+    document.getElementById(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector(DRAW_SCR_MAP[key]+' .color-swatch');
+    if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true;
+    document.querySelectorAll(DRAW_SCR_MAP[key]+' .color-swatch').forEach(b=>b.classList.remove('active'));
+    document.getElementById(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  draw(c.getContext('2d'), size);
+  return c.toDataURL('image/png');
+}
+function drawUpdateCursor(key){
+  const canvas = document.getElementById(key+'Ink');
+  if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2);
+      cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+      cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke();
+    }, size);
+    canvas.style.cursor = `url(${url}) ${size/2} ${size/2}, cell`;
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL((cx)=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = `url(${url}) 10 10, crosshair`;
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwErr').textContent='';
+  document.getElementById('adminPwModal').classList.add('show');
+  document.getElementById('adminPwInput').focus();
+}
+async function checkAdminPassword(){
+  const v = document.getElementById('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ document.getElementById('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(ok){
+    document.getElementById('adminPwModal').classList.remove('show');
+    document.getElementById('adminPanelBody').innerHTML =
+      '<div><strong>정리 빈칸</strong></div>'+
+      '<div>① =, 직각삼각형</div>'+
+      '<div>② &gt;(예각삼각형이 given)</div>'+
+      '<div>③ &lt;, 둔각삼각형</div>'+
+      '<div style="margin-top:8px"><strong>레벨1 풀(4/11, 3개 이상 정답)</strong></div>'+
+      POOL_L1.map(e=>`<div>${e[0]},${e[1]},${e[2]} → ${classifyTriangle(e[0],e[1],e[2])}</div>`).join('')+
+      '<div style="margin-top:8px"><strong>레벨2 풀(3문항/세트, 전부 정답)</strong></div>'+
+      POOL_L2.map(e=>`<div>${e.p},${e.q}: 예각=${e.acute}, 직각=${e.right}, 둔각=${e.obtuse}</div>`).join('')+
+      '<div class="btn-row" style="margin-top:8px">'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoScreen(\'activity\')">활동으로</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoScreen(\'summary\')">정리로</button>'+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGoScreen(\'practice\')">문제풀이로</button>'+
+      '</div>';
+    document.getElementById('adminPanel').style.display='block';
+  } else {
+    document.getElementById('adminPwErr').textContent='비밀번호가 틀렸어요.';
+  }
+}
+function adminGoScreen(name){
+  if(name==='activity'){ showScreen('scActivity'); drawBindOnce('act'); drawSetupCanvas('act'); actInit(); }
+  else if(name==='summary'){ showScreen('scSummary'); summaryInit(); }
+  else if(name==='practice'){ showScreen('scPractice'); drawBindOnce('pg'); drawSetupCanvas('pg'); startLevel(0); }
+}
+
+/* ════════════════════════════════
+   계산기 (이 프로젝트 첫 도입 — 문제풀이에서만 노출)
+════════════════════════════════ */
+const calcSt = { display:'0', prev:null, op:null, fresh:true };
+function calcToggle(){
+  document.getElementById('calcPanel').classList.toggle('show');
+  document.getElementById('calcToggleBtn').classList.toggle('active');
+}
+function calcRender(){ document.getElementById('calcDisplay').textContent = calcSt.display; }
+function calcDigit(d){
+  if(calcSt.fresh){ calcSt.display = (d==='.') ? '0.' : d; calcSt.fresh=false; }
+  else {
+    if(d==='.' && calcSt.display.includes('.')) return;
+    calcSt.display = (calcSt.display==='0' && d!=='.') ? d : calcSt.display+d;
+  }
+  calcRender();
+}
+function calcOp(op){
+  if(calcSt.op && !calcSt.fresh) calcEquals();
+  calcSt.prev = parseFloat(calcSt.display);
+  calcSt.op = op;
+  calcSt.fresh = true;
+}
+function calcEquals(){
+  if(calcSt.op===null || calcSt.prev===null) return;
+  const cur = parseFloat(calcSt.display);
+  let result = cur;
+  if(calcSt.op==='+') result = calcSt.prev+cur;
+  else if(calcSt.op==='-') result = calcSt.prev-cur;
+  else if(calcSt.op==='×') result = calcSt.prev*cur;
+  else if(calcSt.op==='÷') result = cur===0 ? NaN : calcSt.prev/cur;
+  calcSt.display = String(Math.round(result*1e8)/1e8);
+  calcSt.op = null; calcSt.prev = null; calcSt.fresh = true;
+  calcRender();
+}
+function calcSquare(){
+  const cur = parseFloat(calcSt.display)||0;
+  calcSt.display = String(Math.round(cur*cur*1e8)/1e8);
+  calcSt.fresh = true;
+  calcRender();
+}
+function calcClear(){ calcSt.display='0'; calcSt.prev=null; calcSt.op=null; calcSt.fresh=true; calcRender(); }
+function calcBackspace(){
+  if(calcSt.fresh) return;
+  calcSt.display = calcSt.display.length>1 ? calcSt.display.slice(0,-1) : '0';
+  if(calcSt.display==='-') calcSt.display='0';
+  calcRender();
+}
+
+/* ════════════════════════════════
+   공용: 삼각형 분류
+════════════════════════════════ */
+function classifyTriangle(a,b,c){
+  const s=[a,b,c].sort((x,y)=>x-y);
+  const lhs = s[0]*s[0]+s[1]*s[1], rhs = s[2]*s[2];
+  if(Math.abs(lhs-rhs)<1e-9) return '직각삼각형';
+  if(lhs>rhs) return '예각삼각형';
+  return '둔각삼각형';
+}
+
+/* ════════════════════════════════
+   문제 풀(레벨1·레벨2) — Node로 분류/임계값 검증 완료
+════════════════════════════════ */
+const POOL_L1 = [[3,7,8],[9,40,41],[13,16,27],[15,20,25],[4,5,6],[5,6,7],[6,8,10],[7,10,12],[5,12,13],[8,10,13],[10,11,12]];
+const POOL_L2 = [
+  {p:6,q:8,acute:9,right:10,obtuse:12},
+  {p:9,q:12,acute:13,right:15,obtuse:17},
+  {p:8,q:15,acute:16,right:17,obtuse:20},
+  {p:10,q:24,acute:25,right:26,obtuse:29},
+  {p:18,q:24,acute:27,right:30,obtuse:35},
+  {p:15,q:20,acute:22,right:25,obtuse:30}
+];
+
+/* ════════════════════════════════
+   활동: B,C 고정(BC=4), A는 C 중심 반지름 3(cm) 원 위에서만 드래그
+════════════════════════════════ */
+const ACT_UNIT = 28;
+const ACT_C = [180,180], ACT_B = [180-4*ACT_UNIT,180];
+const ACT_R = 3*ACT_UNIT;
+const ACT_THETA_MIN = -165*Math.PI/180, ACT_THETA_MAX = -15*Math.PI/180;
+let actTheta = -60*Math.PI/180;
+let actDragging = false;
+
+function actCurrentA(){ return [ACT_C[0]+ACT_R*Math.cos(actTheta), ACT_C[1]+ACT_R*Math.sin(actTheta)]; }
+function actAngleCDeg(){ return actTheta*180/Math.PI + 180; }
+function actAB2cm(){ const A=actCurrentA(); const abCm = dist(A,ACT_B)/ACT_UNIT; return abCm*abCm; }
+function sideLabelPts(p1,p2,away,bulge,t){
+  t = (t===undefined)?0.5:t;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-away[0], mid[1]-away[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+13), mid[1]+dy*(bulge+13)];
+  return {ctrl,labelPt};
+}
+function actRenderSVG(){
+  const A = actCurrentA();
+  const cen = bboxCenterOf([ACT_B,ACT_C,A]);
+  const bcLP = sideLabelPts(ACT_B,ACT_C,A,12);
+  const aDir = unitVec(cen,A);
+  const aLabelPos = [A[0]+aDir[0]*16, A[1]+aDir[1]*16];
+  const html = `
+    <circle cx="${ACT_C[0]}" cy="${ACT_C[1]}" r="${ACT_R}" fill="none" stroke="#c7cdf5" stroke-width="1.4" stroke-dasharray="3 4"></circle>
+    <polygon id="actTriPoly" points="${ptsToStr([ACT_B,ACT_C,A])}" fill="#4f46e5" fill-opacity="0.06" stroke="#4f46e5" stroke-width="2.2"></polygon>
+    <polyline id="actRtMark" fill="none" stroke="#4a4a6a" stroke-width="1.6"></polyline>
+    <path class="sidecurve" style="stroke:#1a1a2e" d="M ${ACT_B[0]} ${ACT_B[1]} Q ${bcLP.ctrl[0].toFixed(1)} ${bcLP.ctrl[1].toFixed(1)} ${ACT_C[0]} ${ACT_C[1]}"></path>
+    <text class="sidelabel" style="fill:#1a1a2e" x="${bcLP.labelPt[0].toFixed(1)}" y="${(bcLP.labelPt[1]+4).toFixed(1)}">4</text>
+    <path id="actCurveCA" class="sidecurve" style="stroke:#1a1a2e" d=""></path>
+    <text id="actLabelCA" class="sidelabel" style="fill:#1a1a2e" x="0" y="0">3</text>
+    <path id="actCurveAB" class="sidecurve" style="stroke:#e05a20" d=""></path>
+    <text id="actLabelAB" class="sidelabel" style="fill:#e05a20" x="0" y="0">?</text>
+    <text class="vlabel" x="${(ACT_B[0]-16).toFixed(1)}" y="${(ACT_B[1]+5).toFixed(1)}" fill="#1a1a2e">B</text>
+    <text class="vlabel" x="${(ACT_C[0]+16).toFixed(1)}" y="${(ACT_C[1]+5).toFixed(1)}" fill="#1a1a2e">C</text>
+    <text id="actLabelAVert" class="vlabel" x="${aLabelPos[0].toFixed(1)}" y="${(aLabelPos[1]+5).toFixed(1)}" fill="#1a1a2e">A</text>
+    <circle id="actHandle" cx="${A[0].toFixed(1)}" cy="${A[1].toFixed(1)}" r="13" fill="#fff" stroke="#4f46e5" stroke-width="3" style="cursor:grab;touch-action:none"></circle>
+  `;
+  document.getElementById('actSvg').innerHTML = html;
+  actBindDrag();
+  actUpdateSVG();
+}
+/* 드래그 도중엔 innerHTML을 절대 다시 쓰지 않는다(핸들이 setPointerCapture 중이라 깨짐) — 속성만 갱신 */
+function actUpdateSVG(){
+  const A = actCurrentA();
+  const cen = bboxCenterOf([ACT_B,ACT_C,A]);
+  document.getElementById('actTriPoly').setAttribute('points', ptsToStr([ACT_B,ACT_C,A]));
+  // 직각 표시는 ∠C가 실제로(허용오차 내에서) 90°일 때만 보여준다 — 각도와 무관하게 항상 그리면
+  // u1,u2가 수직이 아닌데도 코너 모양이 비슷해 보여서 "항상 직각처럼" 보이는 착시가 생김
+  const u1=unitVec(ACT_C,ACT_B), u2=unitVec(ACT_C,A), rsize=13;
+  if(Math.abs(actAngleCDeg()-90)<=2){
+    const rp1=[ACT_C[0]+u1[0]*rsize, ACT_C[1]+u1[1]*rsize];
+    const rp2=[rp1[0]+u2[0]*rsize, rp1[1]+u2[1]*rsize];
+    const rp3=[ACT_C[0]+u2[0]*rsize, ACT_C[1]+u2[1]*rsize];
+    document.getElementById('actRtMark').setAttribute('points', ptsToStr([rp1,rp2,rp3]));
+  } else {
+    document.getElementById('actRtMark').setAttribute('points', '');
+  }
+  const caLP = sideLabelPts(ACT_C,A,ACT_B,12);
+  document.getElementById('actCurveCA').setAttribute('d', `M ${ACT_C[0]} ${ACT_C[1]} Q ${caLP.ctrl[0].toFixed(1)} ${caLP.ctrl[1].toFixed(1)} ${A[0].toFixed(1)} ${A[1].toFixed(1)}`);
+  document.getElementById('actLabelCA').setAttribute('x', caLP.labelPt[0].toFixed(1));
+  document.getElementById('actLabelCA').setAttribute('y', (caLP.labelPt[1]+4).toFixed(1));
+  const abLP = sideLabelPts(A,ACT_B,ACT_C,12);
+  document.getElementById('actCurveAB').setAttribute('d', `M ${A[0].toFixed(1)} ${A[1].toFixed(1)} Q ${abLP.ctrl[0].toFixed(1)} ${abLP.ctrl[1].toFixed(1)} ${ACT_B[0]} ${ACT_B[1]}`);
+  document.getElementById('actLabelAB').setAttribute('x', abLP.labelPt[0].toFixed(1));
+  document.getElementById('actLabelAB').setAttribute('y', (abLP.labelPt[1]+4).toFixed(1));
+  const aDir = unitVec(cen,A);
+  document.getElementById('actLabelAVert').setAttribute('x', (A[0]+aDir[0]*16).toFixed(1));
+  document.getElementById('actLabelAVert').setAttribute('y', (A[1]+aDir[1]*16+5).toFixed(1));
+  document.getElementById('actHandle').setAttribute('cx', A[0].toFixed(1));
+  document.getElementById('actHandle').setAttribute('cy', A[1].toFixed(1));
+  actUpdateReadout();
+}
+function actUpdateReadout(){
+  document.getElementById('rbAB2val').textContent = actAB2cm().toFixed(1);
+  document.getElementById('rbAngle').textContent = '∠C ≈ ' + actAngleCDeg().toFixed(1) + '°';
+}
+function actBindDrag(){
+  const handle = document.getElementById('actHandle');
+  handle.addEventListener('pointerdown', evt=>{
+    evt.preventDefault();
+    actDragging = true;
+    try{ handle.setPointerCapture(evt.pointerId); }catch(e){}
+  });
+  handle.addEventListener('pointermove', evt=>{
+    if(!actDragging) return;
+    evt.preventDefault();
+    const svg = document.getElementById('actSvg');
+    const pt = svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    let th = Math.atan2(loc.y-ACT_C[1], loc.x-ACT_C[0]);
+    th = Math.max(ACT_THETA_MIN, Math.min(ACT_THETA_MAX, th));
+    // 자석 효과: 90°에 가까워지면(±3°) 정확히 90.0°로 스냅 — 안내는 "∠C=90°"라는데 화면엔 90.4°로 보이는 불일치 방지
+    if(Math.abs((th*180/Math.PI+180)-90) <= 3) th = -Math.PI/2;
+    actTheta = th;
+    actUpdateSVG();
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(evtName=>handle.addEventListener(evtName, ()=>{ actDragging=false; }));
+}
+function actPanel(html){ document.getElementById('actPanel').innerHTML = html; }
+function appendActPanel(html){ document.getElementById('actPanel').insertAdjacentHTML('beforeend', html); }
+function actInit(){
+  actTheta = -60*Math.PI/180;
+  actRenderSVG();
+  actPanel(`
+    <div class="panel-title"><span class="step-badge">1</span> 자유롭게 움직여보기</div>
+    <p>점 A를 움직이면 <span class="seg">CA</span>=3은 항상 유지돼요(원 위에서만 움직여요). <span class="seg">BC</span>=4도 고정이에요. 자유롭게 움직이면서 ∠C와 <span class="seg">AB</span>²이 어떻게 함께 바뀌는지 살펴보세요.</p>
+    <div class="btn-row"><button class="btn btn-primary" id="actFreeNextBtn" onclick="actStepRight()">다음: ∠C=90°로 만들어보기 →</button></div>
+  `);
+}
+function actStepRight(){
+  document.getElementById('actFreeNextBtn').disabled=true;
+  appendActPanel(`
+    <div class="panel-title" style="margin-top:14px"><span class="step-badge">2</span> ∠C = 90°로 만들어보기</div>
+    <p class="key-q">점 A를 움직여서 ∠C가 정확히 90°가 되도록 만들어보세요.</p>
+    <div class="btn-row"><button class="btn btn-check" id="actRightCheckBtn" onclick="actCheckRight()">확인</button></div>
+    <div class="feedback" id="actRightFb"></div>
+  `);
+}
+function actCheckRight(){
+  const ang = actAngleCDeg();
+  const fb = document.getElementById('actRightFb');
+  if(Math.abs(ang-90)<=2){
+    document.getElementById('actRightCheckBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='맞아요! ∠C=90°예요.';
+    appendActPanel(actRelHTML('Right'));
+  } else {
+    fb.className='feedback error'; fb.textContent = ang<90 ? '아직 90°보다 작아요. 좀 더 벌려보세요.' : '90°를 넘었어요. 좀 더 좁혀보세요.';
+  }
+}
+function actStepAcute(){
+  appendActPanel(`
+    <div class="panel-title" style="margin-top:14px"><span class="step-badge">3</span> ∠C를 90°보다 작게(예각) 만들어보기</div>
+    <p class="key-q">점 A를 움직여서 ∠C가 90°보다 뚜렷하게 작아지도록 만들어보세요.</p>
+    <div class="btn-row"><button class="btn btn-check" id="actAcuteCheckBtn" onclick="actCheckAcute()">확인</button></div>
+    <div class="feedback" id="actAcuteFb"></div>
+  `);
+}
+function actCheckAcute(){
+  const ang = actAngleCDeg();
+  const fb = document.getElementById('actAcuteFb');
+  if(ang<=80){
+    document.getElementById('actAcuteCheckBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='좋아요! ∠C가 예각이 됐어요.';
+    appendActPanel(actRelHTML('Acute'));
+  } else {
+    fb.className='feedback error'; fb.textContent='아직 충분히 작지 않아요. ∠C를 더 줄여보세요.';
+  }
+}
+function actStepObtuse(){
+  appendActPanel(`
+    <div class="panel-title" style="margin-top:14px"><span class="step-badge">4</span> ∠C를 90°보다 크게(둔각) 만들어보기</div>
+    <p class="key-q">점 A를 움직여서 ∠C가 90°보다 뚜렷하게 커지도록 만들어보세요.</p>
+    <div class="btn-row"><button class="btn btn-check" id="actObtuseCheckBtn" onclick="actCheckObtuse()">확인</button></div>
+    <div class="feedback" id="actObtuseFb"></div>
+  `);
+}
+function actCheckObtuse(){
+  const ang = actAngleCDeg();
+  const fb = document.getElementById('actObtuseFb');
+  if(ang>=100){
+    document.getElementById('actObtuseCheckBtn').disabled=true;
+    fb.className='feedback success'; fb.textContent='좋아요! ∠C가 둔각이 됐어요.';
+    appendActPanel(actRelHTML('Obtuse'));
+  } else {
+    fb.className='feedback error'; fb.textContent='아직 충분히 크지 않아요. ∠C를 더 늘려보세요.';
+  }
+}
+function actRelHTML(idp){
+  return `
+    <div class="proof-block" style="text-align:center">이때 <span class="seg">BC</span>²+<span class="seg">CA</span>²(=25)과 <span class="seg">AB</span>²을 비교하면?</div>
+    <div class="btn-row" id="act${idp}RelRow">
+      <button class="choice-btn" onclick="actPickRel('${idp}','>',this)"><span class="seg">BC</span>²+<span class="seg">CA</span>² &gt; <span class="seg">AB</span>²</button>
+      <button class="choice-btn" onclick="actPickRel('${idp}','=',this)"><span class="seg">BC</span>²+<span class="seg">CA</span>² = <span class="seg">AB</span>²</button>
+      <button class="choice-btn" onclick="actPickRel('${idp}','<',this)"><span class="seg">BC</span>²+<span class="seg">CA</span>² &lt; <span class="seg">AB</span>²</button>
+    </div>
+    <div class="feedback" id="act${idp}RelFb"></div>
+  `;
+}
+const ACT_STAGE_CORRECT = {Right:'=', Acute:'>', Obtuse:'<'};
+const ACT_STAGE_TYPE = {Right:'직각삼각형', Acute:'예각삼각형', Obtuse:'둔각삼각형'};
+function actPickRel(idp, rel, btn){
+  document.querySelectorAll('#act'+idp+'RelRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('act'+idp+'RelFb');
+  if(rel===ACT_STAGE_CORRECT[idp]){
+    document.querySelectorAll('#act'+idp+'RelRow .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    appendActPanel(actTypeHTML(idp, rel));
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요.';
+  }
+}
+function actTypeHTML(idp, relSymbol){
+  const relDisp = relSymbol==='>' ? '&gt;' : relSymbol==='<' ? '&lt;' : '=';
+  return `
+    <div class="proof-block" style="text-align:center">그럼 결론적으로, <span class="seg">BC</span>²+<span class="seg">CA</span>² ${relDisp} <span class="seg">AB</span>² 이면 무슨 삼각형일까요?</div>
+    <div class="btn-row" id="act${idp}TypeRow">
+      <button class="choice-btn" onclick="actPickType('${idp}','예각삼각형',this)">예각삼각형</button>
+      <button class="choice-btn" onclick="actPickType('${idp}','직각삼각형',this)">직각삼각형</button>
+      <button class="choice-btn" onclick="actPickType('${idp}','둔각삼각형',this)">둔각삼각형</button>
+    </div>
+    <div class="feedback" id="act${idp}TypeFb"></div>
+  `;
+}
+function actPickType(idp, v, btn){
+  document.querySelectorAll('#act'+idp+'TypeRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('act'+idp+'TypeFb');
+  if(v===ACT_STAGE_TYPE[idp]){
+    document.querySelectorAll('#act'+idp+'TypeRow .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    if(idp==='Right') actStepAcute();
+    else if(idp==='Acute') actStepObtuse();
+    else actStepConclude();
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요.';
+  }
+}
+function actStepConclude(){
+  appendActPanel(`
+    <div class="summary-box">세 경우 모두 확인했어요!<br>이 관계를 "정리"에서 일반적인 식으로 정리해볼까요?</div>
+    <div class="btn-row" style="margin-top:10px"><button class="btn btn-primary" onclick="goToSummary()">정리로 넘어가기 →</button></div>
+  `);
+}
+
+/* ════════════════════════════════
+   정리: 빈칸뚫기(기호·삼각형 종류 모두 버튼 선택)
+════════════════════════════════ */
+function goToSummary(){ showScreen('scSummary'); summaryInit(); }
+function summaryInit(){
+  document.getElementById('summaryArea').innerHTML = `
+    <div class="panel-title"><span class="step-badge">📘</span> 정리</div>
+    <p>삼각형 ABC의 세 변의 길이가 각각 a, b, c이고, 이 중 c가 가장 긴 변이라고 하자.</p>
+    <div class="proof-block" style="text-align:left">
+      ① a²+b² = c²이면 ∠C=90°인 (<span id="sumBlank1Disp" style="color:var(--indigo);font-weight:800">　</span>)이다.<br><br>
+      ② a²+b² (<span id="sumBlank2Disp" style="color:var(--indigo);font-weight:800">　</span>) c²이면 삼각형 ABC는 예각삼각형이다.<br><br>
+      ③ a²+b² (<span id="sumBlank3aDisp" style="color:var(--indigo);font-weight:800">　</span>) c²이면 삼각형 ABC는 (<span id="sumBlank3bDisp" style="color:var(--indigo);font-weight:800">　</span>)이다.
+    </div>
+    <div id="sumQ1">
+      <p class="key-q">① 빈칸에 들어갈 삼각형의 종류는 무엇일까요?</p>
+      <div class="btn-row" id="sumQ1Row">
+        <button class="choice-btn" onclick="sumPick1('예각삼각형',this)">예각삼각형</button>
+        <button class="choice-btn" onclick="sumPick1('직각삼각형',this)">직각삼각형</button>
+        <button class="choice-btn" onclick="sumPick1('둔각삼각형',this)">둔각삼각형</button>
+      </div>
+      <div class="feedback" id="sumQ1Fb"></div>
+    </div>
+    <div id="sumQ2Area"></div>
+    <div id="sumQ3Area"></div>
+    <div class="btn-row" id="sumNextRow" style="display:none;margin-top:14px"><button class="btn btn-primary" onclick="goToPractice()">문제풀이로 넘어가기 →</button></div>
+  `;
+  sum3St.sym=false; sum3St.type=false;
+}
+function sumPick1(v, btn){
+  document.querySelectorAll('#sumQ1Row .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('sumQ1Fb');
+  if(v==='직각삼각형'){
+    document.getElementById('sumBlank1Disp').textContent = '직각삼각형';
+    document.querySelectorAll('#sumQ1Row .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    document.getElementById('sumQ2Area').innerHTML = `
+      <p class="key-q" style="margin-top:14px">② 빈칸에 들어갈 기호는 무엇일까요?</p>
+      <div class="btn-row" id="sumQ2Row">
+        <button class="choice-btn" onclick="sumPick2('>',this)">&gt;</button>
+        <button class="choice-btn" onclick="sumPick2('=',this)">=</button>
+        <button class="choice-btn" onclick="sumPick2('<',this)">&lt;</button>
+      </div>
+      <div class="feedback" id="sumQ2Fb"></div>
+    `;
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요.';
+  }
+}
+function sumPick2(v, btn){
+  document.querySelectorAll('#sumQ2Row .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('sumQ2Fb');
+  if(v==='>'){
+    document.getElementById('sumBlank2Disp').textContent = '>';
+    document.querySelectorAll('#sumQ2Row .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='맞아요!';
+    document.getElementById('sumQ3Area').innerHTML = `
+      <p class="key-q" style="margin-top:14px">③ 빈칸에 들어갈 기호와 삼각형의 종류는 무엇일까요?</p>
+      <div class="btn-row" id="sumQ3SymRow">
+        <button class="choice-btn" onclick="sumPick3Sym('>',this)">&gt;</button>
+        <button class="choice-btn" onclick="sumPick3Sym('=',this)">=</button>
+        <button class="choice-btn" onclick="sumPick3Sym('<',this)">&lt;</button>
+      </div>
+      <div class="btn-row" id="sumQ3TypeRow">
+        <button class="choice-btn" onclick="sumPick3Type('예각삼각형',this)">예각삼각형</button>
+        <button class="choice-btn" onclick="sumPick3Type('직각삼각형',this)">직각삼각형</button>
+        <button class="choice-btn" onclick="sumPick3Type('둔각삼각형',this)">둔각삼각형</button>
+      </div>
+      <div class="feedback" id="sumQ3Fb"></div>
+    `;
+  } else {
+    fb.className='feedback error'; fb.textContent='다시 생각해보세요.';
+  }
+}
+const sum3St = { sym:false, type:false };
+function sumPick3Sym(v, btn){
+  document.querySelectorAll('#sumQ3SymRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(v==='<'){
+    document.getElementById('sumBlank3aDisp').textContent='<';
+    document.querySelectorAll('#sumQ3SymRow .choice-btn').forEach(b=>b.disabled=true);
+    sum3St.sym = true;
+    sumCheck3Done();
+  } else {
+    document.getElementById('sumQ3Fb').className='feedback error';
+    document.getElementById('sumQ3Fb').textContent='기호를 다시 생각해보세요.';
+  }
+}
+function sumPick3Type(v, btn){
+  document.querySelectorAll('#sumQ3TypeRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(v==='둔각삼각형'){
+    document.getElementById('sumBlank3bDisp').textContent='둔각삼각형';
+    document.querySelectorAll('#sumQ3TypeRow .choice-btn').forEach(b=>b.disabled=true);
+    sum3St.type = true;
+    sumCheck3Done();
+  } else {
+    document.getElementById('sumQ3Fb').className='feedback error';
+    document.getElementById('sumQ3Fb').textContent='삼각형의 종류를 다시 생각해보세요.';
+  }
+}
+function sumCheck3Done(){
+  if(sum3St.sym && sum3St.type){
+    document.getElementById('sumQ3Fb').className='feedback success';
+    document.getElementById('sumQ3Fb').textContent='맞아요! 정리를 완성했어요.';
+    document.getElementById('sumNextRow').style.display='';
+  }
+}
+
+/* ════════════════════════════════
+   문제풀이: 레벨1(숫자 랜덤, 4문제 중 3개+) → 레벨2(조건 변형, 3문제 전부)
+════════════════════════════════ */
+const LEVELS = [ { key:'1', label:'레벨1', passNeeded:3 }, { key:'2', label:'레벨2', passNeeded:3 } ];
+const pst = { levelIdx:0, idx:0, correct:0, order:[], l2pair:null, passedLevels:{} };
+function goToPractice(){
+  showScreen('scPractice');
+  drawBindOnce('pg'); drawSetupCanvas('pg');
+  startLevel(0);
+}
+function updateLevelTabs(){
+  document.getElementById('levelTabs').innerHTML = LEVELS.map((lv,i)=>{
+    let cls='level-tab';
+    if(i===pst.levelIdx) cls+=' active';
+    else if(pst.passedLevels[i]) cls+=' done';
+    return `<div class="${cls}">${lv.label}</div>`;
+  }).join('');
+}
+function startLevel(levelIdx){
+  pst.levelIdx = levelIdx; pst.idx=0; pst.correct=0;
+  if(levelIdx===0){
+    pst.order = shuffle(POOL_L1).slice(0,4);
+  } else {
+    pst.l2pair = POOL_L2[Math.floor(Math.random()*POOL_L2.length)];
+    pst.order = shuffle(['acute','right','obtuse']);
+  }
+  showScreen('scPractice');
+  updateLevelTabs();
+  renderPQuestion();
+}
+function renderPQuestion(){
+  const lv = LEVELS[pst.levelIdx];
+  document.getElementById('pgProgress').textContent = `${lv.label} · ${pst.idx+1} / ${pst.order.length}`;
+  if(pst.levelIdx===0){
+    const tri = pst.order[pst.idx];
+    document.getElementById('pgArea').innerHTML = `
+      <div class="qtext" style="text-align:center;font-weight:700;font-size:15px;margin-bottom:14px">세 변의 길이가 각각 ${tri[0]}cm, ${tri[1]}cm, ${tri[2]}cm인 삼각형은 어떤 삼각형일까요?</div>
+      <div class="btn-row" id="pgChoiceRow">
+        <button class="choice-btn" onclick="pgPickL1('예각삼각형',this)">예각삼각형</button>
+        <button class="choice-btn" onclick="pgPickL1('직각삼각형',this)">직각삼각형</button>
+        <button class="choice-btn" onclick="pgPickL1('둔각삼각형',this)">둔각삼각형</button>
+      </div>
+      <div class="feedback" id="pgFb"></div>
+    `;
+  } else {
+    const type = pst.order[pst.idx];
+    const pair = pst.l2pair;
+    const typeLabel = type==='acute'?'예각삼각형':type==='right'?'직각삼각형':'둔각삼각형';
+    const correctX = pair[type];
+    const options = shuffle([pair.acute, pair.right, pair.obtuse]);
+    document.getElementById('pgArea').innerHTML = `
+      <div class="qtext" style="text-align:center;font-weight:700;font-size:15px;margin-bottom:6px">두 변의 길이가 각각 ${pair.p}cm, ${pair.q}cm인 삼각형이 있습니다.</div>
+      <div class="qtext" style="text-align:center;font-weight:700;font-size:15px;margin-bottom:14px">이 삼각형이 <span style="color:var(--indigo)">${typeLabel}</span>이 되기 위한 나머지 한 변 x의 값은?</div>
+      <div class="btn-row" id="pgChoiceRow">
+        ${options.map(o=>`<button class="choice-btn" onclick="pgPickL2(${o},${correctX},this)">x = ${o}</button>`).join('')}
+      </div>
+      <div class="feedback" id="pgFb"></div>
+    `;
+  }
+}
+function pgPickL1(v, btn){
+  document.querySelectorAll('#pgChoiceRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const tri = pst.order[pst.idx];
+  const correct = classifyTriangle(tri[0],tri[1],tri[2]);
+  const fb = document.getElementById('pgFb');
+  if(v===correct){
+    pst.correct++;
+    document.querySelectorAll('#pgChoiceRow .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='✅ 정답이에요!';
+    setTimeout(pgNext, 1200);
+  } else {
+    fb.className='feedback error'; fb.textContent='❌ 틀렸어요. 다시 확인해서 골라보세요.';
+  }
+}
+function pgPickL2(v, correctX, btn){
+  document.querySelectorAll('#pgChoiceRow .choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fb = document.getElementById('pgFb');
+  if(v===correctX){
+    pst.correct++;
+    document.querySelectorAll('#pgChoiceRow .choice-btn').forEach(b=>b.disabled=true);
+    fb.className='feedback success'; fb.textContent='✅ 정답이에요!';
+    setTimeout(pgNext, 1200);
+  } else {
+    fb.className='feedback error'; fb.textContent='❌ 틀렸어요. 다시 확인해서 골라보세요.';
+  }
+}
+function pgNext(){
+  pst.idx++;
+  if(pst.idx < pst.order.length) renderPQuestion();
+  else levelFinish();
+}
+function levelFinish(){
+  const lv = LEVELS[pst.levelIdx];
+  const pass = pst.correct >= lv.passNeeded;
+  if(pass) pst.passedLevels[pst.levelIdx] = true;
+  updateLevelTabs();
+  showScreen('scLevelResult');
+  document.getElementById('lrIcon').textContent = pass?'🎉':'💪';
+  document.getElementById('lrTitle').textContent = pass ? `${lv.label} 통과!` : `${lv.label} 아쉬워요`;
+  document.getElementById('lrScore').textContent = `${pst.correct} / ${pst.order.length}`;
+  document.getElementById('lrMsg').textContent = pass ? '잘했어요! 다음으로 넘어가볼까요?' : `${lv.passNeeded}개 이상 맞혀야 통과해요. 다시 도전해볼까요?`;
+  document.getElementById('lrRetryBtn').style.display = pass ? 'none' : '';
+  document.getElementById('lrNextBtn').style.display = pass ? '' : 'none';
+  document.getElementById('lrNextBtn').textContent = (pst.levelIdx < LEVELS.length-1) ? '다음 레벨 →' : '결과 보기 →';
+}
+function lrRetry(){ startLevel(pst.levelIdx); }
+function lrNext(){
+  if(pst.levelIdx < LEVELS.length-1){ startLevel(pst.levelIdx+1); }
+  else {
+    showScreen('scDone');
+    if(window._reportHubComplete) window._reportHubComplete();
+  }
+}
+
+drawBindOnce('act');
+drawSetupCanvas('act');
+actInit();
+</script>
+</body>
+</html>

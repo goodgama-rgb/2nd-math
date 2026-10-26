@@ -413,6 +413,7 @@ window.handleInstallClick = async function(){
 const ITEM_REGISTRY = {
   "pythagorean-theorem": { type:"탐구", meta:"증명 활동", file:"피타고라스_정리.html", defaultTitle:"피타고라스 정리 증명 탐구" },
   "pythagorean-theorem-assessment": { type:"문제", meta:"형성평가", file:"피타고라스_정리_형성평가.html", defaultTitle:"피타고라스 정리 형성평가" },
+  "right-triangle-condition": { type:"탐구", meta:"탐구 활동", file:"직각삼각형이_되는_조건.html", defaultTitle:"직각삼각형이 되는 조건 탐구" },
   "iso-proof": { type:"탐구", meta:"증명 활동", file:"이등변삼각형_성질_증명_탐구.html", defaultTitle:"성질 증명 탐구" },
   "iso-144-1": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_quiz(144-1).html", defaultTitle:"문제 1" },
   "iso-144-2": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_bisector_quiz(144-2).html", defaultTitle:"문제 2" },
@@ -563,6 +564,9 @@ const DEFAULT_STRUCTURE = { units: [
       { name:"피타고라스 정리", items:[
         { id:"pythagorean-theorem", title:"피타고라스 정리 증명 탐구" },
         { id:"pythagorean-theorem-assessment", title:"피타고라스 정리 형성평가" }
+      ] },
+      { name:"직각삼각형이 되는 조건", items:[
+        { id:"right-triangle-condition", title:"직각삼각형이 되는 조건 탐구" }
       ] }
   ] },
   { id:"probability", name:"경우의 수와 확률", ready:false, subunits:[
