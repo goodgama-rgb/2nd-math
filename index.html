@@ -1241,6 +1241,30 @@ let editStructure = null; // 편집 중인 임시 복사본(저장 전까지 Fir
 let structDirty = false;
 let dragPayload = null; // { kind:'unit', id } | { kind:'subunit', eid } | { kind:'item', id }
 
+// 드래그 중 화면 가장자리에 가까이 가면 자동으로 스크롤 — 끌고 있는 동안은 손을 뗄 수 없어서
+// 일반 스크롤(휠/스크롤바)이 전혀 안 먹히는 문제 대응(맨 아래 단원까지 멀 때 배치 불가능했던 버그)
+let autoScrollDir = 0; // -1 위로, 0 멈춤, 1 아래로
+let autoScrollTimer = null;
+function autoScrollStep(){ if(autoScrollDir !== 0) window.scrollBy(0, autoScrollDir * 22); }
+function stopAutoScroll(){
+  autoScrollDir = 0;
+  if(autoScrollTimer){ clearInterval(autoScrollTimer); autoScrollTimer = null; }
+}
+function initStructureAutoScroll(){
+  const EDGE = 90;
+  document.addEventListener('dragover', (e)=>{
+    if(!dragPayload) return;
+    const y = e.clientY;
+    if(y < EDGE) autoScrollDir = -1;
+    else if(y > window.innerHeight - EDGE) autoScrollDir = 1;
+    else autoScrollDir = 0;
+    if(autoScrollDir !== 0 && !autoScrollTimer){ autoScrollTimer = setInterval(autoScrollStep, 16); }
+    else if(autoScrollDir === 0 && autoScrollTimer){ clearInterval(autoScrollTimer); autoScrollTimer = null; }
+  });
+  document.addEventListener('dragend', ()=>{ dragPayload = null; stopAutoScroll(); });
+  document.addEventListener('drop', stopAutoScroll);
+}
+
 function markStructDirty(){
   structDirty = true;
   updateStructDirtyFlag();
@@ -1587,6 +1611,8 @@ function initStructureEditorContainers(){
   document.getElementById('structAddUnitBtn').addEventListener('click', addUnitPrompt);
   document.getElementById('structSaveBtn').addEventListener('click', saveStructure);
   document.getElementById('structRevertBtn').addEventListener('click', revertStructureEditsConfirm);
+
+  initStructureAutoScroll();
 }
 
 function saveStructure(){
