@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사건 A 또는 사건 B</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --colA:#2563eb;--colA-l:#dbeafe;--colB:#ea580c;--colB-l:#ffedd5;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+/* 강조 3단계: ① 핵심 질문(.key-q, 한 블록에 1개) ② 핵심어(.kw, 문단에 1~2개) ③ 보충(.sub) — 밑줄은 핵심 질문 안의 .em에만 */
+.key-q{display:block;font-size:17px;font-weight:800;line-height:1.7;color:var(--ink);background:#fffbeb;border:1.5px solid #fcd34d;border-left:6px solid #f59e0b;border-radius:10px;padding:9px 14px 10px;margin:10px 0}
+.key-q::before{content:'❓ 질문';display:block;font-size:11.5px;font-weight:800;color:#b45309;margin-bottom:1px}
+.key-q.task::before{content:'✏️ 해 보기'}
+.key-q .em{text-decoration:underline;text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
+.kw{font-weight:800;color:#be123c}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.reread{animation:rereadFlash 1.2s ease-out 2}
+@keyframes rereadFlash{0%{box-shadow:0 0 0 5px #f59e0b;background-color:#fef3c7}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+.ans-tag{font-size:12px;font-weight:800;color:#fff;background:var(--red);border-radius:8px;padding:2px 8px;line-height:1.6}
+.variant-banner{background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px}
+.it{font-style:italic;font-family:'Times New Roman',serif;font-weight:700;font-size:1.08em}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 450px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+  .split-left.board-sticky{position:sticky;top:0;z-index:5;max-height:50vh;overflow-y:auto}
+}
+
+.stepper{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.stepper .st{padding:5px 11px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12px;font-weight:700;color:var(--ink3)}
+.stepper .st.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.stepper .st.done{background:var(--green-l);color:#14532d;border-color:var(--green)}
+
+/* 왼쪽: 실험 + 두 색 붓 + 결과 보드 */
+.exp-head{display:flex;gap:8px;align-items:flex-start;font-size:14px;font-weight:700;line-height:1.6;margin-bottom:10px}
+.exp-badge{flex-shrink:0;background:var(--ink);color:#fff;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:12px;margin-top:2px}
+.brush-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+.brush{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:2px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:800;font-family:inherit;color:var(--ink2)}
+.brush .sw{width:16px;height:16px;border-radius:4px;display:inline-block}
+.brush.A .sw{background:var(--colA)}
+.brush.B .sw{background:var(--colB)}
+.brush.A.active{border-color:var(--colA);background:var(--colA-l);color:var(--colA);box-shadow:0 0 0 2px var(--colA)}
+.brush.B.active{border-color:var(--colB);background:var(--colB-l);color:var(--colB);box-shadow:0 0 0 2px var(--colB)}
+.board{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:14px 10px;background:#fbfcff;border:1.5px dashed #d8ddfb;border-radius:12px}
+.board.flash{animation:boardFlash 1s ease-out}
+@keyframes boardFlash{0%{box-shadow:0 0 0 5px #f59e0b;border-color:#f59e0b}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+.chip{border:2px solid #d8ddfb;border-radius:12px;background:#fff;padding:7px 8px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink2)}
+.chip.pA{border-color:var(--colA);background:var(--colA-l);color:var(--colA);box-shadow:0 0 0 2px var(--colA)}
+.chip.pB{border-color:var(--colB);background:var(--colB-l);color:var(--colB);box-shadow:0 0 0 2px var(--colB)}
+.chip.pAB{border-color:#7c3aed;background:linear-gradient(135deg,var(--colA-l) 50%,var(--colB-l) 50%);color:#5b21b6;box-shadow:0 0 0 2px #7c3aed}
+.chip.static,.gcell.static{cursor:default}
+.group-board{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.group{display:flex;flex-direction:column;align-items:center;gap:8px}
+.group .g-title{font-size:12px;font-weight:800;padding:2px 14px;border-radius:10px;color:#fff;background:#8b6b4a}
+.group .g-items{display:flex;gap:8px}
+.board-tip{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-top:8px}
+.legend{margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700}
+.legend .lg{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px}
+.legend .lg.A{background:var(--colA-l);color:var(--colA)}
+.legend .lg.B{background:var(--colB-l);color:var(--colB)}
+/* 순서쌍 칸 보드 */
+.grid-wrap{overflow-x:auto}
+.grid{border-collapse:separate;border-spacing:3px;margin:0 auto}
+.grid th{font-size:11px;font-weight:800;color:var(--ink2);padding:0}
+.grid th .hd{display:flex;justify-content:center;align-items:center}
+.gcell{width:50px;height:34px;border:1.5px solid #d8ddfb;border-radius:7px;background:#fff;font-size:11.5px;font-weight:700;color:var(--ink2);cursor:pointer;font-family:inherit;padding:0}
+.gcell.pA{border-color:var(--colA);background:var(--colA-l);color:var(--colA);box-shadow:0 0 0 1.5px var(--colA)}
+.gcell.pB{border-color:var(--colB);background:var(--colB-l);color:var(--colB);box-shadow:0 0 0 1.5px var(--colB)}
+.gcell.pAB{border-color:#7c3aed;background:linear-gradient(135deg,var(--colA-l) 50%,var(--colB-l) 50%);color:#5b21b6}
+.gcell.hl{outline:3px solid #f59e0b;outline-offset:1px}
+.axis-note{text-align:center;font-size:12px;color:var(--ink2);font-weight:700;margin-top:6px;line-height:1.6}
+
+/* 오른쪽 */
+.panel-title{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--indigo);color:#fff;font-size:12px;font-weight:800;flex-shrink:0}
+.qblock{border-top:1px dashed #e0e7ff;padding-top:12px;margin-top:12px}
+.qblock:first-child{border-top:none;padding-top:0;margin-top:0}
+.lead{font-size:14px;line-height:1.8;color:var(--ink2);margin-bottom:8px}
+.prob-box{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:12px 14px;font-size:14.5px;line-height:1.85;margin-bottom:8px}
+.count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:14px;font-weight:700}
+.tagA{color:var(--colA);font-weight:800}
+.tagB{color:var(--colB);font-weight:800}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:15px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.formula{display:flex;align-items:flex-start;justify-content:center;gap:6px;flex-wrap:wrap;margin:10px 0;font-size:16px;font-weight:800}
+.formula .fcol{display:flex;flex-direction:column;align-items:center;gap:4px}
+.formula .fcol small{font-size:11.5px;font-weight:700;color:var(--ink2);text-align:center;max-width:120px;line-height:1.4}
+.formula .op{padding-top:4px}
+.choice-col{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.choice-btn{padding:9px 16px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;text-align:left;line-height:1.5}
+.choice-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.choice-btn.correct{background:var(--green);color:#fff;border-color:var(--green)}
+.choice-btn.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.choice-btn:disabled{cursor:default}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-check:hover{background:#15803d}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px;line-height:1.6}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.note-box{background:var(--green-ll);border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
+.def-box{background:var(--indigo-ll);border:2px solid var(--indigo);border-radius:12px;padding:14px 16px;font-size:15px;line-height:1.9;margin-top:12px;text-align:center}
+.warn-box{background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
+.sit-cards{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.sit-card{flex:1 1 200px;border:2px solid #d8ddfb;border-radius:12px;padding:12px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;font-size:14px;font-weight:700;line-height:1.7;color:var(--ink)}
+.sit-card .no{display:inline-block;background:var(--ink);color:#fff;border-radius:10px;padding:0 8px;font-size:12px;margin-bottom:4px}
+.sit-card.correct{border-color:var(--green);background:var(--green-ll)}
+.sit-card.wrong{border-color:var(--red);background:var(--red-l)}
+.sit-card:disabled{cursor:default}
+.cls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 10px;border:1.5px solid #e0e7ff;border-radius:10px;margin-bottom:8px;background:#fff}
+.cls-row.wrong{border-color:var(--red);background:var(--red-l)}
+.cls-row.right{border-color:var(--green);background:var(--green-ll)}
+.cls-row .ct{flex:1 1 240px;font-size:13.5px;font-weight:700;line-height:1.7}
+.cls-row .cb{display:flex;gap:6px}
+.cls-row .cb .choice-btn{padding:5px 11px;font-size:12.5px}
+.hint-card{background:#fff;border:1.5px solid #d8ddfb;border-radius:12px;padding:14px;font-size:13.5px;line-height:1.9}
+.num-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin:6px 0 10px}
+.num-row span{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1.5px solid #c7cdf5;border-radius:6px;font-weight:800;font-size:13px;background:#fff}
+
+.sum-line{font-size:15px;line-height:2.4}
+.pick{display:inline-flex;gap:4px;vertical-align:middle;flex-wrap:wrap}
+.pick .choice-btn{padding:3px 11px;font-size:13.5px}
+.slot{display:inline-block;min-width:70px;border-bottom:2px solid var(--indigo);text-align:center;font-weight:800;color:var(--indigo);padding:0 6px}
+.slot.filled{color:#be123c;border-bottom-color:var(--green)}
+
+.progress{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:6px}
+.level-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.level-tab{padding:7px 16px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink2)}
+.level-tab.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.level-tab.done{background:var(--green-l);color:#14532d;border-color:var(--green)}
+
+.result-wrap{text-align:center;padding:24px 10px}
+.result-icon{font-size:48px;margin-bottom:10px}
+.result-score{font-size:22px;font-weight:800;color:var(--indigo);margin:8px 0}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:420px;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25)}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">사건 A 또는 사건 B가 일어나는 경우의 수</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'event-or' };
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="screen active" id="scAct">
+    <div class="split-layout">
+      <div class="split-left card" id="actLeft"></div>
+      <div class="split-right card"><div id="actRight"></div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scSummary">
+    <div class="card" style="max-width:780px;margin:0 auto">
+      <div id="summaryArea"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scPractice">
+    <div class="level-tabs" id="levelTabs"></div>
+    <div class="split-layout">
+      <div class="split-left card" id="pgLeft"></div>
+      <div class="split-right card">
+        <div class="progress" id="pgProgress"></div>
+        <div id="pgArea"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scLevelResult">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon" id="lrIcon">🎉</div>
+        <h2 id="lrTitle">통과했어요!</h2>
+        <div class="result-score" id="lrScore">3 / 4</div>
+        <p id="lrMsg" style="color:var(--ink2)"></p>
+        <button class="restart-btn" id="lrRetryBtn" onclick="lrRetry()" style="display:none">🔄 다시 도전하기</button>
+        <button class="primary-btn" id="lrNextBtn" onclick="lrNext()">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px;line-height:1.8">사건 A 또는 사건 B가 일어나는 경우의 수를 구하는 방법을 알아보고, 문제풀이까지 모두 마쳤어요.</p>
+        <div class="result-score" id="doneStat" style="font-size:17px"></div>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:350px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:46;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pickN(arr,n){ return shuffle(arr).slice(0,n); }
+function randInt(lo,hi){ return lo+Math.floor(Math.random()*(hi-lo+1)); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function $(id){ return document.getElementById(id); }
+function setFb(id, ok, msg){ const fb=$(id); fb.className='feedback '+(ok?'success':'error'); fb.innerHTML=msg; }
+function parseCount(s){ const m=String(s||'').replace(/\s+/g,'').match(/^(\d+)(가지|개|권|벌|종류)?$/); return m?parseInt(m[1],10):null; }
+function sameSet(a,b){ if(a.size!==b.size) return false; for(const v of a) if(!b.has(v)) return false; return true; }
+function itA(){ return '<span class="it">A</span>'; }
+function itB(){ return '<span class="it">B</span>'; }
+
+/* ════════════════════════════════
+   읽기 확인 · 찍기 방지 (사건의_뜻.html과 같은 방식)
+   - readGate: 질문이 뜨고 읽을 시간도 안 지나 고르면 채점하지 않고 질문을 다시 보게 함
+   - wrongLock: 틀리면 몇 초 동안 잠그고(틀릴수록 길게) 보기 순서를 다시 섞음
+   - firstTry: 질문마다 첫 시도만 기록 → 완료 화면에 '한 번에 맞힌 질문' 표시
+════════════════════════════════ */
+const GUARD = { on:true };            // 검증 스크립트에서만 끔
+const LOCK_SECS = [3,5,8];
+const stat = { seen:{}, total:0, first:0 };
+const shown = {}, tries = {};
+function firstTry(qid, ok){ if(qid in stat.seen) return; stat.seen[qid]=ok; stat.total++; if(ok) stat.first++; }
+// 빈칸·칠하기 채점 결과(true/false/null)를 첫 시도에 기록하고, 통과했는지 돌려줌
+function graded(qid, r){ if(r===false) firstTry(qid,false); return r===true; }
+function flashRef(ref){
+  const el = typeof ref==='string' ? $(ref) : ref;
+  if(!el) return;
+  el.classList.remove('reread'); void el.offsetWidth; el.classList.add('reread');
+}
+function markShown(qid, blockId){
+  const el = $(blockId);
+  const len = el ? el.textContent.replace(/\s+/g,'').length : 40;
+  shown[qid] = { t:Date.now(), need:Math.min(4000, Math.max(1500, len*25)), block:blockId };
+}
+function readGate(qid, fbId){
+  const s = shown[qid];
+  if(!GUARD.on || !s || Date.now()-s.t >= s.need) return true;
+  setFb(fbId,false,'✋ 잠깐! 질문을 끝까지 읽고 골라 봐요.');
+  const kq = document.querySelector('#'+s.block+' .key-q');
+  if(kq) flashRef(kq);
+  return false;
+}
+function lockSecs(qid){
+  tries[qid] = (tries[qid]||0)+1;
+  return GUARD.on ? LOCK_SECS[Math.min(tries[qid],LOCK_SECS.length)-1] : 0;
+}
+// secs초 동안 안내문에 남은 시간을 보여 준 뒤 onDone. anchor가 화면에서 사라지면(단계 이동) 멈춤
+function lockTimer(secs, fbId, msg, what, anchor, onDone){
+  if(!secs){ onDone(); return; }
+  let left = secs;
+  const paint = ()=>setFb(fbId,false,`${msg}<br><span class="lock-note">⏳ ${left}초 뒤에 ${what}</span>`);
+  paint();
+  const t = setInterval(()=>{
+    if(!document.body.contains(anchor)){ clearInterval(t); return; }
+    left--;
+    if(left<=0){ clearInterval(t); onDone(); } else paint();
+  }, 1000);
+}
+// o: {qid,row,fb,msg,refs,noShuffle,after}
+function wrongLock(o){
+  const row = $(o.row);
+  const btns = [...row.querySelectorAll('button')];
+  btns.forEach(b=>b.disabled=true);
+  (o.refs||[]).forEach(flashRef);
+  lockTimer(lockSecs(o.qid), o.fb, o.msg, '다시 고를 수 있어요', row, ()=>{
+    btns.forEach(b=>{ b.disabled=false; b.classList.remove('wrong','active'); });
+    if(!o.noShuffle) shuffle(btns).forEach(b=>b.parentNode.appendChild(b));
+    setFb(o.fb,false,o.msg+'<br><span class="sub">다시 골라 보세요.</span>');
+    if(o.after) o.after();
+  });
+}
+// 객관식 한 문항 공통: 읽기 확인 → 첫 시도 기록 → 오답이면 잠금. 정답일 때만 true
+function choiceGrade(q, btn, ok, wrongMsg, refs){
+  if(btn.disabled || !readGate(q, q+'Fb')) return false;
+  firstTry(q, ok);
+  markChoice(q+'Row', btn, ok);
+  if(!ok){ wrongLock({qid:q, row:q+'Row', fb:q+'Fb', msg:wrongMsg, refs}); return false; }
+  return true;
+}
+
+/* ════════════════════════════════
+   실험과 결과
+════════════════════════════════ */
+const OUT = {
+  book:['국내 ①','국내 ②','해외 ①','해외 ②','해외 ③'],
+  dice:[1,2,3,4,5,6],
+  dice2:[], pouch:[]
+};
+for(let a=1;a<=6;a++) for(let b=1;b<=6;b++) OUT.dice2.push(a+','+b);
+for(let a=1;a<=5;a++) for(let b=1;b<=5;b++) OUT.pouch.push(a+','+b);
+const EXP = {
+  book:{ instr:'이번 달 추천 도서 5권(국내 도서 2권, 해외 도서 3권) 중에서 책 한 권을 고른다.' },
+  dice:{ instr:'한 개의 주사위를 던진다.' },
+  dice2:{ instr:'서로 다른 두 개의 주사위를 동시에 던진다.' },
+  pouch:{ instr:'두 주머니 A, B에 1부터 5까지의 자연수가 각각 하나씩 적힌 공이 5개씩 들어 있다. 각 주머니에서 공을 한 개씩 꺼낸다.' }
+};
+const BOOK_COLORS = {'국내 ①':'#f472b6','국내 ②':'#a78bfa','해외 ①':'#34d399','해외 ②':'#f87171','해외 ③':'#60a5fa'};
+const PIPS = {1:[[.5,.5]],2:[[.28,.28],[.72,.72]],3:[[.27,.27],[.5,.5],[.73,.73]],4:[[.28,.28],[.72,.28],[.28,.72],[.72,.72]],5:[[.27,.27],[.73,.27],[.5,.5],[.27,.73],[.73,.73]],6:[[.28,.24],[.72,.24],[.28,.5],[.72,.5],[.28,.76],[.72,.76]]};
+function dieSVG(n,s,body,pip){
+  body = body||'#fff'; pip = pip||'#1a1a2e';
+  const r=s*0.085;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="display:block"><rect x="1.5" y="1.5" width="${s-3}" height="${s-3}" rx="${(s*.18).toFixed(1)}" fill="${body}" stroke="#1a1a2e" stroke-width="1.4"/>`+
+    PIPS[n].map(([x,y])=>`<circle cx="${(x*s).toFixed(1)}" cy="${(y*s).toFixed(1)}" r="${(n===1&&body==='#fff'?r*1.6:r).toFixed(1)}" fill="${n===1&&body==='#fff'?'#dc2626':pip}"/>`).join('')+`</svg>`;
+}
+const DIE1 = '#22c55e', DIE2 = '#a855f7';   // 교과서 그림처럼 초록·보라 주사위
+function ballSVG(n,s,fill,stroke){ return `<svg width="${s}" height="${s}" viewBox="0 0 30 30" style="display:block"><circle cx="15" cy="15" r="13" fill="${fill}" stroke="${stroke}" stroke-width="1.6"/><text x="15" y="19.5" text-anchor="middle" font-size="12" font-weight="800" fill="#1a1a2e">${n}</text></svg>`; }
+function chipFace(exp,v){
+  if(exp==='book') return `<svg width="34" height="44" viewBox="0 0 34 44" style="display:block"><rect x="3" y="2" width="28" height="40" rx="3" fill="${BOOK_COLORS[v]}" stroke="#1a1a2e" stroke-width="1.4"/><rect x="3" y="2" width="6" height="40" fill="rgba(0,0,0,.15)"/><rect x="13" y="10" width="14" height="4" rx="1" fill="#fff" opacity=".85"/></svg><span>${v}</span>`;
+  if(exp==='dice') return dieSVG(v,40)+`<span>${v}</span>`;
+  return String(v);
+}
+
+/* ════════════════════════════════
+   사건 정의 — 경우는 test 함수로 계산 (검증 스크립트에서 전체 확인)
+════════════════════════════════ */
+function pv(v){ return v.split(',').map(Number); }
+const OPS = {
+  sum:{ name:'합', ip:'합이', f:(a,b)=>a+b },
+  diff:{ name:'차', ip:'차가', f:(a,b)=>Math.abs(a-b) },
+  prod:{ name:'곱', ip:'곱이', f:(a,b)=>a*b }
+};
+function pairEv(exp, op, k){
+  const subj = exp==='dice2' ? '눈의 수의' : '두 공에 적힌 수의';
+  return { exp, op, k, short:`${OPS[op].ip} ${k}`, text:`${subj} ${OPS[op].ip} ${k}이다`, test:v=>{ const [a,b]=pv(v); return OPS[op].f(a,b)===k; } };
+}
+const EV = {
+  bDom:{ exp:'book', short:'국내 도서', text:'국내 도서를 고른다', test:v=>v.startsWith('국내') },
+  bFor:{ exp:'book', short:'해외 도서', text:'해외 도서를 고른다', test:v=>v.startsWith('해외') },
+  dLe2:{ exp:'dice', short:'2 이하', text:'2 이하의 눈이 나온다', test:v=>v<=2 },
+  dGe5:{ exp:'dice', short:'5 이상', text:'5 이상의 눈이 나온다', test:v=>v>=5 },
+  dEven:{ exp:'dice', short:'짝수', text:'짝수의 눈이 나온다', test:v=>v%2===0 },
+  dMul3:{ exp:'dice', short:'3의 배수', text:'3의 배수의 눈이 나온다', test:v=>v%3===0 },
+  ex1A: pairEv('dice2','sum',5),
+  ex1B: pairEv('dice2','sum',11),
+  q4A: pairEv('pouch','diff',1),
+  q4B: pairEv('pouch','diff',4)
+};
+function caseSet(evt){ return new Set(OUT[evt.exp].filter(evt.test)); }
+function casesList(evt){ return OUT[evt.exp].filter(evt.test).map(v=>evt.exp==='dice2'||evt.exp==='pouch' ? '('+v.replace(',',', ')+')' : v).join(', '); }
+
+/* ════════════════════════════════
+   두 색 붓 결과 보드 (왼쪽 패널)
+   key: 'act' | 'pg'   brushes: {A:'라벨', B:'라벨'}
+════════════════════════════════ */
+const boards = {};
+function setBoard(key, exp, opts){
+  opts = opts||{};
+  boards[key] = { exp, A:new Set(opts.presetA||[]), B:new Set(opts.presetB||[]), brush:'A', labels:opts.labels||{A:'A',B:'B'},
+                  interactive: !opts.locked, done:false, legend:opts.legend||null, hl:null };
+  renderBoard(key, true);
+}
+function chipClass(b, v){
+  const a=b.A.has(v), bb=b.B.has(v);
+  return a&&bb ? ' pAB' : a ? ' pA' : bb ? ' pB' : '';
+}
+function renderBoard(key, flash){
+  const b = boards[key];
+  const left = $(key+'Left');
+  left.classList.add('board-sticky');
+  const stc = (!b.interactive || b.done) ? ' static' : '';
+  let inner;
+  if(b.exp==='book'){
+    const grp = (title, items)=>`<div class="group"><span class="g-title">${title}</span><div class="g-items">${items.map(v=>`<button class="chip${chipClass(b,v)}${stc}" onclick="paintCell('${key}',${OUT.book.indexOf(v)})">${chipFace('book',v)}</button>`).join('')}</div></div>`;
+    inner = `<div class="group-board">${grp('국내 도서',OUT.book.slice(0,2))}${grp('해외 도서',OUT.book.slice(2))}</div>`;
+  } else if(b.exp==='dice'){
+    inner = OUT.dice.map((v,i)=>`<button class="chip${chipClass(b,v)}${stc}" onclick="paintCell('${key}',${i})">${chipFace('dice',v)}</button>`).join('');
+  } else {
+    const n = b.exp==='dice2' ? 6 : 5;
+    const hdRow = b.exp==='dice2' ? (j=>dieSVG(j,22,DIE2,'#fff')) : (j=>ballSVG(j,22,'#fde68a','#b45309'));
+    const hdCol = b.exp==='dice2' ? (i=>dieSVG(i,22,DIE1,'#fff')) : (i=>ballSVG(i,22,'#bfdbfe','#2563eb'));
+    let rows = `<tr><th></th>${[...Array(n)].map((_,j)=>`<th><div class="hd">${hdRow(j+1)}</div></th>`).join('')}</tr>`;
+    for(let i=1;i<=n;i++){
+      rows += `<tr><th><div class="hd">${hdCol(i)}</div></th>`;
+      for(let j=1;j<=n;j++){
+        const v=i+','+j, idx=OUT[b.exp].indexOf(v);
+        rows += `<td><button class="gcell${chipClass(b,v)}${stc}${b.hl&&b.hl.includes(v)?' hl':''}" onclick="paintCell('${key}',${idx})">(${i}, ${j})</button></td>`;
+      }
+      rows += `</tr>`;
+    }
+    const note = b.exp==='dice2'
+      ? `순서쌍 (<b style="color:#15803d">초록 주사위의 눈</b>, <b style="color:#7e22ce">보라 주사위의 눈</b>)`
+      : `순서쌍 (<b style="color:#1d4ed8">주머니 A의 공</b>, <b style="color:#b45309">주머니 B의 공</b>)`;
+    inner = `<div class="grid-wrap"><table class="grid">${rows}</table></div>`;
+    inner = `<div style="width:100%">${inner}<div class="axis-note">${note}</div></div>`;
+  }
+  const brushBar = (b.interactive && !b.done) ? `<div class="brush-bar">
+      <button class="brush A ${b.brush==='A'?'active':''}" onclick="pickBrush('${key}','A')"><span class="sw"></span>${b.labels.A} 칠하기</button>
+      <button class="brush B ${b.brush==='B'?'active':''}" onclick="pickBrush('${key}','B')"><span class="sw"></span>${b.labels.B} 칠하기</button>
+    </div>` : '';
+  const tip = (!b.interactive) ? '색칠된 결과를 보고 오른쪽 질문에 답해 보세요.'
+            : b.done ? '✅ 확인 완료!'
+            : '👆 붓을 고른 뒤 결과를 누르면 그 색으로 칠해지고, 다시 누르면 지워져요.';
+  const legend = b.legend ? `<div class="legend">${b.legend}</div>` : '';
+  left.innerHTML = `<div class="exp-head"><span class="exp-badge">실험</span><span>${EXP[b.exp].instr}</span></div>
+    ${brushBar}<div class="board" id="${key}Board">${inner}</div><div class="board-tip">${tip}</div>${legend}`;
+  if(flash){ const bd=$(key+'Board'); bd.classList.remove('flash'); void bd.offsetWidth; bd.classList.add('flash'); }
+}
+function pickBrush(key, w){ const b=boards[key]; if(!b||!b.interactive||b.done) return; b.brush=w; renderBoard(key,false); }
+function paintCell(key, i){
+  const b = boards[key];
+  if(!b || !b.interactive || b.done) return;
+  const v = OUT[b.exp][i]; const set = b[b.brush];
+  if(set.has(v)) set.delete(v); else set.add(v);
+  renderBoard(key, false);
+}
+function setLegend(key, html){ boards[key].legend = html; renderBoard(key,false); }
+function legendHTML(evA, evB, la, lb){
+  return `<div class="lg A">🟦 ${la||itA()} : ${evA.text} → ${caseSet(evA).size}가지</div><div class="lg B">🟧 ${lb||itB()} : ${evB.text} → ${caseSet(evB).size}가지</div>`;
+}
+// 칠하기 채점: true=정답, false=오답, null=아직 안 칠함(문제풀이에서 실패로 치지 않음)
+function checkPaint(key, evA, evB, fbId){
+  const b = boards[key];
+  if(b.A.size===0 && b.B.size===0){ setFb(fbId,false,'먼저 붓을 골라 결과를 칠해 주세요.'); return null; }
+  const msgs = [];
+  for(const [w,ev] of [['A',evA],['B',evB]]){
+    const t = caseSet(ev), s = b[w];
+    if(s.size===0){ msgs.push(`<b>${b.labels[w]}</b> 붓으로 아직 칠하지 않았어요.`); continue; }
+    const extra=[...s].filter(v=>!t.has(v)).length, miss=[...t].filter(v=>!s.has(v)).length;
+    if(extra&&miss) msgs.push(`<b>${b.labels[w]}</b> 붓: 맞지 않는 결과도 칠해져 있고, 빠진 결과도 있어요.`);
+    else if(extra) msgs.push(`<b>${b.labels[w]}</b> 붓: 맞지 않는 결과가 칠해져 있어요.`);
+    else if(miss) msgs.push(`<b>${b.labels[w]}</b> 붓: 빠진 결과가 있어요.`);
+  }
+  if(msgs.length){ setFb(fbId,false,'❌ '+msgs.join('<br>')); return false; }
+  return true;
+}
+// 숫자 빈칸 채점: items=[{id,val}]  true/false/null(빈칸 있음)
+function checkNums(items, fbId, prefix){
+  let empty=false, wrong=0;
+  for(const it of items){
+    const inp=$(it.id); const raw=inp.value.trim();
+    if(raw===''){ empty=true; continue; }
+    const n=parseCount(raw);
+    if(n!==it.val){ wrong++; inp.classList.add('wrong'); inp.classList.remove('correct'); }
+    else { inp.classList.remove('wrong'); }
+  }
+  if(wrong){ setFb(fbId,false,(prefix||'')+`❌ 빨간 빈칸 ${wrong}개를 다시 확인해 보세요.`); return false; }
+  if(empty){ setFb(fbId,false,(prefix||'')+'빈칸을 모두 채워 주세요.'); return null; }
+  items.forEach(it=>{ const inp=$(it.id); inp.classList.add('correct'); inp.disabled=true; });
+  return true;
+}
+function lockBoard(key){ boards[key].done=true; renderBoard(key,false); }
+
+/* ════════════════════════════════
+   단계 표시 · 오른쪽 패널
+════════════════════════════════ */
+const STAGES = ['사건에 이름 붙이기','\'또는\'의 뜻','한 권? 두 권?','겹치면 어떻게 될까?','주사위 두 개','주머니 두 개','정리','문제풀이'];
+let curStage = 0;
+function renderStepper(){
+  $('stepper').innerHTML = STAGES.map((s,i)=>`<span class="st ${i===curStage?'active':(i<curStage?'done':'')}">${i+1}. ${s}</span>`).join('');
+}
+function R(html){ $('actRight').innerHTML = html; }
+function appendR(html){ $('actRight').insertAdjacentHTML('beforeend', html); }
+function scrollToEl(id){ const el=$(id); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+function choiceCol(name, opts){
+  return `<div class="choice-col" id="${name}Row">`+shuffle(opts).map(o=>`<button class="choice-btn" data-k="${o.key}" onclick="${name}Pick('${o.key}',this)">${o.label}</button>`).join('')+`</div>`;
+}
+function markChoice(rowId, btn, ok){
+  document.querySelectorAll('#'+rowId+' .choice-btn').forEach(b=>b.classList.remove('active','wrong'));
+  btn.classList.add(ok?'correct':'wrong');
+  if(ok) document.querySelectorAll('#'+rowId+' .choice-btn').forEach(b=>b.disabled=true);
+}
+function formulaHTML(prefix, labA, labB, labT){
+  return `<div class="formula">
+    <div class="fcol"><input class="blank" id="${prefix}a"><small>${labA}</small></div><span class="op">+</span>
+    <div class="fcol"><input class="blank" id="${prefix}b"><small>${labB}</small></div><span class="op">=</span>
+    <div class="fcol"><input class="blank" id="${prefix}t"><small>${labT}</small></div>
+  </div>`;
+}
+
+/* ════════════════════════════════
+   1단계: 사건에 이름 붙이기 (추천 도서)
+════════════════════════════════ */
+function stage0(){
+  curStage=0; renderStepper(); showScreen('scAct');
+  setBoard('act','book',{labels:{A:'사건 A',B:'사건 B'}});
+  R(`<div class="panel-title"><span class="step-badge">1</span>사건에 이름 붙이기</div>
+    <div class="prob-box">어느 도서관의 이번 달 추천 도서에는 국내 도서 2권과 해외 도서 3권이 있다. 이 중에서 책 한 권을 고른다.</div>
+    <p class="lead">사건을 매번 긴 문장으로 부르면 불편해요. 그래서 사건에 <span class="kw">짧은 이름</span>을 붙여요.</p>
+    <div class="def-box" style="text-align:left">사건 ${itA()} : 국내 도서를 고른다.<br>사건 ${itB()} : 해외 도서를 고른다.</div>
+    <div class="qblock" id="s0aBlock" style="border-top:none">
+      <p class="key-q task">왼쪽에서 <span class="em">두 붓</span>으로 사건 A, B가 일어나는 경우를 각각 칠하고, 경우의 수를 써 보자.</p>
+      <p class="sub">파란 붓은 사건 A, 주황 붓은 사건 B예요.</p>
+      <div class="count-row"><span class="tagA">사건 ${itA()}</span>가 일어나는 경우의 수: <input class="blank" id="s0a"></div>
+      <div class="count-row"><span class="tagB">사건 ${itB()}</span>가 일어나는 경우의 수: <input class="blank" id="s0b"></div>
+      <div class="btn-row"><button class="btn btn-check" id="s0Btn" onclick="s0Check()">확인</button></div>
+      <div class="feedback" id="s0Fb"></div>
+    </div>`);
+}
+function s0Check(){
+  if($('s0Btn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s0', checkPaint('act', EV.bDom, EV.bFor, 's0Fb'))) return;
+  if(!graded('s0', checkNums([{id:'s0a',val:2},{id:'s0b',val:3}], 's0Fb', '칠한 것은 맞아요! '))) return;
+  firstTry('s0', true);
+  $('s0Btn').disabled = true; lockBoard('act');
+  setLegend('act', legendHTML(EV.bDom, EV.bFor));
+  setFb('s0Fb',true,'✅ 맞아요! 왼쪽 보드 아래에 사건의 이름표가 붙었어요.');
+  appendR(`<div class="qblock" id="s0qBlock">
+    <p class="key-q">그럼 '사건 B'는 <span class="em">어떤 사건</span>을 부르는 이름일까요?</p>
+    ${choiceCol('s0q',[{key:'for',label:'해외 도서를 고른다.'},{key:'dom',label:'국내 도서를 고른다.'},{key:'any',label:'책 한 권을 고른다.'}])}
+    <div class="feedback" id="s0qFb"></div>
+  </div>`);
+  markShown('s0q','s0qBlock');
+  scrollToEl('s0qBlock');
+}
+function s0qPick(k, btn){
+  if(!choiceGrade('s0q', btn, k==='for', k==='dom' ? '❌ 그건 사건 A예요. 왼쪽 이름표를 다시 봐요.' : '❌ 책 한 권을 고르는 것은 실험이에요. 사건 B가 어떤 결과인지 왼쪽 이름표를 봐요.', ['actLeft'])) return;
+  setFb('s0qFb',true,'✅ 맞아요. A, B는 사건에 붙인 짧은 이름이에요. 문자를 보면 어떤 사건인지 떠올려야 해요.');
+  appendR(`<div class="qblock" id="s0End"><div class="btn-row"><button class="btn" id="s0NextBtn" onclick="this.disabled=true;stage1()">다음: '또는'의 뜻 →</button></div></div>`);
+  scrollToEl('s0End');
+}
+
+/* ════════════════════════════════
+   2단계: '또는'의 뜻
+════════════════════════════════ */
+function stage1(){
+  curStage=1; renderStepper(); showScreen('scAct');
+  setBoard('act','book',{locked:true, presetA:[...caseSet(EV.bDom)], presetB:[...caseSet(EV.bFor)], legend:legendHTML(EV.bDom,EV.bFor)});
+  R(`<div class="panel-title"><span class="step-badge">2</span>'또는'의 뜻</div>
+    <div class="prob-box">추천 도서 중에서 책 한 권을 고를 때, 국내 도서 <span class="kw">또는</span> 해외 도서를 고르는 경우의 수를 구해 보자.<br>즉, 사건 ${itA()} 또는 사건 ${itB()}가 일어나는 경우의 수예요.</div>
+    <div class="qblock" style="border-top:none" id="s1q1Block">
+      <p class="key-q">'사건 A 또는 사건 B가 일어난다'는 <span class="em">무슨 뜻</span>일까요?</p>
+      ${choiceCol('s1q1',[
+        {key:'or',label:'사건 A가 일어나거나 사건 B가 일어난다.'},
+        {key:'big',label:'사건 A, B 중에서 경우의 수가 더 큰 사건만 생각한다.'},
+        {key:'pick',label:'사건 A와 사건 B 중에서 하나를 정해서 그 사건만 생각한다.'}])}
+      <div class="feedback" id="s1q1Fb"></div>
+    </div>`);
+  markShown('s1q1','s1q1Block');
+}
+function s1q1Pick(k, btn){
+  if(!choiceGrade('s1q1', btn, k==='or', '❌ 수학에서 \'또는\'은 둘 중 하나를 골라 버리라는 말이 아니에요. 국내 도서를 골라도, 해외 도서를 골라도 \'국내 도서 또는 해외 도서를 골랐다\'고 말할 수 있을까요?')) return;
+  setFb('s1q1Fb',true,'✅ 맞아요. A가 일어나도, B가 일어나도 \'A 또는 B가 일어났다\'고 해요.');
+  appendR(`<div class="qblock" id="s1q2Block">
+    <p class="lead">친구가 고른 책이 <span class="kw">해외 ②</span>예요.</p>
+    <p class="key-q">이때 '사건 A 또는 사건 B'는 <span class="em">일어난</span> 걸까요?</p>
+    ${choiceCol('s1q2',[{key:'yes',label:'네, 일어났어요.'},{key:'no',label:'아니요, 일어나지 않았어요.'}])}
+    <div class="feedback" id="s1q2Fb"></div>
+  </div>`);
+  markShown('s1q2','s1q2Block');
+  scrollToEl('s1q2Block');
+}
+function s1q2Pick(k, btn){
+  if(!choiceGrade('s1q2', btn, k==='yes', '❌ 해외 ②는 사건 B가 일어나는 경우예요. B가 일어났다면 \'A 또는 B\'는 어떨까요?', ['actLeft'])) return;
+  setFb('s1q2Fb',true,'✅ 맞아요. 해외 ②는 사건 B가 일어난 것이므로 \'A 또는 B\'가 일어난 거예요.');
+  appendR(`<div class="qblock" id="s1q3Block">
+    <p class="lead">그러니까 'A 또는 B가 일어나는 경우'는 왼쪽의 파란 책과 주황 책을 <span class="kw">한데 모은 것</span>이에요.</p>
+    <p class="key-q">사건 A 또는 사건 B가 일어나는 경우는 <span class="em">모두</span> 몇 가지일까요? 왼쪽에서 칠해진 책을 세어 보자.</p>
+    <div class="count-row">모두 <input class="blank" id="s1t"> 가지</div>
+    <div class="btn-row"><button class="btn btn-check" id="s1tBtn" onclick="s1tCheck()">확인</button></div>
+    <div class="feedback" id="s1tFb"></div>
+  </div>`);
+  scrollToEl('s1q3Block');
+}
+function s1tCheck(){
+  if($('s1tBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s1t', checkNums([{id:'s1t',val:5}], 's1tFb'))) return;
+  firstTry('s1t', true);
+  $('s1tBtn').disabled = true;
+  setFb('s1tFb',true,'✅ 맞아요. 칠해진 책은 모두 5권이에요.');
+  appendR(`<div class="qblock" id="s1fBlock">
+    <p class="key-q task">이번에는 직접 세지 말고, <span class="em">각 사건의 경우의 수</span>로 나타내 보자.</p>
+    ${formulaHTML('s1f','국내 도서를 고르는<br>경우의 수','해외 도서를 고르는<br>경우의 수','국내 도서 또는 해외<br>도서를 고르는 경우의 수')}
+    <div class="btn-row"><button class="btn btn-check" id="s1fBtn" onclick="s1fCheck()">확인</button></div>
+    <div class="feedback" id="s1fFb"></div>
+  </div>`);
+  scrollToEl('s1fBlock');
+}
+function s1fCheck(){
+  if($('s1fBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s1f', checkNums([{id:'s1fa',val:2},{id:'s1fb',val:3},{id:'s1ft',val:5}], 's1fFb'))) return;
+  firstTry('s1f', true);
+  $('s1fBtn').disabled = true;
+  setFb('s1fFb',true,'✅ 맞아요. 2 + 3 = 5로, 직접 센 것과 같아요!');
+  appendR(`<div class="qblock" id="s1End">
+    <div class="note-box">모은 것을 직접 세는 대신, 각 사건의 경우의 수를 <span class="kw">더해서</span> 구할 수 있었어요.<br>그런데 정말 언제나 더하기만 하면 될까요? 다음 단계에서 확인해 봐요.</div>
+    <div class="btn-row"><button class="btn" id="s1NextBtn" onclick="this.disabled=true;stage2()">다음: 한 권? 두 권? →</button></div>
+  </div>`);
+  scrollToEl('s1End');
+}
+
+/* ════════════════════════════════
+   3단계: 한 권? 두 권? + '동시에 일어나지 않는다'
+════════════════════════════════ */
+function stage2(){
+  curStage=2; renderStepper(); showScreen('scAct');
+  setBoard('act','book',{locked:true, presetA:[...caseSet(EV.bDom)], presetB:[...caseSet(EV.bFor)], legend:legendHTML(EV.bDom,EV.bFor)});
+  const cards = shuffle([
+    {key:'one', html:'추천 도서 5권 중에서 책을 <b>한 권</b> 고른다.'},
+    {key:'two', html:'국내 도서 중에서 한 권, <b>그리고</b> 해외 도서 중에서 한 권을 골라 모두 <b>두 권</b>을 고른다.'}
+  ]);
+  R(`<div class="panel-title"><span class="step-badge">3</span>한 권? 두 권?</div>
+    <div id="s2Block">
+    <p class="key-q">지금까지 다룬 '국내 도서 또는 해외 도서를 고르는' 상황은 <span class="em">어느 쪽</span>일까요?</p>
+    <div class="sit-cards" id="s2Row">${cards.map((c,i)=>`<button class="sit-card" data-k="${c.key}" onclick="s2Pick('${c.key}',this)"><span class="no">상황 ${i+1}</span><br>${c.html}</button>`).join('')}</div>
+    <div class="feedback" id="s2Fb"></div>
+    </div>`);
+  markShown('s2','s2Block');
+}
+function s2Pick(k, btn){
+  if(btn.disabled || !readGate('s2','s2Fb')) return;
+  const ok = k==='one';
+  firstTry('s2', ok);
+  // 카드에 '상황 1, 2' 번호가 붙어 있어서 순서는 섞지 않음
+  if(!ok){ btn.classList.add('wrong'); wrongLock({qid:'s2', row:'s2Row', fb:'s2Fb', msg:'❌ 왼쪽 위의 실험을 다시 읽어 봐요. 책을 몇 권 고르나요?', refs:['actLeft'], noShuffle:true}); return; }
+  btn.classList.add('correct'); document.querySelectorAll('#s2Row .sit-card').forEach(b=>b.disabled=true);
+  setFb('s2Fb',true,'✅ 맞아요. 책은 <span class="kw">한 권만</span> 고르는 실험이에요. 그 한 권이 국내 도서일 수도, 해외 도서일 수도 있는 거예요.<br><span class="sub">(두 권을 고르는 상황은 다음 시간에 배워요.)</span>');
+  appendR(`<div class="qblock" id="s2qBlock">
+    <p class="key-q">고른 책 한 권이 국내 도서이면서 <span class="em">동시에</span> 해외 도서일 수 있을까요?</p>
+    ${choiceCol('s2q',[{key:'no',label:'아니요. 한 권의 책은 국내 도서이거나 해외 도서, 둘 중 하나예요.'},{key:'yes',label:'네. 국내 도서이면서 해외 도서인 책도 있어요.'}])}
+    <div class="feedback" id="s2qFb"></div>
+  </div>`);
+  markShown('s2q','s2qBlock');
+  scrollToEl('s2qBlock');
+}
+function s2qPick(k, btn){
+  if(!choiceGrade('s2q', btn, k==='no', '❌ 왼쪽 보드에서 파란색과 주황색이 함께 칠해진 책이 있나요?', ['actBoard'])) return;
+  setFb('s2qFb',true,'✅ 맞아요. 왼쪽 보드에도 두 색이 함께 칠해진 책은 없어요.');
+  appendR(`<div class="qblock" id="s2End">
+    <div class="def-box">사건 ${itA()}가 일어나면 사건 ${itB()}는 일어나지 않을 때,<br>두 사건 ${itA()}, ${itB()}는 <b style="color:#be123c">동시에 일어나지 않는다</b>고 한다.</div>
+    <div class="note-box">국내 도서를 고르면 해외 도서는 고른 것이 아니에요. 그래서 사건 A, B는 동시에 일어나지 않아요.</div>
+    <div class="btn-row"><button class="btn" id="s2NextBtn" onclick="this.disabled=true;stage3()">다음: 겹치면 어떻게 될까? →</button></div>
+  </div>`);
+  scrollToEl('s2End');
+}
+
+/* ════════════════════════════════
+   4단계: 겹치면 어떻게 될까? (확인하고 더한다까지만 — 겹칠 때의 계산법은 다루지 않음)
+════════════════════════════════ */
+const OVERLAP_PAIRS = [
+  { exp:'dice', a:'홀수의 눈이 나온다', b:'짝수의 눈이 나온다', ta:v=>v%2===1, tb:v=>v%2===0 },
+  { exp:'dice', a:'소수의 눈이 나온다', b:'짝수의 눈이 나온다', ta:v=>[2,3,5].includes(v), tb:v=>v%2===0 },
+  { exp:'dice', a:'4 이상의 눈이 나온다', b:'2 이하의 눈이 나온다', ta:v=>v>=4, tb:v=>v<=2 },
+  { exp:'dice', a:'3 이하의 눈이 나온다', b:'3의 배수의 눈이 나온다', ta:v=>v<=3, tb:v=>v%3===0 },
+  { exp:'dice', a:'6의 약수의 눈이 나온다', b:'5의 배수의 눈이 나온다', ta:v=>6%v===0, tb:v=>v%5===0 },
+  { exp:'card', a:'3의 배수가 적힌 카드가 나온다', b:'5의 배수가 적힌 카드가 나온다', ta:v=>v%3===0, tb:v=>v%5===0 },
+  { exp:'card', a:'짝수가 적힌 카드가 나온다', b:'5의 배수가 적힌 카드가 나온다', ta:v=>v%2===0, tb:v=>v%5===0 },
+  { exp:'card', a:'7 이상의 수가 적힌 카드가 나온다', b:'소수가 적힌 카드가 나온다', ta:v=>v>=7, tb:v=>[2,3,5,7].includes(v) },
+  { exp:'card', a:'4의 배수가 적힌 카드가 나온다', b:'9의 약수가 적힌 카드가 나온다', ta:v=>v%4===0, tb:v=>9%v===0 },
+  { exp:'dice', a:'짝수의 눈이 나온다', b:'5의 눈이 나온다', ta:v=>v%2===0, tb:v=>v===5 },
+  { exp:'dice', a:'4의 약수의 눈이 나온다', b:'홀수의 눈이 나온다', ta:v=>4%v===0, tb:v=>v%2===1 },
+  { exp:'card', a:'홀수가 적힌 카드가 나온다', b:'2의 배수가 적힌 카드가 나온다', ta:v=>v%2===1, tb:v=>v%2===0 },
+  { exp:'card', a:'10의 약수가 적힌 카드가 나온다', b:'3의 배수가 적힌 카드가 나온다', ta:v=>10%v===0, tb:v=>v%3===0 },
+  { exp:'card', a:'6 이하의 수가 적힌 카드가 나온다', b:'4의 배수가 적힌 카드가 나온다', ta:v=>v<=6, tb:v=>v%4===0 }
+];
+const PAIR_OUT = { dice:[1,2,3,4,5,6], card:[1,2,3,4,5,6,7,8,9,10] };
+function pairOverlaps(p){ return PAIR_OUT[p.exp].some(v=>p.ta(v)&&p.tb(v)); }
+const s3 = { rows:[], pick:{}, done:{}, used:new Set(), locked:false };
+function s3RowInner(i){
+  const p = s3.rows[i];
+  return `<span class="ct">${p.exp==='dice'?'🎲 한 개의 주사위를 던진다.':'🃏 1부터 10까지의 수가 적힌 카드 중 한 장을 뽑는다.'}<br><span class="tagA">${itA()}</span>: ${p.a}. &nbsp; <span class="tagB">${itB()}</span>: ${p.b}.</span><span class="cb">${['yes','no'].map(c=>`<button class="choice-btn" onclick="s3Pick(${i},'${c}',this)">${c==='yes'?'동시에 일어날 수 있다':'동시에 일어나지 않는다'}</button>`).join('')}</span>`;
+}
+// 틀린 줄을 새 사건 쌍으로 — 보기가 두 개라 같은 줄을 다시 고르면 반대쪽만 눌러도 맞히게 되므로 바꿈 (겹침 여부는 무작위)
+function s3NextPair(){
+  const fresh = OVERLAP_PAIRS.filter(p=>!s3.used.has(p));
+  const pool = fresh.length ? fresh : OVERLAP_PAIRS.filter(p=>!s3.rows.includes(p));
+  const p = pickN(pool,1)[0];
+  s3.used.add(p);
+  return p;
+}
+function stage3(){
+  curStage=3; renderStepper(); showScreen('scAct');
+  setBoard('act','dice',{labels:{A:'사건 A',B:'사건 B'}});
+  R(`<div class="panel-title"><span class="step-badge">4</span>겹치면 어떻게 될까?</div>
+    <p class="lead">이번에는 한 개의 주사위를 던지는 실험이에요.</p>
+    <div class="def-box" style="text-align:left">사건 ${itA()} : 2 이하의 눈이 나온다.<br>사건 ${itB()} : 5 이상의 눈이 나온다.</div>
+    <div class="qblock" style="border-top:none" id="s3aBlock">
+      <p class="key-q task">두 붓으로 각 사건이 일어나는 경우를 칠하고, 빈칸을 채워 보자.</p>
+      ${formulaHTML('s3a','사건 A의 경우의 수','사건 B의 경우의 수','A 또는 B가 일어나는<br>경우의 수')}
+      <div class="btn-row"><button class="btn btn-check" id="s3aBtn" onclick="s3aCheck()">확인</button></div>
+      <div class="feedback" id="s3aFb"></div>
+    </div>`);
+}
+function s3aCheck(){
+  if($('s3aBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s3a', checkPaint('act', EV.dLe2, EV.dGe5, 's3aFb'))) return;
+  if(!graded('s3a', checkNums([{id:'s3aa',val:2},{id:'s3ab',val:2},{id:'s3at',val:4}], 's3aFb', '칠한 것은 맞아요! '))) return;
+  firstTry('s3a', true);
+  $('s3aBtn').disabled = true; lockBoard('act'); setLegend('act', legendHTML(EV.dLe2, EV.dGe5));
+  setFb('s3aFb',true,'✅ 맞아요. 2 + 2 = 4예요.');
+  appendR(`<div class="qblock" id="s3a2Block">
+    <p class="lead">주사위를 던졌더니 <span class="kw">3의 눈</span>이 나왔어요.</p>
+    <p class="key-q">이때 '사건 A 또는 사건 B'는 <span class="em">일어난</span> 걸까요?</p>
+    ${choiceCol('s3a2',[{key:'no',label:'아니요. 3은 A에도, B에도 들어가지 않아요.'},{key:'yes',label:'네. 주사위를 던졌으니 일어났어요.'}])}
+    <div class="feedback" id="s3a2Fb"></div>
+  </div>`);
+  markShown('s3a2','s3a2Block');
+  scrollToEl('s3a2Block');
+}
+function s3a2Pick(k, btn){
+  if(!choiceGrade('s3a2', btn, k==='no', '❌ 왼쪽 보드에서 3의 눈은 어떤 색으로 칠해져 있나요?', ['actBoard'])) return;
+  setFb('s3a2Fb',true,'✅ 맞아요. 칠해지지 않은 결과가 나오면 \'A 또는 B\'는 일어나지 않은 거예요.');
+  setBoard('act','dice',{labels:{A:'사건 A',B:'사건 B'}});
+  appendR(`<div class="qblock" id="s3bBlock">
+    <p class="lead">이번에는 사건을 바꿔 볼게요. <span class="sub">왼쪽 보드를 새로 비웠어요.</span></p>
+    <div class="def-box" style="text-align:left">사건 ${itA()} : 짝수의 눈이 나온다.<br>사건 ${itB()} : 3의 배수의 눈이 나온다.</div>
+    <p class="key-q task">두 붓으로 각 사건이 일어나는 경우를 칠하고, 각각의 경우의 수를 써 보자.</p>
+    <div class="count-row"><span class="tagA">사건 ${itA()}</span>의 경우의 수: <input class="blank" id="s3ba"></div>
+    <div class="count-row"><span class="tagB">사건 ${itB()}</span>의 경우의 수: <input class="blank" id="s3bb"></div>
+    <div class="btn-row"><button class="btn btn-check" id="s3bBtn" onclick="s3bCheck()">확인</button></div>
+    <div class="feedback" id="s3bFb"></div>
+  </div>`);
+  scrollToEl('s3bBlock');
+}
+function s3bCheck(){
+  if($('s3bBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s3b', checkPaint('act', EV.dEven, EV.dMul3, 's3bFb'))) return;
+  if(!graded('s3b', checkNums([{id:'s3ba',val:3},{id:'s3bb',val:2}], 's3bFb', '칠한 것은 맞아요! '))) return;
+  firstTry('s3b', true);
+  $('s3bBtn').disabled = true; lockBoard('act'); setLegend('act', legendHTML(EV.dEven, EV.dMul3));
+  setFb('s3bFb',true,'✅ 맞아요! 그런데 왼쪽 보드에 두 색이 함께 칠해진 눈이 있네요.');
+  appendR(`<div class="qblock" id="s3cBlock">
+    <p class="key-q">사건 A 또는 사건 B가 일어나는 경우는 모두 몇 가지일까요? 왼쪽에서 칠해진 눈을 <span class="em">직접</span> 세어 보자.</p>
+    <div class="count-row">직접 세면: <input class="blank" id="s3ct"> 가지</div>
+    <div class="count-row">더하면: 3 + 2 = <input class="blank" id="s3cs"></div>
+    <div class="btn-row"><button class="btn btn-check" id="s3cBtn" onclick="s3cCheck()">확인</button></div>
+    <div class="feedback" id="s3cFb"></div>
+  </div>`);
+  scrollToEl('s3cBlock');
+}
+function s3cCheck(){
+  if($('s3cBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  const r = checkNums([{id:'s3ct',val:4},{id:'s3cs',val:5}], 's3cFb');
+  graded('s3c', r);
+  if(r!==true){
+    if(r===false && parseCount($('s3ct').value)===5) setFb('s3cFb',false,'❌ 직접 셀 때는 칠해진 눈의 개수를 세요. 두 색이 함께 칠해진 눈도 한 번만 세요.');
+    return;
+  }
+  firstTry('s3c', true);
+  $('s3cBtn').disabled = true;
+  setFb('s3cFb',true,'✅ 직접 세면 4가지인데, 더하면 5가 나와요. 결과가 달라요!');
+  appendR(`<div class="qblock" id="s3dBlock">
+    <p class="key-q"><span class="em">왜</span> 더한 값이 직접 센 것보다 1만큼 클까요?</p>
+    ${choiceCol('s3d',[
+      {key:'six',label:'6의 눈이 사건 A에도, 사건 B에도 들어가서 두 번 세었기 때문이에요.'},
+      {key:'luck',label:'주사위를 던질 때마다 결과가 달라지기 때문이에요.'},
+      {key:'mul',label:'3의 배수는 더하면 안 되는 수이기 때문이에요.'}])}
+    <div class="feedback" id="s3dFb"></div>
+  </div>`);
+  markShown('s3d','s3dBlock');
+  scrollToEl('s3dBlock');
+}
+function s3dPick(k, btn){
+  if(!choiceGrade('s3d', btn, k==='six', '❌ 왼쪽 보드에서 두 색이 함께 칠해진 눈을 찾아봐요. 그 눈은 3과 2에서 각각 몇 번 세어졌나요?', ['actBoard'])) return;
+  setFb('s3dFb',true,'✅ 맞아요. 6의 눈이 나오면 짝수이면서 동시에 3의 배수예요. 사건 A, B가 <span class="kw">동시에 일어나는</span> 경우가 있어서 그냥 더하면 두 번 세게 돼요.');
+  const by = o=>OVERLAP_PAIRS.filter(p=>pairOverlaps(p)===o);
+  s3.rows = shuffle([...pickN(by(true),2), ...pickN(by(false),2)]);
+  s3.pick = {}; s3.done = {}; s3.locked = false; s3.used = new Set(s3.rows);
+  appendR(`<div class="qblock" id="s3eBlock">
+    <div class="warn-box">그래서 'A 또는 B'의 경우의 수를 더하기 전에는 먼저 <span class="kw">두 사건이 동시에 일어나는 경우가 있는지</span> 확인해야 해요.</div>
+    <p class="key-q task">다음 두 사건 A, B가 <span class="em">동시에 일어나는 경우</span>가 있는지 확인해 보자.</p>
+    <p class="sub">틀린 줄은 새 사건으로 바뀌어요.</p>
+    <div style="margin-top:8px">${s3.rows.map((p,i)=>`<div class="cls-row" id="s3r${i}">${s3RowInner(i)}</div>`).join('')}</div>
+    <div class="btn-row"><button class="btn btn-check" id="s3eBtn" onclick="s3eCheck()">확인</button></div>
+    <div class="feedback" id="s3eFb"></div>
+  </div>`);
+  // 왼쪽: 확인용 참고 보드 (주사위 눈, 카드 수)
+  const left=$('actLeft'); left.classList.remove('board-sticky');
+  left.innerHTML = `<div class="hint-card" id="s3Hint">
+    <div style="font-weight:800;margin-bottom:6px">🔎 이렇게 확인해 봐요</div>
+    <div>두 사건에 <span class="kw">모두 들어가는 결과가 하나라도 있으면</span> 두 사건은 동시에 일어날 수 있어요.</div>
+    <div style="margin-top:10px;font-weight:700">🎲 주사위의 눈</div><div class="num-row">${PAIR_OUT.dice.map(v=>`<span>${v}</span>`).join('')}</div>
+    <div style="font-weight:700">🃏 카드의 수</div><div class="num-row">${PAIR_OUT.card.map(v=>`<span>${v}</span>`).join('')}</div>
+  </div>`;
+  scrollToEl('s3eBlock');
+}
+function s3Pick(i, c, btn){
+  if($('s3eBtn').disabled || s3.locked || s3.done[i]) return;
+  s3.pick[i] = c;
+  $('s3r'+i).classList.remove('wrong','right');
+  $('s3r'+i).querySelectorAll('.choice-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function s3eCheck(){
+  if($('s3eBtn').disabled || s3.locked) return;   // 이미 통과했거나 잠금 중
+  const pending = s3.rows.map((p,i)=>i).filter(i=>!s3.done[i]);
+  const un = pending.filter(i=>!s3.pick[i]).length;
+  if(un){ setFb('s3eFb',false,`아직 고르지 않은 줄이 ${un}개 있어요.`); return; }
+  const wrongIdx = [];
+  pending.forEach(i=>{
+    const p = s3.rows[i], row = $('s3r'+i);
+    if((s3.pick[i]==='yes')===pairOverlaps(p)){
+      s3.done[i] = true; row.classList.remove('wrong'); row.classList.add('right');
+      row.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+    } else {
+      wrongIdx.push(i); row.classList.add('wrong');
+      row.querySelector('.cb').innerHTML = `<span class="ans-tag">❌ 틀렸어요</span>`;
+    }
+  });
+  firstTry('s3e', wrongIdx.length===0);
+  if(wrongIdx.length){
+    s3.locked = true;
+    flashRef('s3Hint');
+    const msg = `❌ ${wrongIdx.length}개가 틀렸어요. 두 사건에 모두 들어가는 수가 있는지, 다시 한 번 생각해 보세요!`;
+    lockTimer(lockSecs('s3e'), 's3eFb', msg, '틀린 줄이 새 사건으로 바뀌어요', $('s3eBtn'), ()=>{
+      wrongIdx.forEach(i=>{
+        s3.rows[i] = s3NextPair(); delete s3.pick[i];
+        const row = $('s3r'+i); row.classList.remove('wrong'); row.innerHTML = s3RowInner(i);
+      });
+      s3.locked = false;
+      setFb('s3eFb',false,`🔁 새 사건 ${wrongIdx.length}줄이 나왔어요. 두 사건에 모두 들어가는 수가 있는지 찾아 보세요.`);
+    });
+    return;
+  }
+  $('s3eBtn').disabled = true;
+  setFb('s3eFb',true,'✅ 모두 맞았어요!');
+  appendR(`<div class="qblock" id="s3End">
+    <div class="note-box">✔ 두 사건이 동시에 일어나지 않으면 → 각 사건의 경우의 수를 <span class="kw">더해요.</span><br>✔ 두 사건이 동시에 일어날 수 있으면 → 같은 경우를 두 번 세게 되니 <span class="kw">그냥 더하면 안 돼요.</span></div>
+    <div class="btn-row"><button class="btn" id="s3NextBtn" onclick="this.disabled=true;stage4()">다음: 주사위 두 개 →</button></div>
+  </div>`);
+  scrollToEl('s3End');
+}
+
+/* ════════════════════════════════
+   5단계: 주사위 두 개 (교과서 예제 1) — 두 가지 '동시에'
+════════════════════════════════ */
+function stage4(){
+  curStage=4; renderStepper(); showScreen('scAct');
+  setBoard('act','dice2',{locked:true});
+  boards.act.hl = ['1,4','4,1']; renderBoard('act',false);
+  R(`<div class="panel-title"><span class="step-badge">5</span>주사위 두 개</div>
+    <div class="prob-box" id="s4Prob"><b>예제 1</b> 서로 다른 두 개의 주사위를 동시에 던질 때 나오는 눈의 수의 합이 5 또는 11인 경우의 수를 구하시오.</div>
+    <p class="lead">주사위가 두 개이면 결과를 <span class="kw">순서쌍</span>으로 나타내요. 왼쪽 표의 칸 하나하나가 나올 수 있는 결과예요.</p>
+    <div class="qblock" style="border-top:none" id="s4q1Block">
+      <p class="key-q">왼쪽에 노란 테두리로 표시된 (1, 4)와 (4, 1)은 <span class="em">같은 경우</span>일까요?</p>
+      ${choiceCol('s4q1',[
+        {key:'diff',label:'다른 경우예요. (1, 4)는 초록 주사위가 1, 보라 주사위가 4이고, (4, 1)은 그 반대예요.'},
+        {key:'same',label:'같은 경우예요. 두 눈이 모두 1과 4이니까요.'}])}
+      <div class="feedback" id="s4q1Fb"></div>
+    </div>`);
+  markShown('s4q1','s4q1Block');
+}
+function s4q1Pick(k, btn){
+  if(!choiceGrade('s4q1', btn, k==='diff', '❌ 초록 주사위에서 1이 나온 것과 초록 주사위에서 4가 나온 것은 같은 결과일까요?', ['actBoard'])) return;
+  setFb('s4q1Fb',true,'✅ 맞아요. 서로 다른 두 주사위이므로 (1, 4)와 (4, 1)은 다른 경우예요.');
+  setBoard('act','dice2',{labels:{A:'합이 5',B:'합이 11'}});
+  appendR(`<div class="qblock" id="s4aBlock">
+    <p class="lead">사건 ${itA()} : 눈의 수의 합이 5이다. &nbsp; 사건 ${itB()} : 눈의 수의 합이 11이다.</p>
+    <p class="key-q task">왼쪽 표에서 두 붓으로 각 사건이 일어나는 칸을 칠하고, 각각의 경우의 수를 써 보자.</p>
+    <div class="count-row"><span class="tagA">합이 5</span>인 경우의 수: <input class="blank" id="s4a"></div>
+    <div class="count-row"><span class="tagB">합이 11</span>인 경우의 수: <input class="blank" id="s4b"></div>
+    <div class="btn-row"><button class="btn btn-check" id="s4aBtn" onclick="s4aCheck()">확인</button></div>
+    <div class="feedback" id="s4aFb"></div>
+  </div>`);
+  scrollToEl('s4aBlock');
+}
+function s4aCheck(){
+  if($('s4aBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s4a', checkPaint('act', EV.ex1A, EV.ex1B, 's4aFb'))) return;
+  if(!graded('s4a', checkNums([{id:'s4a',val:4},{id:'s4b',val:2}], 's4aFb', '칠한 것은 맞아요! '))) return;
+  firstTry('s4a', true);
+  $('s4aBtn').disabled = true; lockBoard('act'); setLegend('act', legendHTML(EV.ex1A, EV.ex1B, '합이 5', '합이 11'));
+  setFb('s4aFb',true,'✅ 맞아요! 합이 5인 경우는 4가지, 합이 11인 경우는 2가지예요.');
+  appendR(`<div class="qblock" id="s4bBlock">
+    <p class="lead">예제에는 <span class="kw">'동시에'</span>라는 말이 나와요. 그런데 앞에서 배운 '동시에 일어나지 않는다'의 '동시에'와는 뜻이 달라요.</p>
+    <p class="key-q">'두 개의 주사위를 동시에 던진다'에서 '동시에'는 <span class="em">무슨 뜻</span>일까요?</p>
+    ${choiceCol('s4q2',[
+      {key:'time',label:'두 주사위를 같은 순간에 함께 던진다는 뜻이에요.'},
+      {key:'both',label:'한 결과가 두 사건에 모두 들어간다는 뜻이에요.'}])}
+    <div class="feedback" id="s4q2Fb"></div>
+  </div>`);
+  markShown('s4q2','s4bBlock');
+  scrollToEl('s4bBlock');
+}
+function s4q2Pick(k, btn){
+  if(!choiceGrade('s4q2', btn, k==='time', '❌ \'주사위를 동시에 던진다\'는 주사위를 던지는 방법을 말하고 있어요. 언제 던지는지에 대한 말이에요.', ['s4Prob'])) return;
+  setFb('s4q2Fb',true,'✅ 맞아요. 이 \'동시에\'는 <span class="kw">던지는 순간</span>에 대한 말일 뿐이에요.');
+  appendR(`<div class="qblock" id="s4cBlock">
+    <p class="lead">그럼 '두 사건이 <span class="kw">동시에 일어나는지</span>'는 따로 확인해야 해요.</p>
+    <p class="key-q">왼쪽 표에서 눈의 수의 합이 5이면서 <span class="em">동시에 11</span>인 칸이 있나요?</p>
+    ${choiceCol('s4q3',[
+      {key:'no',label:'없어요. 두 색이 함께 칠해진 칸이 없어요.'},
+      {key:'yes',label:'있어요. 주사위를 동시에 던졌으니까요.'}])}
+    <div class="feedback" id="s4q3Fb"></div>
+  </div>`);
+  markShown('s4q3','s4cBlock');
+  scrollToEl('s4cBlock');
+}
+function s4q3Pick(k, btn){
+  if(!choiceGrade('s4q3', btn, k==='no', '❌ 주사위를 같은 순간에 던진 것과, 한 칸이 두 사건에 모두 들어가는 것은 다른 이야기예요. 왼쪽 표를 다시 봐요.', ['actBoard'])) return;
+  setFb('s4q3Fb',true,'✅ 맞아요. 합이 5이면서 동시에 11일 수는 없으므로, 두 사건은 동시에 일어나지 않아요.');
+  appendR(`<div class="qblock" id="s4dBlock">
+    <p class="key-q task">그럼 눈의 수의 합이 5 <span class="em">또는</span> 11인 경우의 수를 구해 보자.</p>
+    ${formulaHTML('s4f','합이 5인<br>경우의 수','합이 11인<br>경우의 수','합이 5 또는 11인<br>경우의 수')}
+    <div class="btn-row"><button class="btn btn-check" id="s4fBtn" onclick="s4fCheck()">확인</button></div>
+    <div class="feedback" id="s4fFb"></div>
+  </div>`);
+  scrollToEl('s4dBlock');
+}
+function s4fCheck(){
+  if($('s4fBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s4f', checkNums([{id:'s4fa',val:4},{id:'s4fb',val:2},{id:'s4ft',val:6}], 's4fFb'))) return;
+  firstTry('s4f', true);
+  $('s4fBtn').disabled = true;
+  setFb('s4fFb',true,'✅ 정답! 4 + 2 = 6이에요.');
+  appendR(`<div class="qblock" id="s4End">
+    <div class="note-box">✔ '주사위를 동시에 던진다' → 같은 순간에 던진다는 뜻<br>✔ '두 사건이 동시에 일어나지 않는다' → 한 결과가 두 사건에 모두 들어가지 않는다는 뜻<br>더하기 전에 확인할 것은 <span class="kw">두 번째</span>예요!</div>
+    <div class="btn-row"><button class="btn" id="s4NextBtn" onclick="this.disabled=true;stage5()">다음: 주머니 두 개 →</button></div>
+  </div>`);
+  scrollToEl('s4End');
+}
+
+/* ════════════════════════════════
+   6단계: 주머니 두 개 (교과서 문제 4)
+════════════════════════════════ */
+function stage5(){
+  curStage=5; renderStepper(); showScreen('scAct');
+  setBoard('act','pouch',{labels:{A:'차가 1',B:'차가 4'}});
+  R(`<div class="panel-title"><span class="step-badge">6</span>주머니 두 개</div>
+    <div class="prob-box"><b>문제 4</b> 두 주머니 A, B에 1부터 5까지의 자연수가 각각 하나씩 적힌 5개의 공이 들어 있다. 각 주머니에서 공을 한 개씩 꺼낼 때, 꺼낸 공에 적힌 수의 차가 1 또는 4인 경우의 수를 구하시오.</div>
+    <p class="lead">여기서 A, B는 <span class="kw">주머니의 이름</span>이에요. 사건에는 '차가 1', '차가 4'라는 이름을 붙였어요.<br><span class="sub">※ 두 수의 차는 큰 수에서 작은 수를 뺀 값이에요.</span></p>
+    <div class="qblock" style="border-top:none">
+      <p class="key-q task">왼쪽 표에서 두 붓으로 차가 1인 칸과 차가 4인 칸을 칠하고, 빈칸을 채워 보자.</p>
+      ${formulaHTML('s5f','차가 1인<br>경우의 수','차가 4인<br>경우의 수','차가 1 또는 4인<br>경우의 수')}
+      <div class="btn-row"><button class="btn btn-check" id="s5Btn" onclick="s5Check()">확인</button></div>
+      <div class="feedback" id="s5Fb"></div>
+    </div>`);
+}
+function s5Check(){
+  if($('s5Btn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  if(!graded('s5', checkPaint('act', EV.q4A, EV.q4B, 's5Fb'))) return;
+  if(!graded('s5', checkNums([{id:'s5fa',val:8},{id:'s5fb',val:2},{id:'s5ft',val:10}], 's5Fb', '칠한 것은 맞아요! '))) return;
+  firstTry('s5', true);
+  $('s5Btn').disabled = true; lockBoard('act'); setLegend('act', legendHTML(EV.q4A, EV.q4B, '차가 1', '차가 4'));
+  setFb('s5Fb',true,'✅ 정답! 차가 1이면서 동시에 4일 수는 없으므로 8 + 2 = 10이에요.');
+  appendR(`<div class="qblock" id="s5End">
+    <div class="note-box">두 색이 함께 칠해진 칸이 없죠? 그래서 두 사건은 동시에 일어나지 않고, 경우의 수를 더할 수 있었어요.</div>
+    <div class="btn-row"><button class="btn" id="s5NextBtn" onclick="this.disabled=true;stage6()">다음: 정리하기 →</button></div>
+  </div>`);
+  scrollToEl('s5End');
+}
+
+/* ════════════════════════════════
+   7단계: 정리
+════════════════════════════════ */
+const SUM_BLANKS = [
+  { ans:'동시에 일어나지 않는', opts:['동시에 일어나지 않는','동시에 일어나는','아무'], wrong:{'동시에 일어나는':'짝수와 3의 배수처럼 동시에 일어나는 사건을 더했을 때 어떻게 되었는지 떠올려 봐요.','아무':'아무 두 사건이나 더해도 될까요? 4단계의 주사위를 떠올려 봐요.'} },
+  { ans:'a+b', opts:['a+b','a−b','a와 b 중 큰 수'], wrong:{'a−b':'국내 도서 2권, 해외 도서 3권일 때 몇 권 중에서 골랐는지 떠올려 봐요.','a와 b 중 큰 수':'\'또는\'은 하나를 골라 버리는 게 아니라 두 사건의 경우를 한데 모으는 것이었어요.'} }
+];
+let sumIdx = 0;
+function stage6(){
+  curStage=6; renderStepper(); showScreen('scSummary');
+  sumIdx = 0;
+  $('summaryArea').innerHTML = `<div class="panel-title"><span class="step-badge">7</span>정리해 볼까요?</div>
+    <p class="key-q task">빈칸에 알맞은 것을 차례로 골라 보자.</p>
+    <div class="sum-line" style="margin-top:10px">
+      <span class="slot" id="slot0">①</span> 두 사건 ${itA()}, ${itB()}에 대하여 사건 ${itA()}가 일어나는 경우의 수를 <span class="it">a</span>, 사건 ${itB()}가 일어나는 경우의 수를 <span class="it">b</span>라고 하면<br>
+      (사건 ${itA()} 또는 사건 ${itB()}가 일어나는 경우의 수) = <span class="slot" id="slot1">②</span>
+    </div>
+    <div id="sumPickArea" style="margin-top:8px"></div>
+    <div class="feedback" id="sumFb"></div>
+    <div id="sumEnd"></div>`;
+  sumRenderPick();
+}
+function fmtOpt(o){ return o.replace(/\ba\b/g,'<span class="it">a</span>').replace(/\bb\b/g,'<span class="it">b</span>'); }
+function sumRenderPick(){
+  const b = SUM_BLANKS[sumIdx];
+  $('sumPickArea').innerHTML = `<div style="font-weight:700;font-size:13.5px;margin-bottom:6px">${['①','②'][sumIdx]}에 들어갈 것:</div>
+    <div class="pick" id="sumRow">${shuffle(b.opts).map(o=>`<button class="choice-btn" data-o="${o}" onclick="sumPick(this)">${fmtOpt(o)}</button>`).join('')}</div>`;
+}
+function sumPick(btn){
+  if(btn.disabled) return;
+  const o = btn.dataset.o, b = SUM_BLANKS[sumIdx];
+  firstTry('sum'+sumIdx, o===b.ans);
+  if(o!==b.ans){ markChoice('sumRow',btn,false); wrongLock({qid:'sum'+sumIdx, row:'sumRow', fb:'sumFb', msg:'❌ '+b.wrong[o]}); return; }
+  markChoice('sumRow',btn,true);
+  const slot = $('slot'+sumIdx); slot.innerHTML = fmtOpt(o); slot.classList.add('filled');
+  setFb('sumFb',true,'✅ 맞아요!');
+  sumIdx++;
+  if(sumIdx < SUM_BLANKS.length){ setTimeout(sumRenderPick, 400); return; }
+  $('sumPickArea').innerHTML = '';
+  $('sumEnd').innerHTML = `
+    <div class="def-box">(사건 ${itA()} 또는 사건 ${itB()}가 일어나는 경우의 수) = <span class="it">a</span> + <span class="it">b</span><br><span style="font-size:13px;color:var(--ink2)">단, 두 사건 ${itA()}, ${itB()}는 동시에 일어나지 않는다.</span></div>
+    <div class="note-box">
+      <b>'또는'이 나오면 이렇게 해요</b><br>
+      ① 두 사건이 각각 무엇인지 확인해요. (사건 A, 사건 B)<br>
+      ② 두 사건이 <span class="kw">동시에 일어나는 경우가 있는지</span> 확인해요.<br>
+      ③ 동시에 일어나지 않으면 각 사건의 경우의 수를 <span class="kw">더해요</span>.<br>
+      <span class="sub">※ '주사위를 동시에 던진다'의 '동시에'는 같은 순간에 던진다는 뜻으로, ②와는 다른 말이에요.</span>
+    </div>
+    <div class="btn-row"><button class="btn" id="sumNextBtn" onclick="this.disabled=true;goToPractice()">문제풀이 시작 →</button></div>`;
+}
+
+/* ════════════════════════════════
+   8단계: 문제풀이
+   레벨1: 대상 1개, 겹치지 않는 두 사건 — 방식1(a, b 주고 합) + 방식2(전체와 한쪽 주고 다른 쪽) 섞음
+   레벨2: 대상 2개(주사위 두 개 / 주머니 두 개) — 표에 칠하고 a + b = ?
+   통과: 4문제 중 3문제 이상 '첫 시도'에 정답
+════════════════════════════════ */
+const L1_TEMPLATES = [
+  { A:'이온음료', B:'탄산음료',
+    q1:'어느 음료 자판기에 서로 다른 이온음료 {a}가지, 탄산음료 {b}가지가 있다. 이 중에서 음료 한 가지를 고를 때, 이온음료 또는 탄산음료를 고르는 경우의 수를 구하려고 한다.',
+    q2:'어느 음료 자판기에는 서로 다른 이온음료와 탄산음료만 있고, 음료 한 가지를 고르는 경우의 수는 {t}이다. 이 중 이온음료가 {a}가지일 때, 탄산음료를 고르는 경우의 수를 구하려고 한다.',
+    lA:'이온음료를 고르는<br>경우의 수', lB:'탄산음료를 고르는<br>경우의 수', lT:'이온음료 또는 탄산음료를<br>고르는 경우의 수' },
+  { A:'국내 도서', B:'해외 도서',
+    q1:'어느 도서관의 추천 도서에 국내 도서 {a}권, 해외 도서 {b}권이 있다. 이 중에서 책 한 권을 고를 때, 국내 도서 또는 해외 도서를 고르는 경우의 수를 구하려고 한다.',
+    q2:'어느 도서관의 추천 도서는 국내 도서와 해외 도서로만 이루어져 있고, 책 한 권을 고르는 경우의 수는 {t}이다. 이 중 국내 도서가 {a}권일 때, 해외 도서를 고르는 경우의 수를 구하려고 한다.',
+    lA:'국내 도서를 고르는<br>경우의 수', lB:'해외 도서를 고르는<br>경우의 수', lT:'국내 도서 또는 해외 도서를<br>고르는 경우의 수' },
+  { A:'김밥', B:'라면',
+    q1:'어느 분식집 차림표에 서로 다른 김밥 {a}가지, 라면 {b}가지가 있다. 이 중에서 음식 한 가지를 고를 때, 김밥 또는 라면을 고르는 경우의 수를 구하려고 한다.',
+    q2:'어느 분식집 차림표에는 서로 다른 김밥과 라면만 있고, 음식 한 가지를 고르는 경우의 수는 {t}이다. 이 중 김밥이 {a}가지일 때, 라면을 고르는 경우의 수를 구하려고 한다.',
+    lA:'김밥을 고르는<br>경우의 수', lB:'라면을 고르는<br>경우의 수', lT:'김밥 또는 라면을<br>고르는 경우의 수' },
+  { A:'버스', B:'지하철',
+    q1:'학교에서 도서관까지 가는 버스 노선이 {a}가지, 지하철 노선이 {b}가지 있다. 이 중 한 가지 노선을 이용하여 갈 때, 버스 또는 지하철을 이용하는 경우의 수를 구하려고 한다.',
+    q2:'학교에서 도서관까지 버스 또는 지하철 중 한 가지 노선을 이용하여 가는 경우의 수는 {t}이다. 이 중 버스 노선이 {a}가지일 때, 지하철을 이용하는 경우의 수를 구하려고 한다.',
+    lA:'버스를 이용하는<br>경우의 수', lB:'지하철을 이용하는<br>경우의 수', lT:'버스 또는 지하철을<br>이용하는 경우의 수' },
+  { A:'운동 동아리', B:'예술 동아리',
+    q1:'우리 학교에 서로 다른 운동 동아리 {a}개, 예술 동아리 {b}개가 있다. 이 중에서 동아리 한 개에 가입할 때, 운동 동아리 또는 예술 동아리에 가입하는 경우의 수를 구하려고 한다.',
+    q2:'우리 학교에는 서로 다른 운동 동아리와 예술 동아리만 있고, 동아리 한 개에 가입하는 경우의 수는 {t}이다. 이 중 운동 동아리가 {a}개일 때, 예술 동아리에 가입하는 경우의 수를 구하려고 한다.',
+    lA:'운동 동아리에 가입하는<br>경우의 수', lB:'예술 동아리에 가입하는<br>경우의 수', lT:'운동 동아리 또는 예술 동아리에<br>가입하는 경우의 수' },
+  { A:'반팔 티셔츠', B:'긴팔 티셔츠',
+    q1:'옷장에 서로 다른 반팔 티셔츠 {a}벌, 긴팔 티셔츠 {b}벌이 있다. 이 중에서 티셔츠 한 벌을 고를 때, 반팔 티셔츠 또는 긴팔 티셔츠를 고르는 경우의 수를 구하려고 한다.',
+    q2:'옷장에는 서로 다른 반팔 티셔츠와 긴팔 티셔츠만 있고, 티셔츠 한 벌을 고르는 경우의 수는 {t}이다. 이 중 반팔 티셔츠가 {a}벌일 때, 긴팔 티셔츠를 고르는 경우의 수를 구하려고 한다.',
+    lA:'반팔 티셔츠를 고르는<br>경우의 수', lB:'긴팔 티셔츠를 고르는<br>경우의 수', lT:'반팔 티셔츠 또는 긴팔 티셔츠를<br>고르는 경우의 수' }
+];
+// 방식1: a, b가 주어지고 합을 구함 / 방식2: 전체와 한쪽이 주어지고 다른 쪽을 구함 (주어진 값 ↔ 미지수 바꿔치기)
+function buildL1(tpl, mode){
+  let a=randInt(2,7), b=randInt(2,7); while(b===a) b=randInt(2,7);
+  const t=a+b;
+  const text = (mode===1?tpl.q1:tpl.q2).replace('{a}',a).replace('{b}',b).replace('{t}',t);
+  return { mode, tpl, a, b, t, text, caseA:tpl.lA, caseB:tpl.lB, caseT:tpl.lT };
+}
+// 레벨2: 같은 종류(합·차·곱)끼리 짝지은 두 사건은 항상 동시에 일어나지 않음
+function l2Candidates(){
+  const list=[];
+  for(const exp of ['dice2','pouch']){
+    for(const op of ['sum','diff','prod']){
+      const vals = [...new Set(OUT[exp].map(v=>{ const [a,b]=pv(v); return OPS[op].f(a,b); }))].sort((x,y)=>x-y);
+      for(let i=0;i<vals.length;i++) for(let j=i+1;j<vals.length;j++){
+        const A=pairEv(exp,op,vals[i]), B=pairEv(exp,op,vals[j]);
+        const na=caseSet(A).size, nb=caseSet(B).size;
+        if(na<1||nb<1) continue;
+        if(op==='diff' && vals[i]===0) continue;          // '차가 0'은 어색해서 제외
+        if(na+nb>10 || na+nb<3) continue;                 // 칠하기 부담 조절
+        if(exp==='dice2' && op==='sum' && vals[i]===5 && vals[j]===11) continue; // 예제 1 그대로는 제외
+        if(exp==='pouch' && op==='diff' && vals[i]===1 && vals[j]===4) continue; // 문제 4 그대로는 제외
+        list.push({exp, op, A, B});
+      }
+    }
+  }
+  return list;
+}
+const L2_POOL = l2Candidates();
+function l2Text(q){
+  const opi = OPS[q.op].ip;
+  if(q.exp==='dice2') return `서로 다른 두 개의 주사위를 동시에 던질 때, 나오는 눈의 수의 ${opi} ${q.A.k} 또는 ${q.B.k}인 경우의 수를 구하시오.`;
+  return `두 주머니 A, B에 1부터 5까지의 자연수가 각각 하나씩 적힌 5개의 공이 들어 있다. 각 주머니에서 공을 한 개씩 꺼낼 때, 꺼낸 공에 적힌 수의 ${opi} ${q.A.k} 또는 ${q.B.k}인 경우의 수를 구하시오.`;
+}
+const LEVELS = [ { label:'레벨1 · 한 가지 고르기', passNeeded:3, n:4 }, { label:'레벨2 · 두 개를 동시에', passNeeded:3, n:4 } ];
+const pst = { levelIdx:0, idx:0, correct:0, order:[], firstTry:true, passedLevels:{} };
+function goToPractice(){ curStage=7; renderStepper(); startLevel(0); }
+function updateLevelTabs(){
+  $('levelTabs').innerHTML = LEVELS.map((lv,i)=>`<div class="level-tab ${i===pst.levelIdx?'active':(pst.passedLevels[i]?'done':'')}">${lv.label}</div>`).join('');
+}
+function startLevel(levelIdx){
+  pst.levelIdx = levelIdx; pst.idx=0; pst.correct=0;
+  if(levelIdx===0){
+    const tpls = pickN(L1_TEMPLATES, 4);
+    const modes = shuffle([1,1,2,2]);
+    pst.order = tpls.map((t,i)=>buildL1(t, modes[i]));
+  } else {
+    const d = pickN(L2_POOL.filter(q=>q.exp==='dice2'),2), p = pickN(L2_POOL.filter(q=>q.exp==='pouch'),2);
+    pst.order = shuffle([...d,...p]);
+  }
+  showScreen('scPractice'); updateLevelTabs(); renderPQuestion();
+}
+// 레벨1에서 틀리면 같은 상황·같은 방식으로 숫자만 바꾼 새 문제 (숫자를 바꿔 넣어 보며 맞히는 것을 막음)
+function makeL1Variant(q){
+  let v; do { v = buildL1(q.tpl, q.mode); } while(v.a===q.a && v.b===q.b);
+  v.variant = true;
+  return v;
+}
+function renderPQuestion(keepFail){
+  const lv = LEVELS[pst.levelIdx], q = pst.order[pst.idx];
+  pst.firstTry = !keepFail;
+  $('pgProgress').textContent = `${lv.label} · ${pst.idx+1} / ${pst.order.length}`;
+  const banner = q.variant ? `<div class="variant-banner">🔁 숫자가 바뀐 새 문제예요. 이 문제를 맞혀야 다음으로 넘어가요. <span class="sub">(점수에는 들어가지 않아요.)</span></div>` : '';
+  if(pst.levelIdx===0){
+    const left=$('pgLeft'); left.classList.remove('board-sticky');
+    left.innerHTML = `<div class="hint-card"><div style="font-weight:800;margin-bottom:6px">🔎 확인할 것</div>
+      ① 두 사건이 각각 무엇인지 확인해요.<br>② 두 사건이 동시에 일어나는 경우가 있는지 확인해요.<br>③ 동시에 일어나지 않으면 경우의 수를 더해요.</div>`;
+    $('pgArea').innerHTML = `${banner}<div class="prob-box">${q.text}</div>
+      <p class="key-q task">빈칸에 알맞은 수를 써 보자.</p>
+      ${formulaHTML('pg', q.caseA, q.caseB, q.caseT)}
+      <div class="btn-row"><button class="btn btn-check" id="pgBtn" onclick="pgCheck()">확인</button></div>
+      <div class="feedback" id="pgFb"></div><div class="btn-row" id="pgNextRow"></div>`;
+  } else {
+    setBoard('pg', q.exp, {labels:{A:q.A.short, B:q.B.short}});
+    const opi = OPS[q.op].ip;
+    $('pgArea').innerHTML = `<div class="prob-box">${l2Text(q)}</div>
+      <p class="key-q task">왼쪽 표에서 두 붓으로 각 사건이 일어나는 칸을 칠하고, 빈칸을 채워 보자.</p>
+      ${q.op==='diff'?'<p class="sub">※ 두 수의 차는 큰 수에서 작은 수를 뺀 값이에요.</p>':''}
+      ${formulaHTML('pg', `${opi} ${q.A.k}인<br>경우의 수`, `${opi} ${q.B.k}인<br>경우의 수`, `${opi} ${q.A.k} 또는 ${q.B.k}인<br>경우의 수`)}
+      <div class="btn-row"><button class="btn btn-check" id="pgBtn" onclick="pgCheck()">확인</button></div>
+      <div class="feedback" id="pgFb"></div><div class="btn-row" id="pgNextRow"></div>`;
+  }
+}
+function pgCheck(){
+  if($('pgBtn').disabled) return;   // 이미 통과한 단계는 다시 이어붙이지 않음
+  const q = pst.order[pst.idx];
+  let r;
+  if(pst.levelIdx===0){
+    r = checkNums([{id:'pga',val:q.a},{id:'pgb',val:q.b},{id:'pgt',val:q.t}], 'pgFb');
+  } else {
+    r = checkPaint('pg', q.A, q.B, 'pgFb');
+    if(r===true) r = checkNums([{id:'pga',val:caseSet(q.A).size},{id:'pgb',val:caseSet(q.B).size},{id:'pgt',val:caseSet(q.A).size+caseSet(q.B).size}], 'pgFb', '칠한 것은 맞아요! ');
+  }
+  if(r===false) pst.firstTry = false;
+  if(r===false && pst.levelIdx===0){
+    // 정답은 보여 주지 않고, 잠깐 뒤 숫자만 바꾼 새 문제로
+    ['pga','pgb','pgt'].forEach(id=>$(id).disabled=true); $('pgBtn').disabled = true;
+    const msg = '❌ 다시 한 번 생각해 보세요!';
+    lockTimer(lockSecs('pg'+pst.idx), 'pgFb', msg, '숫자가 바뀐 새 문제가 나와요', $('pgBtn'), ()=>{
+      pst.order[pst.idx] = makeL1Variant(q);
+      renderPQuestion(true);
+    });
+    return;
+  }
+  if(r!==true) return;
+  $('pgBtn').disabled = true;
+  if(pst.levelIdx===1) lockBoard('pg');
+  if(pst.firstTry) pst.correct++;
+  setFb('pgFb',true, pst.firstTry ? '✅ 정답이에요!' : '✅ 맞아요! (다시 풀어서 맞힌 문제는 점수에 들어가지 않아요.)');
+  $('pgNextRow').innerHTML = `<button class="btn" id="pgNextBtn" onclick="this.disabled=true;pgNext()">${pst.idx<pst.order.length-1?'다음 문제 →':'결과 보기 →'}</button>`;
+}
+function pgNext(){ pst.idx++; if(pst.idx < pst.order.length) renderPQuestion(); else levelFinish(); }
+function levelFinish(){
+  const lv = LEVELS[pst.levelIdx];
+  const pass = pst.correct >= lv.passNeeded;
+  if(pass) pst.passedLevels[pst.levelIdx] = true;
+  updateLevelTabs(); showScreen('scLevelResult');
+  $('lrIcon').textContent = pass?'🎉':'💪';
+  $('lrTitle').textContent = pass ? `${lv.label.split(' ·')[0]} 통과!` : `${lv.label.split(' ·')[0]} 아쉬워요`;
+  $('lrScore').textContent = `${pst.correct} / ${pst.order.length}`;
+  $('lrMsg').textContent = pass ? '잘했어요! 다음으로 넘어가 볼까요?' : `한 번에 맞힌 문제가 ${lv.passNeeded}개 이상이어야 통과해요. 다시 도전해 볼까요?`;
+  $('lrRetryBtn').style.display = pass ? 'none' : '';
+  $('lrNextBtn').style.display = pass ? '' : 'none';
+  $('lrNextBtn').textContent = (pst.levelIdx < LEVELS.length-1) ? '다음 레벨 →' : '결과 보기 →';
+}
+function lrRetry(){ startLevel(pst.levelIdx); }
+function lrNext(){
+  if(pst.levelIdx < LEVELS.length-1){ startLevel(pst.levelIdx+1); }
+  else {
+    curStage = STAGES.length; renderStepper(); showScreen('scDone');
+    $('doneStat').innerHTML = stat.total ? `탐구하면서 한 번에 맞힌 질문: ${stat.first} / ${stat.total}` : '';
+    if(window._reportHubComplete) window._reportHubComplete();
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  const ev = e=>`${casesList(e)} → ${caseSet(e).size}`;
+  $('adminPanelBody').innerHTML =
+    '<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">'+
+      STAGES.map((s,i)=>`<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGo(${i})">${i+1}.${s}</button>`).join('')+
+      '<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="adminGo(8)">레벨2</button>'+
+    '</div>'+
+    '<div><strong>숫자 빈칸 인정 형식</strong>: 5 (= 5가지 = 5개 = 5권 = 5벌 = 5종류, 띄어쓰기 무시)</div>'+
+    `<div><strong>1단계</strong>: A 국내 ${ev(EV.bDom)} / B 해외 ${ev(EV.bFor)} · 사건 B = 해외 도서를 고른다</div>`+
+    '<div><strong>2단계</strong>: A가 일어나거나 B가 일어난다 / 해외②→일어남 / 모두 5 / 2+3=5</div>'+
+    '<div><strong>3단계</strong>: 한 권 고르기 / 동시에 국내·해외 불가</div>'+
+    `<div><strong>4단계</strong>: 2 이하 ${ev(EV.dLe2)}, 5 이상 ${ev(EV.dGe5)} → 2+2=4 / 3의 눈 → 안 일어남 / 짝수 ${ev(EV.dEven)}, 3의 배수 ${ev(EV.dMul3)} → 직접 4, 더하면 5 / 6을 두 번 셈</div>`+
+    '<div style="margin-left:8px">겹침 분류 풀(겹침 2 + 안 겹침 2 랜덤):<br>'+OVERLAP_PAIRS.map(p=>`${p.a} / ${p.b} → ${pairOverlaps(p)?'동시에 일어날 수 있다':'동시에 일어나지 않는다'}`).join('<br>')+'</div>'+
+    `<div><strong>5단계</strong>: (1,4)≠(4,1) / 합 5 ${ev(EV.ex1A)} / 합 11 ${ev(EV.ex1B)} / 같은 순간에 던진다 / 겹치는 칸 없음 / 4+2=6</div>`+
+    `<div><strong>6단계</strong>: 차 1 ${ev(EV.q4A)} / 차 4 ${ev(EV.q4B)} / 8+2=10</div>`+
+    '<div><strong>7단계</strong>: ① 동시에 일어나지 않는 ② a+b</div>'+
+    '<div><strong>레벨1</strong>: 상황 6개 × 방식1(a, b 주고 합)·방식2(전체와 한쪽 주고 다른 쪽) — 빈칸은 (A쪽)+(B쪽)=(전체) 순서 고정, a·b는 2~7 서로 다른 수</div>'+
+    `<div><strong>레벨2</strong>: 같은 종류(합·차·곱)끼리 짝지은 ${L2_POOL.length}쌍에서 주사위 2 + 주머니 2 랜덤 (교과서 예제 1·문제 4와 같은 쌍은 제외)</div>`+
+    '<div style="color:var(--red);margin-top:6px">미인정: "다섯"처럼 한글 수사 / 레벨1에서 두 빈칸 (A쪽, B쪽) 순서를 바꿔 쓴 경우</div>'+
+    '<div style="margin-top:6px"><strong>찍기 방지</strong>: 질문이 뜬 뒤 1.5~4초 안에 고르면 채점 안 함 · 틀리면 3→5→8초 잠금 후 보기 다시 섞기 · 4단계 겹침 분류의 틀린 줄은 새 사건 쌍으로 교체(겹침 여부 무작위) · 레벨1 오답은 숫자만 바꾼 새 문제 (둘 다 정답 공개 안 함)</div>'+
+    `<label style="display:block;margin-top:6px"><input type="checkbox" ${GUARD.on?'':'checked'} onchange="GUARD.on=!this.checked"> 시연용: 읽기 확인·잠금 끄기</label>`;
+  $('adminPanel').style.display='block';
+}
+function adminGo(i){
+  const f=[stage0,stage1,stage2,stage3,stage4,stage5,stage6,goToPractice];
+  if(i<8) f[i](); else { curStage=7; renderStepper(); startLevel(1); }
+}
+
+stage0();
+</script>
+</body>
+</html>
