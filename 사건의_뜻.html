@@ -113,6 +113,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .feedback.error{color:var(--red)}
 .note-box{background:var(--green-ll);border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
 .def-box{background:var(--indigo-ll);border:2px solid var(--indigo);border-radius:12px;padding:14px 16px;font-size:15px;line-height:1.9;margin-top:12px}
+.modal-overlay.termpop{background:rgba(26,26,46,0.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.term-box{max-width:480px;width:100%}
+.term-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--indigo);border-radius:10px;padding:2px 10px;margin-bottom:8px}
+.term-box .def-box{margin-top:0;text-align:left}
+.term-box .def-box .blank{font-size:15px;color:#be123c}
+.def-box.term-wait{visibility:hidden}
+.def-box u{text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
 .def-box b.term{color:#be123c}
 .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-size:13.5px;font-weight:700}
 .flow .fbox{background:#fff;border:1.5px solid #d8ddfb;border-radius:8px;padding:6px 10px;text-align:center;line-height:1.5}
@@ -268,6 +275,11 @@ function finishToHub(){ document.getElementById('hubBackLink').click(); }
     </div>
   </div>
 
+</div>
+
+<!-- 용어 팝업: 파란 정리 상자의 핵심 용어를 써야 닫힘 -->
+<div class="modal-overlay termpop" id="termModal">
+  <div class="modal-box term-box" id="termBox"></div>
 </div>
 
 <div class="modal-overlay" id="adminPwModal">
@@ -577,6 +589,47 @@ function renderStepper(){
 function R(html){ $('actRight').innerHTML = html; }
 function appendR(html){ $('actRight').insertAdjacentHTML('beforeend', html); }
 function scrollToEl(id){ const el=$(id); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+/* ════════════════════════════════
+   용어 팝업 — 파란 정리 상자를 핵심 용어 빈칸으로 먼저 띄우고, 써야 닫힘.
+   틀리면 "다시 한 번 생각해 보세요!"만 (정답 공개 없음). 닫히면 화면의 상자가 나타남.
+════════════════════════════════ */
+let termCfg = null, termTimer = null;
+function normTerm(s){ return String(s||'').replace(/[\s'"‘’“”.,!]/g,''); }
+function termAfter(cfg, delay){
+  clearTimeout(termTimer);
+  termTimer = setTimeout(()=>{ if($(cfg.box)) openTermPop(cfg); }, delay==null ? 700 : delay);
+}
+function openTermPop(cfg){
+  termCfg = cfg;
+  const w = Math.max(...cfg.ans.map(a=>a.length))*1.1 + 1.6;
+  $('termBox').innerHTML = `<div class="term-tag">📘 개념 정리</div><div class="modal-text" style="margin-bottom:8px">${cfg.title}<br><span style="color:var(--ink2);font-weight:600">빈칸에 알맞은 말을 써 보세요.</span></div>
+    <div class="def-box">${cfg.html.replace('[[BLANK]]', `<input class="blank" id="termInp" style="width:${w}em" autocomplete="off">`)}</div>
+    <div class="feedback" id="termFb"></div>
+    <div class="btn-row"><button class="modal-btn" id="termBtn" onclick="termCheck()">확인</button></div>`;
+  $('termModal').classList.add('show');
+  const inp = $('termInp');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') termCheck(); });
+  try{ inp.focus(); }catch(e){}
+}
+function closeTermPop(){ clearTimeout(termTimer); $('termModal').classList.remove('show'); termCfg = null; }
+function termCheck(){
+  if(!termCfg || $('termBtn').disabled) return;
+  const inp = $('termInp'), raw = normTerm(inp.value);
+  if(raw===''){ setFb('termFb',false,'빈칸을 채워 주세요.'); return; }
+  const ok = termCfg.ans.some(a=>normTerm(a)===raw);
+  firstTry(termCfg.qid, ok);
+  inp.classList.toggle('wrong',!ok); inp.classList.toggle('correct',ok);
+  if(!ok){ setFb('termFb',false,'❌ 다시 한 번 생각해 보세요!'); return; }
+  setFb('termFb',true,'✅ 맞아요!');
+  $('termBtn').disabled = true;
+  const box = termCfg.box;
+  setTimeout(()=>{
+    closeTermPop();
+    const el = $(box); if(!el) return;
+    el.classList.remove('term-wait'); flashRef(el); scrollToEl(box);
+  }, 600);
+}
+
 function choiceCol(name, opts){
   // opts: [{key,label}] — 화면에 넣기 전에 순서 섞기
   return `<div class="choice-col" id="${name}Row">`+shuffle(opts).map(o=>`<button class="choice-btn" data-k="${o.key}" onclick="${name}Pick('${o.key}',this)">${o.label}</button>`).join('')+`</div>`;
@@ -676,7 +729,7 @@ function s0q3Pick(k, btn){
   setFb('s0q3Fb',true,'✅ 맞아요! 주사위를 던졌을 때 나오는 결과예요.');
   appendR(`<div class="qblock" id="s0defBlock">
       <p class="lead">수학에서 말하는 '사건'의 뜻이에요.</p>
-      <div class="def-box" id="s0def">같은 조건에서 반복할 수 있는 실험이나 관찰의 결과를 <b class="term">사건</b>이라고 한다.</div>
+      <div class="def-box term-wait" id="s0def">같은 조건에서 반복할 수 있는 실험이나 관찰의 결과를 <b class="term">사건</b>이라고 한다.</div>
       <p class="key-q">위의 뜻에서, 사건은 <span class="em">어떤 실험이나 관찰</span>의 결과라고 했나요?</p>
       ${choiceCol('s0d',[{key:'repeat',label:'같은 조건에서 반복할 수 있는 실험이나 관찰'},{key:'once',label:'딱 한 번만 해 볼 수 있는 실험이나 관찰'},{key:'same',label:'결과가 항상 똑같이 나오는 실험이나 관찰'}])}
       <div class="feedback" id="s0dFb"></div>
@@ -684,6 +737,8 @@ function s0q3Pick(k, btn){
     </div>`);
   markShown('s0d','s0defBlock');
   scrollToEl('s0defBlock');
+  termAfter({ qid:'term0', box:'s0def', title:"수학에서 말하는 '사건'의 뜻이에요.",
+    html:'같은 조건에서 반복할 수 있는 실험이나 관찰의 결과를 [[BLANK]]이라고 한다.', ans:['사건'] });
 }
 function s0dPick(k, btn){
   if(btn.disabled || !readGate('s0d','s0dFb')) return;
@@ -747,7 +802,7 @@ function s1bCheck(){
     s1target = target;
     appendR(`<div class="qblock" id="s1cBlock">
       <p class="lead">'3의 배수의 눈이 나온다'는 주사위를 던졌을 때 나오는 결과이므로 <span class="kw">사건</span>이에요.</p>
-      <div class="def-box" id="s1def">사건이 일어나는 가짓수를 <b class="term">경우의 수</b>라고 한다.</div>
+      <div class="def-box term-wait" id="s1def">사건이 일어나는 가짓수를 <b class="term">경우의 수</b>라고 한다.</div>
       <p class="key-q">위의 뜻에서, 경우의 수는 <span class="em">무엇</span>이라고 했나요?</p>
       ${choiceCol('s1d',[{key:'kinds',label:'사건이 일어나는 가짓수'},{key:'rolls',label:'주사위를 던진 횟수'},{key:'each',label:'사건이 일어나는 결과 하나하나'}])}
       <div class="feedback" id="s1dFb"></div>
@@ -755,6 +810,8 @@ function s1bCheck(){
     </div>`);
     markShown('s1d','s1cBlock');
     scrollToEl('s1cBlock');
+    termAfter({ qid:'term1', box:'s1def', title:"수학에서 말하는 '경우의 수'의 뜻이에요.",
+      html:'사건이 일어나는 가짓수를 [[BLANK]]라고 한다.', ans:['경우의 수'] });
   }, 's1b');
 }
 let s1target = null;
@@ -1300,6 +1357,7 @@ async function checkAdminPassword(){
     REVERSE_ITEMS.map(it=>`<div>${it.set.join(', ')} → ${reverseCorrectIds(it).map(id=>EV[id].text).join(' / ')}</div>`).join('')+
     '<div style="margin-top:6px"><strong>7단계 정리</strong>: ① 결과 ② 사건 ③ 경우의 수</div>'+
     '<div style="margin-top:6px"><strong>레벨2</strong>: 일어나는 경우가 색칠된 결과와 같은 사건 1개만 정답(오답 3개는 경우가 서로 다르게 자동 선택)</div>'+
+    '<div><strong>용어 팝업</strong>: 사건 / 경우의 수 (띄어쓰기·따옴표·마침표 무시)</div>'+
     '<div style="color:var(--red);margin-top:6px">미인정: "두 가지"처럼 한글 수사로 쓴 경우의 수</div>'+
     '<div style="margin-top:6px"><strong>정의 확인 질문</strong>: 사건 → 같은 조건에서 반복할 수 있는 실험이나 관찰 / 경우의 수 → 사건이 일어나는 가짓수</div>'+
     '<div style="margin-top:6px"><strong>찍기 방지 (실험판)</strong>: 질문이 뜬 뒤 1.5~4초 안에 고르면 채점 안 함 · 틀리면 3→5→8초 잠금 후 보기 다시 섞기 · 4단계 틀린 문장은 새 문장으로 교체(유형 무작위, 정답 공개 안 함) · 레벨2 사건 오답은 새 변형 문제</div>'+
@@ -1307,6 +1365,7 @@ async function checkAdminPassword(){
   $('adminPanel').style.display='block';
 }
 function adminGo(i){
+  closeTermPop();
   if(i===0) stage0(); else if(i===1) stage1(); else if(i===2) stage2(); else if(i===3) stage3();
   else if(i===4) stage4(); else if(i===5) stage5(); else if(i===6) stage6();
   else if(i===7) goToPractice();
