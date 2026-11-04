@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이 사건의 경우는?</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --ev:#be123c;--sel:#f59e0b;--sel-l:#fef3c7;
+  --gold:#f59e0b;
+  --r:14px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:40px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:860px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-soft{background:var(--indigo-l);color:var(--indigo)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.feedback{min-height:22px;font-size:14px;font-weight:800;text-align:center;margin-top:8px}
+.feedback.ok{color:var(--green)}
+.feedback.no{color:var(--red)}
+.feedback.info{color:#b45309}
+
+/* 시작 화면 */
+.title-box{text-align:center;padding:22px 16px 16px}
+.title-box h1{font-size:28px;font-weight:900;letter-spacing:-0.5px}
+.title-box h1 .e{color:var(--ev)}
+.title-box p{margin-top:6px;font-size:14px;color:var(--ink2);font-weight:600}
+.remember{background:var(--indigo-ll);border-radius:12px;padding:10px 14px;font-size:13.5px;line-height:1.8;font-weight:700;color:#312e81}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lv{border:2px solid #d8ddfb;border-radius:14px;padding:14px 12px;background:#fff;text-align:center;cursor:pointer;font-family:inherit;color:var(--ink);transition:transform .15s}
+.lv:hover:not(:disabled){transform:translateY(-2px);border-color:var(--indigo)}
+.lv:disabled{cursor:default;background:#f4f4f8;color:var(--ink3)}
+.lv .n{font-size:13px;font-weight:800;color:var(--indigo)}
+.lv:disabled .n{color:var(--ink3)}
+.lv .t{font-size:17px;font-weight:900;margin:3px 0}
+.lv .d{font-size:12px;color:var(--ink2);font-weight:600;line-height:1.5;min-height:36px}
+.lv .best{margin-top:6px;font-size:12px;font-weight:800;color:#b45309}
+.lv .pass{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:800;color:#14532d;background:var(--green-l);border-radius:10px;padding:1px 8px}
+.rules{font-size:13px;line-height:1.85;color:var(--ink2);font-weight:600}
+.rules li{margin-left:18px}
+@media (max-width:640px){ .levels{grid-template-columns:1fr} }
+
+/* 게임 화면 */
+.hud{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+.hud .box{background:#fff;border-radius:12px;padding:6px 14px;font-weight:900;font-size:18px;box-shadow:var(--shadow);min-width:96px;text-align:center}
+.hud .box small{display:block;font-size:10.5px;color:var(--ink3);font-weight:800}
+.hud .combo{color:#c2410c}
+.hud .combo.hot{animation:pulse .6s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+.timebar{height:12px;border-radius:8px;background:#dfe3fb;overflow:hidden;margin-bottom:14px}
+.timebar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#84cc16);border-radius:8px;transition:width .1s linear}
+.timebar.low i{background:linear-gradient(90deg,#ef4444,#f97316)}
+.arena{position:relative}
+.q-card{position:relative;background:#fff;border-radius:18px;border:3px solid #c7cdfa;box-shadow:0 8px 28px rgba(79,70,229,.18);padding:18px 18px 16px;transition:transform .25s ease, opacity .25s ease}
+.q-card .ctx{display:inline-block;font-size:11.5px;font-weight:800;color:var(--indigo);background:var(--indigo-ll);border-radius:10px;padding:2px 9px;margin-bottom:6px}
+.q-card .txt{font-size:18px;font-weight:800;line-height:1.75;word-break:keep-all}
+.q-card .txt .evt{color:var(--ev)}
+.q-card .task{font-size:13.5px;font-weight:800;color:var(--ink2);margin-top:4px}
+.q-card .task u{text-decoration-color:var(--gold);text-decoration-thickness:3px;text-underline-offset:4px}
+.q-card .cbar{height:7px;border-radius:5px;background:#eef0fb;margin-top:12px;overflow:hidden}
+.q-card .cbar i{display:block;height:100%;background:var(--gold);border-radius:5px}
+.q-card .cbar-lbl{font-size:10.5px;color:var(--ink3);font-weight:800;margin-top:3px;text-align:right}
+.q-card.done{transform:translateY(-14px);opacity:0}
+.q-card.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.q-card.enter{animation:enter .22s ease-out}
+@keyframes enter{from{transform:translateY(18px) scale(.97);opacity:0}}
+.pop{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-size:24px;font-weight:900;pointer-events:none;animation:popUp .9s ease-out forwards;white-space:nowrap;z-index:3}
+.pop.plus{color:var(--green)} .pop.minus{color:var(--red)}
+@keyframes popUp{from{opacity:1;transform:translate(-50%,10px)}to{opacity:0;transform:translate(-50%,-46px)}}
+.wrong-msg{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-weight:900;font-size:15px;border-radius:12px;padding:6px 14px;white-space:nowrap;z-index:3}
+
+/* 결과 고르기 보드 */
+.board{margin-top:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:64px;border:2.5px solid #d8ddfb;background:#fff;border-radius:14px;padding:8px 8px 6px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:800;color:var(--ink);transition:transform .08s}
+.chip:active{transform:scale(.95)}
+.chip .big{font-size:28px;line-height:1.1}
+.chip .grp{font-size:10.5px;font-weight:800;border-radius:8px;padding:0 6px}
+.chip .pair{display:flex;gap:3px}
+.chip.on{border-color:var(--sel);background:var(--sel-l);box-shadow:0 0 0 3px rgba(245,158,11,.35)}
+.chip:disabled,.cell:disabled{cursor:default}
+.grid36{border-collapse:separate;border-spacing:3px;margin:0 auto}
+.grid36 th{font-size:11px;font-weight:800;color:var(--ink2);padding:0}
+.grid36 th .hd{display:flex;flex-direction:column;align-items:center}
+.cell{width:46px;height:34px;border:2px solid #d8ddfb;background:#fff;border-radius:8px;font-family:inherit;font-size:11.5px;font-weight:800;color:var(--ink);cursor:pointer;padding:0}
+.cell.on{border-color:var(--sel);background:var(--sel-l);box-shadow:0 0 0 2px rgba(245,158,11,.4)}
+@media (max-width:420px){ .cell{width:38px;height:30px;font-size:10px} }
+.answer-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.count-box{font-size:16px;font-weight:800}
+.blank{border:none;border-bottom:2.5px solid var(--indigo);background:transparent;width:64px;font-size:18px;font-weight:800;font-family:inherit;text-align:center;padding:2px 4px}
+.blank:focus{outline:none;background:var(--indigo-ll)}
+.none-btn{border:2px dashed #c7cdfa;background:#fff;border-radius:12px;padding:7px 12px;font-size:13px;font-weight:800;font-family:inherit;color:var(--ink2);cursor:pointer}
+.none-btn.on{border-style:solid;border-color:var(--sel);background:var(--sel-l);color:#92400e}
+.sel-count{font-size:12px;font-weight:800;color:var(--ink3);text-align:center;margin-top:6px}
+.countdown{position:fixed;inset:0;background:rgba(26,26,46,.55);display:none;align-items:center;justify-content:center;z-index:40;font-size:110px;font-weight:900;color:#fff;text-shadow:0 6px 24px rgba(0,0,0,.35)}
+.countdown.show{display:flex}
+
+/* 결과·오답 상자 */
+.result-big{text-align:center}
+.result-big .score{font-size:46px;font-weight:900;color:var(--indigo)}
+.result-big .newbest{display:inline-block;background:#fef3c7;color:#92400e;font-weight:900;border-radius:12px;padding:3px 12px;font-size:13px;margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.stats div{background:var(--indigo-ll);border-radius:12px;padding:8px;text-align:center;font-size:20px;font-weight:900}
+.stats small{display:block;font-size:11px;color:var(--ink3);font-weight:800}
+@media (max-width:560px){ .stats{grid-template-columns:repeat(2,1fr)} }
+.verdict{margin-top:14px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.7;text-align:center}
+.verdict.ok{background:var(--green-l);color:#14532d}
+.verdict.no{background:#fef3c7;color:#92400e}
+.box-head{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:900;margin-bottom:6px}
+.box-count{font-size:13px;font-weight:800;color:var(--ink3)}
+.hint-box{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:700;color:#92400e;margin-top:10px;line-height:1.7}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:30px;margin-bottom:6px}
+.modal-text{font-size:15px;font-weight:800;margin-bottom:10px}
+.modal-btn{border:none;border-radius:10px;padding:8px 16px;font-size:13.5px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.pw{border:2px solid #c7cdfa;border-radius:8px;padding:6px 8px;font-size:15px;font-family:inherit;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">🎮 이 사건의 경우는?</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'case-game' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._hubDb = _db;
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+</script>
+
+<div class="main">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="scMenu">
+    <div class="card title-box">
+      <h1>이 <span class="e">사건</span>의 경우는? 🔍</h1>
+      <p>100초 동안 사건이 일어나는 경우를 빠짐없이 골라 보세요!</p>
+    </div>
+    <div class="card">
+      <div class="box-head">📌 기억하기</div>
+      <div class="remember">
+        🎯 <b>사건</b>: 같은 조건에서 반복할 수 있는 실험이나 관찰의 결과<br>
+        🔍 <b>사건이 일어나는 경우</b>: 그 사건에 해당하는 결과들<br>
+        🔢 <b>경우의 수</b>: 사건이 일어나는 가짓수
+      </div>
+    </div>
+    <div class="card">
+      <div class="box-head">🎯 레벨 고르기</div>
+      <div class="levels" id="levelBox"></div>
+    </div>
+    <div class="card">
+      <div class="box-head">📖 게임 방법</div>
+      <ul class="rules">
+        <li>사건이 일어나는 경우를 <b>모두</b> 눌러 고르고, 경우의 수를 쓴 뒤 <b>[확인]</b>을 눌러요. (Enter 키도 돼요)</li>
+        <li>하나라도 빠지거나 더 고르면 틀려요. 해당하는 경우가 하나도 없으면 <b>[🚫 해당하는 경우가 없어요]</b>를 눌러요.</li>
+        <li>맞히면 <b>+100점</b>, 빨리 맞히면 보너스, 연속으로 맞히면 콤보 점수가 더 붙어요.</li>
+        <li>노란 막대가 다 줄어들어도 괜찮아요. 보너스만 사라지니 끝까지 확인하고 내요.</li>
+        <li>틀리면 <b>−50점</b>, 콤보가 0이 되고 잠깐 멈춰요. 틀린 카드는 🗃 오답 상자로 가요.</li>
+        <li>게임이 끝나면 오답 상자의 카드(비슷한 새 카드)를 다시 풀어야 해요. 정답률이 80%보다 낮으면 다음 레벨이 열리지 않아요.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div class="screen" id="scPlay">
+    <div class="hud">
+      <div class="box"><small>남은 시간</small><span id="hudTime">100</span>초</div>
+      <div class="box"><small>점수</small><span id="hudScore">0</span></div>
+      <div class="box combo" id="hudComboBox"><small>콤보</small>🔥 <span id="hudCombo">0</span></div>
+      <div class="box"><small>맞힌 카드</small><span id="hudCorrect">0</span>장</div>
+    </div>
+    <div class="timebar" id="timebar"><i id="timebarFill" style="width:100%"></i></div>
+    <div class="arena" id="arena"></div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="screen" id="scResult"></div>
+
+  <!-- 오답 상자 -->
+  <div class="screen" id="scReview"></div>
+</div>
+
+<div class="countdown" id="countdown"></div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="pw" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:390px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:60;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:6px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function now(){ return Date.now(); }
+
+/* ════════════════════════════════
+   실험 — 결과 목록과 그림 ('사건의 뜻' 수업 파일과 같은 그림)
+   두 개짜리 실험의 결과는 'A,B' 문자열 (순서쌍)
+════════════════════════════════ */
+const R6 = [1,2,3,4,5,6];
+const pairs = (xs, ys) => xs.flatMap(x=>ys.map(y=>`${x},${y}`));
+const EXPS = {
+  dice: { ctx:'🎲 주사위', when:'한 개의 주사위를 던질 때', out:R6 },
+  coin: { ctx:'🪙 동전', when:'한 개의 동전을 던질 때', out:['앞면','뒷면'] },
+  card: { ctx:'🃏 숫자 카드', when:'1부터 10까지의 자연수가 하나씩 적힌 카드 10장 중에서 한 장을 뽑을 때', out:[1,2,3,4,5,6,7,8,9,10] },
+  ball: { ctx:'🔵 번호 공', when:'1부터 8까지의 번호가 하나씩 적힌 공 8개가 들어 있는 주머니에서 공 한 개를 꺼낼 때', out:[1,2,3,4,5,6,7,8] },
+  menu: { ctx:'🍽 차림표', when:'아래 차림표에서 음식을 한 가지 고를 때', out:['칼국수','쫄면','김밥','비빔밥','볶음밥'] },
+  rps:  { ctx:'✊ 가위바위보', when:'한 사람이 가위, 바위, 보 중에서 하나를 낼 때', out:['가위','바위','보'] },
+  coin2:{ ctx:'🪙🪙 동전 두 개', when:'서로 다른 두 개의 동전 A, B를 동시에 던질 때', out:pairs(['앞','뒤'],['앞','뒤']), note:'(동전 A, 동전 B)' },
+  rps2: { ctx:'✊✋ 두 사람 가위바위보', when:'재이와 친구가 가위바위보를 한 번 할 때', out:pairs(['가위','바위','보'],['가위','바위','보']), note:'(재이, 친구)' },
+  dice2:{ ctx:'🎲🎲 주사위 두 개', when:'서로 다른 두 개의 주사위 A, B를 동시에 던질 때', out:pairs(R6,R6), note:'(주사위 A, 주사위 B)' }
+};
+const MENU_GRP = {'칼국수':'면','쫄면':'면','김밥':'밥','비빔밥':'밥','볶음밥':'밥'};
+const MENU_EMOJI = {'칼국수':'🍜','쫄면':'🍝','김밥':'🍙','비빔밥':'🥗','볶음밥':'🍛'};
+const RPS_EMOJI = {'가위':'✌️','바위':'✊','보':'🖐️'};
+const PIPS = {1:[[.5,.5]],2:[[.28,.28],[.72,.72]],3:[[.27,.27],[.5,.5],[.73,.73]],4:[[.28,.28],[.72,.28],[.28,.72],[.72,.72]],5:[[.27,.27],[.73,.27],[.5,.5],[.27,.73],[.73,.73]],6:[[.28,.24],[.72,.24],[.28,.5],[.72,.5],[.28,.76],[.72,.76]]};
+function dieSVG(n,s){
+  const r=s*0.085;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="display:block"><rect x="1.5" y="1.5" width="${s-3}" height="${s-3}" rx="${(s*.18).toFixed(1)}" fill="#fff" stroke="#1a1a2e" stroke-width="1.6"/>`+
+    PIPS[n].map(([x,y])=>`<circle cx="${(x*s).toFixed(1)}" cy="${(y*s).toFixed(1)}" r="${(n===1?r*1.6:r).toFixed(1)}" fill="${n===1?'#dc2626':'#1a1a2e'}"/>`).join('')+`</svg>`;
+}
+function coinSVG(face,s){
+  return `<svg width="${s}" height="${s}" viewBox="0 0 40 40" style="display:block"><circle cx="20" cy="20" r="17.5" fill="#fcd34d" stroke="#b45309" stroke-width="2"/><circle cx="20" cy="20" r="13" fill="none" stroke="#b45309" stroke-width="1" stroke-dasharray="2 2"/><text x="20" y="25" text-anchor="middle" font-size="13" font-weight="800" fill="#92400e">${face}</text></svg>`;
+}
+function chipFace(exp, v){
+  if(exp==='dice') return dieSVG(v,40)+`<span>${v}</span>`;
+  if(exp==='coin') return coinSVG(v==='앞면'?'앞':'뒤',40)+`<span>${v}</span>`;
+  if(exp==='card') return `<svg width="34" height="44" viewBox="0 0 34 44" style="display:block"><rect x="1.5" y="1.5" width="31" height="41" rx="5" fill="#fff" stroke="#4a4a6a" stroke-width="1.6"/><text x="17" y="28.5" text-anchor="middle" font-size="16" font-weight="800" fill="#1a1a2e">${v}</text></svg>`;
+  if(exp==='ball') return `<svg width="40" height="40" viewBox="0 0 40 40" style="display:block"><circle cx="20" cy="20" r="17.5" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.8"/><circle cx="20" cy="20" r="10" fill="#fff"/><text x="20" y="25" text-anchor="middle" font-size="13" font-weight="800" fill="#1e3a8a">${v}</text></svg><span>${v}번</span>`;
+  if(exp==='menu'){ const g=MENU_GRP[v]; return `<span class="big">${MENU_EMOJI[v]}</span><span>${v}</span><span class="grp" style="background:${g==='면'?'#dcfce7;color:#166534':'#ffedd5;color:#9a3412'}">${g}</span>`; }
+  if(exp==='rps') return `<span class="big">${RPS_EMOJI[v]}</span><span>${v}</span>`;
+  if(exp==='coin2'){ const [a,b]=v.split(','); return `<span class="pair">${coinSVG(a,34)}${coinSVG(b,34)}</span><span>(${a}, ${b})</span>`; }
+  if(exp==='rps2'){ const [a,b]=v.split(','); return `<span class="big">${RPS_EMOJI[a]}${RPS_EMOJI[b]}</span><span>(${a}, ${b})</span>`; }
+  return String(v);
+}
+
+/* ════════════════════════════════
+   사건 — 경우는 손으로 적지 않고 test 함수로 계산 (점검 스크립트에서 전체 확인)
+   t: '~ 사건' 앞에 오는 말, lv: 나오는 레벨, h: 오답 상자 힌트(낱말 뜻만, 답은 알려 주지 않음)
+════════════════════════════════ */
+const isPrime = v=> v>=2 && [...Array(v).keys()].slice(2).every(d=>v%d!==0);
+const H = {
+  prime:'소수는 1보다 큰 자연수 중에서 1과 자기 자신만을 약수로 가지는 수예요.',
+  div:'어떤 수를 나누어떨어지게 하는 수가 그 수의 약수예요. 1과 자기 자신도 약수예요.',
+  ge:"'○ 이상', '○ 이하'에는 ○도 들어가요.",
+  gt:"'○보다 큰', '○보다 작은'에는 ○가 들어가지 않아요.",
+  not:"'~가 아닌', '~하지 않는'은 그것을 뺀 나머지 결과예요.",
+  ord:'A와 B는 서로 달라서 (앞, 뒤)와 (뒤, 앞)처럼 순서가 바뀌면 다른 경우예요.',
+  diff:'두 수의 차는 큰 수에서 작은 수를 뺀 값이에요.',
+  win:'가위는 보를, 바위는 가위를, 보는 바위를 이겨요.'
+};
+const d2 = v => v.split(',').map(Number);
+const EVENTS = [
+  // ── 레벨 1
+  {exp:'dice', lv:1, t:'짝수의 눈이 나오는', f:v=>v%2===0},
+  {exp:'dice', lv:1, t:'홀수의 눈이 나오는', f:v=>v%2===1},
+  {exp:'dice', lv:1, t:'2의 배수의 눈이 나오는', f:v=>v%2===0},
+  {exp:'dice', lv:1, t:'3의 배수의 눈이 나오는', f:v=>v%3===0},
+  {exp:'dice', lv:1, t:'4 이상의 눈이 나오는', f:v=>v>=4, h:'ge'},
+  {exp:'dice', lv:1, t:'3 이하의 눈이 나오는', f:v=>v<=3, h:'ge'},
+  {exp:'dice', lv:1, t:'5의 배수의 눈이 나오는', f:v=>v%5===0},
+  {exp:'coin', lv:1, t:'앞면이 나오는', f:v=>v==='앞면'},
+  {exp:'card', lv:1, t:'짝수가 적힌 카드가 나오는', f:v=>v%2===0},
+  {exp:'card', lv:1, t:'홀수가 적힌 카드가 나오는', f:v=>v%2===1},
+  {exp:'card', lv:1, t:'3의 배수가 적힌 카드가 나오는', f:v=>v%3===0},
+  {exp:'card', lv:1, t:'4의 배수가 적힌 카드가 나오는', f:v=>v%4===0},
+  {exp:'card', lv:1, t:'5의 배수가 적힌 카드가 나오는', f:v=>v%5===0},
+  {exp:'card', lv:1, t:'7 이상의 수가 적힌 카드가 나오는', f:v=>v>=7, h:'ge'},
+  {exp:'card', lv:1, t:'4 이하의 수가 적힌 카드가 나오는', f:v=>v<=4, h:'ge'},
+  {exp:'ball', lv:1, t:'번호가 짝수인 공이 나오는', f:v=>v%2===0},
+  {exp:'ball', lv:1, t:'번호가 3의 배수인 공이 나오는', f:v=>v%3===0},
+  {exp:'ball', lv:1, t:'번호가 6 이상인 공이 나오는', f:v=>v>=6, h:'ge'},
+  {exp:'menu', lv:1, t:'면 종류를 고르는', f:v=>MENU_GRP[v]==='면'},
+  {exp:'menu', lv:1, t:'밥 종류를 고르는', f:v=>MENU_GRP[v]==='밥'},
+  {exp:'dice', lv:1, t:'7의 눈이 나오는', f:v=>v===7, zero:true},
+  {exp:'card', lv:1, t:'11이 적힌 카드가 나오는', f:v=>v===11, zero:true},
+  {exp:'ball', lv:1, t:'번호가 9 이상인 공이 나오는', f:v=>v>=9, zero:true, h:'ge'},
+  // ── 레벨 2
+  {exp:'dice', lv:2, t:'소수의 눈이 나오는', f:isPrime, h:'prime'},
+  {exp:'dice', lv:2, t:'6의 약수의 눈이 나오는', f:v=>6%v===0, h:'div'},
+  {exp:'dice', lv:2, t:'4의 약수의 눈이 나오는', f:v=>4%v===0, h:'div'},
+  {exp:'dice', lv:2, t:'4보다 작은 눈이 나오는', f:v=>v<4, h:'gt'},
+  {exp:'dice', lv:2, t:'3보다 크고 6보다 작은 눈이 나오는', f:v=>v>3&&v<6, h:'gt'},
+  {exp:'dice', lv:2, t:'2의 배수가 아닌 눈이 나오는', f:v=>v%2!==0, h:'not'},
+  {exp:'card', lv:2, t:'소수가 적힌 카드가 나오는', f:isPrime, h:'prime'},
+  {exp:'card', lv:2, t:'10의 약수가 적힌 카드가 나오는', f:v=>10%v===0, h:'div'},
+  {exp:'card', lv:2, t:'9의 약수가 적힌 카드가 나오는', f:v=>9%v===0, h:'div'},
+  {exp:'card', lv:2, t:'3의 배수가 아닌 수가 적힌 카드가 나오는', f:v=>v%3!==0, h:'not'},
+  {exp:'card', lv:2, t:'3보다 크고 8보다 작은 수가 적힌 카드가 나오는', f:v=>v>3&&v<8, h:'gt'},
+  {exp:'ball', lv:2, t:'번호가 8의 약수인 공이 나오는', f:v=>8%v===0, h:'div'},
+  {exp:'ball', lv:2, t:'번호가 소수인 공이 나오는', f:isPrime, h:'prime'},
+  {exp:'menu', lv:2, t:'비빔밥이 아닌 밥 종류를 고르는', f:v=>MENU_GRP[v]==='밥'&&v!=='비빔밥', h:'not'},
+  {exp:'rps',  lv:2, t:'가위를 내지 않는', f:v=>v!=='가위', h:'not'},
+  {exp:'rps',  lv:2, t:'보를 내지 않는', f:v=>v!=='보', h:'not'},
+  {exp:'coin2', lv:2, t:'앞면이 한 개만 나오는', f:v=>v.split(',').filter(x=>x==='앞').length===1, h:'ord'},
+  {exp:'coin2', lv:2, t:'서로 같은 면이 나오는', f:v=>{ const [a,b]=v.split(','); return a===b; }, h:'ord'},
+  {exp:'coin2', lv:2, t:'앞면이 한 개 이상 나오는', f:v=>v.includes('앞'), h:'ord'},
+  {exp:'coin2', lv:2, t:'두 개 모두 뒷면이 나오는', f:v=>v==='뒤,뒤'},
+  {exp:'rps2', lv:2, t:'재이가 이기는', f:v=>{ const [a,b]=v.split(','); return BEATS[a]===b; }, h:'win'},
+  {exp:'rps2', lv:2, t:'친구가 이기는', f:v=>{ const [a,b]=v.split(','); return BEATS[b]===a; }, h:'win'},
+  {exp:'rps2', lv:2, t:'두 사람이 비기는', f:v=>{ const [a,b]=v.split(','); return a===b; }},
+  {exp:'rps2', lv:2, t:'재이가 보를 내는', f:v=>v.startsWith('보,')},
+  {exp:'dice', lv:2, t:'6보다 큰 눈이 나오는', f:v=>v>6, zero:true, h:'gt'},
+  {exp:'card', lv:2, t:'10보다 큰 수가 적힌 카드가 나오는', f:v=>v>10, zero:true, h:'gt'},
+  {exp:'coin2', lv:2, t:'앞면이 3개 나오는', f:v=>false, zero:true},
+  {exp:'rps2', lv:2, t:'두 사람이 모두 이기는', f:v=>false, zero:true, h:'win'},
+  // ── 레벨 3: 서로 다른 주사위 두 개 (36칸)
+  ...[3,4,5,6,7,8,9,10,11].map(s=>({exp:'dice2', lv:3, t:`나오는 두 눈의 수의 합이 ${s}인`, f:v=>{ const [a,b]=d2(v); return a+b===s; }})),
+  {exp:'dice2', lv:3, t:'두 눈의 수가 서로 같은', f:v=>{ const [a,b]=d2(v); return a===b; }},
+  ...[2,3,4,5].map(k=>({exp:'dice2', lv:3, t:`두 눈의 수의 차가 ${k}인`, f:v=>{ const [a,b]=d2(v); return Math.abs(a-b)===k; }, h:'diff'})),
+  ...[4,6,12].map(p=>({exp:'dice2', lv:3, t:`두 눈의 수의 곱이 ${p}인`, f:v=>{ const [a,b]=d2(v); return a*b===p; }})),
+  {exp:'dice2', lv:3, t:'두 눈의 수의 합이 4 이하인', f:v=>{ const [a,b]=d2(v); return a+b<=4; }, h:'ge'},
+  {exp:'dice2', lv:3, t:'두 눈의 수의 합이 10 이상인', f:v=>{ const [a,b]=d2(v); return a+b>=10; }, h:'ge'},
+  {exp:'dice2', lv:3, t:'A는 1의 눈, B는 짝수의 눈이 나오는', f:v=>{ const [a,b]=d2(v); return a===1&&b%2===0; }},
+  {exp:'dice2', lv:3, t:'A는 3의 배수, B는 4 이상의 눈이 나오는', f:v=>{ const [a,b]=d2(v); return a%3===0&&b>=4; }, h:'ge'},
+  {exp:'dice2', lv:3, t:'두 눈의 수의 합이 13인', f:v=>{ const [a,b]=d2(v); return a+b===13; }, zero:true},
+  {exp:'dice2', lv:3, t:'두 눈의 수의 곱이 7인', f:v=>{ const [a,b]=d2(v); return a*b===7; }, zero:true},
+  {exp:'dice2', lv:3, t:'두 눈의 수의 차가 6인', f:v=>{ const [a,b]=d2(v); return Math.abs(a-b)===6; }, zero:true, h:'diff'}
+];
+const BEATS = {'가위':'보','바위':'가위','보':'바위'};
+EVENTS.forEach((e,i)=>{ e.id=i; });
+function caseSet(e){ return new Set(EXPS[e.exp].out.filter(e.f).map(String)); }
+
+const LEVELS = [
+  null,
+  { name:'경우 찾기', desc:'주사위·동전·카드·공에서 쉬운 사건', cardSecs:12, zero:0.12, pass:{correct:8, acc:0.8} },
+  { name:'까다로운 사건', desc:'소수·약수·~보다 큰, 동전 두 개·두 사람 가위바위보', cardSecs:16, zero:0.12, pass:{correct:6, acc:0.8} },
+  { name:'주사위 두 개', desc:'36가지 결과에서 경우 찾기', cardSecs:25, zero:0.12, pass:{correct:4, acc:0.8} }
+];
+const MAX_LV = 3;
+const GAME_SECS = 100;
+const BASE = 100, SPEED_MAX = 50, WRONG = 50, LOCK_MS = 1500;
+const comboBonus = c => 10*Math.min(c,10);    // 앞에서 연속으로 맞힌 개수만큼 (최대 +100)
+
+// 카드: 일어나지 않는 사건은 레벨별 비율로, 바로 앞 두 사건은 피함
+function makeCard(lv, prev, zeroWant){
+  const pool = EVENTS.filter(e=>e.lv===lv);
+  const z = zeroWant!=null ? zeroWant : Math.random() < LEVELS[lv].zero;
+  let cand = pool.filter(e=>!!e.zero===z && !(prev||[]).includes(e.id));
+  if(!cand.length) cand = pool.filter(e=>!!e.zero===z);
+  const e = pick(cand);
+  return { ev:e, lv, target:caseSet(e) };
+}
+function variantOf(card){
+  for(let i=0;i<30;i++){ const c = makeCard(card.lv, [card.ev.id], !!card.ev.zero); if(c.ev.id!==card.ev.id) return c; }
+  return makeCard(card.lv, [card.ev.id]);
+}
+function parseCount(raw){
+  const s = String(raw||'').replace(/\s+/g,'').replace(/(가지|개)$/,'');
+  return /^\d+$/.test(s) ? Number(s) : null;
+}
+
+/* ════════════════════════════════
+   저장 (레벨 열림·최고 점수) — 이 브라우저에만, 실패해도 게임은 진행
+════════════════════════════════ */
+const STU = window._hubStudent || {};
+const SAVE_KEY = `caseGame_${STU.cls||'x'}_${STU.num||'x'}`;
+let SAVE = { open:1, best:{}, passed:{} };
+try{ const v = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(v && v.open) SAVE = Object.assign(SAVE, v); }catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); }catch(e){} }
+
+/* ════════════════════════════════
+   화면 전환 · 시작 화면
+════════════════════════════════ */
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id)); window.scrollTo(0,0); }
+function renderMenu(){
+  $('levelBox').innerHTML = [1,2,3].map(lv=>{
+    const L = LEVELS[lv], open = lv <= SAVE.open, best = SAVE.best[lv];
+    return `<button class="lv" id="lvBtn${lv}" onclick="startLevel(${lv})" ${open?'':'disabled'}>
+      <div class="n">${open?'':'🔒 '}레벨 ${lv}</div><div class="t">${L.name}</div><div class="d">${L.desc}</div>
+      ${open ? (best!=null ? `<div class="best">최고 ${best}점</div>` : '') : `<div class="d" style="min-height:0">레벨 ${lv-1}을 통과하면 열려요</div>`}
+      ${SAVE.passed[lv] ? '<div class="pass">✔ 통과</div>' : ''}
+    </button>`;
+  }).join('');
+  show('scMenu');
+}
+
+/* ════════════════════════════════
+   카드 화면 (게임·오답 상자 공용) — pre: 'g'(게임) | 'r'(오답 상자)
+════════════════════════════════ */
+const SEL = { g:null, r:null };   // { set:Set, none:bool }
+function boardHTML(pre, exp){
+  const E = EXPS[exp];
+  if(exp==='dice2'){
+    const hd = n => `<div class="hd">${dieSVG(n,20)}</div>`;
+    return `<table class="grid36"><tr><th style="font-size:10px">A╲B</th>${R6.map(b=>`<th>${hd(b)}</th>`).join('')}</tr>`+
+      R6.map(a=>`<tr><th>${hd(a)}</th>${R6.map(b=>`<td><button class="cell" data-v="${a},${b}" onclick="toggle('${pre}',this)">(${a}, ${b})</button></td>`).join('')}</tr>`).join('')+`</table>`;
+  }
+  return `<div class="chips">${E.out.map(v=>`<button class="chip" data-v="${v}" onclick="toggle('${pre}',this)">${chipFace(exp,v)}</button>`).join('')}</div>`;
+}
+function cardHTML(pre, c, withBar){
+  const E = EXPS[c.ev.exp];
+  return `<div class="q-card enter" id="${pre}Card">
+      <span class="ctx">${E.ctx}</span>
+      <div class="txt">${E.when}, <span class="evt">${c.ev.t} 사건</span></div>
+      <div class="task">이 사건이 일어나는 경우를 <u>모두</u> 고르고, 경우의 수를 써 보세요.${E.note?` <span class="sub">결과는 ${E.note}로 나타내요.</span>`:''}</div>
+      <div class="board" id="${pre}Board">${boardHTML(pre, c.ev.exp)}</div>
+      <div class="sel-count" id="${pre}SelCount">고른 경우: 0개</div>
+      <div class="answer-row">
+        <button class="none-btn" id="${pre}None" onclick="toggleNone('${pre}')">🚫 해당하는 경우가 없어요</button>
+        <span class="count-box">경우의 수: 모두 <input class="blank" id="${pre}Cnt" inputmode="numeric" autocomplete="off"> 가지</span>
+        <button class="btn" id="${pre}Submit" onclick="submit('${pre}')">확인</button>
+      </div>
+      <div class="feedback" id="${pre}Fb"></div>
+      ${withBar ? '<div class="cbar"><i style="width:100%"></i></div><div class="cbar-lbl">⚡ 빨리 맞히면 보너스</div>' : ''}
+    </div>`;
+}
+function bindCard(pre){
+  SEL[pre] = { set:new Set(), none:false };
+  $(pre+'Cnt').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); submit(pre); } });
+}
+function refreshSel(pre){
+  const S = SEL[pre];
+  $(pre+'Board').querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on', S.set.has(b.dataset.v)));
+  $(pre+'None').classList.toggle('on', S.none);
+  $(pre+'SelCount').textContent = S.none ? '해당하는 경우가 없다고 골랐어요' : `고른 경우: ${S.set.size}개`;
+}
+function locked(pre){ return pre==='g' ? (!G || G.over || G.phase!=='op') : (!R || R.phase!=='op'); }
+function toggle(pre, btn){
+  if(locked(pre)) return;
+  const S = SEL[pre], v = btn.dataset.v;
+  if(S.set.has(v)) S.set.delete(v); else S.set.add(v);
+  S.none = false;
+  refreshSel(pre);
+}
+function toggleNone(pre){
+  if(locked(pre)) return;
+  const S = SEL[pre];
+  S.none = !S.none; if(S.none) S.set.clear();
+  refreshSel(pre);
+}
+// 채점: 'empty'(아직 안 고름/안 씀 — 감점 없음) | true | false
+function grade(pre, card){
+  const S = SEL[pre], n = parseCount($(pre+'Cnt').value);
+  const fb = $(pre+'Fb');
+  if(!S.none && S.set.size===0){ fb.className='feedback info'; fb.textContent='경우를 골라 주세요. 해당하는 경우가 하나도 없으면 [🚫 해당하는 경우가 없어요]를 눌러요.'; return 'empty'; }
+  if($(pre+'Cnt').value.trim()===''){ fb.className='feedback info'; fb.textContent='경우의 수를 써 주세요.'; try{ $(pre+'Cnt').focus(); }catch(e){} return 'empty'; }
+  if(n===null){ fb.className='feedback info'; fb.textContent='경우의 수는 숫자로 써 주세요.'; return 'empty'; }
+  const T = card.target;
+  const same = S.set.size===T.size && [...T].every(v=>S.set.has(v));
+  return same && n===T.size;
+}
+function submit(pre){ if(pre==='g') gameSubmit(); else reviewSubmit(); }
+function lockCard(pre){
+  const card = $(pre+'Card'); if(!card) return;
+  card.querySelectorAll('button,input').forEach(b=>b.disabled=true);
+}
+
+/* ════════════════════════════════
+   게임 진행
+════════════════════════════════ */
+let G = null;
+let ticker = null;
+function startLevel(lv){
+  if(lv > SAVE.open) return;
+  G = { lv, score:0, combo:0, maxCombo:0, correct:0, tries:0, wrong:[], card:null, phase:'idle', endAt:0, cardAt:0, recent:[], over:false };
+  show('scPlay');
+  $('hudTime').textContent = GAME_SECS; $('hudScore').textContent = 0; $('hudCombo').textContent = 0; $('hudCorrect').textContent = 0;
+  $('timebarFill').style.width = '100%'; $('timebar').classList.remove('low');
+  $('arena').innerHTML = '';
+  countdown(3, ()=>{
+    G.endAt = now() + GAME_SECS*1000;
+    nextCard();
+    clearInterval(ticker); ticker = setInterval(tick, 100);
+  });
+}
+function countdown(n, done){
+  const el = $('countdown');
+  if(n<=0){ el.classList.remove('show'); done(); return; }
+  el.textContent = n; el.classList.add('show');
+  setTimeout(()=>countdown(n-1, done), 700);
+}
+function tick(){
+  if(!G || G.over) return;
+  const left = Math.max(0, G.endAt - now());
+  $('hudTime').textContent = Math.ceil(left/1000);
+  $('timebarFill').style.width = (left/(GAME_SECS*1000)*100)+'%';
+  $('timebar').classList.toggle('low', left < 15000);
+  const cb = document.querySelector('#gCard .cbar i');
+  if(cb && G.card){ const f = Math.max(0, 1 - (now()-G.cardAt)/(LEVELS[G.lv].cardSecs*1000)); cb.style.width = (f*100)+'%';
+    const lbl = document.querySelector('#gCard .cbar-lbl'); if(lbl) lbl.textContent = f>0 ? '⚡ 빨리 맞히면 보너스' : '보너스는 사라졌지만 천천히 확인해도 돼요'; }
+  if(left<=0) endGame();
+}
+function speedBonus(){ const f = Math.max(0, 1 - (now()-G.cardAt)/(LEVELS[G.lv].cardSecs*1000)); return Math.round(SPEED_MAX*f); }
+function nextCard(){
+  if(G.over) return;
+  const c = makeCard(G.lv, G.recent);
+  G.recent = [c.ev.id].concat(G.recent).slice(0,2);
+  G.card = c; G.phase = 'op'; G.cardAt = now();
+  $('arena').innerHTML = cardHTML('g', c, true);
+  bindCard('g');
+}
+function gameSubmit(){
+  if(!G || G.over || G.phase!=='op') return;
+  const r = grade('g', G.card);
+  if(r==='empty') return;
+  if(r) right(); else wrong();
+}
+function right(){
+  const gain = BASE + speedBonus() + comboBonus(G.combo);
+  G.score += gain; G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo); G.correct++; G.tries++;
+  G.phase = 'anim';
+  lockCard('g');
+  $('gFb').className='feedback ok'; $('gFb').textContent='✅ 맞아요!';
+  floatPop('+'+gain, true);
+  updateHud();
+  setTimeout(()=>{ if(G.over) return; $('gCard').classList.add('done'); setTimeout(nextCard, 250); }, 450);
+}
+function wrong(){
+  G.score = Math.max(0, G.score - WRONG); G.combo = 0; G.tries++;
+  G.wrong.push(G.card);
+  G.phase = 'lock';
+  lockCard('g');
+  floatPop('−'+WRONG, false);
+  const card = $('gCard');
+  card.classList.add('shake');
+  card.insertAdjacentHTML('beforeend', `<div class="wrong-msg">❌ 다시 한 번 생각해 보세요! 🗃 오답 상자로</div>`);
+  updateHud();
+  setTimeout(()=>{ if(G.over) return; card.classList.remove('shake'); card.classList.add('done'); setTimeout(nextCard, 250); }, LOCK_MS);
+}
+function floatPop(text, plus){
+  const el = document.createElement('div'); el.className = 'pop '+(plus?'plus':'minus'); el.textContent = text;
+  $('arena').appendChild(el); setTimeout(()=>el.remove(), 900);
+}
+function updateHud(){
+  $('hudScore').textContent = G.score; $('hudCombo').textContent = G.combo; $('hudCorrect').textContent = G.correct;
+  $('hudComboBox').classList.toggle('hot', G.combo>=5);
+}
+
+/* ════════════════════════════════
+   게임 끝 → 결과 → 오답 상자
+════════════════════════════════ */
+function accOf(g){ return g.tries ? g.correct/g.tries : 0; }
+function endGame(){
+  if(!G || G.over) return;
+  G.over = true; clearInterval(ticker); ticker = null;
+  lockCard('g');
+  const L = LEVELS[G.lv], acc = accOf(G);
+  const passed = G.correct >= L.pass.correct && acc >= L.pass.acc;
+  const prevBest = SAVE.best[G.lv];
+  const newBest = prevBest==null || G.score > prevBest;
+  if(newBest) SAVE.best[G.lv] = G.score;
+  G.passed = passed;
+  // 다음 레벨은 오답 상자까지 끝내야 열림 (오답이 없으면 바로)
+  persist();
+  const pct = Math.round(acc*100);
+  let verdict;
+  if(passed) verdict = `<div class="verdict ok">🎉 레벨 ${G.lv} 통과! (맞힌 카드 ${L.pass.correct}장 이상, 정답률 80% 이상)${G.lv<MAX_LV?`<br>${G.wrong.length?'오답 상자까지 끝내면 ':''}레벨 ${G.lv+1}이 열려요.`:''}</div>`;
+  else if(G.tries && acc < L.pass.acc) verdict = `<div class="verdict no">정답률이 ${pct}%예요. 80% 이상이어야 통과예요.<br>빨리 내기보다 경우를 하나씩 확인해 보세요.</div>`;
+  else verdict = `<div class="verdict no">맞힌 카드가 ${G.correct}장이에요. ${L.pass.correct}장 이상 맞혀야 통과예요. 조금만 더!</div>`;
+  $('scResult').innerHTML = `<div class="card result-big">
+      <div class="sub">레벨 ${G.lv} · ${L.name}</div>
+      <div class="score">${G.score}점</div>
+      ${newBest && G.score>0 ? '<div class="newbest">🌟 내 최고 기록!</div>' : (prevBest!=null?`<div class="sub">내 최고 ${prevBest}점</div>`:'')}
+      <div class="stats">
+        <div>${G.correct}<small>맞힌 카드</small></div>
+        <div>${G.wrong.length}<small>틀린 카드</small></div>
+        <div>${pct}%<small>정답률</small></div>
+        <div>${G.maxCombo}<small>최고 콤보</small></div>
+      </div>
+      ${verdict}
+      <div class="btn-row">
+        ${G.wrong.length ? `<button class="btn" id="toReviewBtn" onclick="startReview()">🗃 오답 상자 풀기 (${G.wrong.length}장)</button>`
+                         : `<button class="btn" onclick="finishRound()">확인</button>`}
+      </div>
+    </div>`;
+  show('scResult');
+  if(!G.wrong.length) unlockNext();
+}
+function unlockNext(){
+  if(!G || !G.passed) return;
+  SAVE.passed[G.lv] = true;
+  if(G.lv < MAX_LV && SAVE.open < G.lv+1) SAVE.open = G.lv+1;
+  persist();
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+function finishRound(){ renderMenu(); }
+
+// 오답 상자: 같은 레벨의 다른 사건(일어나지 않는 사건이었으면 또 그런 사건)을 시간 제한 없이 — 맞혀야 다음 카드
+let R = null;
+function startReview(){
+  R = { list: G.wrong.map(variantOf), i:0, phase:'op' };
+  show('scReview');
+  renderReview();
+}
+function renderReview(){
+  const c = R.list[R.i];
+  R.phase = 'op';
+  $('scReview').innerHTML = `<div class="card">
+      <div class="box-head">🗃 오답 상자 <span class="box-count">${R.i+1} / ${R.list.length}</span></div>
+      <p class="sub" style="margin-bottom:10px">틀렸던 카드와 비슷한 새 카드예요. 시간 제한이 없으니 하나씩 확인해 보세요.</p>
+      ${cardHTML('r', c, false)}
+      <div id="rvHint"></div>
+      <div class="btn-row"><button class="btn btn-soft" id="rvHintBtn" onclick="reviewHint()">💡 힌트</button></div>
+    </div>`;
+  bindCard('r');
+}
+function reviewHint(){
+  const e = R.list[R.i].ev;
+  $('rvHint').innerHTML = `<div class="hint-box">💡 고른 것이 모두 사건에 맞는지, 고르지 않은 것 중에 맞는 것은 없는지 하나씩 확인해 봐요. 해당하는 경우가 하나도 없을 수도 있어요.${e.h?'<br>📖 '+H[e.h]:''}</div>`;
+  $('rvHintBtn').disabled = true;
+}
+function reviewSubmit(){
+  if(!R || R.phase!=='op') return;
+  const r = grade('r', R.list[R.i]);
+  if(r==='empty') return;
+  if(!r){ reviewLock(); return; }
+  R.phase = 'done';
+  lockCard('r');
+  $('rFb').className='feedback ok'; $('rFb').textContent = '✅ 맞아요!';
+  setTimeout(()=>{
+    R.i++;
+    if(R.i < R.list.length){ renderReview(); return; }
+    unlockNext();
+    $('scReview').innerHTML = `<div class="card result-big">
+        <div style="font-size:40px">🎉</div>
+        <div class="box-head" style="justify-content:center">오답 상자를 모두 비웠어요!</div>
+        ${G.passed && G.lv<MAX_LV ? `<p class="sub" style="font-size:14px">레벨 ${G.lv+1}이 열렸어요.</p>` : ''}
+        <div class="btn-row"><button class="btn" onclick="finishRound()">처음 화면으로</button></div>
+      </div>`;
+  }, 600);
+}
+function reviewLock(){
+  R.phase = 'lock';
+  lockCard('r');
+  let n = 3;
+  const msg = ()=> `❌ 다시 한 번 생각해 보세요!<br><span class="lock-note">⏳ ${n}초 뒤에 새 카드가 나와요</span>`;
+  $('rFb').className='feedback no'; $('rFb').innerHTML = msg();
+  const t = setInterval(()=>{ n--; if(n>0){ $('rFb').innerHTML = msg(); return; }
+    clearInterval(t);
+    R.list[R.i] = variantOf(R.list[R.i]);
+    renderReview();
+  }, 1000);
+}
+
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function adminUnlockAll(){ SAVE.open = MAX_LV; persist(); renderMenu(); }
+function adminEndNow(){ if(G && !G.over){ G.endAt = now(); tick(); } }
+function caseText(e){ const s=[...caseSet(e)]; return s.length ? s.map(v=>v.includes(',')?`(${v.replace(',',', ')})`:v).join(', ') : '없음'; }
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  const cur = G && !G.over && G.card ? `<div style="color:#b45309"><strong>지금 카드 정답</strong>: ${caseText(G.card.ev)} → ${G.card.target.size}가지</div>` : '';
+  $('adminPanelBody').innerHTML =
+    `<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">${btn('레벨 모두 열기','adminUnlockAll()')}${btn('지금 게임 끝내기','adminEndNow()')}${btn('새로 고침','showAdminPanel()')}</div>`+ cur +
+    `<div><strong>점수</strong>: 정답 +${BASE}, 빠르기 보너스 최대 +${SPEED_MAX}, 콤보 +10×(앞에서 연속 정답 수, 최대 +100), 오답 −${WRONG}(0점 아래로는 안 내려감)</div>`+
+    `<div><strong>정답</strong>: 고른 경우가 정확히 같고(빠짐·더함 없음) 경우의 수가 맞아야 함. 일어나지 않는 사건은 [해당 없음] + 0. 경우의 수 입력: 3 = 3가지 = 3개 (띄어쓰기 무시). 안 고르거나 안 쓰고 [확인]하면 감점 없이 안내만.</div>`+
+    `<div><strong>카드 시간 막대</strong>: 레벨1 ${LEVELS[1].cardSecs}초, 레벨2 ${LEVELS[2].cardSecs}초, 레벨3 ${LEVELS[3].cardSecs}초 — 다 줄어도 오답 아님, 보너스만 0</div>`+
+    `<div><strong>통과</strong>: 맞힌 카드 레벨1 ${LEVELS[1].pass.correct}장↑ / 레벨2 ${LEVELS[2].pass.correct}장↑ / 레벨3 ${LEVELS[3].pass.correct}장↑, 정답률 80%↑ + 오답 상자 완료 → 다음 레벨 (레벨 1 통과 때 허브 완료 ✅). 순위표 없음.</div>`+
+    `<div><strong>일어나지 않는 사건</strong>: 각 레벨 약 ${Math.round(LEVELS[1].zero*100)}%</div>`+
+    [1,2,3].map(lv=>`<div style="margin-top:6px"><strong>레벨 ${lv} 사건</strong></div>`+
+      EVENTS.filter(e=>e.lv===lv).map(e=>`<div style="margin-left:6px">• ${EXPS[e.exp].ctx} ${e.t} 사건 → <span style="color:var(--ink3)">${caseText(e)} (${caseSet(e).size}가지)</span></div>`).join('')).join('');
+  $('adminPanel').style.display = 'block';
+}
+
+renderMenu();
+</script>
+</body>
+</html>
