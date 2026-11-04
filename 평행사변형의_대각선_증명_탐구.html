@@ -1051,7 +1051,7 @@
   let _adminUnsub = null;
   let _latestRows = [];
 
-  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function todayStr(){ return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date()); }
   async function hashPw(pw){
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
     return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');

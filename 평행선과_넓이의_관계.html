@@ -592,7 +592,7 @@ function backToObserve(){
    리더보드 (Firestore) — where+orderBy 복합 색인 문제를 피하기 위해
    date만 필터링해서 받아온 뒤 정렬은 JS에서 처리
 ════════════════════════════════ */
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+function todayStr(){ return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date()); }
 async function submitScore(){
   const s = window._student, db = window._db;
   if(!db || !s.cls || !s.num) return;

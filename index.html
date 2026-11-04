@@ -685,7 +685,7 @@ let adminUnlockedIds = [];
 let adminUnlockedAt = {};
 let unsubAdminToday = null;
 
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+function todayStr(){ return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date()); }
 
 // 날짜+반을 시드로 쓰는 결정론적 랜덤(같은 날엔 같은 결과)
 function seededShuffle(arr, seedStr){

@@ -475,7 +475,7 @@ function restart(){
 /* ════════════════════════════════
    리더보드 (Firestore)
 ════════════════════════════════ */
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+function todayStr(){ return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date()); }
 async function submitScore(){
   const s = window._student, db = window._db;
   if(!db || !s.cls || !s.num) return;
