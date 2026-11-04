@@ -138,6 +138,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .feedback.info{color:#b45309}
 .note-box{background:var(--green-ll);border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
 .def-box{background:var(--indigo-ll);border:2px solid var(--indigo);border-radius:12px;padding:14px 16px;font-size:15px;line-height:1.9;margin-top:12px;text-align:center}
+.modal-overlay.termpop{background:rgba(26,26,46,0.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.term-box{max-width:480px;width:100%}
+.term-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--indigo);border-radius:10px;padding:2px 10px;margin-bottom:8px}
+.term-box .def-box{margin-top:0;text-align:left}
+.term-box .def-box .blank{font-size:15px;color:#be123c}
+.def-box.term-wait{visibility:hidden}
+.def-box u{text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
 .warn-box{background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
 .hint-card{background:#fff;border:1.5px solid #d8ddfb;border-radius:12px;padding:14px;font-size:13.5px;line-height:1.9}
 .hint-box{background:#fffbeb;border:1.5px dashed #f59e0b;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.85;margin-top:8px}
@@ -348,6 +355,11 @@ function finishToHub(){ document.getElementById('hubBackLink').click(); }
     </span>
   </div>
   <div id="boardBody" class="big"></div>
+</div>
+
+<!-- 용어 팝업: 파란 정리 상자의 핵심 용어를 써야 닫힘 -->
+<div class="modal-overlay termpop" id="termModal">
+  <div class="modal-box term-box" id="termBox"></div>
 </div>
 
 <div class="modal-overlay" id="adminPwModal">
@@ -673,6 +685,47 @@ function renderStepper(){
   }).join('');
 }
 function scrollToEl(id){ const el=$(id); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+/* ════════════════════════════════
+   용어 팝업 — 파란 정리 상자를 핵심 용어 빈칸으로 먼저 띄우고, 써야 닫힘.
+   틀리면 "다시 한 번 생각해 보세요!"만 (정답 공개 없음). 닫히면 화면의 상자가 나타남.
+════════════════════════════════ */
+let termCfg = null, termTimer = null;
+function normTerm(s){ return String(s||'').replace(/[\s'"‘’“”.,!]/g,''); }
+function termAfter(cfg, delay){
+  clearTimeout(termTimer);
+  termTimer = setTimeout(()=>{ if($(cfg.box)) openTermPop(cfg); }, delay==null ? 700 : delay);
+}
+function openTermPop(cfg){
+  termCfg = cfg;
+  const w = Math.max(...cfg.ans.map(a=>a.length))*1.1 + 1.6;
+  $('termBox').innerHTML = `<div class="term-tag">📘 개념 정리</div><div class="modal-text" style="margin-bottom:8px">${cfg.title}<br><span style="color:var(--ink2);font-weight:600">빈칸에 알맞은 말을 써 보세요.</span></div>
+    <div class="def-box">${cfg.html.replace('[[BLANK]]', `<input class="blank" id="termInp" style="width:${w}em" autocomplete="off">`)}</div>
+    <div class="feedback" id="termFb"></div>
+    <div class="btn-row"><button class="modal-btn" id="termBtn" onclick="termCheck()">확인</button></div>`;
+  $('termModal').classList.add('show');
+  const inp = $('termInp');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') termCheck(); });
+  try{ inp.focus(); }catch(e){}
+}
+function closeTermPop(){ clearTimeout(termTimer); $('termModal').classList.remove('show'); termCfg = null; }
+function termCheck(){
+  if(!termCfg || $('termBtn').disabled) return;
+  const inp = $('termInp'), raw = normTerm(inp.value);
+  if(raw===''){ setFb('termFb',false,'빈칸을 채워 주세요.'); return; }
+  const ok = termCfg.ans.some(a=>normTerm(a)===raw);
+  firstTry(termCfg.qid, ok);
+  inp.classList.toggle('wrong',!ok); inp.classList.toggle('correct',ok);
+  if(!ok){ setFb('termFb',false,'❌ 다시 한 번 생각해 보세요!'); return; }
+  setFb('termFb',true,'✅ 맞아요!');
+  $('termBtn').disabled = true;
+  const box = termCfg.box;
+  setTimeout(()=>{
+    closeTermPop();
+    const el = $(box); if(!el) return;
+    el.classList.remove('term-wait'); flashRef(el); scrollToEl(box);
+  }, 600);
+}
+
 
 /* ════════════════════════════════
    확인 팝업 — 맞혀야 닫힘. 틀리면 "다시 한 번 생각해 보세요!"만 (정답 공개 없음)
@@ -1101,7 +1154,7 @@ function stage4(){
     <div class="dice-row">${[1,2,3,4,5,6].map(n=>dieSVG(n,48)).join('')}</div>
     <p class="sub" style="text-align:center">각 눈이 나올 가능성은 모두 같아요.</p>`);
   R(`<div class="panel-title"><span class="step-badge">5</span>확률의 뜻</div>
-    <div class="def-box" style="text-align:left">일반적으로 <span class="kw">각 경우가 일어날 가능성이 모두 같은</span> 실험이나 관찰을 여러 번 반복할 때, 사건 ${itA()}가 일어나는 상대도수가 일정한 값에 가까워지면 이 일정한 값은 일어날 수 있는 모든 경우의 수에 대한 사건 ${itA()}가 일어나는 경우의 수의 비율과 같다.<br>
+    <div class="def-box term-wait" id="s4def" style="text-align:left">일반적으로 <span class="kw">각 경우가 일어날 가능성이 모두 같은</span> 실험이나 관찰을 여러 번 반복할 때, 사건 ${itA()}가 일어나는 상대도수가 일정한 값에 가까워지면 이 일정한 값은 일어날 수 있는 모든 경우의 수에 대한 사건 ${itA()}가 일어나는 경우의 수의 비율과 같다.<br>
       이 비율을 사건 ${itA()}가 일어날 <b style="color:#be123c">확률</b>이라고 한다. 즉, 사건 ${itA()}가 일어날 확률 ${itp()}는
       <div style="text-align:center;font-weight:800;margin-top:6px;font-size:16px">${itp()} = ${sfrac(`(사건 ${itA()}가 일어나는 경우의 수)`,'(모든 경우의 수)')}</div></div>
     <p class="sub" style="margin-top:6px">※ 확률은 보통 영어 단어 probability의 첫 글자 ${itp()}로 나타내요.</p>
@@ -1110,6 +1163,8 @@ function stage4(){
       <p class="sub">확인 문제가 나오면 위 내용은 보이지 않아요.</p>
       <div class="btn-row"><button class="btn" id="s4aBtn" onclick="this.disabled=true;openGate3(s4Self)">확인 문제 풀기</button></div>
     </div>`);
+  termAfter({ qid:'term5', box:'s4def', title:"수학에서 말하는 '확률'의 뜻이에요.",
+    html:`일반적으로 각 경우가 일어날 가능성이 모두 같은 실험이나 관찰을 여러 번 반복할 때, 사건 ${itA()}가 일어나는 상대도수가 일정한 값에 가까워지면 이 일정한 값은 일어날 수 있는 모든 경우의 수에 대한 사건 ${itA()}가 일어나는 경우의 수의 비율과 같다.<br>이 비율을 사건 ${itA()}가 일어날 [[BLANK]]이라고 한다.`, ans:['확률'] }, 300);
 }
 function s4Self(){
   if($('s4bBlock')) return;
@@ -1611,6 +1666,7 @@ function showAdminPanel(){
     '<div><strong>팝업④</strong>: 주사위·카드 확률 한 문제 (틀리면 새 문제)</div>'+
     '<div><strong>레벨1</strong>: 주사위/카드 1 + 공/학생 1 (확률 구하기) + 공·학생 개수 구하기 2 (확률은 약분된 꼴로 주어짐)</div>'+
     '<div><strong>레벨2</strong>: 동전 두 개·동전과 주사위·가위바위보 중 2 + 주사위 두 개 1 + 카드 두 자리 수 1 — 모든 경우의 수, 사건의 경우의 수, 확률. 힌트는 풀이 방향만, 힌트를 써도 점수 인정. 계산 연습장(펜) 있음</div>'+
+    '<div><strong>용어 팝업</strong>: 확률 (띄어쓰기·따옴표·마침표 무시)</div>'+
     '<div style="color:var(--red);margin-top:6px">미인정: "다섯"처럼 한글 수사 / 분수를 소수로 쓴 경우(분수 칸이 분자·분모로 나뉘어 있어 소수 입력 불가)</div>'+
     '<div style="margin-top:6px"><strong>찍기 방지</strong>: 질문이 뜬 뒤 1.5~4초 안에 고르면 채점 안 함 · 틀리면 3→5→8초 잠금 후 보기 다시 섞기 · 팝업④와 문제풀이 오답은 숫자만 바뀐 새 문제 (모두 정답 공개 안 함)</div>'+
     `<label style="display:block;margin-top:6px"><input type="checkbox" ${GUARD.on?'':'checked'} onchange="GUARD.on=!this.checked"> 시연용: 읽기 확인·잠금 끄기</label>`;
@@ -1618,6 +1674,7 @@ function showAdminPanel(){
 }
 function adminPassGate(){ if(!gateCfg) return; const done = gateCfg.onPass; closeGate(); if(done) done(); }
 function adminGo(i){
+  closeTermPop();
   closeGate();
   while(FLIP.res.length<30) FLIP.res.push(Math.random()<0.5?'H':'T');
   if(i>=2 && SIM.cum.length<1000) simAdd(1000);
