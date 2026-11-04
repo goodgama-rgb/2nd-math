@@ -410,6 +410,8 @@ window.handleInstallClick = async function(){
 
 // ---- 콘텐츠 등록소: 실제 파일과 묶인 기술적 사실(종류/메타/파일명) — 새 파일 추가할 때만 여기 등록 ----
 // 배치(어느 대단원/소단원, 순서, 제목)는 더 이상 여기 없음 — siteConfig/contentStructure 문서로 이동, 관리자 페이지 '단원 구조 편집'에서 드래그로 편집
+// 항목 종류별 아이콘 — 문제 ✏️, 게임 🎮, 그 밖(탐구) 🔍
+function typeEmoji(t){ return t==='문제' ? '✏️' : t==='게임' ? '🎮' : '🔍'; }
 const ITEM_REGISTRY = {
   "pythagorean-theorem": { type:"탐구", meta:"증명 활동", file:"피타고라스_정리.html", defaultTitle:"피타고라스 정리 증명 탐구" },
   "pythagorean-theorem-assessment": { type:"문제", meta:"형성평가", file:"피타고라스_정리_형성평가.html", defaultTitle:"피타고라스 정리 형성평가" },
@@ -418,6 +420,7 @@ const ITEM_REGISTRY = {
   "event-or": { type:"탐구", meta:"탐구 활동", file:"사건_A_또는_사건_B.html", defaultTitle:"사건 A 또는 사건 B가 일어나는 경우의 수" },
   "event-and": { type:"탐구", meta:"탐구 활동", file:"사건_A와_사건_B가_동시에.html", defaultTitle:"사건 A와 사건 B가 동시에 일어나는 경우의 수" },
   "prob-concept": { type:"탐구", meta:"탐구 활동", file:"확률의_개념.html", defaultTitle:"확률의 개념" },
+  "event-game": { type:"게임", meta:"게임", file:"사건일까_실험일까_게임.html", defaultTitle:"사건일까? 실험일까? 스피드 분류 게임" },
   "iso-proof": { type:"탐구", meta:"증명 활동", file:"이등변삼각형_성질_증명_탐구.html", defaultTitle:"성질 증명 탐구" },
   "iso-144-1": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_quiz(144-1).html", defaultTitle:"문제 1" },
   "iso-144-2": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_bisector_quiz(144-2).html", defaultTitle:"문제 2" },
@@ -577,7 +580,8 @@ const DEFAULT_STRUCTURE = { units: [
       { name:"경우의 수", items:[
         { id:"event-meaning", title:"사건의 뜻" },
         { id:"event-or", title:"사건 A 또는 사건 B가 일어나는 경우의 수" },
-        { id:"event-and", title:"사건 A와 사건 B가 동시에 일어나는 경우의 수" }
+        { id:"event-and", title:"사건 A와 사건 B가 동시에 일어나는 경우의 수" },
+        { id:"event-game", title:"사건일까? 실험일까? 스피드 분류 게임" }
       ] },
       { name:"확률", items:[
         { id:"prob-concept", title:"확률의 개념" }
@@ -830,8 +834,8 @@ function openUnit(unitId){
         el.href = href;
         el.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
       }
-      const iconClass = it.type==='문제' ? 'quiz' : 'explore';
-      const emoji = locked ? '🔒' : (it.type==='문제' ? '✏️' : '🔍');
+      const iconClass = it.type==='탐구' ? 'explore' : 'quiz';
+      const emoji = locked ? '🔒' : typeEmoji(it.type);
       el.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
         <span><span class="card-title">${it.title}</span><span class="card-meta">${locked ? '아직 잠겨있어요' : it.meta}</span></span>
         ${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
@@ -860,7 +864,7 @@ function renderToday(){
     const a = document.createElement('a');
     a.className = 'today-item' + (done ? ' done' : ''); a.href = href;
     a.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
-    a.innerHTML = `<span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span>${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
+    a.innerHTML = `<span>${typeEmoji(it.type)}</span><span>${it.title}</span>${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
     wrap.appendChild(a);
   });
 }
@@ -915,7 +919,7 @@ function renderCalendarInto(wrapId, unlockedAtMap, students){
         const statClass = 'calendar-stat' + (doneCount===0 ? ' zero' : '');
         statHtml = ` <span class="${statClass}">${doneCount}/${students.length}명 완료</span>`;
       }
-      return `<div class="calendar-item">${it.type==='문제'?'✏️':'🔍'} ${it.title} <span class="card-meta">(${it.subunitName})</span>${statHtml}</div>`;
+      return `<div class="calendar-item">${typeEmoji(it.type)} ${it.title} <span class="card-meta">(${it.subunitName})</span>${statHtml}</div>`;
     }).join('');
     day.innerHTML = `<div class="calendar-date">${d}</div>${itemsHtml}`;
     wrap.appendChild(day);
@@ -1176,7 +1180,7 @@ function renderAdminPreview(){
 
   const todayItemsList = allRealItems().filter(it=> todayChecked.includes(it.id));
   previewToday.innerHTML = todayItemsList.length
-    ? todayItemsList.map(it=>`<div class="today-item"><span>${it.type==='문제'?'✏️':'🔍'}</span><span>${it.title}</span></div>`).join('')
+    ? todayItemsList.map(it=>`<div class="today-item"><span>${typeEmoji(it.type)}</span><span>${it.title}</span></div>`).join('')
     : '<span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span>';
   const previewNotice = document.getElementById('preview-notice');
   if(notice){ document.getElementById('preview-notice-text').textContent = notice; previewNotice.style.display = 'block'; }
@@ -1195,8 +1199,8 @@ function renderAdminPreview(){
         const locked = !unlockChecked.includes(it.id);
         const el = document.createElement('div');
         el.className = 'card' + (locked ? ' locked' : '');
-        const iconClass = it.type==='문제' ? 'quiz' : 'explore';
-        const emoji = locked ? '🔒' : (it.type==='문제' ? '✏️' : '🔍');
+        const iconClass = it.type==='탐구' ? 'explore' : 'quiz';
+        const emoji = locked ? '🔒' : typeEmoji(it.type);
         el.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
           <span><span class="card-title">${it.title}</span><span class="card-meta">${locked ? '아직 잠겨있어요' : it.meta}</span></span>`;
         items.appendChild(el);
@@ -1417,9 +1421,9 @@ function buildItemRow(it, reg, isUnplaced){
 
   const icon = document.createElement('span');
   const known = !!reg;
-  icon.className = 'icon ' + (known ? (reg.type==='문제' ? 'quiz' : 'explore') : '');
+  icon.className = 'icon ' + (known ? (reg.type==='탐구' ? 'explore' : 'quiz') : '');
   icon.style.background = known ? '' : 'var(--coral)';
-  icon.textContent = known ? (reg.type==='문제' ? '✏️' : '🔍') : '⚠️';
+  icon.textContent = known ? typeEmoji(reg.type) : '⚠️';
 
   const titleInput = document.createElement('input');
   titleInput.className = 'struct-item-title-input';
