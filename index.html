@@ -347,6 +347,21 @@
   </div>
 </div>
 
+<!-- 단원 구조 편집: 드래그 대신 클릭으로 항목을 배치/이동하는 팝업 -->
+<div id="struct-move-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeStructMoveModal();">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 class="modal-title">어디로 옮길까요?</h3>
+      <button class="modal-close" type="button" onclick="closeStructMoveModal()">✕</button>
+    </div>
+    <p class="admin-hint" id="struct-move-modal-itemname"></p>
+    <div class="field"><label>대단원</label><select id="struct-move-unit-select"></select></div>
+    <div class="field"><label>소단원</label><select id="struct-move-subunit-select"></select></div>
+    <p class="msg" id="struct-move-modal-msg"></p>
+    <button class="btn mint" type="button" id="struct-move-confirm-btn">여기로 배치</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
@@ -1446,7 +1461,13 @@ function buildItemRow(it, reg, isUnplaced){
   meta.className = 'struct-item-meta';
   meta.textContent = known ? reg.meta : ('등록소에 없음: ' + it.id);
 
-  row.append(handle, icon, titleInput, meta);
+  const moveBtn = document.createElement('button');
+  moveBtn.type = 'button';
+  moveBtn.className = 'struct-mini-btn';
+  moveBtn.textContent = isUnplaced ? '📍 배치' : '📍 이동';
+  moveBtn.addEventListener('click', ()=> openStructMoveModal(it.id));
+
+  row.append(handle, icon, titleInput, meta, moveBtn);
 
   row.addEventListener('dragover', (e)=>{ if(dragPayload && dragPayload.kind==='item') e.preventDefault(); });
   row.addEventListener('drop', (e)=>{
@@ -1608,6 +1629,74 @@ function buildSubunitBlock(unit, su){
 
   return block;
 }
+
+// ---- 드래그가 불편하다는 피드백 반영: 클릭만으로도 배치/이동 가능하게 하는 팝업 ----
+let structMoveTargetItemId = null;
+
+function populateStructMoveSubunitSelect(unitId){
+  const u = editStructure.units.find(x=> x.id === unitId);
+  const subSelect = document.getElementById('struct-move-subunit-select');
+  subSelect.innerHTML = '';
+  const subs = u ? u.subunits : [];
+  if(!subs.length){
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '(이 대단원엔 소단원이 없어요 — 먼저 소단원을 추가하세요)';
+    subSelect.appendChild(opt);
+    return;
+  }
+  subs.forEach(su=>{
+    const opt = document.createElement('option');
+    opt.value = su._eid; opt.textContent = su.name;
+    subSelect.appendChild(opt);
+  });
+}
+
+window.openStructMoveModal = function(itemId){
+  structMoveTargetItemId = itemId;
+  const reg = ITEM_REGISTRY[itemId];
+  const loc = findItemLocation(itemId);
+  const curTitle = loc ? editStructure.units[loc.ui].subunits[loc.si].items[loc.ii].title : (reg ? reg.defaultTitle : itemId);
+  document.getElementById('struct-move-modal-itemname').textContent = `"${curTitle}" 을(를) 어디로 옮길까요?`;
+  document.getElementById('struct-move-modal-msg').textContent = '';
+
+  const unitSelect = document.getElementById('struct-move-unit-select');
+  unitSelect.innerHTML = '';
+  editStructure.units.forEach(u=>{
+    const opt = document.createElement('option');
+    opt.value = u.id; opt.textContent = u.name;
+    unitSelect.appendChild(opt);
+  });
+  unitSelect.onchange = ()=> populateStructMoveSubunitSelect(unitSelect.value);
+  // 현재 위치한 대단원을 기본 선택값으로
+  if(loc) unitSelect.value = editStructure.units[loc.ui].id;
+  populateStructMoveSubunitSelect(unitSelect.value || (editStructure.units[0] && editStructure.units[0].id));
+  if(loc){
+    const subEid = editStructure.units[loc.ui].subunits[loc.si]._eid;
+    document.getElementById('struct-move-subunit-select').value = subEid;
+  }
+
+  document.getElementById('struct-move-modal').style.display = 'flex';
+};
+window.closeStructMoveModal = function(){
+  document.getElementById('struct-move-modal').style.display = 'none';
+  structMoveTargetItemId = null;
+};
+document.getElementById('struct-move-confirm-btn').addEventListener('click', ()=>{
+  const subEid = document.getElementById('struct-move-subunit-select').value;
+  const msg = document.getElementById('struct-move-modal-msg');
+  if(!structMoveTargetItemId) return;
+  if(!subEid){
+    msg.textContent = '이 대단원엔 소단원이 없어요 — 다른 대단원을 고르거나 소단원을 먼저 추가하세요.';
+    msg.className = 'msg error';
+    return;
+  }
+  const obj = removeItemById(structMoveTargetItemId);
+  const loc = findSubunitLocationByEid(subEid);
+  if(loc) editStructure.units[loc.ui].subunits[loc.si].items.push(obj);
+  markStructDirty();
+  closeStructMoveModal();
+  renderStructureEditor();
+});
 
 // 컨테이너 레벨 드롭존(빈 공간에 놓으면 끝에 추가/미배치로) — DOM이 다시 안 만들어지는 고정 요소라 한 번만 등록
 function initStructureEditorContainers(){
