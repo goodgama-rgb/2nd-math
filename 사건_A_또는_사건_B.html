@@ -123,6 +123,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .feedback.error{color:var(--red)}
 .note-box{background:var(--green-ll);border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
 .def-box{background:var(--indigo-ll);border:2px solid var(--indigo);border-radius:12px;padding:14px 16px;font-size:15px;line-height:1.9;margin-top:12px;text-align:center}
+.modal-overlay.termpop{background:rgba(26,26,46,0.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.term-box{max-width:480px;width:100%}
+.term-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--indigo);border-radius:10px;padding:2px 10px;margin-bottom:8px}
+.term-box .def-box{margin-top:0;text-align:left}
+.term-box .def-box .blank{font-size:15px;color:#be123c}
+.def-box.term-wait{visibility:hidden}
+.def-box u{text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
 .warn-box{background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
 .sit-cards{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
 .sit-card{flex:1 1 200px;border:2px solid #d8ddfb;border-radius:12px;padding:12px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;font-size:14px;font-weight:700;line-height:1.7;color:var(--ink)}
@@ -266,6 +273,11 @@ function finishToHub(){ document.getElementById('hubBackLink').click(); }
     </div>
   </div>
 
+</div>
+
+<!-- 용어 팝업: 파란 정리 상자의 핵심 용어를 써야 닫힘 -->
+<div class="modal-overlay termpop" id="termModal">
+  <div class="modal-box term-box" id="termBox"></div>
 </div>
 
 <div class="modal-overlay" id="adminPwModal">
@@ -543,6 +555,47 @@ function renderStepper(){
 function R(html){ $('actRight').innerHTML = html; }
 function appendR(html){ $('actRight').insertAdjacentHTML('beforeend', html); }
 function scrollToEl(id){ const el=$(id); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+/* ════════════════════════════════
+   용어 팝업 — 파란 정리 상자를 핵심 용어 빈칸으로 먼저 띄우고, 써야 닫힘.
+   틀리면 "다시 한 번 생각해 보세요!"만 (정답 공개 없음). 닫히면 화면의 상자가 나타남.
+════════════════════════════════ */
+let termCfg = null, termTimer = null;
+function normTerm(s){ return String(s||'').replace(/[\s'"‘’“”.,!]/g,''); }
+function termAfter(cfg, delay){
+  clearTimeout(termTimer);
+  termTimer = setTimeout(()=>{ if($(cfg.box)) openTermPop(cfg); }, delay==null ? 700 : delay);
+}
+function openTermPop(cfg){
+  termCfg = cfg;
+  const w = Math.max(...cfg.ans.map(a=>a.length))*1.1 + 1.6;
+  $('termBox').innerHTML = `<div class="term-tag">📘 개념 정리</div><div class="modal-text" style="margin-bottom:8px">${cfg.title}<br><span style="color:var(--ink2);font-weight:600">빈칸에 알맞은 말을 써 보세요.</span></div>
+    <div class="def-box">${cfg.html.replace('[[BLANK]]', `<input class="blank" id="termInp" style="width:${w}em" autocomplete="off">`)}</div>
+    <div class="feedback" id="termFb"></div>
+    <div class="btn-row"><button class="modal-btn" id="termBtn" onclick="termCheck()">확인</button></div>`;
+  $('termModal').classList.add('show');
+  const inp = $('termInp');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') termCheck(); });
+  try{ inp.focus(); }catch(e){}
+}
+function closeTermPop(){ clearTimeout(termTimer); $('termModal').classList.remove('show'); termCfg = null; }
+function termCheck(){
+  if(!termCfg || $('termBtn').disabled) return;
+  const inp = $('termInp'), raw = normTerm(inp.value);
+  if(raw===''){ setFb('termFb',false,'빈칸을 채워 주세요.'); return; }
+  const ok = termCfg.ans.some(a=>normTerm(a)===raw);
+  firstTry(termCfg.qid, ok);
+  inp.classList.toggle('wrong',!ok); inp.classList.toggle('correct',ok);
+  if(!ok){ setFb('termFb',false,'❌ 다시 한 번 생각해 보세요!'); return; }
+  setFb('termFb',true,'✅ 맞아요!');
+  $('termBtn').disabled = true;
+  const box = termCfg.box;
+  setTimeout(()=>{
+    closeTermPop();
+    const el = $(box); if(!el) return;
+    el.classList.remove('term-wait'); flashRef(el); scrollToEl(box);
+  }, 600);
+}
+
 function choiceCol(name, opts){
   return `<div class="choice-col" id="${name}Row">`+shuffle(opts).map(o=>`<button class="choice-btn" data-k="${o.key}" onclick="${name}Pick('${o.key}',this)">${o.label}</button>`).join('')+`</div>`;
 }
@@ -708,11 +761,13 @@ function s2qPick(k, btn){
   if(!choiceGrade('s2q', btn, k==='no', '❌ 왼쪽 보드에서 파란색과 주황색이 함께 칠해진 책이 있나요?', ['actBoard'])) return;
   setFb('s2qFb',true,'✅ 맞아요. 왼쪽 보드에도 두 색이 함께 칠해진 책은 없어요.');
   appendR(`<div class="qblock" id="s2End">
-    <div class="def-box">사건 ${itA()}가 일어나면 사건 ${itB()}는 일어나지 않을 때,<br>두 사건 ${itA()}, ${itB()}는 <b style="color:#be123c">동시에 일어나지 않는다</b>고 한다.</div>
+    <div class="def-box term-wait" id="s2def">사건 ${itA()}가 일어나면 사건 ${itB()}는 일어나지 않을 때,<br>두 사건 ${itA()}, ${itB()}는 <b style="color:#be123c">동시에 일어나지 않는다</b>고 한다.</div>
     <div class="note-box">국내 도서를 고르면 해외 도서는 고른 것이 아니에요. 그래서 사건 A, B는 동시에 일어나지 않아요.</div>
     <div class="btn-row"><button class="btn" id="s2NextBtn" onclick="this.disabled=true;stage3()">다음: 겹치면 어떻게 될까? →</button></div>
   </div>`);
   scrollToEl('s2End');
+  termAfter({ qid:'term2', box:'s2def', title:"수학에서 말하는 '동시에 일어나지 않는다'의 뜻이에요.",
+    html:`사건 ${itA()}가 일어나면 사건 ${itB()}는 일어나지 않을 때,<br>두 사건 ${itA()}, ${itB()}는 [[BLANK]]고 한다.`, ans:['동시에 일어나지 않는다'] });
 }
 
 /* ════════════════════════════════
@@ -1061,7 +1116,7 @@ function sumPick(btn){
   if(sumIdx < SUM_BLANKS.length){ setTimeout(sumRenderPick, 400); return; }
   $('sumPickArea').innerHTML = '';
   $('sumEnd').innerHTML = `
-    <div class="def-box">(사건 ${itA()} 또는 사건 ${itB()}가 일어나는 경우의 수) = <span class="it">a</span> + <span class="it">b</span><br><span style="font-size:13px;color:var(--ink2)">단, 두 사건 ${itA()}, ${itB()}는 동시에 일어나지 않는다.</span></div>
+    <div class="def-box" id="sumDef">(사건 ${itA()} 또는 사건 ${itB()}가 일어나는 경우의 수) = <span class="it">a</span> + <span class="it">b</span><br>단, <u>두 사건 ${itA()}, ${itB()}는 동시에 일어나지 않는다.</u></div>
     <div class="note-box">
       <b>'또는'이 나오면 이렇게 해요</b><br>
       ① 두 사건이 각각 무엇인지 확인해요. (사건 A, 사건 B)<br>
@@ -1271,12 +1326,14 @@ async function checkAdminPassword(){
     '<div><strong>7단계</strong>: ① 동시에 일어나지 않는 ② a+b</div>'+
     '<div><strong>레벨1</strong>: 상황 6개 × 방식1(a, b 주고 합)·방식2(전체와 한쪽 주고 다른 쪽) — 빈칸은 (A쪽)+(B쪽)=(전체) 순서 고정, a·b는 2~7 서로 다른 수</div>'+
     `<div><strong>레벨2</strong>: 같은 종류(합·차·곱)끼리 짝지은 ${L2_POOL.length}쌍에서 주사위 2 + 주머니 2 랜덤 (교과서 예제 1·문제 4와 같은 쌍은 제외)</div>`+
+    '<div><strong>용어 팝업</strong>: 동시에 일어나지 않는다 (공식 상자는 바로 앞에서 빈칸을 골라 완성하므로 팝업 없음) (띄어쓰기·따옴표·마침표 무시)</div>'+
     '<div style="color:var(--red);margin-top:6px">미인정: "다섯"처럼 한글 수사 / 레벨1에서 두 빈칸 (A쪽, B쪽) 순서를 바꿔 쓴 경우</div>'+
     '<div style="margin-top:6px"><strong>찍기 방지</strong>: 질문이 뜬 뒤 1.5~4초 안에 고르면 채점 안 함 · 틀리면 3→5→8초 잠금 후 보기 다시 섞기 · 4단계 겹침 분류의 틀린 줄은 새 사건 쌍으로 교체(겹침 여부 무작위) · 레벨1 오답은 숫자만 바꾼 새 문제 (둘 다 정답 공개 안 함)</div>'+
     `<label style="display:block;margin-top:6px"><input type="checkbox" ${GUARD.on?'':'checked'} onchange="GUARD.on=!this.checked"> 시연용: 읽기 확인·잠금 끄기</label>`;
   $('adminPanel').style.display='block';
 }
 function adminGo(i){
+  closeTermPop();
   const f=[stage0,stage1,stage2,stage3,stage4,stage5,stage6,goToPractice];
   if(i<8) f[i](); else { curStage=7; renderStepper(); startLevel(1); }
 }

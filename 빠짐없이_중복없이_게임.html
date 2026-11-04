@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빠짐없이! 중복 없이! 경우 모으기</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --colA:#2563eb;--colA-l:#dbeafe;--colB:#ea580c;--colB-l:#ffedd5;
+  --gold:#f59e0b;
+  --r:14px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:40px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:900px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.kw{font-weight:800;color:#be123c}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-soft{background:var(--indigo-l);color:var(--indigo)}
+.btn-done{background:var(--green)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.feedback{min-height:22px;font-size:14px;font-weight:800;text-align:center;margin-top:8px}
+.feedback.ok{color:var(--green)}
+.feedback.no{color:var(--red)}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+
+/* 시작 화면 */
+.title-box{text-align:center;padding:22px 16px 16px}
+.title-box h1{font-size:28px;font-weight:900;letter-spacing:-0.5px}
+.title-box p{margin-top:6px;font-size:14px;color:var(--ink2);font-weight:600}
+.box-head{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:900;margin-bottom:8px;flex-wrap:wrap}
+.box-count{font-size:13px;font-weight:800;color:var(--ink3)}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lv{border:2px solid #d8ddfb;border-radius:14px;padding:14px 12px;background:#fff;text-align:center;cursor:pointer;font-family:inherit;color:var(--ink);transition:transform .15s}
+.lv:hover:not(:disabled){transform:translateY(-2px);border-color:var(--indigo)}
+.lv:disabled{cursor:default;background:#f4f4f8;color:var(--ink3)}
+.lv .n{font-size:13px;font-weight:800;color:var(--indigo)}
+.lv:disabled .n{color:var(--ink3)}
+.lv .t{font-size:17px;font-weight:900;margin:3px 0}
+.lv .d{font-size:12px;color:var(--ink2);font-weight:600;line-height:1.5;min-height:36px}
+.lv .best{margin-top:6px;font-size:12px;font-weight:800;color:#b45309}
+.lv .pass{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:800;color:#14532d;background:var(--green-l);border-radius:10px;padding:1px 8px}
+.lv .rank-tag{display:inline-block;margin-top:4px;font-size:11px;font-weight:800;color:#92400e;background:#fef3c7;border-radius:10px;padding:1px 8px}
+.rules{font-size:13px;line-height:1.85;color:var(--ink2);font-weight:600}
+.rules li{margin-left:18px}
+@media (max-width:640px){ .levels{grid-template-columns:1fr} }
+
+/* 게임 화면 */
+.hud{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+.hud .box{background:#fff;border-radius:12px;padding:6px 14px;font-weight:900;font-size:18px;box-shadow:var(--shadow);min-width:96px;text-align:center}
+.hud .box small{display:block;font-size:10.5px;color:var(--ink3);font-weight:800}
+.sit{font-size:17px;font-weight:800;line-height:1.7;word-break:keep-all}
+.sit .ctx{display:inline-block;font-size:12px;font-weight:800;color:var(--indigo);background:var(--indigo-ll);border-radius:10px;padding:2px 9px;margin-right:6px;vertical-align:2px}
+.sit u{text-decoration-color:var(--gold);text-decoration-thickness:3px;text-underline-offset:4px}
+.group{margin-top:12px}
+.group-name{font-size:13px;font-weight:900;margin-bottom:6px}
+.group-name.a{color:var(--colA)} .group-name.b{color:var(--colB)}
+.items{display:flex;gap:8px;flex-wrap:wrap}
+.item{border:2px solid #d8ddfb;background:#fff;border-radius:12px;padding:8px 12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink);min-width:58px;transition:transform .08s}
+.item:active{transform:scale(.95)}
+.item .ic{font-size:20px;display:block;line-height:1.2}
+.item.a.sel{border-color:var(--colA);background:var(--colA-l)}
+.item.b.sel{border-color:var(--colB);background:var(--colB-l)}
+.item.digit{font-size:26px;min-width:56px;padding:8px 10px}
+.builder{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 4px;flex-wrap:wrap}
+.slot{min-width:120px;min-height:52px;border:2.5px dashed #c7cdfa;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;padding:6px 10px;background:#fafbff}
+.slot.a.full{border:2.5px solid var(--colA);background:var(--colA-l)}
+.slot.b.full{border:2.5px solid var(--colB);background:var(--colB-l)}
+.slot small{display:block;font-size:10.5px;color:var(--ink3)}
+.builder .plus{font-size:24px;font-weight:900;color:var(--ink3)}
+.build-msg{min-height:26px;text-align:center;font-size:15px;font-weight:900}
+.build-msg.ok{color:var(--green)} .build-msg.no{color:var(--red)}
+.pop{animation:popIn .5s ease-out}
+@keyframes popIn{0%{transform:scale(.8);opacity:.3}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.flash{animation:flash 1s ease-out 2}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--gold);background:#fef3c7}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+
+/* 수집함 */
+.bag-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.bag-title{font-size:15px;font-weight:900}
+.prog{flex:1;min-width:120px;height:12px;border-radius:8px;background:#dfe3fb;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#84cc16);border-radius:8px;transition:width .3s}
+.chips{display:flex;gap:6px;flex-wrap:wrap;min-height:40px}
+.chip{background:var(--indigo-ll);border:1.5px solid #c7cdfa;border-radius:10px;padding:4px 10px;font-size:13.5px;font-weight:800}
+.chip .xa{color:var(--colA)} .chip .xb{color:var(--colB)}
+.grid-wrap{overflow-x:auto}
+table.bag{border-collapse:collapse;margin:0 auto;font-size:13px;font-weight:800}
+table.bag th,table.bag td{border:1.5px solid #c7cdfa;padding:6px 8px;text-align:center;min-width:54px}
+table.bag th.ra{background:var(--colA-l);color:var(--colA)}
+table.bag th.cb{background:var(--colB-l);color:var(--colB)}
+table.bag th.corner{background:#f4f4f8;color:var(--ink3);font-size:11px}
+table.bag td.found{background:var(--green-l);color:#14532d}
+table.bag td.empty{background:#fff;color:#d1d5f0}
+table.bag td.no{background:#f1f1f5;color:#b0b0c0}
+.road-svg{width:100%;max-width:560px;display:block;margin:4px auto 0}
+.road{fill:none;stroke-linecap:round;cursor:pointer}
+
+/* 확인 문제 · 결과 */
+.eq{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;font-size:17px;font-weight:800;margin:10px 0}
+.eq .lbl{font-size:12px;color:var(--ink3);display:block;text-align:center}
+.eq input{width:62px;font-size:20px;font-weight:800;text-align:center;border:2.5px solid #c7cdfa;border-radius:10px;padding:6px;font-family:inherit}
+.eq input.wrong{border-color:var(--red);background:var(--red-l)}
+.eq input.correct{border-color:var(--green);background:var(--green-l)}
+.result-big{text-align:center}
+.result-big .score{font-size:46px;font-weight:900;color:var(--indigo)}
+.result-big .newbest{display:inline-block;background:#fef3c7;color:#92400e;font-weight:900;border-radius:12px;padding:3px 12px;font-size:13px;margin-top:4px}
+table.sum{border-collapse:collapse;margin:14px auto 0;font-size:13.5px;font-weight:700}
+table.sum th,table.sum td{border:1px solid #d8ddfb;padding:6px 10px;text-align:center}
+table.sum th{background:var(--indigo-ll)}
+.verdict{margin-top:14px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.7;text-align:center;background:var(--green-l);color:#14532d}
+
+/* 순위표 */
+.rank-list{list-style:none}
+.rank-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-weight:800;font-size:15px}
+.rank-list li:nth-child(odd){background:var(--indigo-ll)}
+.rank-list li.me{outline:2.5px solid var(--gold);background:#fffbeb}
+.rank-list .rk{width:34px;text-align:center;font-size:18px}
+.rank-list .nm{flex:1}
+.rank-list .sc{color:var(--indigo)}
+.board .rank-list li{font-size:24px;padding:12px 16px}
+.board .rank-list .rk{width:52px;font-size:28px}
+.cls-pick{display:flex;gap:5px;flex-wrap:wrap}
+.cls-pick button{border:1.5px solid #d8ddfb;background:#fff;border-radius:16px;padding:4px 11px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.cls-pick button.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:30px;margin-bottom:6px}
+.modal-text{font-size:15px;font-weight:800;margin-bottom:10px}
+.modal-btn{border:none;border-radius:10px;padding:8px 16px;font-size:13.5px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.blank{border:2px solid #c7cdfa;border-radius:8px;padding:6px 8px;font-size:15px;font-family:inherit;text-align:center}
+.board-wrap{position:fixed;inset:0;background:#fff;z-index:70;display:none;overflow-y:auto;padding:24px 32px}
+.board-wrap.show{display:block}
+.board-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.board-top h2{font-size:24px;color:var(--indigo)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">🧺 빠짐없이! 중복 없이! 경우 모으기</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'collect-game' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._hubDb = _db;
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+</script>
+
+<div class="main">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="scMenu">
+    <div class="card title-box">
+      <h1>🧺 빠짐없이! 중복 없이!</h1>
+      <p>가능한 경우를 하나씩 직접 만들어 모두 모아 보세요.</p>
+    </div>
+    <div class="card">
+      <div class="box-head">🎯 레벨 고르기</div>
+      <div class="levels" id="levelBox"></div>
+    </div>
+    <div class="card">
+      <div class="box-head">📖 게임 방법</div>
+      <ul class="rules">
+        <li>한 판에 상황이 <b>3개</b> 나와요. 상황마다 가능한 경우를 <b>모두</b> 만들어 🧺 수집함에 모아요.</li>
+        <li>파란 줄에서 하나, 주황 줄에서 하나를 누르면 하나의 경우가 만들어져요.</li>
+        <li>새로운 경우를 모으면 <b>+20점</b>. 빨리 다 모을수록 시간 보너스가 커요.</li>
+        <li>이미 모은 것을 또 만들거나(<b>중복</b>), 만들 수 없는 것을 만들면 <b>−30점</b>이에요.</li>
+        <li>레벨 2·3에서는 전체 개수가 보이지 않아요. 다 모았다고 생각하면 <b>[다 찾았어요!]</b>를 눌러요. 아직 남아 있으면 <b>−100점</b>!</li>
+        <li>한 상황을 다 모으면 계산으로 확인하는 문제가 나와요. 한 번에 맞히면 +50점이에요.</li>
+      </ul>
+    </div>
+    <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🏆 우리 반 순위표 (레벨 2)</button></div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div class="screen" id="scPlay">
+    <div class="hud">
+      <div class="box"><small>상황</small><span id="hudRound">1</span> / 3</div>
+      <div class="box"><small>시간</small><span id="hudTime">0</span>초</div>
+      <div class="box"><small>점수</small><span id="hudScore">0</span></div>
+    </div>
+    <div class="card" id="sitCard"></div>
+    <div class="card" id="bagCard"></div>
+  </div>
+
+  <div class="screen" id="scCheck"></div>
+  <div class="screen" id="scResult"></div>
+  <div class="screen" id="scRank"></div>
+</div>
+
+<div class="board-wrap" id="boardWrap">
+  <div class="board-top">
+    <h2>🏆 경우 모으기 레벨 2 순위표</h2>
+    <div class="cls-pick" id="boardCls"></div>
+    <button class="btn btn-soft" onclick="boardLoad()">🔄 새로고침</button>
+    <button class="btn" style="background:var(--red)" onclick="boardReset()">순위표 초기화</button>
+    <button class="btn" style="background:#9090b0;margin-left:auto" onclick="closeBoard()">닫기</button>
+  </div>
+  <div id="boardBody" class="board"></div>
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:390px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:60;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:6px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function now(){ return Date.now(); }
+function escHTML(t){ return String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const RETHINK = '❌ 다시 한 번 생각해 보세요!';
+
+/* ════════════════════════════════
+   상황 만들기 — 모두 '두 가지를 하나씩 골라 짝짓기'
+   A(파랑), B(주황) 재료 목록 + valid(x,y) + 확인 문제(eq)
+   sizes: 레벨별 [A 개수, B 개수] 후보 (경우의 수: 레벨1 4~8, 레벨2 6~12, 레벨3 12~20)
+════════════════════════════════ */
+const POOL = {
+  top:[{ic:'🔴',l:'빨강 티'},{ic:'🔵',l:'파랑 티'},{ic:'🟢',l:'초록 티'},{ic:'🟡',l:'노랑 티'},{ic:'🟣',l:'보라 티'}],
+  bottom:[{ic:'👖',l:'청바지'},{ic:'🩳',l:'반바지'},{ic:'👗',l:'치마'},{ic:'🟫',l:'면바지'}],
+  flavor:[{ic:'🍓',l:'딸기'},{ic:'🍫',l:'초코'},{ic:'🤍',l:'바닐라'},{ic:'🌿',l:'민트'},{ic:'🍵',l:'녹차'}],
+  cone:[{ic:'🍦',l:'콘'},{ic:'🍨',l:'컵'},{ic:'🧇',l:'와플'}],
+  burger:[{ic:'🍔',l:'불고기'},{ic:'🧀',l:'치즈'},{ic:'🦐',l:'새우'},{ic:'🍗',l:'치킨'},{ic:'🥓',l:'베이컨'}],
+  drink:[{ic:'🥤',l:'콜라'},{ic:'🫧',l:'사이다'},{ic:'🧃',l:'주스'},{ic:'🥛',l:'우유'}],
+  roadA:['①','②','③','④','⑤'].map(l=>({ic:'',l:'길 '+l, s:l})),
+  roadB:['ㄱ','ㄴ','ㄷ','ㄹ'].map(l=>({ic:'',l:'길 '+l, s:l}))
+};
+const take = (arr, n) => shuffle(arr.slice()).slice(0,n).map((x,i)=>Object.assign({id:'i'+i+'_'+x.l}, x));
+const keepOrder = (arr, n) => arr.slice(0,n).map((x,i)=>Object.assign({id:'i'+i}, x));
+
+const CTX = {
+  outfit:{ name:'👕 옷 입히기', sizes:{1:[[3,2],[4,2],[2,3]], 2:[[3,3],[4,3],[3,4],[4,2]], 3:[[5,3],[4,4],[5,4]]},
+    make([m,n]){ const A=take(POOL.top,m), B=take(POOL.bottom,n);
+      return { A, B, an:'상의', bn:'하의', ctx:'👕 재이의 옷장',
+        sit:`상의 ${m}벌, 하의 ${n}벌이 있어요. <u>상의와 하의를 하나씩 골라 입는 방법</u>을 모두 모아 보세요.`,
+        eq:{ a:m, b:n, al:'상의의 수', bl:'하의의 수' } }; } },
+  icecream:{ name:'🍦 아이스크림', sizes:{1:[[3,2],[4,2]], 2:[[4,2],[5,2],[4,3],[3,3]], 3:[[5,3],[4,3]]},
+    make([m,n]){ const A=take(POOL.flavor,m), B=take(POOL.cone,n);
+      return { A, B, an:'맛', bn:'그릇', ctx:'🍦 아이스크림 가게',
+        sit:`아이스크림 맛이 ${m}가지, 담는 그릇이 ${n}가지 있어요. <u>맛과 그릇을 하나씩 골라 주문하는 방법</u>을 모두 모아 보세요.`,
+        eq:{ a:m, b:n, al:'맛의 수', bl:'그릇의 수' } }; } },
+  burger:{ name:'🍔 세트 메뉴', sizes:{1:[[2,3],[3,2],[2,4]], 2:[[3,3],[3,4],[4,3]], 3:[[4,4],[5,3],[5,4]]},
+    make([m,n]){ const A=take(POOL.burger,m), B=take(POOL.drink,n);
+      return { A, B, an:'버거', bn:'음료', ctx:'🍔 햄버거 가게',
+        sit:`버거가 ${m}종류, 음료가 ${n}종류 있어요. <u>버거와 음료를 하나씩 골라 세트를 만드는 방법</u>을 모두 모아 보세요.`,
+        eq:{ a:m, b:n, al:'버거의 수', bl:'음료의 수' } }; } },
+  road:{ name:'🗺 길 찾기', sizes:{1:[[2,2],[3,2],[2,3]], 2:[[3,3],[4,2],[3,4]], 3:[[4,3],[4,4],[5,3]]},
+    make([m,n]){ const A=keepOrder(POOL.roadA,m), B=keepOrder(POOL.roadB,n);
+      return { A, B, an:'집 → 문구점', bn:'문구점 → 학교', ctx:'🗺 길 찾기', road:true,
+        sit:`집에서 문구점까지 가는 길이 ${m}가지, 문구점에서 학교까지 가는 길이 ${n}가지 있어요. <u>집에서 문구점을 거쳐 학교까지 가는 방법</u>을 모두 모아 보세요.`,
+        eq:{ a:m, b:n, al:'집→문구점 길의 수', bl:'문구점→학교 길의 수' } }; } },
+  coinDie:{ name:'🪙🎲 동전과 주사위', sizes:{2:[[2,6]], 3:[[2,6]]},
+    make(){ const A=[{id:'h',ic:'🪙',l:'앞면',s:'앞'},{id:'t',ic:'🪙',l:'뒷면',s:'뒤'}];
+      const B=[1,2,3,4,5,6].map(v=>({id:'d'+v, ic:'⚀⚁⚂⚃⚄⚅'[v-1], l:v+'의 눈', s:String(v)}));
+      return { A, B, an:'동전', bn:'주사위', ctx:'🪙🎲 동전과 주사위', pair:true,
+        sit:`동전 한 개와 주사위 한 개를 동시에 던져요. <u>일어날 수 있는 결과</u>를 (동전, 주사위)로 모두 모아 보세요.`,
+        eq:{ a:2, b:6, al:'동전의 결과 수', bl:'주사위의 결과 수' } }; } },
+  rps:{ name:'✌️ 가위바위보', sizes:{2:[[3,3]]},
+    make(){ const H=[{ic:'✌️',l:'가위'},{ic:'✊',l:'바위'},{ic:'🖐️',l:'보'}];
+      const A=H.map((h,i)=>Object.assign({id:'a'+i, s:h.ic},h)), B=H.map((h,i)=>Object.assign({id:'b'+i, s:h.ic},h));
+      return { A, B, an:'재이가 낸 것', bn:'친구가 낸 것', ctx:'✌️ 가위바위보', pair:true,
+        sit:`재이와 친구가 가위바위보를 한 번 해요. <u>두 사람이 낼 수 있는 경우</u>를 (재이, 친구)로 모두 모아 보세요.`,
+        eq:{ a:3, b:3, al:'재이가 낼 수 있는 것', bl:'친구가 낼 수 있는 것' } }; } },
+  digits:{ name:'🔢 두 자리 수', sizes:{1:[[3,0]], 2:[[4,0],[4,1]], 3:[[5,0],[5,1]]},
+    make([n,zero]){
+      const ds = shuffle([1,2,3,4,5,6,7,8,9]).slice(0, zero ? n-1 : n);
+      if(zero) ds.push(0);
+      ds.sort((x,y)=>x-y);
+      const A=ds.map(v=>({id:'t'+v, ic:'', l:String(v), v})), B=ds.map(v=>({id:'o'+v, ic:'', l:String(v), v}));
+      return { A, B, an:'십의 자리', bn:'일의 자리', ctx:'🔢 숫자 카드', digits:true,
+        valid:(x,y)=> x.v!==y.v && x.v!==0,
+        whyNo:(x,y)=> x.v===0 ? '0은 십의 자리에 올 수 없어요!' : '같은 카드를 두 번 쓸 수 없어요!',
+        sit:`${ds.join(', ')}의 숫자가 하나씩 적힌 카드 ${n}장이 있어요. <u>이 중에서 2장을 뽑아 만들 수 있는 두 자리 자연수</u>를 모두 모아 보세요.`,
+        eq:{ a: zero ? n-1 : n, b:n-1, al:'십의 자리에 올 수 있는 카드 수', bl:'(십의 자리를 정한 뒤) 일의 자리에 올 수 있는 카드 수' } }; } }
+};
+const LEVELS = [
+  null,
+  { name:'모아 보기', desc:'전체 개수와 표가 보여요', hidden:false, grid:true },
+  { name:'다 찾았을까?', desc:'개수는 비밀! 스스로 확인해요', hidden:true, grid:false, ranked:true },
+  { name:'큰 수집', desc:'12개가 넘는 큰 수집과 0 카드', hidden:true, grid:false }
+];
+const ROUNDS = 3;
+const NEW_PT = 20, DUP_PT = 30, BAD_PT = 30, CLAIM_PT = 100, HINT_PT = 30, EQ_PT = 50, TIME_PT = 5;
+const parSecs = N => 3*N + 10;   // 이 시간보다 빨리 끝내면 남은 초 × 5점
+
+function makeRound(key, lv){
+  const C = CTX[key];
+  const r = C.make(pick(C.sizes[lv]));
+  r.key = key;
+  r.valid = r.valid || (()=>true);
+  r.all = [];
+  r.A.forEach(x=>r.B.forEach(y=>{ if(r.valid(x,y)) r.all.push(x.id+'|'+y.id); }));
+  r.N = r.all.length;
+  return r;
+}
+function planGame(lv){
+  const keys = shuffle(Object.keys(CTX).filter(k=>CTX[k].sizes[lv]));
+  // 레벨 3은 두 자리 수(0 카드 포함 가능)를 꼭 넣음
+  if(lv===3 && !keys.slice(0,ROUNDS).includes('digits')){ keys.splice(keys.indexOf('digits'),1); keys.splice(Math.floor(Math.random()*ROUNDS),0,'digits'); }
+  return keys.slice(0,ROUNDS);
+}
+// 표 머리·짧은 표시용
+const shortOf = (r,x) => (r.digits||r.road||r.pair) ? (x.s||x.l) : (x.ic?x.ic+' ':'')+x.l;
+const fullOf = x => (x.ic?x.ic+' ':'')+x.l;
+function comboHTML(r, x, y){
+  if(r.digits) return `<b>${x.l}${y.l}</b>`;
+  if(r.pair) return `(<span class="xa">${x.s}</span>, <span class="xb">${y.s}</span>)`;
+  if(r.road) return `<span class="xa">${x.s}</span> → <span class="xb">${y.s}</span>`;
+  return `<span class="xa">${x.ic}${x.l}</span> + <span class="xb">${y.ic}${y.l}</span>`;
+}
+
+/* ════════════════════════════════
+   저장 (레벨 열림·최고 점수) — 이 브라우저에만
+════════════════════════════════ */
+const STU = window._hubStudent || {};
+const SAVE_KEY = `collectGame_${STU.cls||'x'}_${STU.num||'x'}`;
+let SAVE = { open:1, best:{}, passed:{} };
+try{ const v = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(v && v.open) SAVE = Object.assign(SAVE, v); }catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); }catch(e){} }
+
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id)); window.scrollTo(0,0); }
+function renderMenu(){
+  $('levelBox').innerHTML = [1,2,3].map(lv=>{
+    const L = LEVELS[lv], open = lv <= SAVE.open, best = SAVE.best[lv];
+    return `<button class="lv" id="lvBtn${lv}" onclick="startLevel(${lv})" ${open?'':'disabled'}>
+      <div class="n">${open?'':'🔒 '}레벨 ${lv}</div><div class="t">${L.name}</div><div class="d">${L.desc}</div>
+      ${open ? (best!=null ? `<div class="best">최고 ${best}점</div>` : '') : `<div class="d" style="min-height:0">레벨 ${lv-1}을 끝내면 열려요</div>`}
+      ${SAVE.passed[lv] ? '<div class="pass">✔ 완료</div>' : ''}
+      ${L.ranked ? '<div class="rank-tag">🏆 순위표</div>' : ''}
+    </button>`;
+  }).join('');
+  show('scMenu');
+}
+
+/* ════════════════════════════════
+   게임 진행
+════════════════════════════════ */
+let G = null, ticker = null;
+function startLevel(lv){
+  if(lv > SAVE.open) return;
+  G = { lv, plan:planGame(lv), ri:0, score:0, rows:[] };
+  startRound();
+  clearInterval(ticker); ticker = setInterval(tick, 200);
+}
+function startRound(){
+  const r = makeRound(G.plan[G.ri], G.lv);
+  G.r = r; G.found = []; G.selA = null; G.selB = null; G.startAt = now(); G.hint = LEVELS[G.lv].grid;
+  G.stat = { dup:0, bad:0, claim:0, hint:false, base:0 };
+  G.claimLock = false; G.roundOver = false;
+  show('scPlay');
+  $('hudRound').textContent = G.ri+1;
+  renderSit(); renderBag(); updateHud();
+}
+function tick(){
+  if(!G || G.roundOver || !$('scPlay').classList.contains('active')) return;
+  $('hudTime').textContent = Math.floor((now()-G.startAt)/1000);
+}
+function updateHud(){ $('hudScore').textContent = G.score; }
+function addScore(d){ G.score = Math.max(0, G.score + d); updateHud(); }
+
+function renderSit(){
+  const r = G.r;
+  const btn = (x, side) => `<button class="item ${side}${r.digits?' digit':''}" id="it_${side}_${x.id}" onclick="pickItem('${side}','${x.id}')">${x.ic?`<span class="ic">${x.ic}</span>`:''}${x.l}</button>`;
+  $('sitCard').innerHTML = `<div class="sit"><span class="ctx">${r.ctx}</span>${r.sit}</div>
+    ${r.road ? roadSVG(r) : ''}
+    <div class="group"><div class="group-name a">🔵 ${r.an}</div><div class="items">${r.A.map(x=>btn(x,'a')).join('')}</div></div>
+    <div class="group"><div class="group-name b">🟠 ${r.bn}</div><div class="items">${r.B.map(x=>btn(x,'b')).join('')}</div></div>
+    <div class="builder"><div class="slot a" id="slotA"><span><small>${r.an}</small>?</span></div><span class="plus">${r.digits?'':'+'}</span><div class="slot b" id="slotB"><span><small>${r.bn}</small>?</span></div></div>
+    <div class="build-msg" id="buildMsg"></div>`;
+}
+// 지도: 집 · 문구점 · 학교, 길을 눌러도 고를 수 있음
+function roadSVG(r){
+  const P = [[60,95],[280,95],[500,95]];
+  const curve = (p,q,i,k,cls,id,side,label) => {
+    const off = (i-(k-1)/2)*34, mx=(p[0]+q[0])/2, my=p[1]+off*1.9;
+    const lx = mx, ly = (p[1]+2*my+q[1])/4;
+    return `<path d="M${p[0]},${p[1]} Q${mx},${my} ${q[0]},${q[1]}" class="road" id="rd_${side}_${id}" stroke="${cls}" stroke-width="5" onclick="pickItem('${side}','${id}')"/>
+      <path d="M${p[0]},${p[1]} Q${mx},${my} ${q[0]},${q[1]}" fill="none" stroke="transparent" stroke-width="18" style="cursor:pointer" onclick="pickItem('${side}','${id}')"/>
+      <text x="${lx}" y="${ly+5}" text-anchor="middle" font-size="15" font-weight="800" fill="${cls}" stroke="#fff" stroke-width="4" paint-order="stroke" style="pointer-events:none">${label}</text>`;
+  };
+  return `<svg class="road-svg" viewBox="0 0 560 190">
+    ${r.A.map((x,i)=>curve(P[0],P[1],i,r.A.length,'#2563eb',x.id,'a',x.s)).join('')}
+    ${r.B.map((x,i)=>curve(P[1],P[2],i,r.B.length,'#ea580c',x.id,'b',x.s)).join('')}
+    ${[['🏠 집',P[0]],['✏️ 문구점',P[1]],['🏫 학교',P[2]]].map(([t,p])=>`<circle cx="${p[0]}" cy="${p[1]}" r="9" fill="#1a1a2e"/><text x="${p[0]}" y="${p[1]+(t.includes('문구점')?-14:30)}" text-anchor="middle" font-size="14" font-weight="800" fill="#1a1a2e" stroke="#fff" stroke-width="4" paint-order="stroke">${t}</text>`).join('')}
+  </svg>`;
+}
+function pickItem(side, id){
+  if(!G || G.roundOver) return;
+  const r = G.r, list = side==='a' ? r.A : r.B;
+  const x = list.find(v=>v.id===id); if(!x) return;
+  if(side==='a') G.selA = x; else G.selB = x;
+  document.querySelectorAll(`.item.${side}`).forEach(b=>b.classList.toggle('sel', b.id===`it_${side}_${id}`));
+  document.querySelectorAll(`[id^="rd_${side}_"]`).forEach(p=>p.setAttribute('stroke-width', p.id===`rd_${side}_${id}` ? '9' : '5'));
+  const slot = $(side==='a'?'slotA':'slotB');
+  slot.classList.add('full');
+  slot.innerHTML = `<span><small>${side==='a'?r.an:r.bn}</small>${fullOf(x)}</span>`;
+  if(G.selA && G.selB) build();
+}
+function build(){
+  const r = G.r, x = G.selA, y = G.selB, key = x.id+'|'+y.id;
+  const msg = $('buildMsg');
+  msg.className = 'build-msg'; void msg.offsetWidth;   // 같은 효과를 다시 보여 주려고 초기화
+  let kind;
+  if(!r.valid(x,y)){ kind='bad'; G.stat.bad++; addScore(-BAD_PT); msg.className='build-msg no shake'; msg.textContent = `🚫 ${r.whyNo(x,y)} −${BAD_PT}점`; }
+  else if(G.found.includes(key)){ kind='dup'; G.stat.dup++; addScore(-DUP_PT); msg.className='build-msg no shake'; msg.textContent = `🔁 이미 모았어요! −${DUP_PT}점`; }
+  else { kind='new'; G.found.push(key); G.stat.base += NEW_PT; addScore(NEW_PT); msg.className='build-msg ok pop'; msg.innerHTML = `✨ ${comboHTML(r,x,y)} 모았어요! +${NEW_PT}점`; }
+  G.selA = null; G.selB = null;
+  document.querySelectorAll('.item').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('[id^="rd_"]').forEach(p=>p.setAttribute('stroke-width','5'));
+  $('slotA').className='slot a'; $('slotA').innerHTML = `<span><small>${r.an}</small>?</span>`;
+  $('slotB').className='slot b'; $('slotB').innerHTML = `<span><small>${r.bn}</small>?</span>`;
+  renderBag(kind==='dup' ? key : null);
+  // 레벨 1은 전체 개수가 보이므로 다 모으면 바로 끝
+  if(!LEVELS[G.lv].hidden && G.found.length===r.N) finishRound();
+}
+function renderBag(flashKey){
+  const r = G.r, L = LEVELS[G.lv];
+  const head = L.hidden
+    ? `<div class="bag-head"><span class="bag-title">🧺 모은 것 <span id="bagCount">${G.found.length}</span>개</span></div>`
+    : `<div class="bag-head"><span class="bag-title">🧺 모은 것 <span id="bagCount">${G.found.length}</span> / ${r.N}</span><div class="prog"><i style="width:${G.found.length/r.N*100}%"></i></div></div>`;
+  const body = G.hint ? gridHTML(r) : chipsHTML(r);
+  const btns = L.hidden ? `<div class="btn-row">
+      ${G.hint ? '' : `<button class="btn btn-soft" id="hintBtn" onclick="useHint()">📊 표로 정리해 보기 (−${HINT_PT}점)</button>`}
+      <button class="btn btn-done" id="claimBtn" onclick="claimDone()" ${G.claimLock?'disabled':''}>🙌 다 찾았어요!</button></div>
+      <div class="feedback" id="claimFb"></div>` : '';
+  $('bagCard').innerHTML = head + body + btns;
+  if(flashKey){ const el = document.querySelector(`[data-k="${flashKey}"]`); if(el) el.classList.add('flash'); }
+}
+function chipsHTML(r){
+  if(!G.found.length) return '<p class="sub">아직 모은 것이 없어요. 위에서 하나씩 골라 만들어 보세요.</p>';
+  const byId = (list,id)=>list.find(v=>v.id===id);
+  return `<div class="chips">${G.found.map(k=>{ const [a,b]=k.split('|'); return `<span class="chip" data-k="${k}">${comboHTML(r, byId(r.A,a), byId(r.B,b))}</span>`; }).join('')}</div>`;
+}
+// 표: 가로줄 = 파랑(A), 세로줄 = 주황(B). 빈칸이 곧 아직 못 찾은 것
+function gridHTML(r){
+  return `<div class="grid-wrap"><table class="bag"><tr><th class="corner">${r.an} ＼ ${r.bn}</th>${r.B.map(y=>`<th class="cb">${shortOf(r,y)}</th>`).join('')}</tr>
+    ${r.A.map(x=>`<tr><th class="ra">${shortOf(r,x)}</th>${r.B.map(y=>{
+      const k = x.id+'|'+y.id;
+      if(!r.valid(x,y)) return `<td class="no">✕</td>`;
+      return G.found.includes(k) ? `<td class="found" data-k="${k}">${r.digits ? x.l+y.l : '✔'}</td>` : `<td class="empty">?</td>`;
+    }).join('')}</tr>`).join('')}</table></div>
+    <p class="sub" style="text-align:center;margin-top:6px">✔ 칸은 모은 것, ? 칸은 아직 못 찾은 것${r.digits?', ✕ 칸은 만들 수 없는 것':''}이에요.</p>`;
+}
+function useHint(){
+  if(!G || G.hint || G.roundOver) return;
+  G.hint = true; G.stat.hint = true; addScore(-HINT_PT);
+  renderBag();
+}
+function claimDone(){
+  if(!G || G.roundOver || G.claimLock) return;
+  if(G.found.length === G.r.N){ finishRound(); return; }
+  G.stat.claim++; addScore(-CLAIM_PT);
+  G.claimLock = true;
+  let n = 3;
+  const fb = () => { $('claimFb').className='feedback no'; $('claimFb').innerHTML = `🔍 아직 남아 있어요! −${CLAIM_PT}점<br><span class="lock-note">⏳ ${n}초 뒤에 다시 누를 수 있어요</span>`; };
+  $('claimBtn').disabled = true; fb();
+  const t = setInterval(()=>{ n--; if(!G || G.roundOver){ clearInterval(t); return; }
+    if(n>0){ fb(); return; }
+    clearInterval(t); G.claimLock = false;
+    if($('claimBtn')) $('claimBtn').disabled = false;
+    $('claimFb').innerHTML = '🔍 아직 남아 있어요! 빠진 것이 없는지 다시 살펴보세요.';
+  }, 1000);
+}
+function finishRound(){
+  G.roundOver = true;
+  const secs = Math.floor((now()-G.startAt)/1000);
+  const tb = Math.max(0, parSecs(G.r.N) - secs) * TIME_PT;
+  addScore(tb);
+  G.stat.secs = secs; G.stat.time = tb;
+  renderCheck();
+}
+
+/* ════════════════════════════════
+   계산으로 확인 — 틀리면 정답 없이 "다시 한 번 생각해 보세요!" + 잠깐 잠금
+════════════════════════════════ */
+function renderCheck(){
+  const r = G.r, e = r.eq;
+  G.eqTried = false;
+  $('scCheck').innerHTML = `<div class="card">
+      <div class="box-head">🎉 ${r.N}가지를 모두 모았어요! <span class="box-count">${G.stat.secs}초 · 시간 보너스 +${G.stat.time}점</span></div>
+      <div class="sit" style="font-size:15px;margin-bottom:6px"><span class="ctx">${r.ctx}</span>${r.sit.replace(/<\/?u>/g,'')}</div>
+      <div class="grid-wrap" style="margin:8px 0">${gridHTML(r)}</div>
+      <p style="font-size:15px;font-weight:800;margin-top:10px">🧮 하나씩 모으지 않고 <span class="kw">계산</span>으로 구하면 어떻게 될까요?</p>
+      <div class="eq">
+        <span><span class="lbl">${e.al}</span><input id="eqA" inputmode="numeric"></span> ×
+        <span><span class="lbl">${e.bl}</span><input id="eqB" inputmode="numeric"></span> =
+        <span><span class="lbl">경우의 수</span><input id="eqN" inputmode="numeric"></span>
+      </div>
+      <div class="feedback" id="eqFb"></div>
+      <div class="btn-row"><button class="btn" id="eqBtn" onclick="checkEq()">확인</button></div>
+    </div>`;
+  show('scCheck');
+  ['eqA','eqB','eqN'].forEach(id=>$(id).addEventListener('keydown', ev=>{ if(ev.key==='Enter') checkEq(); }));
+}
+function checkEq(){
+  const e = G.r.eq, ids = ['eqA','eqB','eqN'], want = [e.a, e.b, G.r.N];
+  const vals = ids.map(id=>$(id).value.trim().replace(/(가지|개|벌|장|종류)$/,''));
+  if(vals.some(v=>v==='')){ $('eqFb').className='feedback no'; $('eqFb').textContent='빈칸을 모두 채워 주세요.'; return; }
+  const ok = vals.every((v,i)=>/^\d+$/.test(v) && +v===want[i]);
+  if(ok){
+    if(!G.eqTried){ addScore(EQ_PT); G.stat.eq = EQ_PT; } else G.stat.eq = 0;
+    ids.forEach(id=>{ $(id).classList.add('correct'); $(id).disabled = true; });
+    $('eqBtn').disabled = true;
+    $('eqFb').className='feedback ok'; $('eqFb').textContent = G.eqTried ? '✅ 맞아요!' : `✅ 맞아요! 한 번에 맞혀서 +${EQ_PT}점`;
+    G.rows.push({ ctx:G.r.ctx, N:G.r.N, secs:G.stat.secs, dup:G.stat.dup, bad:G.stat.bad, claim:G.stat.claim, hint:G.stat.hint });
+    $('scCheck').querySelector('.card').insertAdjacentHTML('beforeend', `<div class="btn-row"><button class="btn" id="nextRoundBtn" onclick="nextRound()">${G.ri+1<ROUNDS?'다음 상황 →':'결과 보기 →'}</button></div>`);
+    return;
+  }
+  G.eqTried = true;
+  ids.forEach(id=>$(id).classList.add('wrong'));
+  $('eqBtn').disabled = true;
+  let n = 3;
+  const fb = () => { $('eqFb').className='feedback no'; $('eqFb').innerHTML = `${RETHINK}<br><span class="lock-note">⏳ ${n}초 뒤에 다시 쓸 수 있어요</span>`; };
+  fb();
+  const t = setInterval(()=>{ n--; if(n>0){ fb(); return; } clearInterval(t);
+    ids.forEach(id=>$(id).classList.remove('wrong')); $('eqBtn').disabled = false;
+    $('eqFb').innerHTML = `${RETHINK}<br><span class="sub">위의 표를 보고 다시 써 보세요.</span>`; }, 1000);
+}
+function nextRound(){
+  if(!G) return;
+  const b = $('nextRoundBtn'); if(b) b.disabled = true;
+  G.ri++;
+  if(G.ri < ROUNDS){ startRound(); return; }
+  endGame();
+}
+
+/* ════════════════════════════════
+   결과
+════════════════════════════════ */
+function endGame(){
+  clearInterval(ticker); ticker = null;
+  const lv = G.lv;
+  const prevBest = SAVE.best[lv];
+  const newBest = prevBest==null || G.score > prevBest;
+  if(newBest) SAVE.best[lv] = G.score;
+  SAVE.passed[lv] = true;
+  if(lv < 3 && SAVE.open < lv+1) SAVE.open = lv+1;
+  persist();
+  if(window._reportHubComplete) window._reportHubComplete();
+  $('scResult').innerHTML = `<div class="card result-big">
+      <div class="sub">레벨 ${lv} · ${LEVELS[lv].name}</div>
+      <div class="score">${G.score}점</div>
+      ${newBest && G.score>0 ? '<div class="newbest">🌟 내 최고 기록!</div>' : (prevBest!=null?`<div class="sub">내 최고 ${prevBest}점</div>`:'')}
+      <table class="sum"><tr><th>상황</th><th>경우의 수</th><th>걸린 시간</th><th>중복</th><th>만들 수 없음</th>${LEVELS[lv].hidden?'<th>덜 찾고 누름</th><th>표 힌트</th>':''}</tr>
+        ${G.rows.map(r=>`<tr><td>${r.ctx}</td><td>${r.N}가지</td><td>${r.secs}초</td><td>${r.dup}</td><td>${r.bad}</td>${LEVELS[lv].hidden?`<td>${r.claim}</td><td>${r.hint?'썼어요':'-'}</td>`:''}</tr>`).join('')}
+      </table>
+      <div class="verdict">🎉 레벨 ${lv} 완료!${lv<3?` 레벨 ${lv+1}이 열렸어요.`:''}<br><span style="font-weight:700">하나씩 모아 보니, 두 가지를 하나씩 골라 짝짓는 경우의 수는 <b>곱하면</b> 바로 구할 수 있었어요.</span></div>
+      <div id="rankSaveMsg" class="sub" style="margin-top:8px"></div>
+      <div class="btn-row"><button class="btn" onclick="renderMenu()">처음 화면으로</button></div>
+    </div>`;
+  show('scResult');
+  if(LEVELS[lv].ranked) saveRank(G.score);
+}
+
+/* ════════════════════════════════
+   순위표 (레벨 2) — Firestore 문서 하나: gameRank/collect_{반}
+   best: { 번호: {s:점수, nm:이름, at} } — 내 최고 기록을 넘었을 때만 씀
+════════════════════════════════ */
+function hasClass(){ return !!(window._hubDb && STU.cls && STU.num); }
+function rankRef(cls){ return window._hubDb.collection('gameRank').doc(`collect_${cls}`); }
+function rankRows(best){
+  return Object.entries(best||{}).filter(([k,v])=>v && Number.isFinite(v.s))
+    .map(([k,v])=>({ num:k, nm:(typeof v.nm==='string'&&v.nm.trim())?v.nm.trim():`${k}번`, s:v.s, t:(v.at&&v.at.toMillis)?v.at.toMillis():0 }))
+    .sort((a,b)=> b.s-a.s || a.t-b.t).slice(0,10);
+}
+function rankListHTML(best, me){
+  const rows = rankRows(best);
+  if(!rows.length) return '<p class="sub" style="text-align:center;padding:14px">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</p>';
+  const medal = i => ['🥇','🥈','🥉'][i] || (i+1);
+  return `<ol class="rank-list">${rows.map((r,i)=>`<li class="${r.num===String(me)?'me':''}"><span class="rk">${medal(i)}</span><span class="nm">${escHTML(r.nm)}</span><span class="sc">${r.s}점</span></li>`).join('')}</ol>`;
+}
+function saveRank(score){
+  const msg = $('rankSaveMsg');
+  if(!hasClass()){ if(msg) msg.textContent = '반·번호로 들어오면 레벨 2 점수가 우리 반 순위표에 올라가요.'; return Promise.resolve(false); }
+  const ref = rankRef(STU.cls), me = String(STU.num);
+  return ref.get().then(snap=>{
+    const best = (snap.exists && snap.data().best) || {};
+    if(best[me] && best[me].s >= score){ if(msg) msg.textContent = `🏆 순위표에 있는 내 기록(${best[me].s}점)이 더 높아서 그대로 둘게요.`; return false; }
+    const nm = String(STU.name||'').trim().slice(0,12);
+    return ref.set({ best:{ [me]:{ s:score, nm, at:firebase.firestore.FieldValue.serverTimestamp() } } }, {merge:true})
+      .then(()=>{ if(msg) msg.innerHTML = '🏆 우리 반 순위표에 기록했어요! <a href="#" onclick="openRank();return false">순위표 보기</a>'; return true; });
+  }).catch(err=>{ console.warn('rank', err); if(msg) msg.textContent = '순위표에 기록하지 못했어요. 인터넷 연결을 확인해 주세요.'; return false; });
+}
+function openRank(){
+  show('scRank');
+  $('scRank').innerHTML = `<div class="card"><div class="box-head">🏆 우리 반 순위표 <span class="box-count">레벨 2 · 다 찾았을까?</span></div>
+    <p class="sub" style="margin-bottom:10px">한 사람은 가장 높은 점수 하나만 남아요.</p><div id="rankBody"></div>
+    <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🔄 새로고침</button><button class="btn" onclick="renderMenu()">처음 화면으로</button></div></div>`;
+  if(!hasClass()){ $('rankBody').innerHTML = '<p class="sub" style="text-align:center;padding:14px">학습 선택 목록에서 반과 번호를 정하고 들어오면 우리 반 순위표를 볼 수 있어요.</p>'; return; }
+  $('rankBody').innerHTML = '<p class="sub" style="text-align:center">불러오는 중…</p>';
+  rankRef(STU.cls).get().then(snap=>{
+    $('rankBody').innerHTML = rankListHTML(snap.exists ? snap.data({serverTimestamps:'estimate'}).best : {}, STU.num);
+  }).catch(err=>{ console.warn(err); $('rankBody').innerHTML = '<p class="sub" style="text-align:center;color:var(--red)">순위표를 불러오지 못했어요. 잠시 뒤 다시 열어 보세요.</p>'; });
+}
+
+/* ════════════════════════════════
+   칠판용 순위표 (관리자)
+════════════════════════════════ */
+const BOARD = { cls: null };
+function openBoard(){
+  BOARD.cls = BOARD.cls || STU.cls || '1';
+  $('boardCls').innerHTML = Array.from({length:13},(_,i)=>i+1).map(c=>`<button class="${String(c)===String(BOARD.cls)?'on':''}" onclick="BOARD.cls='${c}';openBoard()">${c}반</button>`).join('');
+  $('boardWrap').classList.add('show');
+  boardLoad();
+}
+function closeBoard(){ $('boardWrap').classList.remove('show'); }
+function boardLoad(){
+  if(!window._hubDb){ $('boardBody').innerHTML = '<p class="sub">저장소에 연결할 수 없어요.</p>'; return; }
+  $('boardBody').innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:8px">${BOARD.cls}반</div><p class="sub">불러오는 중…</p>`;
+  rankRef(BOARD.cls).get().then(snap=>{
+    $('boardBody').innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:8px">${BOARD.cls}반</div>` + rankListHTML(snap.exists ? snap.data({serverTimestamps:'estimate'}).best : {}, null);
+  }).catch(err=>{ console.warn(err); $('boardBody').innerHTML = '<p class="sub" style="color:var(--red)">순위표를 불러오지 못했어요.</p>'; });
+}
+function boardReset(){
+  if(!window._hubDb) return;
+  if(!confirm(`${BOARD.cls}반 순위표를 모두 지울까요? 되돌릴 수 없어요.`)) return;
+  rankRef(BOARD.cls).set({ best:{}, resetAt: firebase.firestore.FieldValue.serverTimestamp() })
+    .then(boardLoad).catch(err=>{ console.warn(err); alert('초기화하지 못했어요.'); });
+}
+
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function adminUnlockAll(){ SAVE.open = 3; persist(); renderMenu(); }
+// 지금 상황의 남은 경우를 모두 채움 (점수 없이)
+function adminFillAll(){
+  if(!G || G.roundOver || !$('scPlay').classList.contains('active')) return;
+  G.found = G.r.all.slice(); renderBag();
+  if(!LEVELS[G.lv].hidden) finishRound();
+}
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  const sizeText = k => [1,2,3].filter(lv=>CTX[k].sizes[lv]).map(lv=>`레벨${lv}: `+CTX[k].sizes[lv].map(s=>{ const r=CTX[k].make(s); r.valid=r.valid||(()=>true); let n=0; r.A.forEach(x=>r.B.forEach(y=>{ if(r.valid(x,y)) n++; })); return n; }).join('·')).join(' / ');
+  $('adminPanelBody').innerHTML =
+    `<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">${btn('📺 칠판용 순위표','openBoard()')}${btn('레벨 모두 열기','adminUnlockAll()')}${btn('이 상황 모두 채우기','adminFillAll()')}</div>`+
+    `<div><strong>점수</strong>: 새로 모음 +${NEW_PT}, 중복 −${DUP_PT}, 만들 수 없음 −${BAD_PT}, 덜 찾고 [다 찾았어요!] −${CLAIM_PT}(3초 잠금), 📊 표 힌트 −${HINT_PT}, 계산 확인 한 번에 맞히면 +${EQ_PT}, 시간 보너스 (3×경우의 수+10초 − 걸린 초)×${TIME_PT} — 0점 아래로는 안 내려감</div>`+
+    `<div><strong>레벨</strong>: 1 = 개수·표 보임, 다 모으면 바로 끝 / 2·3 = 개수 숨김, [다 찾았어요!]로 끝 / 레벨 3은 두 자리 수 상황이 꼭 들어감. 한 판 끝내면 다음 레벨 열림(레벨 1 끝낼 때 허브 완료 ✅)</div>`+
+    `<div><strong>순위표</strong>: 레벨 2만, 1인 최고 점수 1개 — Firestore <code>gameRank/collect_{반}</code></div>`+
+    `<div><strong>계산 확인 칸</strong>: 숫자만 (뒤에 가지·개·벌·장·종류를 붙여도 인정). 칸 순서 고정 — 파랑(앞) × 주황(뒤) = 경우의 수</div>`+
+    `<div style="margin-top:6px"><strong>상황별 경우의 수</strong></div>`+
+    Object.keys(CTX).map(k=>`<div style="margin-left:6px">• <b>${CTX[k].name}</b> — ${sizeText(k)}${k==='digits'?'<br><span style="color:var(--ink3)">카드 n장(0 없음) n×(n−1) / 0 포함 (n−1)×(n−1). 0은 십의 자리 ✕, 같은 카드 두 번 ✕</span>':''}</div>`).join('');
+  $('adminPanel').style.display = 'block';
+}
+
+renderMenu();
+</script>
+</body>
+</html>

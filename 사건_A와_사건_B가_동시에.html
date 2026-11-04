@@ -132,6 +132,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .feedback.error{color:var(--red)}
 .note-box{background:var(--green-ll);border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
 .def-box{background:var(--indigo-ll);border:2px solid var(--indigo);border-radius:12px;padding:14px 16px;font-size:15px;line-height:1.9;margin-top:12px;text-align:center}
+.modal-overlay.termpop{background:rgba(26,26,46,0.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.term-box{max-width:480px;width:100%}
+.term-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--indigo);border-radius:10px;padding:2px 10px;margin-bottom:8px}
+.term-box .def-box{margin-top:0;text-align:left}
+.term-box .def-box .blank{font-size:15px;color:#be123c}
+.def-box.term-wait{visibility:hidden}
+.def-box u{text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
 .warn-box{background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
 .sit-cards{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
 .sit-card{flex:1 1 200px;border:2px solid #d8ddfb;border-radius:12px;padding:12px;background:#fff;font-size:14px;font-weight:700;line-height:1.7;color:var(--ink)}
@@ -282,6 +289,11 @@ function finishToHub(){ document.getElementById('hubBackLink').click(); }
 <!-- 확인 팝업: 맞혀야 닫히고 활동이 이어짐 -->
 <div class="modal-overlay gate" id="gateModal">
   <div class="modal-box" id="gateBox"></div>
+</div>
+
+<!-- 용어 팝업: 파란 정리 상자의 핵심 용어를 써야 닫힘 -->
+<div class="modal-overlay termpop" id="termModal">
+  <div class="modal-box term-box" id="termBox"></div>
 </div>
 
 <div class="modal-overlay" id="adminPwModal">
@@ -658,12 +670,6 @@ function openGate1(onPass){
     body:`<div class="gate-q">두 사건 ${itA()}, ${itB()}가 동시에 일어나지 않을 때,<br>(사건 ${itA()} 또는 사건 ${itB()}가 일어나는 경우의 수)<br>= ${ita()} <input class="blank" id="gateInp" style="width:52px"> ${itb()}</div><p class="sub" style="text-align:left">빈칸에 알맞은 기호를 써 보세요.</p>`,
     ok:raw=>OP_ANS.add.includes(normOp(raw)), onPass });
 }
-// 팝업 ② 정리 확인
-function openGate2(onPass){
-  openGate({ qid:'gate2', title:'방금 읽은 정리를 확인해 봐요.',
-    body:`<div class="gate-q">사건 ${itA()}가 일어나는 경우의 수가 ${ita()}이고, 그 각각에 대하여 사건 ${itB()}가 일어나는 경우의 수가 ${itb()}일 때,<br>(사건 ${itA()}와 사건 ${itB()}가 동시에 일어나는 경우의 수)<br>= ${ita()} <input class="blank" id="gateInp" style="width:52px"> ${itb()}</div><p class="sub" style="text-align:left">빈칸에 알맞은 기호를 써 보세요. (곱하기 기호는 x로 써도 돼요.)</p>`,
-    ok:raw=>OP_ANS.mul.includes(normOp(raw)), onPass });
-}
 // 팝업 ③ 예제 2 핵심
 function openGate3(onPass){
   openGate({ qid:'gate3', title:'카드로 두 자리 자연수를 만들 때를 떠올려 봐요.',
@@ -715,6 +721,47 @@ function renderStepper(){
 function R(html){ $('actRight').innerHTML = html; }
 function appendR(html){ $('actRight').insertAdjacentHTML('beforeend', html); }
 function scrollToEl(id){ const el=$(id); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+/* ════════════════════════════════
+   용어 팝업 — 파란 정리 상자를 핵심 용어 빈칸으로 먼저 띄우고, 써야 닫힘.
+   틀리면 "다시 한 번 생각해 보세요!"만 (정답 공개 없음). 닫히면 화면의 상자가 나타남.
+════════════════════════════════ */
+let termCfg = null, termTimer = null;
+function normTerm(s){ return String(s||'').replace(/[\s'"‘’“”.,!]/g,''); }
+function termAfter(cfg, delay){
+  clearTimeout(termTimer);
+  termTimer = setTimeout(()=>{ if($(cfg.box)) openTermPop(cfg); }, delay==null ? 700 : delay);
+}
+function openTermPop(cfg){
+  termCfg = cfg;
+  const w = Math.max(...cfg.ans.map(a=>a.length))*1.1 + 1.6;
+  $('termBox').innerHTML = `<div class="term-tag">📘 개념 정리</div><div class="modal-text" style="margin-bottom:8px">${cfg.title}<br><span style="color:var(--ink2);font-weight:600">빈칸에 알맞은 말을 써 보세요.</span></div>
+    <div class="def-box">${cfg.html.replace('[[BLANK]]', `<input class="blank" id="termInp" style="width:${w}em" autocomplete="off">`)}</div>
+    <div class="feedback" id="termFb"></div>
+    <div class="btn-row"><button class="modal-btn" id="termBtn" onclick="termCheck()">확인</button></div>`;
+  $('termModal').classList.add('show');
+  const inp = $('termInp');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') termCheck(); });
+  try{ inp.focus(); }catch(e){}
+}
+function closeTermPop(){ clearTimeout(termTimer); $('termModal').classList.remove('show'); termCfg = null; }
+function termCheck(){
+  if(!termCfg || $('termBtn').disabled) return;
+  const inp = $('termInp'), raw = normTerm(inp.value);
+  if(raw===''){ setFb('termFb',false,'빈칸을 채워 주세요.'); return; }
+  const ok = termCfg.ans.some(a=>normTerm(a)===raw);
+  firstTry(termCfg.qid, ok);
+  inp.classList.toggle('wrong',!ok); inp.classList.toggle('correct',ok);
+  if(!ok){ setFb('termFb',false,'❌ 다시 한 번 생각해 보세요!'); return; }
+  setFb('termFb',true,'✅ 맞아요!');
+  $('termBtn').disabled = true;
+  const box = termCfg.box;
+  setTimeout(()=>{
+    closeTermPop();
+    const el = $(box); if(!el) return;
+    el.classList.remove('term-wait'); flashRef(el); scrollToEl(box);
+  }, 600);
+}
+
 function choiceCol(name, opts){
   return `<div class="choice-col" id="${name}Row">`+shuffle(opts).map(o=>`<button class="choice-btn" data-k="${o.key}" onclick="${name}Pick('${o.key}',this)">${o.label}</button>`).join('')+`</div>`;
 }
@@ -975,13 +1022,13 @@ function s2cCheck(){
 }
 
 /* ════════════════════════════════
-   4단계: 정리 (→ 팝업 ② → 스스로 확인: 자음과 모음)
+   4단계: 정리 (용어 팝업: a □ b → 스스로 확인: 자음과 모음)
 ════════════════════════════════ */
 function stage3(){
   curStage=3; renderStepper(); showScreen('scAct'); closeGate();
   setTree('act', [0,1,2]);
   R(`<div class="panel-title"><span class="step-badge">4</span>정리해 볼까요?</div>
-    <div class="def-box" style="text-align:left">사건 ${itA()}가 일어나는 경우의 수가 ${ita()}이고, <span class="kw">그 각각에 대하여</span> 사건 ${itB()}가 일어나는 경우의 수가 ${itb()}이면<br>
+    <div class="def-box term-wait" id="s3def" style="text-align:left">사건 ${itA()}가 일어나는 경우의 수가 ${ita()}이고, <span class="kw">그 각각에 대하여</span> 사건 ${itB()}가 일어나는 경우의 수가 ${itb()}이면<br>
       <div style="text-align:center;font-weight:800;margin-top:4px">(사건 ${itA()}와 사건 ${itB()}가 동시에 일어나는 경우의 수) = ${ita()} × ${itb()}</div></div>
     <p class="sub" style="margin-top:6px">※ 여기서 '동시에'는 같은 순간이라는 뜻이 아니에요. 두 사건이 <b>잇달아(차례로)</b> 일어나는 경우에도 ${ita()} × ${itb()}가 성립해요.</p>
     <table class="cmp">
@@ -993,10 +1040,11 @@ function stage3(){
       </tbody>
     </table>
     <div class="qblock" id="s3aBlock">
-      <p class="key-q task">위 정리를 꼼꼼히 읽었다면, <span class="em">확인 문제</span>를 풀어 보자.</p>
-      <p class="sub">확인 문제가 나오면 위 내용은 보이지 않아요.</p>
-      <div class="btn-row"><button class="btn" id="s3aBtn" onclick="this.disabled=true;openGate2(s3Self)">확인 문제 풀기</button></div>
+      <p class="key-q task">위 정리와 표를 꼼꼼히 읽었다면, <span class="em">스스로 확인</span> 문제를 풀어 보자.</p>
+      <div class="btn-row"><button class="btn" id="s3aBtn" onclick="this.disabled=true;s3Self()">스스로 확인 풀기 →</button></div>
     </div>`);
+  termAfter({ qid:'term4', box:'s3def', title:"'동시에' 일어나는 경우의 수를 정리해요. (곱하기 기호는 x로 써도 돼요.)",
+    html:`사건 ${itA()}가 일어나는 경우의 수가 ${ita()}이고, 그 각각에 대하여 사건 ${itB()}가 일어나는 경우의 수가 ${itb()}이면<br><div style="text-align:center;font-weight:800;margin-top:4px">(사건 ${itA()}와 사건 ${itB()}가 동시에 일어나는 경우의 수) = ${ita()} [[BLANK]] ${itb()}</div>`, ans:OP_ANS.mul }, 300);
 }
 function s3Self(){
   if($('s3bBlock')) return;
@@ -1399,7 +1447,7 @@ async function checkAdminPassword(){
     '<div><strong>팝업①</strong> (3단계 시작): a ( + ) b</div>'+
     '<div><strong>3단계</strong>: 상황1 5, 상황2 6 / 하나만 고르면 끝 vs 둘 다 골라야 끝 / 문장 분류(고르기 2 + 던지기 2, 더하기·곱하기 섞음)</div>'+
     '<div style="margin-left:8px">문장 풀:<br>'+SENTENCES.map(x=>`${x.t==='choose'?'🛍️':'🎲'} ${x.s} → ${x.op==='add'?'더하기':'곱하기'}`).join('<br>')+'</div>'+
-    '<div><strong>팝업②</strong> (4단계 정리 뒤): a ( × ) b · 4단계 스스로 확인 3×5=15</div>'+
+    '<div><strong>4단계</strong>: 스스로 확인 3×5=15</div>'+
     '<div><strong>5단계</strong>: 2×4=8 / 순서 바꿔도 같다(4×2=8)</div>'+
     '<div><strong>6단계</strong>: 12개 (모두 직접 만들어야 통과) / 4, 3, 3 / 4×3=12 / 쓴 카드는 다시 못 씀</div>'+
     '<div><strong>팝업③</strong> (6단계 끝): 그 개수는 항상 ( 3 )</div>'+
@@ -1407,6 +1455,7 @@ async function checkAdminPassword(){
     '<div><strong>팝업④</strong> (문제풀이 전): 문장 풀에서 한 문장 → 더하기·곱하기</div>'+
     '<div><strong>레벨1</strong>: 상황 6개 × 방식1(a, b 주고 곱)·방식2(전체와 한쪽 주고 다른 쪽) — 빈칸은 (A쪽)×(B쪽)=(전체) 순서 고정, a·b는 2~6 서로 다른 수</div>'+
     '<div><strong>레벨2</strong>: 0 없는 카드 1 + 0 있는 카드 2 + 거꾸로 1 (카드는 무작위, 교과서 예제 2·문제 6과 같은 카드는 제외) — 0 없음 n×(n−1), 0 있음 (n−1)×(n−1), 거꾸로 □=n이고 n×(n−1)=개수</div>'+
+    '<div><strong>용어 팝업</strong>: (4단계 정리 상자) a ( × ) b — 기호 빈칸과 같은 형식 인정 (띄어쓰기·따옴표·마침표 무시)</div>'+
     '<div style="color:var(--red);margin-top:6px">미인정: "여섯"처럼 한글 수사 / 곱셈식 두 빈칸의 순서를 바꿔 쓴 경우 (예: 2×3=6)</div>'+
     '<div style="margin-top:6px"><strong>찍기 방지</strong>: 질문이 뜬 뒤 1.5~4초 안에 고르면 채점 안 함 · 틀리면 3→5→8초 잠금 후 보기 다시 섞기 · 문장 분류와 팝업④의 틀린 문장은 새 문장으로 교체 · 문제풀이 오답은 숫자만 바꾼 새 문제 (모두 정답 공개 안 함)</div>'+
     `<label style="display:block;margin-top:6px"><input type="checkbox" ${GUARD.on?'':'checked'} onchange="GUARD.on=!this.checked"> 시연용: 읽기 확인·잠금 끄기</label>`;
@@ -1414,6 +1463,7 @@ async function checkAdminPassword(){
 }
 function adminPassGate(){ if(!gateCfg) return; const done = gateCfg.onPass; closeGate(); done(); }
 function adminGo(i){
+  closeTermPop();
   closeGate();
   const f=[stage0,stage1,stage2,stage3,stage4,stage5,stage6,()=>{ practiceOpened=true; goToPractice(); }];
   if(i<8) f[i](); else { curStage=7; renderStepper(); startLevel(1); }

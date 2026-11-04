@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>더할까, 곱할까? 스피드 분류</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --add:#2563eb;--add-l:#dbeafe;--mul:#ea580c;--mul-l:#ffedd5;
+  --gold:#f59e0b;
+  --r:14px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:40px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:860px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.kw{font-weight:800;color:#be123c}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-soft{background:var(--indigo-l);color:var(--indigo)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.feedback{min-height:22px;font-size:14px;font-weight:800;text-align:center;margin-top:8px}
+.feedback.ok{color:var(--green)}
+.feedback.no{color:var(--red)}
+
+/* 시작 화면 */
+.title-box{text-align:center;padding:22px 16px 16px}
+.title-box h1{font-size:28px;font-weight:900;letter-spacing:-0.5px}
+.title-box h1 .a{color:var(--add)} .title-box h1 .m{color:var(--mul)}
+.title-box p{margin-top:6px;font-size:14px;color:var(--ink2);font-weight:600}
+.remember{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.remember div{border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.6;font-weight:700}
+.remember .ra{background:var(--add-l);color:#1e3a8a}
+.remember .rm{background:var(--mul-l);color:#7c2d12}
+.remember b{font-size:15px}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lv{border:2px solid #d8ddfb;border-radius:14px;padding:14px 12px;background:#fff;text-align:center;cursor:pointer;font-family:inherit;color:var(--ink);transition:transform .15s}
+.lv:hover:not(:disabled){transform:translateY(-2px);border-color:var(--indigo)}
+.lv:disabled{cursor:default;background:#f4f4f8;color:var(--ink3)}
+.lv .n{font-size:13px;font-weight:800;color:var(--indigo)}
+.lv:disabled .n{color:var(--ink3)}
+.lv .t{font-size:17px;font-weight:900;margin:3px 0}
+.lv .d{font-size:12px;color:var(--ink2);font-weight:600;line-height:1.5;min-height:36px}
+.lv .best{margin-top:6px;font-size:12px;font-weight:800;color:#b45309}
+.lv .pass{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:800;color:#14532d;background:var(--green-l);border-radius:10px;padding:1px 8px}
+.lv .rank-tag{display:inline-block;margin-top:4px;font-size:11px;font-weight:800;color:#92400e;background:#fef3c7;border-radius:10px;padding:1px 8px}
+.rules{font-size:13px;line-height:1.85;color:var(--ink2);font-weight:600}
+.rules li{margin-left:18px}
+@media (max-width:640px){ .levels{grid-template-columns:1fr} .remember{grid-template-columns:1fr} }
+
+/* 게임 화면 */
+.hud{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+.hud .box{background:#fff;border-radius:12px;padding:6px 14px;font-weight:900;font-size:18px;box-shadow:var(--shadow);min-width:96px;text-align:center}
+.hud .box small{display:block;font-size:10.5px;color:var(--ink3);font-weight:800}
+.hud .combo{color:#c2410c}
+.hud .combo.hot{animation:pulse .6s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+.timebar{height:12px;border-radius:8px;background:#dfe3fb;overflow:hidden;margin-bottom:14px}
+.timebar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#84cc16);border-radius:8px;transition:width .1s linear}
+.timebar.low i{background:linear-gradient(90deg,#ef4444,#f97316)}
+.arena{position:relative;min-height:250px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.q-card{position:relative;width:100%;max-width:600px;background:#fff;border-radius:18px;border:3px solid #c7cdfa;box-shadow:0 8px 28px rgba(79,70,229,.18);padding:22px 22px 18px;touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .25s ease, opacity .25s ease}
+.q-card .ctx{display:inline-block;font-size:11.5px;font-weight:800;color:var(--indigo);background:var(--indigo-ll);border-radius:10px;padding:2px 9px;margin-bottom:8px}
+.q-card .txt{font-size:19px;font-weight:800;line-height:1.75;word-break:keep-all}
+.q-card .txt .ask{color:var(--indigo)}
+.q-card .cbar{height:7px;border-radius:5px;background:#eef0fb;margin-top:14px;overflow:hidden}
+.q-card .cbar i{display:block;height:100%;background:var(--gold);border-radius:5px}
+.q-card .cbar-lbl{font-size:10.5px;color:var(--ink3);font-weight:800;margin-top:3px;text-align:right}
+.q-card.fly-add{transform:translateX(-120%) rotate(-14deg);opacity:0}
+.q-card.fly-mul{transform:translateX(120%) rotate(14deg);opacity:0}
+.q-card.fly-box{transform:translateY(60%) scale(.4);opacity:0}
+.q-card.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.q-card.enter{animation:enter .22s ease-out}
+@keyframes enter{from{transform:translateY(18px) scale(.96);opacity:0}}
+.op-chip{display:inline-block;margin-top:10px;font-size:13px;font-weight:900;border-radius:10px;padding:3px 10px}
+.op-chip.add{background:var(--add-l);color:var(--add)} .op-chip.mul{background:var(--mul-l);color:var(--mul)}
+.pop{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:24px;font-weight:900;pointer-events:none;animation:popUp .9s ease-out forwards;white-space:nowrap;z-index:3}
+.pop.plus{color:var(--green)} .pop.minus{color:var(--red)}
+@keyframes popUp{from{opacity:1;transform:translate(-50%,10px)}to{opacity:0;transform:translate(-50%,-46px)}}
+.wrong-msg{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-weight:900;font-size:15px;border-radius:12px;padding:6px 14px;white-space:nowrap;z-index:3}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bin{border:none;border-radius:16px;padding:16px 10px;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .08s}
+.bin:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.15)}
+.bin small{display:block;font-size:11.5px;font-weight:800;opacity:.85}
+.bin.add{background:var(--add)} .bin.mul{background:var(--mul)}
+.bin:disabled{opacity:.4;cursor:default}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.num{border:2.5px solid #c7cdfa;background:#fff;border-radius:16px;padding:14px 6px;font-size:26px;font-weight:900;cursor:pointer;font-family:inherit;color:var(--ink);box-shadow:0 4px 0 #c7cdfa}
+.num small{display:block;font-size:10.5px;color:var(--ink3);font-weight:800}
+.num:disabled{opacity:.45;cursor:default}
+.key-tip{text-align:center;font-size:11.5px;color:var(--ink3);font-weight:700;margin-top:8px}
+.countdown{position:fixed;inset:0;background:rgba(26,26,46,.55);display:none;align-items:center;justify-content:center;z-index:40;font-size:110px;font-weight:900;color:#fff;text-shadow:0 6px 24px rgba(0,0,0,.35)}
+.countdown.show{display:flex}
+
+/* 결과·오답 상자 */
+.result-big{text-align:center}
+.result-big .score{font-size:46px;font-weight:900;color:var(--indigo)}
+.result-big .newbest{display:inline-block;background:#fef3c7;color:#92400e;font-weight:900;border-radius:12px;padding:3px 12px;font-size:13px;margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.stats div{background:var(--indigo-ll);border-radius:12px;padding:8px;text-align:center;font-size:20px;font-weight:900}
+.stats small{display:block;font-size:11px;color:var(--ink3);font-weight:800}
+@media (max-width:560px){ .stats{grid-template-columns:repeat(2,1fr)} }
+.verdict{margin-top:14px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.7;text-align:center}
+.verdict.ok{background:var(--green-l);color:#14532d}
+.verdict.no{background:#fef3c7;color:#92400e}
+.box-head{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:900;margin-bottom:6px}
+.box-count{font-size:13px;font-weight:800;color:var(--ink3)}
+.hint-box{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:700;color:#92400e;margin-top:10px}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+
+/* 순위표 */
+.rank-list{list-style:none}
+.rank-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-weight:800;font-size:15px}
+.rank-list li:nth-child(odd){background:var(--indigo-ll)}
+.rank-list li.me{outline:2.5px solid var(--gold);background:#fffbeb}
+.rank-list .rk{width:34px;text-align:center;font-size:18px}
+.rank-list .nm{flex:1}
+.rank-list .sc{color:var(--indigo)}
+.rank-list .ac{font-size:11.5px;color:var(--ink3);width:62px;text-align:right}
+.board .rank-list li{font-size:24px;padding:12px 16px}
+.board .rank-list .rk{width:52px;font-size:28px}
+.board .rank-list .ac{font-size:15px;width:90px}
+.cls-pick{display:flex;gap:5px;flex-wrap:wrap}
+.cls-pick button{border:1.5px solid #d8ddfb;background:#fff;border-radius:16px;padding:4px 11px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.cls-pick button.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:30px;margin-bottom:6px}
+.modal-text{font-size:15px;font-weight:800;margin-bottom:10px}
+.modal-btn{border:none;border-radius:10px;padding:8px 16px;font-size:13.5px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.blank{border:2px solid #c7cdfa;border-radius:8px;padding:6px 8px;font-size:15px;font-family:inherit;text-align:center}
+.board-wrap{position:fixed;inset:0;background:#fff;z-index:70;display:none;overflow-y:auto;padding:24px 32px}
+.board-wrap.show{display:block}
+.board-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.board-top h2{font-size:24px;color:var(--indigo)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">🎮 더할까, 곱할까? 스피드 분류</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'addmul-game' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._hubDb = _db;
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+</script>
+
+<div class="main">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="scMenu">
+    <div class="card title-box">
+      <h1><span class="a">더할까</span>, <span class="m">곱할까</span>? ⚡</h1>
+      <p>100초 동안 상황 카드를 최대한 많이 맞혀 보세요!</p>
+    </div>
+    <div class="card">
+      <div class="box-head">📌 기억하기</div>
+      <div class="remember">
+        <div class="ra"><b>➕ 더한다</b><br>두 사건 A, B가 동시에 일어나지 않을 때,<br>사건 A <span class="kw" style="color:#1d4ed8">또는</span> 사건 B가 일어나는 경우의 수</div>
+        <div class="rm"><b>✖️ 곱한다</b><br>사건 A와 사건 B가 <span class="kw" style="color:#c2410c">동시에</span> 일어나는 경우의 수</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="box-head">🎯 레벨 고르기</div>
+      <div class="levels" id="levelBox"></div>
+    </div>
+    <div class="card">
+      <div class="box-head">📖 게임 방법</div>
+      <ul class="rules">
+        <li>카드를 읽고 경우의 수를 구할 때 <b style="color:var(--add)">더하는지(➕)</b>, <b style="color:var(--mul)">곱하는지(✖️)</b> 골라요. 키보드 ← → 키나 카드를 옆으로 밀어도 돼요.</li>
+        <li>맞히면 <b>+100점</b>, 빨리 맞히면 보너스, 연속으로 맞히면 콤보 점수가 더 붙어요.</li>
+        <li>노란 막대가 다 줄어들어도 괜찮아요. 보너스만 사라지니 끝까지 생각해서 골라요.</li>
+        <li>틀리면 <b>−50점</b>, 콤보가 0이 되고 잠깐 멈춰요. 틀린 카드는 🗃 오답 상자로 가요.</li>
+        <li>게임이 끝나면 오답 상자의 카드(숫자가 바뀐 같은 상황)를 다시 풀어야 해요.</li>
+        <li>정답률이 80%보다 낮으면 다음 레벨이 열리지 않고 순위표에도 오르지 않아요. 찍지 말고 읽어요!</li>
+      </ul>
+    </div>
+    <div class="btn-row"><button class="btn btn-soft" id="rankBtn" onclick="openRank()">🏆 우리 반 순위표 (레벨 2)</button></div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div class="screen" id="scPlay">
+    <div class="hud">
+      <div class="box"><small>남은 시간</small><span id="hudTime">100</span>초</div>
+      <div class="box"><small>점수</small><span id="hudScore">0</span></div>
+      <div class="box combo" id="hudComboBox"><small>콤보</small>🔥 <span id="hudCombo">0</span></div>
+      <div class="box"><small>맞힌 카드</small><span id="hudCorrect">0</span>장</div>
+    </div>
+    <div class="timebar" id="timebar"><i id="timebarFill" style="width:100%"></i></div>
+    <div class="arena" id="arena"></div>
+    <div id="controls"></div>
+    <div class="key-tip" id="keyTip"></div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="screen" id="scResult"></div>
+
+  <!-- 오답 상자 -->
+  <div class="screen" id="scReview"></div>
+
+  <!-- 순위표 -->
+  <div class="screen" id="scRank"></div>
+</div>
+
+<div class="countdown" id="countdown"></div>
+
+<div class="board-wrap" id="boardWrap">
+  <div class="board-top">
+    <h2>🏆 더할까, 곱할까? 레벨 2 순위표</h2>
+    <div class="cls-pick" id="boardCls"></div>
+    <button class="btn btn-soft" onclick="boardLoad()">🔄 새로고침</button>
+    <button class="btn" style="background:var(--red)" onclick="boardReset()">순위표 초기화</button>
+    <button class="btn" style="background:#9090b0;margin-left:auto" onclick="closeBoard()">닫기</button>
+  </div>
+  <div id="boardBody" class="board"></div>
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:390px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:60;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:6px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const rint = (lo,hi) => lo + Math.floor(Math.random()*(hi-lo+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function now(){ return Date.now(); }
+function escHTML(t){ return String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function hasBatchim(word){
+  const c = String(word).trim().slice(-1).charCodeAt(0);
+  if(c>=0xAC00 && c<=0xD7A3) return (c-0xAC00)%28 !== 0;
+  return '013678'.includes(String(word).trim().slice(-1)); // 숫자: 영·일·삼·육·칠·팔
+}
+const josa = (w, a, b) => w + (hasBatchim(w) ? a : b);   // josa('셔츠 3벌','과','와')
+
+/* ════════════════════════════════
+   카드 만들기 — 숫자는 매번 새로, 같은 상황 틀은 다시 나와도 숫자가 바뀜
+   t: 'choose'(고르기) | 'throw'(던지기·뽑기)   op: 'add' | 'mul'
+   a, b: 더하거나 곱할 두 수, trap: 헷갈리기 쉬운 함정 카드
+════════════════════════════════ */
+const HINT = {
+  choose:'하나만 고르면 끝나나요, 둘 다 골라야 끝나나요?',
+  throw:'둘 중 하나만 일어나면 되나요, 둘 다 일어나야 하나요?'
+};
+// 고르기 상황: [A, A단위, B, B단위, 더하기 꼬리, 곱하기 꼬리]
+const CHOOSE = [
+  { ctx:'🍙 분식집', A:'김밥', cA:'가지', B:'라면', cB:'가지', add:'음식 한 가지를 고르는', mul:'김밥과 라면을 각각 하나씩 주문하는' },
+  { ctx:'📚 도서관', A:'소설책', cA:'권', B:'만화책', cB:'권', add:'책 한 권을 빌리는', mul:'소설책과 만화책을 각각 한 권씩 빌리는' },
+  { ctx:'👕 옷장', A:'셔츠', cA:'벌', B:'바지', cB:'벌', add:'옷 한 벌을 골라 세탁하는', mul:'셔츠와 바지를 각각 한 벌씩 골라 입는' },
+  { ctx:'🥐 매점', A:'빵', cA:'종류', B:'우유', cB:'종류', add:'간식 하나를 사는', mul:'빵과 우유를 각각 하나씩 골라 사는' },
+  { ctx:'🗳 학급 대표', A:'남학생', cA:'명', B:'여학생', cB:'명', add:'대표 1명을 뽑는', mul:'남학생 대표 1명과 여학생 대표 1명을 뽑는' },
+  { ctx:'🎧 음악', A:'가요', cA:'곡', B:'팝송', cB:'곡', add:'노래 한 곡을 골라 듣는', mul:'가요와 팝송을 각각 한 곡씩 골라 듣는' },
+  { ctx:'⚽ 동아리', A:'운동 동아리', cA:'개', B:'문화 동아리', cB:'개', add:'동아리 한 곳에 가입하는', mul:'운동 동아리와 문화 동아리에 각각 한 곳씩 가입하는' },
+  { ctx:'✏️ 문구점', A:'볼펜', cA:'종류', B:'연필', cB:'종류', add:'필기구 하나를 사는', mul:'볼펜과 연필을 각각 하나씩 사는' },
+  { ctx:'🍨 디저트', A:'아이스크림', cA:'종류', B:'빙수', cB:'종류', add:'디저트 하나를 고르는', mul:'아이스크림과 빙수를 각각 하나씩 고르는' }
+];
+// 주사위 한 개의 사건 (집합으로 직접 세어 개수를 구함)
+const DIE_EV = [
+  { l:'짝수의 눈', s:[2,4,6] }, { l:'홀수의 눈', s:[1,3,5] }, { l:'3의 배수의 눈', s:[3,6] },
+  { l:'4 이상의 눈', s:[4,5,6] }, { l:'5 이상의 눈', s:[5,6] }, { l:'2 이하의 눈', s:[1,2] },
+  { l:'3 이하의 눈', s:[1,2,3] }, { l:'4의 약수의 눈', s:[1,2,4] }, { l:'1의 눈', s:[1] },
+  { l:'5의 눈', s:[5] }, { l:'6의 눈', s:[6] }
+];
+const disjoint = (x,y) => !x.some(v=>y.includes(v));
+const sumCount = s => 6 - Math.abs(s-7);              // 두 주사위 눈의 합이 s인 경우의 수
+const gcd = (x,y) => y ? gcd(y, x%y) : x;
+const ask = t => `<span class="ask">${t}</span>`;
+
+const GEN = {
+  // ── 고르기: 하나만 고름(더하기) / 둘 다 고름(곱하기)
+  chooseAdd(){ const c=pick(CHOOSE), a=rint(2,6), b=rint(2,6);
+    const head = Math.random()<0.5 ? `${c.A} ${a}${c.cA}, ${c.B} ${b}${c.cB} 중에서` : `${josa(c.A+' '+a+c.cA,'과','와')} ${c.B} ${b}${c.cB} 중에서`;
+    return { t:'choose', op:'add', a, b, ctx:c.ctx, s:`${head} ${ask(c.add+' 경우의 수')}` }; },
+  chooseMul(){ const c=pick(CHOOSE), a=rint(2,6), b=rint(2,6);
+    return { t:'choose', op:'mul', a, b, ctx:c.ctx, s:`${c.A} ${a}${c.cA}, ${c.B} ${b}${c.cB} 중에서 ${ask(c.mul+' 경우의 수')}` }; },
+  // ── 길: 거쳐 가기(곱하기)
+  routeMul(){ const a=rint(2,5), b=rint(2,5);
+    return { t:'choose', op:'mul', a, b, ctx:'🗺 길 찾기', s:`집에서 학교까지 가는 길이 ${a}가지, 학교에서 도서관까지 가는 길이 ${b}가지일 때, ${ask('집에서 학교를 거쳐 도서관까지 가는 경우의 수')}` }; },
+  // ── 교통수단 하나 고르기(더하기) — '또는'이 없는 함정
+  routeAdd(){ const a=rint(2,5), b=rint(2,5);
+    return { t:'choose', op:'add', a, b, trap:true, ctx:'🚌 교통', s:`집에서 도서관까지 버스로 가는 방법이 ${a}가지, 지하철로 가는 방법이 ${b}가지일 때, ${ask('버스나 지하철 중 하나를 타고 도서관까지 가는 경우의 수')}` }; },
+  // ── 주사위 한 개: 둘 중 하나(더하기)
+  dieOr(){ let e1,e2; do{ [e1,e2]=shuffle(DIE_EV.slice()).slice(0,2); }while(!disjoint(e1.s,e2.s));
+    return { t:'throw', op:'add', a:e1.s.length, b:e2.s.length, ctx:'🎲 주사위', s:`한 개의 주사위를 던질 때, ${ask(e1.l+' 또는 '+e2.l+'이 나오는 경우의 수')}` }; },
+  // ── 카드 한 장: a의 배수 또는 b의 배수 (겹치는 수가 없게)
+  cardOr(){ let n,p,q; do{ n=rint(10,20); [p,q]=shuffle([2,3,4,5,6,7,8,9]).slice(0,2); if(p>q)[p,q]=[q,p]; }while(p*q/gcd(p,q)<=n || Math.floor(n/q)<1);
+    return { t:'throw', op:'add', a:Math.floor(n/p), b:Math.floor(n/q), ctx:'🃏 카드', s:`1부터 ${n}까지의 자연수가 하나씩 적힌 카드 ${n}장 중에서 한 장을 뽑을 때, ${ask(p+'의 배수 또는 '+q+'의 배수가 나오는 경우의 수')}` }; },
+  // ── 두 주사위 눈의 합 (주사위는 두 개지만 더하기) — 함정
+  diceSum(){ let s1,s2; do{ s1=rint(2,12); s2=rint(2,12); }while(s1===s2); if(s1>s2)[s1,s2]=[s2,s1];
+    return { t:'throw', op:'add', a:sumCount(s1), b:sumCount(s2), trap:true, ctx:'🎲🎲 주사위 두 개', s:`서로 다른 두 개의 주사위를 동시에 던질 때, ${ask('나오는 눈의 수의 합이 '+s1+' 또는 '+s2+'인 경우의 수')}` }; },
+  // ── 두 상자 카드를 섞어 한 장 (상자는 둘이지만 더하기) — 함정
+  boxMix(){ const a=rint(2,6), b=rint(2,6);
+    return { t:'throw', op:'add', a, b, trap:true, ctx:'📦 카드 상자', s:`빨간 상자에 카드 ${a}장, 파란 상자에 카드 ${b}장이 들어 있어요. 두 상자의 카드를 모두 섞은 뒤 ${ask('카드 한 장을 뽑는 경우의 수')}` }; },
+  // ── 두 상자에서 한 장씩(곱하기)
+  boxEach(){ const a=rint(2,6), b=rint(2,6);
+    return { t:'throw', op:'mul', a, b, ctx:'📦 카드 상자', s:`빨간 상자에 카드 ${a}장, 파란 상자에 카드 ${b}장이 들어 있어요. ${ask('두 상자에서 카드를 각각 한 장씩 뽑는 경우의 수')}` }; },
+  // ── 주사위 두 번(곱하기)
+  dieTwice(){ const e1=pick(DIE_EV.filter(e=>e.s.length>1)), e2=pick(DIE_EV.filter(e=>e.s.length>1));
+    return { t:'throw', op:'mul', a:e1.s.length, b:e2.s.length, ctx:'🎲 주사위', s:`한 개의 주사위를 두 번 던질 때, ${ask('처음에는 '+e1.l+', 두 번째에는 '+e2.l+'이 나오는 경우의 수')}` }; },
+  // ── 주사위 두 번인데 '또는'이 들어 있음(그래도 곱하기) — 함정
+  dieTwiceOr(){ const [x,y]=shuffle([1,2,3,4,5,6]).slice(0,2).sort((m,n)=>m-n); const e2=pick(DIE_EV.filter(e=>e.s.length>1));
+    return { t:'throw', op:'mul', a:2, b:e2.s.length, trap:true, ctx:'🎲 주사위', s:`한 개의 주사위를 두 번 던질 때, ${ask('처음에는 '+x+' 또는 '+y+'의 눈, 두 번째에는 '+e2.l+'이 나오는 경우의 수')}` }; },
+  // ── 동전과 주사위(곱하기)
+  coinDie(){ const e=pick(DIE_EV.filter(v=>v.s.length>1));
+    return { t:'throw', op:'mul', a:2, b:e.s.length, ctx:'🪙 동전과 주사위', s:`동전 한 개와 주사위 한 개를 동시에 던질 때, ${ask('주사위는 '+e.l+'이 나오는 경우의 수')}` }; },
+  // ── 서로 다른 주사위 두 개(곱하기)
+  diceAB(){ const e1=pick(DIE_EV.filter(e=>e.s.length>1)), e2=pick(DIE_EV.filter(e=>e.s.length>1));
+    return { t:'throw', op:'mul', a:e1.s.length, b:e2.s.length, ctx:'🎲🎲 주사위 두 개', s:`서로 다른 두 개의 주사위 A, B를 동시에 던질 때, ${ask('A는 '+e1.l+', B는 '+e2.l+'이 나오는 경우의 수')}` }; }
+};
+const GEN_INFO = {
+  chooseAdd:'고르기 — 하나만 고름 → 더하기 (a+b)', chooseMul:'고르기 — 각각 하나씩 → 곱하기 (a×b)',
+  routeMul:'길 — 거쳐 가기 → 곱하기', routeAdd:'교통수단 중 하나 → 더하기 [함정]',
+  dieOr:'주사위 한 개, ○ 또는 △ → 더하기 (겹치지 않는 사건만)', cardOr:'카드 한 장, p의 배수 또는 q의 배수 → 더하기 (공배수가 없게)',
+  diceSum:'두 주사위 합이 s₁ 또는 s₂ → 더하기 [함정]', boxMix:'두 상자 카드를 섞어 한 장 → 더하기 [함정]',
+  boxEach:'두 상자에서 한 장씩 → 곱하기', dieTwice:'주사위 두 번 → 곱하기',
+  dieTwiceOr:'주사위 두 번, 처음에 x 또는 y → 곱하기(2×…) [함정]', coinDie:'동전과 주사위 → 곱하기 (2×…)', diceAB:'주사위 A, B → 곱하기'
+};
+const NORMAL = { add:['chooseAdd','dieOr','cardOr'], mul:['chooseMul','routeMul','boxEach','dieTwice','coinDie','diceAB'] };
+const TRAPS  = { add:['routeAdd','diceSum','boxMix'], mul:['dieTwiceOr'] };
+const LEVELS = [
+  null,
+  { name:'분류', desc:'➕인지 ✖️인지 고르기', trap:0.15, cardSecs:8,  pass:{correct:12, acc:0.8} },
+  { name:'분류 + 답', desc:'고른 뒤 경우의 수까지 맞히기', trap:0.25, cardSecs:15, pass:{correct:8, acc:0.8}, ranked:true },
+  { name:'함정 카드', desc:'헷갈리는 카드가 잔뜩!', trap:0.6, cardSecs:12, pass:{correct:8, acc:0.8} }
+];
+const GAME_SECS = 100;
+const BASE = 100, SPEED_MAX = 50, WRONG = 50, LOCK_MS = 1500, READ_MS = 600;
+const comboBonus = c => 10*Math.min(c,10);    // 앞에서 연속으로 맞힌 개수만큼 (최대 +100)
+
+// ➕/✖️가 고르게 섞이도록 연산을 먼저 정한 뒤, 레벨의 함정 비율에 따라 카드 틀을 고름
+function makeCard(lv, prevKeys){
+  const L = LEVELS[lv];
+  const op = Math.random()<0.5 ? 'add' : 'mul';
+  for(let tries=0; tries<30; tries++){
+    const useTrap = Math.random() < L.trap;
+    const key = pick((useTrap ? TRAPS : NORMAL)[op]);
+    const c = GEN[key]();
+    if(c.a===2 && c.b===2) continue;                   // 2+2=2×2라 레벨 2 보기가 겹침
+    if(prevKeys && prevKeys.includes(key) && tries<25) continue;
+    c.key = key; c.ans = c.op==='add' ? c.a+c.b : c.a*c.b;
+    return c;
+  }
+  const k = op==='add' ? 'chooseAdd' : 'chooseMul'; const c = GEN[k](); c.key=k; c.ans = op==='add' ? c.a+c.b : c.a*c.b; return c;
+}
+function variantOf(card){
+  for(let i=0;i<40;i++){ const c=GEN[card.key](); if(c.a===2&&c.b===2) continue; c.key=card.key; c.ans=c.op==='add'?c.a+c.b:c.a*c.b; if(c.s!==card.s) return c; }
+  const c=GEN[card.key](); c.key=card.key; c.ans=c.op==='add'?c.a+c.b:c.a*c.b; return c;
+}
+// 레벨 2 보기 3개: 맞는 계산, 반대 연산, 그 밖의 수
+function numChoices(c){
+  const other = c.op==='add' ? c.a*c.b : c.a+c.b;
+  const cand = shuffle([c.a+c.b+1, c.a*c.b+1, c.a*c.b-1, c.a+c.b-1, Math.max(c.a,c.b), c.ans+2])
+    .filter(v=>v>0 && v!==c.ans && v!==other);
+  return shuffle([c.ans, other, cand[0]]);
+}
+
+/* ════════════════════════════════
+   저장 (레벨 열림·최고 점수) — 이 브라우저에만, 실패해도 게임은 진행
+════════════════════════════════ */
+const STU = window._hubStudent || {};
+const SAVE_KEY = `addmulGame_${STU.cls||'x'}_${STU.num||'x'}`;
+let SAVE = { open:1, best:{}, passed:{} };
+try{ const v = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(v && v.open) SAVE = Object.assign(SAVE, v); }catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); }catch(e){} }
+
+/* ════════════════════════════════
+   화면 전환 · 시작 화면
+════════════════════════════════ */
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id)); window.scrollTo(0,0); }
+function renderMenu(){
+  $('levelBox').innerHTML = [1,2,3].map(lv=>{
+    const L = LEVELS[lv], open = lv <= SAVE.open, best = SAVE.best[lv];
+    return `<button class="lv" id="lvBtn${lv}" onclick="startLevel(${lv})" ${open?'':'disabled'}>
+      <div class="n">${open?'':'🔒 '}레벨 ${lv}</div><div class="t">${L.name}</div><div class="d">${L.desc}</div>
+      ${open ? (best!=null ? `<div class="best">최고 ${best}점</div>` : '') : `<div class="d" style="min-height:0">레벨 ${lv-1}을 통과하면 열려요</div>`}
+      ${SAVE.passed[lv] ? '<div class="pass">✔ 통과</div>' : ''}
+      ${L.ranked ? '<div class="rank-tag">🏆 순위표</div>' : ''}
+    </button>`;
+  }).join('');
+  show('scMenu');
+}
+
+/* ════════════════════════════════
+   게임 진행
+════════════════════════════════ */
+let G = null;
+let ticker = null;
+function startLevel(lv){
+  if(lv > SAVE.open) return;
+  G = { lv, score:0, combo:0, maxCombo:0, correct:0, tries:0, wrong:[], card:null, phase:'idle', endAt:0, cardAt:0, recent:[], over:false };
+  show('scPlay');
+  $('hudTime').textContent = GAME_SECS; $('hudScore').textContent = 0; $('hudCombo').textContent = 0; $('hudCorrect').textContent = 0;
+  $('timebarFill').style.width = '100%'; $('timebar').classList.remove('low');
+  $('arena').innerHTML = ''; $('controls').innerHTML = ''; $('keyTip').textContent = '';
+  countdown(3, ()=>{
+    G.endAt = now() + GAME_SECS*1000;
+    nextCard();
+    clearInterval(ticker); ticker = setInterval(tick, 100);
+  });
+}
+function countdown(n, done){
+  const el = $('countdown');
+  if(n<=0){ el.classList.remove('show'); done(); return; }
+  el.textContent = n; el.classList.add('show');
+  setTimeout(()=>countdown(n-1, done), 700);
+}
+function tick(){
+  if(!G || G.over) return;
+  const left = Math.max(0, G.endAt - now());
+  $('hudTime').textContent = Math.ceil(left/1000);
+  $('timebarFill').style.width = (left/(GAME_SECS*1000)*100)+'%';
+  $('timebar').classList.toggle('low', left < 15000);
+  const cb = document.querySelector('.q-card .cbar i');
+  if(cb && G.card){ const f = Math.max(0, 1 - (now()-G.cardAt)/(LEVELS[G.lv].cardSecs*1000)); cb.style.width = (f*100)+'%';
+    const lbl = document.querySelector('.q-card .cbar-lbl'); if(lbl) lbl.textContent = f>0 ? '⚡ 빨리 맞히면 보너스' : '보너스는 사라졌지만 천천히 생각해도 돼요'; }
+  if(left<=0) endGame();
+}
+function speedBonus(){ const f = Math.max(0, 1 - (now()-G.cardAt)/(LEVELS[G.lv].cardSecs*1000)); return Math.round(SPEED_MAX*f); }
+function nextCard(){
+  if(G.over) return;
+  const c = makeCard(G.lv, G.recent);
+  G.recent = [c.key].concat(G.recent).slice(0,2);
+  G.card = c; G.phase = 'read'; G.cardAt = now();
+  $('arena').innerHTML = `<div class="q-card enter" id="qCard">
+      <span class="ctx">${c.ctx}</span>
+      <div class="txt">${c.s}</div>
+      <div id="opChip"></div>
+      <div class="cbar"><i style="width:100%"></i></div><div class="cbar-lbl">⚡ 빨리 맞히면 보너스</div>
+    </div>`;
+  renderBins(true);
+  bindSwipe($('qCard'));
+  // 읽을 틈 없이 마구 누르는 것을 막으려고 아주 잠깐 버튼을 쉬게 함
+  setTimeout(()=>{ if(G && G.card===c && G.phase==='read'){ G.phase='op'; renderBins(false); } }, READ_MS);
+}
+function renderBins(disabled){
+  $('controls').innerHTML = `<div class="bins">
+      <button class="bin add" id="binAdd" onclick="chooseOp('add')" ${disabled?'disabled':''}>➕ 더한다<small>← 키</small></button>
+      <button class="bin mul" id="binMul" onclick="chooseOp('mul')" ${disabled?'disabled':''}>✖️ 곱한다<small>→ 키</small></button>
+    </div>`;
+  $('keyTip').textContent = '키보드 ← → 또는 카드를 왼쪽·오른쪽으로 밀어도 돼요';
+}
+function renderNums(){
+  const ch = numChoices(G.card);
+  G.choices = ch;
+  $('controls').innerHTML = `<div class="nums">${ch.map((v,i)=>`<button class="num" data-v="${v}" onclick="chooseNum(${v})"><small>${i+1}번</small>${v}</button>`).join('')}</div>`;
+  $('keyTip').textContent = '경우의 수는 몇 가지일까요? (키보드 1, 2, 3)';
+}
+function chooseOp(op){
+  if(!G || G.over || G.phase!=='op') return;
+  const c = G.card;
+  if(op !== c.op){ wrong(); return; }
+  if(G.lv===1){ right(op); return; }
+  // 레벨 2·3: 연산을 맞히면 경우의 수 고르기로
+  G.phase = 'num';
+  $('opChip').innerHTML = `<span class="op-chip ${op}">${op==='add'?'➕ 더한다':'✖️ 곱한다'} ✔</span>`;
+  renderNums();
+}
+function chooseNum(v){
+  if(!G || G.over || G.phase!=='num') return;
+  if(v !== G.card.ans){ wrong(); return; }
+  right(G.card.op);
+}
+function right(op){
+  const gain = BASE + speedBonus() + comboBonus(G.combo);
+  G.score += gain; G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo); G.correct++; G.tries++;
+  G.phase = 'anim';
+  floatPop('+'+gain, true);
+  $('qCard').classList.add(op==='add' ? 'fly-add' : 'fly-mul');
+  updateHud();
+  setTimeout(nextCard, 260);
+}
+function wrong(){
+  G.score = Math.max(0, G.score - WRONG); G.combo = 0; G.tries++;
+  G.wrong.push(G.card);
+  G.phase = 'lock';
+  floatPop('−'+WRONG, false);
+  const card = $('qCard');
+  card.classList.add('shake');
+  card.insertAdjacentHTML('beforeend', `<div class="wrong-msg">❌ 다시 한 번 생각해 보세요! 🗃 오답 상자로</div>`);
+  $('controls').querySelectorAll('button').forEach(b=>b.disabled=true);
+  updateHud();
+  setTimeout(()=>{ if(G.over) return; card.classList.remove('shake'); card.classList.add('fly-box'); setTimeout(nextCard, 250); }, LOCK_MS);
+}
+function floatPop(text, plus){
+  const el = document.createElement('div'); el.className = 'pop '+(plus?'plus':'minus'); el.textContent = text;
+  $('arena').appendChild(el); setTimeout(()=>el.remove(), 900);
+}
+function updateHud(){
+  $('hudScore').textContent = G.score; $('hudCombo').textContent = G.combo; $('hudCorrect').textContent = G.correct;
+  $('hudComboBox').classList.toggle('hot', G.combo>=5);
+}
+document.addEventListener('keydown', e=>{
+  if(!G || G.over || !$('scPlay').classList.contains('active')) return;
+  if(e.key==='ArrowLeft'){ e.preventDefault(); chooseOp('add'); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); chooseOp('mul'); }
+  else if(G.phase==='num' && ['1','2','3'].includes(e.key)){ chooseNum(G.choices[+e.key-1]); }
+});
+// 휴대폰: 카드를 왼쪽(➕)·오른쪽(✖️)으로 밀기
+function bindSwipe(el){
+  let x0=null;
+  el.addEventListener('pointerdown', e=>{ if(G.phase!=='op') return; x0=e.clientX; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
+  el.addEventListener('pointermove', e=>{ if(x0===null) return; const dx=e.clientX-x0; el.style.transform=`translateX(${dx}px) rotate(${dx/25}deg)`; });
+  const up = e=>{ if(x0===null) return; const dx=e.clientX-x0; x0=null; el.style.transform='';
+    if(dx<-90) chooseOp('add'); else if(dx>90) chooseOp('mul'); };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', ()=>{ x0=null; el.style.transform=''; });
+}
+
+/* ════════════════════════════════
+   게임 끝 → 결과 → 오답 상자
+════════════════════════════════ */
+function accOf(g){ return g.tries ? g.correct/g.tries : 0; }
+function endGame(){
+  if(!G || G.over) return;
+  G.over = true; clearInterval(ticker); ticker = null;
+  const L = LEVELS[G.lv], acc = accOf(G);
+  const passed = G.correct >= L.pass.correct && acc >= L.pass.acc;
+  const prevBest = SAVE.best[G.lv];
+  const newBest = prevBest==null || G.score > prevBest;
+  if(newBest) SAVE.best[G.lv] = G.score;
+  G.passed = passed;
+  // 다음 레벨은 오답 상자까지 끝내야 열림 (오답이 없으면 바로)
+  persist();
+  const pct = Math.round(acc*100);
+  let verdict;
+  if(passed) verdict = `<div class="verdict ok">🎉 레벨 ${G.lv} 통과! (맞힌 카드 ${L.pass.correct}장 이상, 정답률 80% 이상)${G.lv<3?`<br>${G.wrong.length?'오답 상자까지 끝내면 ':''}레벨 ${G.lv+1}이 열려요.`:''}</div>`;
+  else if(acc < L.pass.acc) verdict = `<div class="verdict no">정답률이 ${pct}%예요. 80% 이상이어야 통과예요.<br>빨리 누르기보다 카드를 끝까지 읽어 보세요.</div>`;
+  else verdict = `<div class="verdict no">맞힌 카드가 ${G.correct}장이에요. ${L.pass.correct}장 이상 맞혀야 통과예요. 조금만 더!</div>`;
+  $('scResult').innerHTML = `<div class="card result-big">
+      <div class="sub">레벨 ${G.lv} · ${L.name}</div>
+      <div class="score">${G.score}점</div>
+      ${newBest && G.score>0 ? '<div class="newbest">🌟 내 최고 기록!</div>' : (prevBest!=null?`<div class="sub">내 최고 ${prevBest}점</div>`:'')}
+      <div class="stats">
+        <div>${G.correct}<small>맞힌 카드</small></div>
+        <div>${G.wrong.length}<small>틀린 카드</small></div>
+        <div>${pct}%<small>정답률</small></div>
+        <div>${G.maxCombo}<small>최고 콤보</small></div>
+      </div>
+      ${verdict}
+      <div id="rankSaveMsg" class="sub" style="margin-top:8px"></div>
+      <div class="btn-row">
+        ${G.wrong.length ? `<button class="btn" id="toReviewBtn" onclick="startReview()">🗃 오답 상자 풀기 (${G.wrong.length}장)</button>`
+                         : `<button class="btn" onclick="finishRound()">확인</button>`}
+      </div>
+    </div>`;
+  show('scResult');
+  if(L.ranked) saveRank(G.score, acc, G.correct);
+  if(!G.wrong.length) unlockNext();
+}
+function unlockNext(){
+  if(!G || !G.passed) return;
+  SAVE.passed[G.lv] = true;
+  if(G.lv < 3 && SAVE.open < G.lv+1) SAVE.open = G.lv+1;
+  persist();
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+function finishRound(){ renderMenu(); }
+
+// 오답 상자: 숫자를 바꾼 같은 상황을 시간 제한 없이 다시 — 맞혀야 다음 카드
+let R = null;
+function startReview(){
+  R = { list: G.wrong.map(variantOf), i:0, phase:'op', hint:false };
+  show('scReview');
+  renderReview();
+}
+function renderReview(){
+  const c = R.list[R.i];
+  R.phase = 'op'; R.hint = false;
+  $('scReview').innerHTML = `<div class="card">
+      <div class="box-head">🗃 오답 상자 <span class="box-count">${R.i+1} / ${R.list.length}</span></div>
+      <p class="sub" style="margin-bottom:10px">틀렸던 카드와 같은 상황이에요. 숫자가 바뀌었어요. 시간 제한이 없으니 천천히 읽어 보세요.</p>
+      <div class="q-card" style="max-width:none"><span class="ctx">${c.ctx}</span><div class="txt">${c.s}</div><div id="rvChip"></div></div>
+      <div id="rvControls" style="margin-top:14px"></div>
+      <div class="feedback" id="rvFb"></div>
+      <div id="rvHint"></div>
+      <div class="btn-row"><button class="btn btn-soft" id="rvHintBtn" onclick="reviewHint()">💡 힌트</button></div>
+    </div>`;
+  renderReviewOps();
+}
+function renderReviewOps(){
+  $('rvControls').innerHTML = `<div class="bins">
+    <button class="bin add" onclick="reviewOp('add',this)">➕ 더한다</button>
+    <button class="bin mul" onclick="reviewOp('mul',this)">✖️ 곱한다</button></div>`;
+}
+function reviewHint(){
+  const c = R.list[R.i];
+  $('rvHint').innerHTML = `<div class="hint-box">💡 ${HINT[c.t]}</div>`;
+  $('rvHintBtn').disabled = true;
+}
+function reviewLock(){
+  $('rvControls').querySelectorAll('button').forEach(b=>b.disabled=true);
+  let n = 3;
+  const msg = ()=> `❌ 다시 한 번 생각해 보세요!<br><span class="lock-note">⏳ ${n}초 뒤에 새 카드가 나와요</span>`;
+  $('rvFb').className='feedback no'; $('rvFb').innerHTML = msg();
+  const t = setInterval(()=>{ n--; if(n>0){ $('rvFb').innerHTML = msg(); return; }
+    clearInterval(t);
+    R.list[R.i] = variantOf(R.list[R.i]);   // 같은 상황, 숫자만 다시
+    renderReview();
+  }, 1000);
+}
+function reviewOp(op, btn){
+  if(R.phase!=='op') return;
+  const c = R.list[R.i];
+  if(op !== c.op){ reviewLock(); return; }
+  if(G.lv===1){ reviewNext(); return; }
+  R.phase = 'num';
+  $('rvChip').innerHTML = `<span class="op-chip ${op}">${op==='add'?'➕ 더한다':'✖️ 곱한다'} ✔</span>`;
+  const ch = numChoices(c);
+  $('rvControls').innerHTML = `<div class="nums">${ch.map(v=>`<button class="num" onclick="reviewNum(${v})">${v}</button>`).join('')}</div>`;
+}
+function reviewNum(v){
+  if(R.phase!=='num') return;
+  if(v !== R.list[R.i].ans){ reviewLock(); return; }
+  reviewNext();
+}
+function reviewNext(){
+  R.phase = 'done';
+  $('rvControls').querySelectorAll('button').forEach(b=>b.disabled=true);
+  $('rvFb').className='feedback ok'; $('rvFb').textContent = '✅ 맞아요!';
+  setTimeout(()=>{
+    R.i++;
+    if(R.i < R.list.length){ renderReview(); return; }
+    unlockNext();
+    $('scReview').innerHTML = `<div class="card result-big">
+        <div style="font-size:40px">🎉</div>
+        <div class="box-head" style="justify-content:center">오답 상자를 모두 비웠어요!</div>
+        ${G.passed && G.lv<3 ? `<p class="sub" style="font-size:14px">레벨 ${G.lv+1}이 열렸어요.</p>` : ''}
+        <div class="btn-row"><button class="btn" onclick="finishRound()">처음 화면으로</button></div>
+      </div>`;
+  }, 600);
+}
+
+/* ════════════════════════════════
+   순위표 (레벨 2) — Firestore 문서 하나: gameRank/addmul_{반}
+   best: { 번호: {s:점수, nm:이름, acc:정답률(%), c:맞힌 카드, at} }
+   내 최고 기록을 넘었을 때만 한 번 씀. 읽기는 화면을 열 때·새로고침 때 한 번씩만.
+════════════════════════════════ */
+function hasClass(){ return !!(window._hubDb && STU.cls && STU.num); }
+function rankRef(cls){ return window._hubDb.collection('gameRank').doc(`addmul_${cls}`); }
+function rankRows(best){
+  return Object.entries(best||{}).filter(([k,v])=>v && Number.isFinite(v.s))
+    .map(([k,v])=>({ num:k, nm:(typeof v.nm==='string'&&v.nm.trim())?v.nm.trim():`${k}번`, s:v.s, acc:v.acc, t:(v.at&&v.at.toMillis)?v.at.toMillis():0 }))
+    .sort((a,b)=> b.s-a.s || a.t-b.t).slice(0,10);
+}
+function rankListHTML(best, me){
+  const rows = rankRows(best);
+  if(!rows.length) return '<p class="sub" style="text-align:center;padding:14px">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</p>';
+  const medal = i => ['🥇','🥈','🥉'][i] || (i+1);
+  return `<ol class="rank-list">${rows.map((r,i)=>`<li class="${r.num===String(me)?'me':''}"><span class="rk">${medal(i)}</span><span class="nm">${escHTML(r.nm)}</span><span class="sc">${r.s}점</span><span class="ac">${r.acc!=null?'정답률 '+r.acc+'%':''}</span></li>`).join('')}</ol>`;
+}
+function saveRank(score, acc, correct){
+  const msg = $('rankSaveMsg');
+  if(!hasClass()){ if(msg) msg.textContent = '반·번호로 들어오면 레벨 2 점수가 우리 반 순위표에 올라가요.'; return Promise.resolve(false); }
+  if(acc < LEVELS[2].pass.acc){ if(msg) msg.textContent = '🏆 정답률이 80%보다 낮아서 순위표에는 올라가지 않아요.'; return Promise.resolve(false); }
+  const ref = rankRef(STU.cls), me = String(STU.num);
+  return ref.get().then(snap=>{
+    const best = (snap.exists && snap.data().best) || {};
+    if(best[me] && best[me].s >= score){ if(msg) msg.textContent = `🏆 순위표에 있는 내 기록(${best[me].s}점)이 더 높아서 그대로 둘게요.`; return false; }
+    const FV = firebase.firestore.FieldValue;
+    const nm = String(STU.name||'').trim().slice(0,12);
+    return ref.set({ best:{ [me]:{ s:score, nm, acc:Math.round(acc*100), c:correct, at:FV.serverTimestamp() } } }, {merge:true})
+      .then(()=>{ if(msg) msg.innerHTML = '🏆 우리 반 순위표에 기록했어요! <a href="#" onclick="openRank();return false">순위표 보기</a>'; return true; });
+  }).catch(err=>{ console.warn('rank', err); if(msg) msg.textContent = '순위표에 기록하지 못했어요. 인터넷 연결을 확인해 주세요.'; return false; });
+}
+function openRank(){
+  show('scRank');
+  const head = `<div class="card"><div class="box-head">🏆 우리 반 순위표 <span class="box-count">레벨 2 · 분류 + 답</span></div>
+    <p class="sub" style="margin-bottom:10px">정답률 80% 이상인 기록만 올라가요. 한 사람은 가장 높은 점수 하나만 남아요.</p><div id="rankBody"></div>
+    <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🔄 새로고침</button><button class="btn" onclick="renderMenu()">처음 화면으로</button></div></div>`;
+  $('scRank').innerHTML = head;
+  if(!hasClass()){ $('rankBody').innerHTML = '<p class="sub" style="text-align:center;padding:14px">학습 선택 목록에서 반과 번호를 정하고 들어오면 우리 반 순위표를 볼 수 있어요.</p>'; return; }
+  $('rankBody').innerHTML = '<p class="sub" style="text-align:center">불러오는 중…</p>';
+  rankRef(STU.cls).get().then(snap=>{
+    $('rankBody').innerHTML = rankListHTML(snap.exists ? snap.data({serverTimestamps:'estimate'}).best : {}, STU.num);
+  }).catch(err=>{ console.warn(err); $('rankBody').innerHTML = '<p class="sub" style="text-align:center;color:var(--red)">순위표를 불러오지 못했어요. 잠시 뒤 다시 열어 보세요.</p>'; });
+}
+
+/* ════════════════════════════════
+   칠판용 순위표 (관리자)
+════════════════════════════════ */
+const BOARD = { cls: null };
+function openBoard(){
+  BOARD.cls = BOARD.cls || STU.cls || '1';
+  $('boardCls').innerHTML = Array.from({length:13},(_,i)=>i+1).map(c=>`<button class="${String(c)===String(BOARD.cls)?'on':''}" onclick="BOARD.cls='${c}';openBoard()">${c}반</button>`).join('');
+  $('boardWrap').classList.add('show');
+  boardLoad();
+}
+function closeBoard(){ $('boardWrap').classList.remove('show'); }
+function boardLoad(){
+  if(!window._hubDb){ $('boardBody').innerHTML = '<p class="sub">저장소에 연결할 수 없어요.</p>'; return; }
+  $('boardBody').innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:8px">${BOARD.cls}반</div><p class="sub">불러오는 중…</p>`;
+  rankRef(BOARD.cls).get().then(snap=>{
+    $('boardBody').innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:8px">${BOARD.cls}반</div>` + rankListHTML(snap.exists ? snap.data({serverTimestamps:'estimate'}).best : {}, null);
+  }).catch(err=>{ console.warn(err); $('boardBody').innerHTML = '<p class="sub" style="color:var(--red)">순위표를 불러오지 못했어요.</p>'; });
+}
+function boardReset(){
+  if(!window._hubDb) return;
+  if(!confirm(`${BOARD.cls}반 순위표를 모두 지울까요? 되돌릴 수 없어요.`)) return;
+  rankRef(BOARD.cls).set({ best:{}, resetAt: firebase.firestore.FieldValue.serverTimestamp() })
+    .then(boardLoad).catch(err=>{ console.warn(err); alert('초기화하지 못했어요.'); });
+}
+
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function adminUnlockAll(){ SAVE.open = 3; persist(); renderMenu(); }
+function adminEndNow(){ if(G && !G.over){ G.endAt = now(); tick(); } }
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  const sample = k => { const c=GEN[k](); return c.s.replace(/<[^>]+>/g,''); };
+  $('adminPanelBody').innerHTML =
+    `<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">${btn('📺 칠판용 순위표','openBoard()')}${btn('레벨 모두 열기','adminUnlockAll()')}${btn('지금 게임 끝내기','adminEndNow()')}</div>`+
+    `<div><strong>점수</strong>: 정답 +${BASE}, 빠르기 보너스 최대 +${SPEED_MAX}(카드 시간 막대 남은 만큼), 콤보 +10×(앞에서 연속 정답 수, 최대 +100), 오답 −${WRONG}(0점 아래로는 안 내려감)</div>`+
+    `<div><strong>카드 시간 막대</strong>: 레벨1 ${LEVELS[1].cardSecs}초, 레벨2 ${LEVELS[2].cardSecs}초, 레벨3 ${LEVELS[3].cardSecs}초 — 다 줄어도 오답 아님, 보너스만 0</div>`+
+    `<div><strong>찍기 막기</strong>: 카드가 나오고 ${READ_MS/1000}초 동안 버튼 쉼, 오답 후 ${LOCK_MS/1000}초 멈춤</div>`+
+    `<div><strong>통과</strong>: 레벨1 맞힌 카드 ${LEVELS[1].pass.correct}장↑, 레벨2·3 ${LEVELS[2].pass.correct}장↑, 모두 정답률 80%↑ + 오답 상자 완료 → 다음 레벨 열림 (레벨 1 통과 때 허브 완료 ✅)</div>`+
+    `<div><strong>순위표</strong>: 레벨 2만, 정답률 80%↑ 기록만, 1인 최고 점수 1개 — Firestore <code>gameRank/addmul_{반}</code></div>`+
+    `<div><strong>레벨 2 보기</strong>: 맞는 계산 / 반대 연산(a+b ↔ a×b) / 그 밖의 수 하나 (2와 2 조합은 안 나옴)</div>`+
+    `<div style="margin-top:6px"><strong>카드 종류</strong> (숫자는 매번 바뀜, 예시 1개씩)</div>`+
+    Object.keys(GEN).map(k=>`<div style="margin-left:6px">• <b>${GEN_INFO[k]}</b><br><span style="color:var(--ink3)">예) ${sample(k)}</span></div>`).join('');
+  $('adminPanel').style.display = 'block';
+}
+
+renderMenu();
+</script>
+</body>
+</html>

@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>길 찾기 지도 퍼즐</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --gold:#f59e0b;
+  --r:14px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:40px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:900px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.kw{font-weight:800;color:#be123c}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-soft{background:var(--indigo-l);color:var(--indigo)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.feedback{min-height:22px;font-size:14px;font-weight:800;text-align:center;margin-top:8px}
+.feedback.ok{color:var(--green)}
+.feedback.no{color:var(--red)}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+
+/* 시작 화면 */
+.title-box{text-align:center;padding:22px 16px 16px}
+.title-box h1{font-size:28px;font-weight:900;letter-spacing:-0.5px}
+.title-box p{margin-top:6px;font-size:14px;color:var(--ink2);font-weight:600}
+.box-head{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:900;margin-bottom:8px;flex-wrap:wrap}
+.box-count{font-size:13px;font-weight:800;color:var(--ink3)}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lv{border:2px solid #d8ddfb;border-radius:14px;padding:14px 12px;background:#fff;text-align:center;cursor:pointer;font-family:inherit;color:var(--ink);transition:transform .15s}
+.lv:hover:not(:disabled){transform:translateY(-2px);border-color:var(--indigo)}
+.lv:disabled{cursor:default;background:#f4f4f8;color:var(--ink3)}
+.lv .n{font-size:13px;font-weight:800;color:var(--indigo)}
+.lv:disabled .n{color:var(--ink3)}
+.lv .t{font-size:17px;font-weight:900;margin:3px 0}
+.lv .d{font-size:12px;color:var(--ink2);font-weight:600;line-height:1.5;min-height:36px}
+.lv .best{margin-top:6px;font-size:12px;font-weight:800;color:#b45309}
+.lv .pass{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:800;color:#14532d;background:var(--green-l);border-radius:10px;padding:1px 8px}
+.lv .rank-tag{display:inline-block;margin-top:4px;font-size:11px;font-weight:800;color:#92400e;background:#fef3c7;border-radius:10px;padding:1px 8px}
+.rules{font-size:13px;line-height:1.85;color:var(--ink2);font-weight:600}
+.rules li{margin-left:18px}
+@media (max-width:640px){ .levels{grid-template-columns:1fr} }
+
+/* 게임 화면 */
+.hud{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+.hud .box{background:#fff;border-radius:12px;padding:6px 14px;font-weight:900;font-size:18px;box-shadow:var(--shadow);min-width:96px;text-align:center}
+.hud .box small{display:block;font-size:10.5px;color:var(--ink3);font-weight:800}
+.q-text{font-size:17px;font-weight:800;line-height:1.7;word-break:keep-all}
+.q-text u{text-decoration-color:var(--gold);text-decoration-thickness:3px;text-underline-offset:4px}
+.map-svg{width:100%;max-width:680px;display:block;margin:6px auto 0;touch-action:manipulation}
+.road{fill:none;stroke-linecap:round}
+.hit{fill:none;stroke:transparent;stroke-width:22;cursor:pointer}
+.map-svg.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.trace-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px;font-size:14px;font-weight:800}
+.trace-now{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:5px 12px;min-width:160px;text-align:center}
+.trace-msg{min-height:24px;text-align:center;font-size:14.5px;font-weight:900;margin-top:6px}
+.trace-msg.ok{color:var(--green)} .trace-msg.no{color:var(--red)}
+.found-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 6px;font-size:14.5px;font-weight:900}
+.prog{flex:1;min-width:120px;height:12px;border-radius:8px;background:#dfe3fb;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#84cc16);border-radius:8px;transition:width .3s}
+.chips{display:flex;gap:6px;flex-wrap:wrap;min-height:34px}
+.chip{background:var(--indigo-ll);border:1.5px solid #c7cdfa;border-radius:10px;padding:4px 10px;font-size:14px;font-weight:800}
+.chip.flash{animation:flash 1s ease-out 2}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--gold);background:#fef3c7}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+.ans-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;font-size:17px;font-weight:800;margin-top:10px}
+.ans-row input{width:76px;font-size:22px;font-weight:800;text-align:center;border:2.5px solid #c7cdfa;border-radius:10px;padding:6px;font-family:inherit}
+.ans-row input.wrong{border-color:var(--red);background:var(--red-l)}
+.ans-row input.correct{border-color:var(--green);background:var(--green-l)}
+.op-pick{display:inline-flex;gap:4px}
+.op-pick button{border:2.5px solid #c7cdfa;background:#fff;border-radius:10px;width:46px;height:46px;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit}
+.op-pick button.on{border-color:var(--indigo);background:var(--indigo-l)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:12.5px;font-weight:800;color:var(--ink2);margin-top:4px}
+.legend i{display:inline-block;width:18px;height:5px;border-radius:3px;vertical-align:middle;margin-right:4px}
+.result-big{text-align:center}
+.result-big .score{font-size:46px;font-weight:900;color:var(--indigo)}
+.result-big .newbest{display:inline-block;background:#fef3c7;color:#92400e;font-weight:900;border-radius:12px;padding:3px 12px;font-size:13px;margin-top:4px}
+table.sum{border-collapse:collapse;margin:14px auto 0;font-size:13.5px;font-weight:700}
+table.sum th,table.sum td{border:1px solid #d8ddfb;padding:6px 10px;text-align:center}
+table.sum th{background:var(--indigo-ll)}
+.verdict{margin-top:14px;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;line-height:1.7;text-align:center;background:var(--green-l);color:#14532d}
+
+/* 순위표 */
+.rank-list{list-style:none}
+.rank-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-weight:800;font-size:15px}
+.rank-list li:nth-child(odd){background:var(--indigo-ll)}
+.rank-list li.me{outline:2.5px solid var(--gold);background:#fffbeb}
+.rank-list .rk{width:34px;text-align:center;font-size:18px}
+.rank-list .nm{flex:1}
+.rank-list .sc{color:var(--indigo)}
+.board .rank-list li{font-size:24px;padding:12px 16px}
+.board .rank-list .rk{width:52px;font-size:28px}
+.cls-pick{display:flex;gap:5px;flex-wrap:wrap}
+.cls-pick button{border:1.5px solid #d8ddfb;background:#fff;border-radius:16px;padding:4px 11px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.cls-pick button.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:30px;margin-bottom:6px}
+.modal-text{font-size:15px;font-weight:800;margin-bottom:10px}
+.modal-btn{border:none;border-radius:10px;padding:8px 16px;font-size:13.5px;font-weight:800;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.blank{border:2px solid #c7cdfa;border-radius:8px;padding:6px 8px;font-size:15px;font-family:inherit;text-align:center}
+.board-wrap{position:fixed;inset:0;background:#fff;z-index:70;display:none;overflow-y:auto;padding:24px 32px}
+.board-wrap.show{display:block}
+.board-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.board-top h2{font-size:24px;color:var(--indigo)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">🗺 길 찾기 지도 퍼즐</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'map-game' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._hubDb = _db;
+  let _reported=false;
+  window._reportHubComplete = function(){
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+</script>
+
+<div class="main">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="scMenu">
+    <div class="card title-box">
+      <h1>🗺 길 찾기 지도 퍼즐</h1>
+      <p>지도를 보고 집에서 학교까지 가는 방법이 몇 가지인지 알아내요.</p>
+    </div>
+    <div class="card">
+      <div class="box-head">🎯 레벨 고르기</div>
+      <div class="levels" id="levelBox"></div>
+    </div>
+    <div class="card">
+      <div class="box-head">📖 게임 방법</div>
+      <ul class="rules">
+        <li>한 판에 지도가 <b>5장</b> 나와요. 지도마다 시간을 재요. 빨리 풀수록 보너스가 커요.</li>
+        <li><b>길 긋기</b>: 🏠 집에서 출발해 길을 차례로 누르면 지나간 길이 색칠돼요. 🏫 학교에 닿으면 그 방법이 목록에 저장돼요.</li>
+        <li><b>레벨 1</b>: 가능한 길을 모두 그은 뒤, 식으로 확인해요.</li>
+        <li><b>레벨 2·3</b>: 길을 긋기 전에 <b>먼저 계산</b>해서 답을 써요. 한 번에 맞히면 +100점!</li>
+        <li>틀리면 −30점이에요. 그때는 길 긋기로 직접 세어 보고 다시 답할 수 있어요.</li>
+      </ul>
+    </div>
+    <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🏆 우리 반 순위표 (레벨 2)</button></div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div class="screen" id="scPlay">
+    <div class="hud">
+      <div class="box"><small>지도</small><span id="hudRound">1</span> / 5</div>
+      <div class="box"><small>시간</small><span id="hudTime">0</span>초</div>
+      <div class="box"><small>점수</small><span id="hudScore">0</span></div>
+    </div>
+    <div class="card" id="mapCard"></div>
+    <div class="card" id="askCard"></div>
+  </div>
+
+  <div class="screen" id="scResult"></div>
+  <div class="screen" id="scRank"></div>
+</div>
+
+<div class="board-wrap" id="boardWrap">
+  <div class="board-top">
+    <h2>🏆 길 찾기 지도 퍼즐 레벨 2 순위표</h2>
+    <div class="cls-pick" id="boardCls"></div>
+    <button class="btn btn-soft" onclick="boardLoad()">🔄 새로고침</button>
+    <button class="btn" style="background:var(--red)" onclick="boardReset()">순위표 초기화</button>
+    <button class="btn" style="background:#9090b0;margin-left:auto" onclick="closeBoard()">닫기</button>
+  </div>
+  <div id="boardBody" class="board"></div>
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:390px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:60;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:6px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const rint = (lo,hi) => lo + Math.floor(Math.random()*(hi-lo+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function now(){ return Date.now(); }
+function escHTML(t){ return String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const RETHINK = '❌ 다시 한 번 생각해 보세요!';
+
+/* ════════════════════════════════
+   지도 만들기
+   노드(장소) + 길(from→to, 이름, 색). 경우의 수는 길을 따라 직접 세어(DFS) 구함
+   type: serial(거쳐 가기 a×b) · parallel(버스 또는 지하철 a+b)
+         serialDirect(거쳐 가기 + 바로 가기 a×b+c) · twoBranch(문구점 또는 도서관을 거쳐 a×b+c×d)
+         roundTrip(갔다가 다른 길로 돌아오기 a×(a−1))
+   세 구간을 잇달아 가는 지도는 만들지 않음 (세 사건으로 넓히지 않기)
+════════════════════════════════ */
+const LAB = { one:['①','②','③','④','⑤'], ga:['ㄱ','ㄴ','ㄷ','ㄹ'], bus:['ⓐ','ⓑ','ⓒ','ⓓ'], gana:['가','나','다','라'], abc:['A','B','C','D'] };
+const COL = { one:'#2563eb', ga:'#ea580c', bus:'#16a34a', gana:'#9333ea', abc:'#0891b2' };
+const PLACE = { home:{t:'🏠 집'}, shop:{t:'✏️ 문구점'}, lib:{t:'📚 도서관'}, school:{t:'🏫 학교'} };
+
+// 두 점 사이 길 k개를 곡선으로 — 가운데에서 off만큼 옆으로 휨
+function curve(P, Q, off){
+  const dx=Q.x-P.x, dy=Q.y-P.y, len=Math.hypot(dx,dy), nx=-dy/len, ny=dx/len;
+  const cx=(P.x+Q.x)/2 + nx*off*2, cy=(P.y+Q.y)/2 + ny*off*2;
+  return { d:`M${P.x},${P.y} Q${cx},${cy} ${Q.x},${Q.y}`, mx:(P.x+2*cx+Q.x)/4, my:(P.y+2*cy+Q.y)/4 };
+}
+function addLeg(m, from, to, k, labKey, offs){
+  for(let i=0;i<k;i++){
+    const c = curve(m.nodes[from], m.nodes[to], offs(i,k));
+    m.edges.push({ id:`${labKey}${i}`, from, to, lab:LAB[labKey][i], col:COL[labKey], d:c.d, mx:c.mx, my:c.my });
+  }
+}
+const spread = gap => (i,k) => (i-(k-1)/2)*gap;
+const MAPS = {
+  serial:{ name:'거쳐 가기', rule:'a × b',
+    make([a,b]){ const m = { type:'serial', nodes:{ home:{x:70,y:150}, shop:{x:320,y:150}, school:{x:570,y:150} }, edges:[] };
+      addLeg(m,'home','shop',a,'one',spread(28)); addLeg(m,'shop','school',b,'ga',spread(28));
+      m.q = `🏠 집에서 ✏️ 문구점을 거쳐 🏫 학교까지 가는 방법은 모두 몇 가지일까요?`;
+      m.eq = { op:'mul', nums:[a,b] }; return m; } },
+  parallel:{ name:'다른 방법 중 하나', rule:'a + b',
+    make([a,b]){ const m = { type:'parallel', nodes:{ home:{x:70,y:150}, school:{x:570,y:150} }, edges:[] };
+      addLeg(m,'home','school',a,'bus',i=>-(38+i*26)); addLeg(m,'home','school',b,'gana',i=>(38+i*26));
+      m.legend = [['bus','🚌 버스 노선'],['gana','🚇 지하철 노선']];
+      m.q = `🏠 집에서 🏫 학교까지 <u>버스나 지하철 중 하나</u>를 타고 가는 방법은 모두 몇 가지일까요?`;
+      m.eq = { op:'add', nums:[a,b] }; return m; } },
+  serialDirect:{ name:'거쳐 가기 + 바로 가기', rule:'a × b + c',
+    make([a,b,c]){ const m = { type:'serialDirect', nodes:{ home:{x:70,y:105}, shop:{x:320,y:105}, school:{x:570,y:105} }, edges:[] };
+      addLeg(m,'home','shop',a,'one',spread(26)); addLeg(m,'shop','school',b,'ga',spread(26));
+      addLeg(m,'home','school',c,'bus',i=>(95+i*26));
+      m.q = `🏠 집에서 🏫 학교까지 가는 방법은 모두 몇 가지일까요? <u>✏️ 문구점을 거쳐 가도 되고, 아래쪽 큰길로 바로 가도 돼요.</u>`;
+      m.formula = `${a} × ${b} + ${c}`; return m; } },
+  twoBranch:{ name:'두 갈래 경유', rule:'a × b + c × d',
+    make([a,b,c,d]){ const m = { type:'twoBranch', nodes:{ home:{x:70,y:150}, shop:{x:320,y:52}, lib:{x:320,y:248}, school:{x:570,y:150} }, edges:[] };
+      addLeg(m,'home','shop',a,'one',spread(22)); addLeg(m,'shop','school',b,'ga',spread(22));
+      addLeg(m,'home','lib',c,'gana',spread(22)); addLeg(m,'lib','school',d,'abc',spread(22));
+      m.q = `🏠 집에서 🏫 학교까지 가는 방법은 모두 몇 가지일까요? <u>✏️ 문구점이나 📚 도서관 중 한 곳을 거쳐 가요.</u>`;
+      m.formula = `${a} × ${b} + ${c} × ${d}`; return m; } },
+  roundTrip:{ name:'갔다가 돌아오기', rule:'a × (a − 1)',
+    make([a]){ const m = { type:'roundTrip', nodes:{ home:{x:90,y:150}, school:{x:550,y:150} }, edges:[] };
+      addLeg(m,'home','school',a,'one',spread(34));
+      m.q = `🏠 집에서 🏫 학교까지 갔다가 다시 🏠 집으로 돌아오는 방법은 모두 몇 가지일까요? 단, <u>갈 때와 올 때는 서로 다른 길로 다녀요.</u>`;
+      m.formula = `${a} × ${a-1}`; return m; } }
+};
+// 레벨별 지도 종류와 크기 후보
+const LEVELS = [
+  null,
+  { name:'길 그어 보기', desc:'길을 모두 그어 보고 식으로 확인해요', trace:true,
+    pool:[ ['serial',[[2,2],[3,2],[2,3],[3,3]]], ['parallel',[[2,2],[3,2],[2,3],[3,3],[4,2]]] ] },
+  { name:'계산 먼저!', desc:'긋기 전에 먼저 계산해서 답해요', ranked:true,
+    pool:[ ['serial',[[3,3],[4,2],[3,4],[4,3]]], ['parallel',[[3,4],[4,3],[4,4]]], ['serialDirect',[[2,2,1],[2,3,1],[3,2,2],[2,2,2],[3,3,1]]] ] },
+  { name:'복잡한 지도', desc:'갈래가 많은 지도와 갔다가 돌아오기',
+    pool:[ ['serialDirect',[[3,3,2],[4,2,3],[3,4,2],[4,3,2]]], ['twoBranch',[[2,2,2,3],[2,3,2,2],[3,2,2,2],[3,2,2,3],[2,3,3,2]]], ['roundTrip',[[3],[4],[5]]] ] }
+];
+const ROUNDS = 5;
+const FIRST_PT = 100, WRONG_PT = 30, LATER_PT = 30, TRACE_PT = 100, DUP_PT = 10, EQ_PT = 50, TIME_PT = 5;
+// 기준 시간: 레벨 1은 길 하나에 4초, 레벨 2·3은 지도 하나에 40초 — 그보다 빨리 끝낸 초 × 5점
+const parSecs = (lv, N) => lv===1 ? 4*N + 10 : 40;
+
+// 집에서 학교까지 갈 수 있는 모든 방법(길 id 목록)
+function allRoutes(m){
+  if(m.type==='roundTrip'){
+    const out=[]; m.edges.forEach(e1=>m.edges.forEach(e2=>{ if(e1!==e2) out.push([e1.id,e2.id]); })); return out;
+  }
+  const out=[];
+  (function go(node, path){
+    if(node==='school'){ out.push(path); return; }
+    m.edges.filter(e=>e.from===node).forEach(e=>go(e.to, path.concat(e.id)));
+  })('home', []);
+  return out;
+}
+function makeMap(type, size){
+  const m = MAPS[type].make(size);
+  m.size = size;
+  m.routes = allRoutes(m).map(r=>r.join('>'));
+  m.N = m.routes.length;
+  return m;
+}
+function planGame(lv){
+  const pool = LEVELS[lv].pool;
+  // 지도 종류가 고르게 나오도록 종류를 돌아가며 고르고 순서를 섞음
+  const types = []; for(let i=0;i<ROUNDS;i++) types.push(pool[i % pool.length]);
+  return shuffle(types).map(([t,sizes])=>({ type:t, size:pick(sizes) }));
+}
+
+/* ════════════════════════════════
+   저장 (레벨 열림·최고 점수) — 이 브라우저에만
+════════════════════════════════ */
+const STU = window._hubStudent || {};
+const SAVE_KEY = `mapGame_${STU.cls||'x'}_${STU.num||'x'}`;
+let SAVE = { open:1, best:{}, passed:{} };
+try{ const v = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(v && v.open) SAVE = Object.assign(SAVE, v); }catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); }catch(e){} }
+
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id)); window.scrollTo(0,0); }
+function renderMenu(){
+  $('levelBox').innerHTML = [1,2,3].map(lv=>{
+    const L = LEVELS[lv], open = lv <= SAVE.open, best = SAVE.best[lv];
+    return `<button class="lv" id="lvBtn${lv}" onclick="startLevel(${lv})" ${open?'':'disabled'}>
+      <div class="n">${open?'':'🔒 '}레벨 ${lv}</div><div class="t">${L.name}</div><div class="d">${L.desc}</div>
+      ${open ? (best!=null ? `<div class="best">최고 ${best}점</div>` : '') : `<div class="d" style="min-height:0">레벨 ${lv-1}을 끝내면 열려요</div>`}
+      ${SAVE.passed[lv] ? '<div class="pass">✔ 완료</div>' : ''}
+      ${L.ranked ? '<div class="rank-tag">🏆 순위표</div>' : ''}
+    </button>`;
+  }).join('');
+  show('scMenu');
+}
+
+/* ════════════════════════════════
+   게임 진행
+════════════════════════════════ */
+let G = null, ticker = null;
+function startLevel(lv){
+  if(lv > SAVE.open) return;
+  G = { lv, plan:planGame(lv), ri:0, score:0, rows:[] };
+  startRound();
+  clearInterval(ticker); ticker = setInterval(tick, 200);
+}
+function startRound(){
+  const p = G.plan[G.ri];
+  const m = makeMap(p.type, p.size);
+  G.m = m; G.found = []; G.path = []; G.cur = 'home'; G.startAt = now(); G.roundOver = false;
+  // 레벨 1은 처음부터 길 긋기, 레벨 2·3은 먼저 계산 (틀린 뒤에 길 긋기가 열림)
+  G.traceOpen = !!LEVELS[G.lv].trace; G.phase = LEVELS[G.lv].trace ? 'trace' : 'answer';
+  G.stat = { wrong:0, dup:0, first:false, traced:false };
+  show('scPlay');
+  $('hudRound').textContent = G.ri+1; $('hudTime').textContent = 0;
+  renderMap(); renderAsk(); updateHud();
+}
+function tick(){
+  if(!G || G.roundOver || !$('scPlay').classList.contains('active')) return;
+  $('hudTime').textContent = Math.floor((now()-G.startAt)/1000);
+}
+function updateHud(){ $('hudScore').textContent = G.score; }
+function addScore(d){ G.score = Math.max(0, G.score + d); updateHud(); }
+
+function renderMap(){
+  const m = G.m;
+  const inPath = new Set(G.path);
+  const svgEdges = m.edges.map(e=>{
+    const on = inPath.has(e.id);
+    return `<path d="${e.d}" class="road" stroke="${on?'#f59e0b':e.col}" stroke-width="${on?9:5}"/>
+      <path d="${e.d}" class="hit" id="rd_${e.id}" onclick="pickRoad('${e.id}')"/>
+      <text x="${e.mx}" y="${e.my+5}" text-anchor="middle" font-size="15" font-weight="800" fill="${on?'#b45309':e.col}" stroke="#fff" stroke-width="5" paint-order="stroke" style="pointer-events:none">${e.lab}</text>`;
+  }).join('');
+  const nodeLabel = (id, n) => {
+    const t = PLACE[id].t;
+    const pos = id==='home' ? {x:n.x-14, y:n.y+5, a:'end'} : id==='school' ? {x:n.x+14, y:n.y+5, a:'start'}
+              : id==='shop' ? {x:n.x, y:n.y-22, a:'middle'} : {x:n.x, y:n.y+32, a:'middle'};
+    const here = G.traceOpen && G.cur===id && G.path.length;
+    return `<circle cx="${n.x}" cy="${n.y}" r="${here?12:9}" fill="${here?'#f59e0b':'#1a1a2e'}"/>
+      <text x="${pos.x}" y="${pos.y}" text-anchor="${pos.a}" font-size="15" font-weight="800" fill="#1a1a2e" stroke="#fff" stroke-width="6" paint-order="stroke">${t}</text>`;
+  };
+  const legend = m.legend ? `<div class="legend">${m.legend.map(([k,t])=>`<span><i style="background:${COL[k]}"></i>${t}</span>`).join('')}</div>` : '';
+  $('mapCard').innerHTML = `<div class="q-text">❓ ${m.q}</div>
+    <svg class="map-svg" id="mapSvg" viewBox="-30 0 700 300">${svgEdges}${Object.entries(m.nodes).map(([id,n])=>nodeLabel(id,n)).join('')}</svg>${legend}
+    ${G.traceOpen ? `<div class="trace-bar"><span class="trace-now" id="traceNow">${traceNowText()}</span><button class="btn btn-soft" style="padding:6px 12px" onclick="resetPath()">↺ 다시 긋기</button></div>
+    <div class="trace-msg" id="traceMsg"></div>` : ''}`;
+}
+function routeText(ids){ return ids.map(id=>G.m.edges.find(e=>e.id===id).lab).join(' → '); }
+function traceNowText(){
+  if(!G.path.length) return '🏠 집에서 출발할 길을 눌러요';
+  return '지금까지: ' + routeText(G.path) + ' …';
+}
+// 길 긋기: 지금 있는 곳에서 이어지는 길만 누를 수 있음
+function pickRoad(id){
+  if(!G || G.roundOver || !G.traceOpen) return;
+  const m = G.m, e = m.edges.find(x=>x.id===id); if(!e) return;
+  let next;
+  if(m.type==='roundTrip'){
+    if(G.path.length===0 && G.cur==='home') next = 'school';
+    else if(G.path.length===1 && G.cur==='school'){
+      if(G.path[0]===id){ traceMsg('🚫 갈 때와 같은 길이에요. 다른 길로 돌아와요!', false); shakeMap(); return; }
+      next = 'home';
+    }
+  } else if(e.from===G.cur) next = e.to;
+  if(!next){ traceMsg('🚧 지금 있는 곳과 이어진 길이 아니에요.', false); shakeMap(); return; }
+  G.path.push(id); G.cur = next;
+  const done = m.type==='roundTrip' ? G.path.length===2 : next==='school';
+  if(done) completeRoute(); else { renderMap(); }
+}
+function completeRoute(){
+  const key = G.path.join('>'), text = routeText(G.path);
+  G.path = []; G.cur = 'home';
+  renderMap();
+  if(G.found.includes(key)){
+    G.stat.dup++;
+    if(LEVELS[G.lv].trace) addScore(-DUP_PT);
+    traceMsg(`🔁 ${text} 은(는) 이미 찾은 길이에요!${LEVELS[G.lv].trace?` −${DUP_PT}점`:''}`, false);
+    renderFound(key); return;
+  }
+  G.found.push(key); G.stat.traced = true;
+  traceMsg(`✨ ${text} 찾았어요!`, true);
+  renderFound();
+  if(LEVELS[G.lv].trace && G.found.length===G.m.N) traceDone();
+}
+function resetPath(){ if(!G || G.roundOver) return; G.path=[]; G.cur='home'; renderMap(); }
+function traceMsg(t, ok){ const el=$('traceMsg'); if(el){ el.className='trace-msg '+(ok?'ok':'no'); el.textContent=t; } }
+function shakeMap(){ const s=$('mapSvg'); if(!s) return; s.classList.remove('shake'); void s.getBoundingClientRect(); s.classList.add('shake'); }
+
+function renderAsk(){
+  const L = LEVELS[G.lv];
+  if(L.trace){
+    $('askCard').innerHTML = `<div class="found-head">📋 찾은 방법 <span id="foundCount">${G.found.length}</span> / ${G.m.N}<div class="prog"><i id="foundProg" style="width:0%"></i></div></div>
+      <div class="chips" id="foundChips"></div><div id="eqArea"></div>`;
+    renderFound(); return;
+  }
+  $('askCard').innerHTML = `<div class="box-head">🧮 먼저 계산해서 답해 보세요</div>
+    <div class="ans-row">모두 <input id="ansInp" inputmode="numeric"> 가지 <button class="btn" id="ansBtn" onclick="checkAns()">확인</button></div>
+    <div class="feedback" id="ansFb"></div>
+    <div id="traceArea"></div>`;
+  $('ansInp').addEventListener('keydown', ev=>{ if(ev.key==='Enter') checkAns(); });
+}
+function renderFound(flashKey){
+  const chips = $('foundChips'); if(!chips) return;
+  chips.innerHTML = G.found.length ? G.found.map(k=>`<span class="chip${k===flashKey?' flash':''}">${routeText(k.split('>'))}</span>`).join('')
+    : '<span class="sub">아직 찾은 방법이 없어요. 위 지도에서 길을 차례로 눌러 보세요.</span>';
+  if($('foundCount')) $('foundCount').textContent = G.found.length;
+  if($('foundProg')) $('foundProg').style.width = (G.found.length/G.m.N*100)+'%';
+}
+
+// 레벨 1: 길을 다 그은 뒤 식으로 확인 (□ ○ □ = □)
+function traceDone(){
+  G.roundOver = true;
+  const secs = Math.floor((now()-G.startAt)/1000);
+  const tb = Math.max(0, parSecs(G.lv, G.m.N) - secs) * TIME_PT;
+  addScore(TRACE_PT + tb);
+  G.stat.secs = secs; G.stat.time = tb;
+  G.op = null; G.eqTried = false;
+  $('eqArea').innerHTML = `<div class="feedback ok" style="margin-top:10px">🎉 ${G.m.N}가지를 모두 찾았어요! +${TRACE_PT}점 · 시간 보너스 +${tb}점 (${secs}초)</div>
+    <p style="font-size:15px;font-weight:800;margin-top:10px;text-align:center">🧮 하나씩 긋지 않고 <span class="kw">계산</span>으로 구하는 식을 완성해 보세요.</p>
+    <div class="ans-row"><input id="eqX" inputmode="numeric"><span class="op-pick"><button id="opAdd" onclick="pickOp('add')">+</button><button id="opMul" onclick="pickOp('mul')">×</button></span><input id="eqY" inputmode="numeric"> = <input id="eqN" inputmode="numeric"></div>
+    <div class="feedback" id="eqFb"></div>
+    <div class="btn-row"><button class="btn" id="eqBtn" onclick="checkEq()">확인</button></div>`;
+}
+function pickOp(op){ if(!G || G.eqDone) return; G.op = op; $('opAdd').classList.toggle('on', op==='add'); $('opMul').classList.toggle('on', op==='mul'); }
+function numVal(id){ return $(id).value.trim().replace(/(가지)$/,''); }
+function checkEq(){
+  const ids = ['eqX','eqY','eqN'], vals = ids.map(numVal);
+  if(vals.some(v=>v==='') || !G.op){ $('eqFb').className='feedback no'; $('eqFb').textContent='빈칸과 기호(+ 또는 ×)를 모두 채워 주세요.'; return; }
+  const e = G.m.eq, nums = vals.map(v=>/^\d+$/.test(v)?+v:NaN);
+  // 두 수의 순서는 바뀌어도 됨 (더하기·곱하기 모두 순서를 바꿔도 같음)
+  const pairOk = (nums[0]===e.nums[0] && nums[1]===e.nums[1]) || (nums[0]===e.nums[1] && nums[1]===e.nums[0]);
+  const ok = pairOk && G.op===e.op && nums[2]===G.m.N;
+  if(ok){
+    G.eqDone = true;
+    if(!G.eqTried) addScore(EQ_PT);
+    ids.forEach(id=>{ $(id).classList.add('correct'); $(id).disabled=true; });
+    $('eqBtn').disabled = true;
+    $('eqFb').className='feedback ok'; $('eqFb').textContent = G.eqTried ? '✅ 맞아요!' : `✅ 맞아요! 한 번에 맞혀서 +${EQ_PT}점`;
+    showNextBtn('eqArea'); return;
+  }
+  G.eqTried = true;
+  ids.forEach(id=>$(id).classList.add('wrong'));
+  lockFor('eqBtn','eqFb', ()=>ids.forEach(id=>$(id).classList.remove('wrong')));
+}
+// 틀렸을 때 공통: 정답 없이 "다시 한 번 생각해 보세요!" + 3초 잠금
+function lockFor(btnId, fbId, after){
+  $(btnId).disabled = true;
+  let n = 3;
+  const fb = () => { $(fbId).className='feedback no'; $(fbId).innerHTML = `${RETHINK}<br><span class="lock-note">⏳ ${n}초 뒤에 다시 답할 수 있어요</span>`; };
+  fb();
+  const t = setInterval(()=>{ n--; if(n>0){ fb(); return; } clearInterval(t);
+    if($(btnId)) $(btnId).disabled = false; if(after) after();
+    if($(fbId)) $(fbId).innerHTML = RETHINK + (LEVELS[G.lv].trace ? '' : '<br><span class="sub">지도에서 길을 직접 그어 세어 본 뒤 다시 답해 보세요.</span>'); }, 1000);
+}
+
+// 레벨 2·3: 먼저 계산 → 틀리면 −30, 길 긋기가 열림 → 다시 맞히면 +30
+function checkAns(){
+  if(!G || G.roundOver) return;
+  const v = $('ansInp').value.trim().replace(/가지$/,'');
+  if(v===''){ $('ansFb').className='feedback no'; $('ansFb').textContent='답을 써 주세요.'; return; }
+  if(/^\d+$/.test(v) && +v===G.m.N){
+    G.roundOver = true;
+    const secs = Math.floor((now()-G.startAt)/1000);
+    let gain, tb = 0;
+    if(G.stat.wrong===0){ tb = Math.max(0, parSecs(G.lv, G.m.N) - secs) * TIME_PT; gain = FIRST_PT + tb; G.stat.first = true; }
+    else gain = LATER_PT;
+    addScore(gain);
+    G.stat.secs = secs; G.stat.time = tb;
+    $('ansInp').classList.add('correct'); $('ansInp').disabled = true; $('ansBtn').disabled = true;
+    $('ansFb').className='feedback ok';
+    $('ansFb').innerHTML = G.stat.wrong===0 ? `✅ 정답이에요! 한 번에 맞혀서 +${FIRST_PT}점 · 시간 보너스 +${tb}점 (${secs}초)` : `✅ 정답이에요! +${LATER_PT}점`;
+    if(G.m.formula) $('ansFb').insertAdjacentHTML('beforeend', `<br><span style="color:var(--ink2)">계산식: ${G.m.formula} = ${G.m.N}</span>`);
+    showNextBtn('askCard'); return;
+  }
+  G.stat.wrong++; addScore(-WRONG_PT);
+  $('ansInp').classList.add('wrong');
+  lockFor('ansBtn','ansFb', ()=>$('ansInp').classList.remove('wrong'));
+  if(!G.traceOpen) openTrace();
+}
+function openTrace(){
+  G.traceOpen = true;
+  renderMap();
+  $('traceArea').innerHTML = `<div class="found-head">✏️ 길을 직접 그어 세어 봐요 — 찾은 방법 <span id="foundCount">0</span>가지</div><div class="chips" id="foundChips"></div>`;
+  renderFound();
+}
+function showNextBtn(areaId){
+  const last = G.ri+1 >= ROUNDS;
+  G.rows.push({ name:MAPS[G.m.type].name, N:G.m.N, secs:G.stat.secs, wrong:G.stat.wrong, dup:G.stat.dup, first:G.stat.first });
+  $(areaId).insertAdjacentHTML('beforeend', `<div class="btn-row"><button class="btn" id="nextRoundBtn" onclick="nextRound()">${last?'결과 보기 →':'다음 지도 →'}</button></div>`);
+}
+function nextRound(){
+  if(!G) return;
+  const b = $('nextRoundBtn'); if(b) b.disabled = true;
+  G.ri++; G.eqDone = false;
+  if(G.ri < ROUNDS){ startRound(); return; }
+  endGame();
+}
+
+/* ════════════════════════════════
+   결과
+════════════════════════════════ */
+function endGame(){
+  clearInterval(ticker); ticker = null;
+  const lv = G.lv, L = LEVELS[lv];
+  const prevBest = SAVE.best[lv];
+  const newBest = prevBest==null || G.score > prevBest;
+  if(newBest) SAVE.best[lv] = G.score;
+  SAVE.passed[lv] = true;
+  if(lv < 3 && SAVE.open < lv+1) SAVE.open = lv+1;
+  persist();
+  if(window._reportHubComplete) window._reportHubComplete();
+  $('scResult').innerHTML = `<div class="card result-big">
+      <div class="sub">레벨 ${lv} · ${L.name}</div>
+      <div class="score">${G.score}점</div>
+      ${newBest && G.score>0 ? '<div class="newbest">🌟 내 최고 기록!</div>' : (prevBest!=null?`<div class="sub">내 최고 ${prevBest}점</div>`:'')}
+      <table class="sum"><tr><th>지도</th><th>방법의 수</th><th>걸린 시간</th>${L.trace?'<th>중복</th>':'<th>한 번에 정답</th><th>틀린 횟수</th>'}</tr>
+        ${G.rows.map(r=>`<tr><td>${r.name}</td><td>${r.N}가지</td><td>${r.secs}초</td>${L.trace?`<td>${r.dup}</td>`:`<td>${r.first?'⭕':'-'}</td><td>${r.wrong}</td>`}</tr>`).join('')}
+      </table>
+      <div class="verdict">🎉 레벨 ${lv} 완료!${lv<3?` 레벨 ${lv+1}이 열렸어요.`:''}<br><span style="font-weight:700"><b>거쳐 가는 길은 곱하고</b>, <b>다른 방법끼리는 더해요.</b></span></div>
+      <div id="rankSaveMsg" class="sub" style="margin-top:8px"></div>
+      <div class="btn-row"><button class="btn" onclick="renderMenu()">처음 화면으로</button></div>
+    </div>`;
+  show('scResult');
+  if(L.ranked) saveRank(G.score);
+}
+
+/* ════════════════════════════════
+   순위표 (레벨 2) — Firestore 문서 하나: gameRank/map_{반}
+   best: { 번호: {s:점수, nm:이름, at} } — 내 최고 기록을 넘었을 때만 씀
+════════════════════════════════ */
+function hasClass(){ return !!(window._hubDb && STU.cls && STU.num); }
+function rankRef(cls){ return window._hubDb.collection('gameRank').doc(`map_${cls}`); }
+function rankRows(best){
+  return Object.entries(best||{}).filter(([k,v])=>v && Number.isFinite(v.s))
+    .map(([k,v])=>({ num:k, nm:(typeof v.nm==='string'&&v.nm.trim())?v.nm.trim():`${k}번`, s:v.s, t:(v.at&&v.at.toMillis)?v.at.toMillis():0 }))
+    .sort((a,b)=> b.s-a.s || a.t-b.t).slice(0,10);
+}
+function rankListHTML(best, me){
+  const rows = rankRows(best);
+  if(!rows.length) return '<p class="sub" style="text-align:center;padding:14px">아직 기록이 없어요. 첫 번째 주인공이 되어 보세요!</p>';
+  const medal = i => ['🥇','🥈','🥉'][i] || (i+1);
+  return `<ol class="rank-list">${rows.map((r,i)=>`<li class="${r.num===String(me)?'me':''}"><span class="rk">${medal(i)}</span><span class="nm">${escHTML(r.nm)}</span><span class="sc">${r.s}점</span></li>`).join('')}</ol>`;
+}
+function saveRank(score){
+  const msg = $('rankSaveMsg');
+  if(!hasClass()){ if(msg) msg.textContent = '반·번호로 들어오면 레벨 2 점수가 우리 반 순위표에 올라가요.'; return Promise.resolve(false); }
+  const ref = rankRef(STU.cls), me = String(STU.num);
+  return ref.get().then(snap=>{
+    const best = (snap.exists && snap.data().best) || {};
+    if(best[me] && best[me].s >= score){ if(msg) msg.textContent = `🏆 순위표에 있는 내 기록(${best[me].s}점)이 더 높아서 그대로 둘게요.`; return false; }
+    const nm = String(STU.name||'').trim().slice(0,12);
+    return ref.set({ best:{ [me]:{ s:score, nm, at:firebase.firestore.FieldValue.serverTimestamp() } } }, {merge:true})
+      .then(()=>{ if(msg) msg.innerHTML = '🏆 우리 반 순위표에 기록했어요! <a href="#" onclick="openRank();return false">순위표 보기</a>'; return true; });
+  }).catch(err=>{ console.warn('rank', err); if(msg) msg.textContent = '순위표에 기록하지 못했어요. 인터넷 연결을 확인해 주세요.'; return false; });
+}
+function openRank(){
+  show('scRank');
+  $('scRank').innerHTML = `<div class="card"><div class="box-head">🏆 우리 반 순위표 <span class="box-count">레벨 2 · 계산 먼저!</span></div>
+    <p class="sub" style="margin-bottom:10px">한 사람은 가장 높은 점수 하나만 남아요.</p><div id="rankBody"></div>
+    <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🔄 새로고침</button><button class="btn" onclick="renderMenu()">처음 화면으로</button></div></div>`;
+  if(!hasClass()){ $('rankBody').innerHTML = '<p class="sub" style="text-align:center;padding:14px">학습 선택 목록에서 반과 번호를 정하고 들어오면 우리 반 순위표를 볼 수 있어요.</p>'; return; }
+  $('rankBody').innerHTML = '<p class="sub" style="text-align:center">불러오는 중…</p>';
+  rankRef(STU.cls).get().then(snap=>{
+    $('rankBody').innerHTML = rankListHTML(snap.exists ? snap.data({serverTimestamps:'estimate'}).best : {}, STU.num);
+  }).catch(err=>{ console.warn(err); $('rankBody').innerHTML = '<p class="sub" style="text-align:center;color:var(--red)">순위표를 불러오지 못했어요. 잠시 뒤 다시 열어 보세요.</p>'; });
+}
+
+/* ════════════════════════════════
+   칠판용 순위표 (관리자)
+════════════════════════════════ */
+const BOARD = { cls: null };
+function openBoard(){
+  BOARD.cls = BOARD.cls || STU.cls || '1';
+  $('boardCls').innerHTML = Array.from({length:13},(_,i)=>i+1).map(c=>`<button class="${String(c)===String(BOARD.cls)?'on':''}" onclick="BOARD.cls='${c}';openBoard()">${c}반</button>`).join('');
+  $('boardWrap').classList.add('show');
+  boardLoad();
+}
+function closeBoard(){ $('boardWrap').classList.remove('show'); }
+function boardLoad(){
+  if(!window._hubDb){ $('boardBody').innerHTML = '<p class="sub">저장소에 연결할 수 없어요.</p>'; return; }
+  $('boardBody').innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:8px">${BOARD.cls}반</div><p class="sub">불러오는 중…</p>`;
+  rankRef(BOARD.cls).get().then(snap=>{
+    $('boardBody').innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:8px">${BOARD.cls}반</div>` + rankListHTML(snap.exists ? snap.data({serverTimestamps:'estimate'}).best : {}, null);
+  }).catch(err=>{ console.warn(err); $('boardBody').innerHTML = '<p class="sub" style="color:var(--red)">순위표를 불러오지 못했어요.</p>'; });
+}
+function boardReset(){
+  if(!window._hubDb) return;
+  if(!confirm(`${BOARD.cls}반 순위표를 모두 지울까요? 되돌릴 수 없어요.`)) return;
+  rankRef(BOARD.cls).set({ best:{}, resetAt: firebase.firestore.FieldValue.serverTimestamp() })
+    .then(boardLoad).catch(err=>{ console.warn(err); alert('초기화하지 못했어요.'); });
+}
+
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function adminUnlockAll(){ SAVE.open = 3; persist(); renderMenu(); }
+function adminShowAnswer(){
+  if(!G || !G.m || !$('scPlay').classList.contains('active')) return;
+  alert(`이 지도의 답: ${G.m.N}가지${G.m.formula?` (${G.m.formula})`:G.m.eq?` (${G.m.eq.nums.join(G.m.eq.op==='add'?' + ':' × ')})`:''}`);
+}
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  $('adminPanelBody').innerHTML =
+    `<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">${btn('📺 칠판용 순위표','openBoard()')}${btn('레벨 모두 열기','adminUnlockAll()')}${btn('지금 지도의 답 보기','adminShowAnswer()')}</div>`+
+    `<div><strong>점수 · 레벨 1</strong>: 길을 다 그으면 +${TRACE_PT}, 중복 −${DUP_PT}, 시간 보너스 (4초×방법 수+10초 − 걸린 초)×${TIME_PT}, 식 확인 한 번에 +${EQ_PT} (두 수 순서는 바꿔도 정답)</div>`+
+    `<div><strong>점수 · 레벨 2·3</strong>: 먼저 계산해서 한 번에 맞히면 +${FIRST_PT} + 시간 보너스 (40초 − 걸린 초)×${TIME_PT}, 틀릴 때마다 −${WRONG_PT}(3초 잠금, 길 긋기 열림), 나중에 맞히면 +${LATER_PT}. 0점 아래로는 안 내려감</div>`+
+    `<div><strong>순위표</strong>: 레벨 2만, 1인 최고 점수 1개 — Firestore <code>gameRank/map_{반}</code></div>`+
+    `<div><strong>답 칸</strong>: 숫자 (뒤에 '가지'를 붙여도 인정)</div>`+
+    `<div style="margin-top:6px"><strong>지도 종류</strong></div>`+
+    [1,2,3].map(lv=>`<div style="margin-left:6px">• <b>레벨 ${lv}</b>: ${LEVELS[lv].pool.map(([t,sz])=>`${MAPS[t].name}(${MAPS[t].rule}) — ${sz.map(s=>makeMap(t,s).N).join('·')}가지`).join(' / ')}</div>`).join('')+
+    `<div style="color:var(--ink3);margin-top:4px">세 구간을 잇달아 가는 지도(세 사건)는 넣지 않음. 갔다가 돌아오기는 갈 때와 다른 길로 → a×(a−1)</div>`;
+  $('adminPanel').style.display = 'block';
+}
+
+renderMenu();
+</script>
+</body>
+</html>
