@@ -72,6 +72,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .item.a.sel{border-color:var(--colA);background:var(--colA-l)}
 .item.b.sel{border-color:var(--colB);background:var(--colB-l)}
 .item.digit{font-size:26px;min-width:56px;padding:8px 10px}
+.item.used{position:relative;background:#eef0f5;border-color:#d5d9e2;color:#b4bac6;cursor:not-allowed}
+.item.used::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;color:#e5484d;opacity:.75}
+.used-note{font-size:13px;color:var(--ink3);text-align:center;margin-top:4px;min-height:18px}
 .builder{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 4px;flex-wrap:wrap}
 .slot{min-width:120px;min-height:52px;border:2.5px dashed #c7cdfa;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;padding:6px 10px;background:#fafbff}
 .slot.a.full{border:2.5px solid var(--colA);background:var(--colA-l)}
@@ -218,7 +221,7 @@ table.sum th{background:var(--indigo-ll)}
         <li>한 상황을 다 모으면 계산으로 확인하는 문제가 나와요. 한 번에 맞히면 +50점이에요.</li>
       </ul>
     </div>
-    <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🏆 우리 반 순위표 (레벨 2)</button></div>
+    <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🏆 우리 반 순위표 (레벨 3)</button></div>
   </div>
 
   <!-- 게임 화면 -->
@@ -239,7 +242,7 @@ table.sum th{background:var(--indigo-ll)}
 
 <div class="board-wrap" id="boardWrap">
   <div class="board-top">
-    <h2>🏆 경우 모으기 레벨 2 순위표</h2>
+    <h2>🏆 경우 모으기 레벨 3 순위표</h2>
     <div class="cls-pick" id="boardCls"></div>
     <button class="btn btn-soft" onclick="boardLoad()">🔄 새로고침</button>
     <button class="btn" style="background:var(--red)" onclick="boardReset()">순위표 초기화</button>
@@ -340,8 +343,8 @@ const CTX = {
 const LEVELS = [
   null,
   { name:'모아 보기', desc:'전체 개수와 표가 보여요', hidden:false, grid:true },
-  { name:'다 찾았을까?', desc:'개수는 비밀! 스스로 확인해요', hidden:true, grid:false, ranked:true },
-  { name:'큰 수집', desc:'12개가 넘는 큰 수집과 0 카드', hidden:true, grid:false }
+  { name:'다 찾았을까?', desc:'개수는 비밀! 스스로 확인해요', hidden:true, grid:false },
+  { name:'큰 수집', desc:'12개가 넘는 큰 수집과 0 카드', hidden:true, grid:false, ranked:true }
 ];
 const ROUNDS = 3;
 const NEW_PT = 20, DUP_PT = 30, BAD_PT = 30, CLAIM_PT = 100, HINT_PT = 30, EQ_PT = 50, TIME_PT = 5;
@@ -429,6 +432,7 @@ function renderSit(){
     ${r.road ? roadSVG(r) : ''}
     <div class="group"><div class="group-name a">🔵 ${r.an}</div><div class="items">${r.A.map(x=>btn(x,'a')).join('')}</div></div>
     <div class="group"><div class="group-name b">🟠 ${r.bn}</div><div class="items">${r.B.map(x=>btn(x,'b')).join('')}</div></div>
+    ${r.digits ? '<div class="used-note" id="usedNote"></div>' : ''}
     <div class="builder"><div class="slot a" id="slotA"><span><small>${r.an}</small>?</span></div><span class="plus">${r.digits?'':'+'}</span><div class="slot b" id="slotB"><span><small>${r.bn}</small>?</span></div></div>
     <div class="build-msg" id="buildMsg"></div>`;
 }
@@ -452,13 +456,31 @@ function pickItem(side, id){
   if(!G || G.roundOver) return;
   const r = G.r, list = side==='a' ? r.A : r.B;
   const x = list.find(v=>v.id===id); if(!x) return;
+  // 숫자 카드: 한쪽 자리에 쓴 카드는 다른 자리에 쓸 수 없음
+  const other = side==='a' ? G.selB : G.selA;
+  if(r.digits && other && other.v===x.v) return;
   if(side==='a') G.selA = x; else G.selB = x;
+  if(r.digits) markUsed();
   document.querySelectorAll(`.item.${side}`).forEach(b=>b.classList.toggle('sel', b.id===`it_${side}_${id}`));
   document.querySelectorAll(`[id^="rd_${side}_"]`).forEach(p=>p.setAttribute('stroke-width', p.id===`rd_${side}_${id}` ? '9' : '5'));
   const slot = $(side==='a'?'slotA':'slotB');
   slot.classList.add('full');
   slot.innerHTML = `<span><small>${side==='a'?r.an:r.bn}</small>${fullOf(x)}</span>`;
   if(G.selA && G.selB) build();
+}
+// 고른 카드와 같은 숫자를 반대쪽 자리에서 막고(✕), 왜 막혔는지 한 줄로 알려 줌
+function markUsed(){
+  const r = G.r, note = $('usedNote');
+  [['a', G.selB], ['b', G.selA]].forEach(([side, sel]) => {
+    (side==='a' ? r.A : r.B).forEach(v => {
+      const b = $(`it_${side}_${v.id}`); if(!b) return;
+      const on = !!sel && sel.v===v.v;
+      b.classList.toggle('used', on); b.disabled = on;
+    });
+  });
+  const s = G.selA || G.selB;
+  if(note) note.textContent = (G.selA && G.selB) || !s ? '' :
+    `${G.selA ? r.an : r.bn}에 쓴 ${s.l} 카드는 ${G.selA ? r.bn : r.an}에 다시 쓸 수 없어요.`;
 }
 function build(){
   const r = G.r, x = G.selA, y = G.selB, key = x.id+'|'+y.id;
@@ -470,6 +492,7 @@ function build(){
   else { kind='new'; G.found.push(key); G.stat.base += NEW_PT; addScore(NEW_PT); msg.className='build-msg ok pop'; msg.innerHTML = `✨ ${comboHTML(r,x,y)} 모았어요! +${NEW_PT}점`; }
   G.selA = null; G.selB = null;
   document.querySelectorAll('.item').forEach(b=>b.classList.remove('sel'));
+  if(r.digits) markUsed();
   document.querySelectorAll('[id^="rd_"]').forEach(p=>p.setAttribute('stroke-width','5'));
   $('slotA').className='slot a'; $('slotA').innerHTML = `<span><small>${r.an}</small>?</span>`;
   $('slotB').className='slot b'; $('slotB').innerHTML = `<span><small>${r.bn}</small>?</span>`;
@@ -617,7 +640,7 @@ function endGame(){
 }
 
 /* ════════════════════════════════
-   순위표 (레벨 2) — Firestore 문서 하나: gameRank/collect_{반}
+   순위표 (레벨 3) — Firestore 문서 하나: gameRank/collect_{반}
    best: { 번호: {s:점수, nm:이름, at} } — 내 최고 기록을 넘었을 때만 씀
 ════════════════════════════════ */
 function hasClass(){ return !!(window._hubDb && STU.cls && STU.num); }
@@ -635,7 +658,7 @@ function rankListHTML(best, me){
 }
 function saveRank(score){
   const msg = $('rankSaveMsg');
-  if(!hasClass()){ if(msg) msg.textContent = '반·번호로 들어오면 레벨 2 점수가 우리 반 순위표에 올라가요.'; return Promise.resolve(false); }
+  if(!hasClass()){ if(msg) msg.textContent = '반·번호로 들어오면 레벨 3 점수가 우리 반 순위표에 올라가요.'; return Promise.resolve(false); }
   const ref = rankRef(STU.cls), me = String(STU.num);
   return ref.get().then(snap=>{
     const best = (snap.exists && snap.data().best) || {};
@@ -647,7 +670,7 @@ function saveRank(score){
 }
 function openRank(){
   show('scRank');
-  $('scRank').innerHTML = `<div class="card"><div class="box-head">🏆 우리 반 순위표 <span class="box-count">레벨 2 · 다 찾았을까?</span></div>
+  $('scRank').innerHTML = `<div class="card"><div class="box-head">🏆 우리 반 순위표 <span class="box-count">레벨 3 · 큰 수집</span></div>
     <p class="sub" style="margin-bottom:10px">한 사람은 가장 높은 점수 하나만 남아요.</p><div id="rankBody"></div>
     <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🔄 새로고침</button><button class="btn" onclick="renderMenu()">처음 화면으로</button></div></div>`;
   if(!hasClass()){ $('rankBody').innerHTML = '<p class="sub" style="text-align:center;padding:14px">학습 선택 목록에서 반과 번호를 정하고 들어오면 우리 반 순위표를 볼 수 있어요.</p>'; return; }
@@ -714,7 +737,7 @@ function showAdminPanel(){
     `<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">${btn('📺 칠판용 순위표','openBoard()')}${btn('레벨 모두 열기','adminUnlockAll()')}${btn('이 상황 모두 채우기','adminFillAll()')}</div>`+
     `<div><strong>점수</strong>: 새로 모음 +${NEW_PT}, 중복 −${DUP_PT}, 만들 수 없음 −${BAD_PT}, 덜 찾고 [다 찾았어요!] −${CLAIM_PT}(3초 잠금), 📊 표 힌트 −${HINT_PT}, 계산 확인 한 번에 맞히면 +${EQ_PT}, 시간 보너스 (3×경우의 수+10초 − 걸린 초)×${TIME_PT} — 0점 아래로는 안 내려감</div>`+
     `<div><strong>레벨</strong>: 1 = 개수·표 보임, 다 모으면 바로 끝 / 2·3 = 개수 숨김, [다 찾았어요!]로 끝 / 레벨 3은 두 자리 수 상황이 꼭 들어감. 한 판 끝내면 다음 레벨 열림(레벨 1 끝낼 때 허브 완료 ✅)</div>`+
-    `<div><strong>순위표</strong>: 레벨 2만, 1인 최고 점수 1개 — Firestore <code>gameRank/collect_{반}</code></div>`+
+    `<div><strong>순위표</strong>: 레벨 3만, 1인 최고 점수 1개 — Firestore <code>gameRank/collect_{반}</code></div>`+
     `<div><strong>계산 확인 칸</strong>: 숫자만 (뒤에 가지·개·벌·장·종류를 붙여도 인정). 칸 순서 고정 — 파랑(앞) × 주황(뒤) = 경우의 수</div>`+
     `<div style="margin-top:6px"><strong>상황별 경우의 수</strong></div>`+
     Object.keys(CTX).map(k=>`<div style="margin-left:6px">• <b>${CTX[k].name}</b> — ${sizeText(k)}${k==='digits'?'<br><span style="color:var(--ink3)">카드 n장(0 없음) n×(n−1) / 0 포함 (n−1)×(n−1). 0은 십의 자리 ✕, 같은 카드 두 번 ✕</span>':''}</div>`).join('');

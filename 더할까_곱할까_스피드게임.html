@@ -200,7 +200,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
   <div class="screen active" id="scMenu">
     <div class="card title-box">
       <h1><span class="a">더할까</span>, <span class="m">곱할까</span>? ⚡</h1>
-      <p>100초 동안 상황 카드를 최대한 많이 맞혀 보세요!</p>
+      <p>60초 동안 상황 카드를 최대한 많이 맞혀 보세요!</p>
     </div>
     <div class="card">
       <div class="box-head">📌 기억하기</div>
@@ -224,13 +224,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
         <li>정답률이 80%보다 낮으면 다음 레벨이 열리지 않고 순위표에도 오르지 않아요. 찍지 말고 읽어요!</li>
       </ul>
     </div>
-    <div class="btn-row"><button class="btn btn-soft" id="rankBtn" onclick="openRank()">🏆 우리 반 순위표 (레벨 2)</button></div>
+    <div class="btn-row"><button class="btn btn-soft" id="rankBtn" onclick="openRank()">🏆 우리 반 순위표 (레벨 3)</button></div>
   </div>
 
   <!-- 게임 화면 -->
   <div class="screen" id="scPlay">
     <div class="hud">
-      <div class="box"><small>남은 시간</small><span id="hudTime">100</span>초</div>
+      <div class="box"><small>남은 시간</small><span id="hudTime">60</span>초</div>
       <div class="box"><small>점수</small><span id="hudScore">0</span></div>
       <div class="box combo" id="hudComboBox"><small>콤보</small>🔥 <span id="hudCombo">0</span></div>
       <div class="box"><small>맞힌 카드</small><span id="hudCorrect">0</span>장</div>
@@ -255,7 +255,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 
 <div class="board-wrap" id="boardWrap">
   <div class="board-top">
-    <h2>🏆 더할까, 곱할까? 레벨 2 순위표</h2>
+    <h2>🏆 더할까, 곱할까? 레벨 3 순위표</h2>
     <div class="cls-pick" id="boardCls"></div>
     <button class="btn btn-soft" onclick="boardLoad()">🔄 새로고침</button>
     <button class="btn" style="background:var(--red)" onclick="boardReset()">순위표 초기화</button>
@@ -382,11 +382,11 @@ const NORMAL = { add:['chooseAdd','dieOr','cardOr'], mul:['chooseMul','routeMul'
 const TRAPS  = { add:['routeAdd','diceSum','boxMix'], mul:['dieTwiceOr'] };
 const LEVELS = [
   null,
-  { name:'분류', desc:'➕인지 ✖️인지 고르기', trap:0.15, cardSecs:8,  pass:{correct:12, acc:0.8} },
-  { name:'분류 + 답', desc:'고른 뒤 경우의 수까지 맞히기', trap:0.25, cardSecs:15, pass:{correct:8, acc:0.8}, ranked:true },
-  { name:'함정 카드', desc:'헷갈리는 카드가 잔뜩!', trap:0.6, cardSecs:12, pass:{correct:8, acc:0.8} }
+  { name:'분류', desc:'➕인지 ✖️인지 고르기', trap:0.15, cardSecs:8,  pass:{correct:7, acc:0.8} },
+  { name:'분류 + 답', desc:'고른 뒤 경우의 수까지 맞히기', trap:0.25, cardSecs:15, pass:{correct:5, acc:0.8} },
+  { name:'함정 카드', desc:'헷갈리는 카드가 잔뜩!', trap:0.6, cardSecs:12, pass:{correct:5, acc:0.8}, ranked:true }
 ];
-const GAME_SECS = 100;
+const GAME_SECS = 60;
 const BASE = 100, SPEED_MAX = 50, WRONG = 50, LOCK_MS = 1500, READ_MS = 600;
 const comboBonus = c => 10*Math.min(c,10);    // 앞에서 연속으로 맞힌 개수만큼 (최대 +100)
 
@@ -693,7 +693,7 @@ function reviewNext(){
 }
 
 /* ════════════════════════════════
-   순위표 (레벨 2) — Firestore 문서 하나: gameRank/addmul_{반}
+   순위표 (레벨 3) — Firestore 문서 하나: gameRank/addmul_{반}
    best: { 번호: {s:점수, nm:이름, acc:정답률(%), c:맞힌 카드, at} }
    내 최고 기록을 넘었을 때만 한 번 씀. 읽기는 화면을 열 때·새로고침 때 한 번씩만.
 ════════════════════════════════ */
@@ -712,8 +712,8 @@ function rankListHTML(best, me){
 }
 function saveRank(score, acc, correct){
   const msg = $('rankSaveMsg');
-  if(!hasClass()){ if(msg) msg.textContent = '반·번호로 들어오면 레벨 2 점수가 우리 반 순위표에 올라가요.'; return Promise.resolve(false); }
-  if(acc < LEVELS[2].pass.acc){ if(msg) msg.textContent = '🏆 정답률이 80%보다 낮아서 순위표에는 올라가지 않아요.'; return Promise.resolve(false); }
+  if(!hasClass()){ if(msg) msg.textContent = '반·번호로 들어오면 레벨 3 점수가 우리 반 순위표에 올라가요.'; return Promise.resolve(false); }
+  if(acc < LEVELS[3].pass.acc){ if(msg) msg.textContent = '🏆 정답률이 80%보다 낮아서 순위표에는 올라가지 않아요.'; return Promise.resolve(false); }
   const ref = rankRef(STU.cls), me = String(STU.num);
   return ref.get().then(snap=>{
     const best = (snap.exists && snap.data().best) || {};
@@ -726,7 +726,7 @@ function saveRank(score, acc, correct){
 }
 function openRank(){
   show('scRank');
-  const head = `<div class="card"><div class="box-head">🏆 우리 반 순위표 <span class="box-count">레벨 2 · 분류 + 답</span></div>
+  const head = `<div class="card"><div class="box-head">🏆 우리 반 순위표 <span class="box-count">레벨 3 · 함정 카드</span></div>
     <p class="sub" style="margin-bottom:10px">정답률 80% 이상인 기록만 올라가요. 한 사람은 가장 높은 점수 하나만 남아요.</p><div id="rankBody"></div>
     <div class="btn-row"><button class="btn btn-soft" onclick="openRank()">🔄 새로고침</button><button class="btn" onclick="renderMenu()">처음 화면으로</button></div></div>`;
   $('scRank').innerHTML = head;
@@ -791,7 +791,7 @@ function showAdminPanel(){
     `<div><strong>카드 시간 막대</strong>: 레벨1 ${LEVELS[1].cardSecs}초, 레벨2 ${LEVELS[2].cardSecs}초, 레벨3 ${LEVELS[3].cardSecs}초 — 다 줄어도 오답 아님, 보너스만 0</div>`+
     `<div><strong>찍기 막기</strong>: 카드가 나오고 ${READ_MS/1000}초 동안 버튼 쉼, 오답 후 ${LOCK_MS/1000}초 멈춤</div>`+
     `<div><strong>통과</strong>: 레벨1 맞힌 카드 ${LEVELS[1].pass.correct}장↑, 레벨2·3 ${LEVELS[2].pass.correct}장↑, 모두 정답률 80%↑ + 오답 상자 완료 → 다음 레벨 열림 (레벨 1 통과 때 허브 완료 ✅)</div>`+
-    `<div><strong>순위표</strong>: 레벨 2만, 정답률 80%↑ 기록만, 1인 최고 점수 1개 — Firestore <code>gameRank/addmul_{반}</code></div>`+
+    `<div><strong>순위표</strong>: 레벨 3만, 정답률 80%↑ 기록만, 1인 최고 점수 1개 — Firestore <code>gameRank/addmul_{반}</code></div>`+
     `<div><strong>레벨 2 보기</strong>: 맞는 계산 / 반대 연산(a+b ↔ a×b) / 그 밖의 수 하나 (2와 2 조합은 안 나옴)</div>`+
     `<div style="margin-top:6px"><strong>카드 종류</strong> (숫자는 매번 바뀜, 예시 1개씩)</div>`+
     Object.keys(GEN).map(k=>`<div style="margin-left:6px">• <b>${GEN_INFO[k]}</b><br><span style="color:var(--ink3)">예) ${sample(k)}</span></div>`).join('');
