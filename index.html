@@ -63,6 +63,8 @@
   .today-box .today-label{font-family:var(--disp);font-size:23px;color:var(--lav-ink);margin-bottom:10px;display:block;}
   .today-item{display:flex;align-items:center;gap:9px;padding:9px 0;text-decoration:none;color:var(--ink);font-size:16.5px;font-weight:700;}
   .today-item.done{opacity:.65;}
+  .today-item.locked-seq{opacity:.55;cursor:not-allowed;}
+  .today-item.locked-seq .card-meta{font-size:11px;margin-left:auto;}
   .today-empty{color:var(--lav-ink);opacity:.75;font-size:14.5px;}
   .notice-box{background:var(--coral);border-radius:16px;padding:14px 18px;margin-bottom:18px;}
   .notice-box .notice-box-label{font-family:var(--disp);font-size:15px;color:var(--coral-ink);display:block;margin-bottom:4px;}
@@ -277,6 +279,10 @@
           </div>
           <p class="admin-hint">오늘의 학습 박스 아래에 그대로 표시돼요</p>
           <input id="admin-notice" type="text" placeholder="예: 내일까지 3번 문제 풀어오세요!">
+          <label class="struct-ready-label" style="margin-top:10px;">
+            <input type="checkbox" id="admin-sequential">
+            <span>🔒 오늘의 학습, 순서대로 통과해야 다음이 열려요 (앞 항목을 완료해야 다음 항목 클릭 가능)</span>
+          </label>
         </div>
         <div class="admin-cols-label"><span>🔓 열기</span><span>⭐ 오늘</span><span></span></div>
         <div id="admin-list"></div>
@@ -679,6 +685,7 @@ let todayIds = [];
 let unlockedIds = null; // null = 아직 설정 안 됨(전체 열림), 배열이면 그 배열에 있는 id만 열림
 let unlockedAt = {};    // { itemId: '2026-08-20' } - 진도 캘린더용
 let noticeText = '';
+let sequentialToday = false; // 켜져 있으면 "오늘의 학습" 목록을 앞 항목부터 순서대로 완료해야 다음이 열림
 let unsubStudentToday = null;
 let myItemsOpened = new Set(); // 이 학생이 열어본/완료한 항목 id들 (카드 완료 체크 표시용)
 
@@ -782,6 +789,7 @@ function subscribeStudentToday(cls){
     unlockedIds = null;
     unlockedAt = {};
     noticeText = '';
+    sequentialToday = false;
     rerender();
   }, 4000);
   unsubStudentToday = onSnapshot(doc(db,'todayByClass', String(cls)), (snap)=>{
@@ -793,11 +801,13 @@ function subscribeStudentToday(cls){
       unlockedIds = data.unlockedIds || [];
       unlockedAt = data.unlockedAt || {};
       noticeText = data.notice || '';
+      sequentialToday = !!data.sequentialToday;
     }else{
       todayIds = [];
       unlockedIds = null;
       unlockedAt = {};
       noticeText = '';
+      sequentialToday = false;
     }
     rerender();
   }, (err)=>{
@@ -808,6 +818,7 @@ function subscribeStudentToday(cls){
     unlockedIds = null;
     unlockedAt = {};
     noticeText = '';
+    sequentialToday = false;
     rerender();
   });
 }
@@ -839,6 +850,18 @@ function renderUnitList(){
   });
 }
 
+// ---- 오늘의 학습 순차 잠금: sequentialToday가 켜져 있으면 todayIds 순서대로 앞 항목을
+// 완료해야 다음 항목이 열림. 잠겨있지 않으면 null, 잠겨있으면 이유 문구를 돌려줌 ----
+function sequentialLockReason(itemId){
+  if(!sequentialToday) return null;
+  const idx = todayIds.indexOf(itemId);
+  if(idx <= 0) return null; // 오늘의 학습에 없거나 첫 항목이면 순차 잠금 대상 아님
+  const prevId = todayIds[idx - 1];
+  if(myItemsOpened.has(prevId)) return null;
+  const prevItem = allRealItems().find(it=> it.id === prevId);
+  return prevItem ? `먼저 '${prevItem.title}'를 끝내야 열려요` : '이전 항목을 먼저 끝내야 열려요';
+}
+
 function openUnit(unitId){
   currentUnitId = unitId;
   const unit = CONTENT.find(u=>u.id===unitId);
@@ -854,7 +877,9 @@ function openUnit(unitId){
       items.innerHTML = '<p class="msg">콘텐츠 준비중이에요</p>';
     }
     su.items.forEach(it=>{
-      const locked = unlockedIds !== null && !unlockedIds.includes(it.id);
+      const teacherLocked = unlockedIds !== null && !unlockedIds.includes(it.id);
+      const seqReason = teacherLocked ? null : sequentialLockReason(it.id);
+      const locked = teacherLocked || !!seqReason;
       const done = myItemsOpened.has(it.id);
       const el = document.createElement(locked ? 'div' : 'a');
       el.className = 'card' + (locked ? ' locked' : '') + (done ? ' done' : '');
@@ -865,8 +890,9 @@ function openUnit(unitId){
       }
       const iconClass = it.type==='탐구' ? 'explore' : 'quiz';
       const emoji = locked ? '🔒' : typeEmoji(it.type);
+      const lockMsg = seqReason || '아직 잠겨있어요';
       el.innerHTML = `<span class="icon ${iconClass}">${emoji}</span>
-        <span><span class="card-title">${it.title}</span><span class="card-meta">${locked ? '아직 잠겨있어요' : it.meta}</span></span>
+        <span><span class="card-title">${it.title}</span><span class="card-meta">${locked ? lockMsg : it.meta}</span></span>
         ${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
       items.appendChild(el);
     });
@@ -888,12 +914,18 @@ function renderToday(){
   }
   wrap.innerHTML = '';
   items.forEach(it=>{
+    const seqReason = sequentialLockReason(it.id);
+    const locked = !!seqReason;
     const done = myItemsOpened.has(it.id);
     const href = withStudentParams(it.file, it.id);
-    const a = document.createElement('a');
-    a.className = 'today-item' + (done ? ' done' : ''); a.href = href;
-    a.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
-    a.innerHTML = `<span>${typeEmoji(it.type)}</span><span>${it.title}</span>${done ? '<span class="done-badge" title="완료">✅</span>' : ''}`;
+    const a = document.createElement(locked ? 'div' : 'a');
+    a.className = 'today-item' + (done ? ' done' : '') + (locked ? ' locked-seq' : '');
+    if(!locked){
+      a.href = href;
+      a.onclick = (e)=>{ e.preventDefault(); goToItem(it, href); };
+    }
+    const rightBit = locked ? `<span class="card-meta">🔒 ${seqReason}</span>` : (done ? '<span class="done-badge" title="완료">✅</span>' : '');
+    a.innerHTML = `<span>${locked ? '🔒' : typeEmoji(it.type)}</span><span>${it.title}</span>${rightBit}`;
     wrap.appendChild(a);
   });
 }
@@ -902,7 +934,7 @@ function renderToday(){
 function renderRecommend(){
   const wrap = document.getElementById('recommend-list');
   if(!studentInfo){ return; }
-  const pool = allRealItems().filter(it=> it.type==='문제' && (unlockedIds===null || unlockedIds.includes(it.id)));
+  const pool = allRealItems().filter(it=> it.type==='문제' && (unlockedIds===null || unlockedIds.includes(it.id)) && !sequentialLockReason(it.id));
   if(!pool.length){
     wrap.innerHTML = '<span class="recommend-empty">아직 열린 문제가 없어요</span>';
     return;
@@ -1095,12 +1127,14 @@ function selectAdminClass(cls){
       adminUnlockedIds = data.unlockedIds || [];
       adminUnlockedAt = data.unlockedAt || {};
       document.getElementById('admin-notice').value = data.notice || '';
+      document.getElementById('admin-sequential').checked = !!data.sequentialToday;
     }else{
       // 아직 설정한 적 없는 반: 지금까지는 전체 열림 상태였으니 체크박스도 전체 열림으로 시작
       adminTodayIds = [];
       adminUnlockedIds = allRealItems().map(it=>it.id);
       adminUnlockedAt = {};
       document.getElementById('admin-notice').value = '';
+      document.getElementById('admin-sequential').checked = false;
     }
     renderAdminList();
     if(document.getElementById('admin-calendar-modal').style.display === 'flex'){
@@ -1207,9 +1241,13 @@ function renderAdminPreview(){
   const todayChecked = Array.from(document.querySelectorAll('.chk-today:checked')).map(cb=>cb.dataset.id);
   const notice = document.getElementById('admin-notice').value.trim();
 
+  const sequential = document.getElementById('admin-sequential').checked;
   const todayItemsList = allRealItems().filter(it=> todayChecked.includes(it.id));
   previewToday.innerHTML = todayItemsList.length
-    ? todayItemsList.map(it=>`<div class="today-item"><span>${typeEmoji(it.type)}</span><span>${it.title}</span></div>`).join('')
+    ? todayItemsList.map((it,i)=>{
+        const seqLocked = sequential && i > 0; // 미리보기엔 "누구"가 없어서, 2번째부터는 항상 처음엔 잠겨있다는 뜻으로만 표시
+        return `<div class="today-item">${seqLocked?'<span>🔒</span>':`<span>${typeEmoji(it.type)}</span>`}<span>${it.title}</span>${seqLocked?'<span class="card-meta">앞 항목 완료 전까지 잠김</span>':''}</div>`;
+      }).join('')
     : '<span class="today-empty">아직 선생님이 오늘의 학습을 정하지 않았어요</span>';
   const previewNotice = document.getElementById('preview-notice');
   if(notice){ document.getElementById('preview-notice-text').textContent = notice; previewNotice.style.display = 'block'; }
@@ -1239,6 +1277,7 @@ function renderAdminPreview(){
   });
 }
 document.getElementById('admin-notice').addEventListener('input', renderAdminPreview);
+document.getElementById('admin-sequential').addEventListener('change', renderAdminPreview);
 
 window.saveToday = function(){
   const msg = document.getElementById('admin-msg');
@@ -1251,12 +1290,13 @@ window.saveToday = function(){
     const finalUnlockedAt = {...adminUnlockedAt};
     finalUnlocked.forEach(id=>{ if(!finalUnlockedAt[id]) finalUnlockedAt[id] = todayStr(); });
     const notice = document.getElementById('admin-notice').value.trim();
+    const sequentialToday = document.getElementById('admin-sequential').checked;
     const cls = selectedAdminClass;
     const timeoutId = setTimeout(()=>{
       msg.textContent = '저장이 오래 걸리고 있어요. 인터넷 연결을 확인하고 다시 시도해주세요.';
       msg.className = 'msg error';
     }, 8000);
-    setDoc(doc(db,'todayByClass', String(cls)), { todayIds: todayChecked, unlockedIds: finalUnlocked, unlockedAt: finalUnlockedAt, notice, updatedAt: serverTimestamp() })
+    setDoc(doc(db,'todayByClass', String(cls)), { todayIds: todayChecked, unlockedIds: finalUnlocked, unlockedAt: finalUnlockedAt, notice, sequentialToday, updatedAt: serverTimestamp() })
       .then(()=>{
         clearTimeout(timeoutId);
         msg.textContent = `저장했어요! ${cls}반 학생 화면에 바로 반영돼요.`;
