@@ -158,6 +158,8 @@
   .struct-mini-btn{background:none;border:1.5px solid var(--line);border-radius:8px;font-size:11px;padding:4px 9px;cursor:pointer;color:var(--ink-dim);font-family:var(--sans);white-space:nowrap;}
   .struct-mini-btn.danger{color:var(--coral-ink);border-color:var(--coral);}
   .struct-ready-label{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-dim);white-space:nowrap;}
+  .admin-seq-label{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--ink-dim);line-height:1.45;margin-top:10px;cursor:pointer;}
+  .admin-seq-label input{flex-shrink:0;margin-top:2px;}
   .struct-subunit{background:var(--paper);border-radius:12px;padding:10px 12px;margin:0 0 10px 22px;border:1.5px solid var(--line);}
   .struct-subunit-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
   .struct-item-row{display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:7px 10px;box-shadow:0 2px 0 rgba(46,42,34,.08);}
@@ -279,7 +281,7 @@
           </div>
           <p class="admin-hint">오늘의 학습 박스 아래에 그대로 표시돼요</p>
           <input id="admin-notice" type="text" placeholder="예: 내일까지 3번 문제 풀어오세요!">
-          <label class="struct-ready-label" style="margin-top:10px;">
+          <label class="admin-seq-label">
             <input type="checkbox" id="admin-sequential">
             <span>🔒 오늘의 학습, 순서대로 통과해야 다음이 열려요 (앞 항목을 완료해야 다음 항목 클릭 가능)</span>
           </label>
