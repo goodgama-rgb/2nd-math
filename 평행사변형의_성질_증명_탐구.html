@@ -296,7 +296,24 @@
   <span>👤 <b id="sessionName"></b> 님, 오늘도 화이팅!</span>
   <span style="display:flex;gap:8px;"><a href="index.html" id="hubBackLink">← 학습 선택 목록으로 돌아가기</a><button onclick="location.reload()">로그아웃</button></span>
 </div>
-<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+<script>
+document.getElementById('hubBackLink').href = 'index.html' + location.search;
+(function(){
+  var _hb = document.getElementById('hubBackLink');
+  var _urlNum = new URLSearchParams(location.search).get('num');
+  var _isPreview = !_urlNum || _urlNum === '99'; // 관리자 미리보기(파라미터 없음 또는 99번) 때는 나가기 경고 안 띄움
+  _hb.addEventListener('click', function(e){
+    if(!_isPreview && !window._activityDone && !confirm('아직 다 끝내지 않았어요! 지금 나가면 처음부터 다시 해야 해요. 그래도 나갈까요?')){
+      e.preventDefault();
+    }
+  });
+  if(!_isPreview){
+    window.addEventListener('beforeunload', function(e){
+      if(!window._activityDone){ e.preventDefault(); e.returnValue=''; }
+    });
+  }
+})();
+</script>
 
 <header>
   <h1>📐 평행사변형의 성질</h1>
@@ -1076,6 +1093,7 @@
   }catch(e){ console.warn('hub firebase init:', e); }
 
   window.finishActivityAndReturn = function(){
+    window._activityDone = true;
     const p = new URLSearchParams(location.search);
     const cls = p.get('cls'), num = p.get('num'), id = p.get('id'), name = p.get('name');
     const goHome = ()=>{ location.href = 'index.html' + location.search; };

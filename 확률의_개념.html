@@ -206,6 +206,39 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .sender-list{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}
 .sender-list span{background:#eef0ff;color:var(--indigo);border-radius:12px;padding:2px 9px;font-size:12px;font-weight:800}
 .board-count{font-size:20px;font-weight:800;color:var(--ink)}
+
+/* 동전 던지기 팝업 (3단계 공학 도구) */
+.ftbl td.live{background:#fef3c7;color:#b45309;box-shadow:inset 0 0 0 2px #f59e0b}
+.ftbl td.done-pop{animation:cellPop .6s ease-out}
+@keyframes cellPop{0%{background:#fde68a}100%{background:transparent}}
+.tp-pop{position:fixed;z-index:60;background:#fff;border:2px solid #c7d2fe;border-radius:16px;box-shadow:0 18px 50px rgba(30,27,75,.28);padding:14px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.tp-pop.hide{display:none}
+.tp-head{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:var(--indigo)}
+.tp-head .sp{flex:1}
+.tp-mute{border:1.5px solid #d8ddfb;background:#fff;border-radius:10px;padding:3px 8px;font-size:15px;cursor:pointer}
+.tp-stat{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tp-stat div{background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:10px;padding:4px 10px;font-size:12.5px;font-weight:700;color:var(--ink2);text-align:center}
+.tp-stat b{display:block;font-size:20px;color:var(--ink)}
+.tp-stat .hd b{color:#b45309}
+.tp-board{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:0 auto;width:100%;max-width:400px}
+.mc{aspect-ratio:1/1;border-radius:50%;border:1.5px dashed #d8ddfb;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:transparent;user-select:none}
+.mc.h{border:2px solid #b45309;background:radial-gradient(circle at 35% 30%,#fff7c2,#fbbf24 55%,#d97706);color:#78350f;animation:mcFlip .26s ease-out}
+.mc.t{border:2px solid #6b7280;background:#d1d5db;color:#374151;opacity:.15;animation:mcFlipT .26s ease-out}
+@keyframes mcFlip{0%{transform:scaleX(.05) translateY(-6px);opacity:.4}60%{transform:scaleX(1.15) translateY(-2px)}100%{transform:none;opacity:1}}
+@keyframes mcFlipT{0%{transform:scaleX(.05) translateY(-6px);opacity:.6}100%{transform:none;opacity:.15}}
+.tp-pop.fast .mc.h,.tp-pop.fast .mc.t{animation-duration:.18s}
+.tp-rounds{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;min-height:24px}
+.tp-rounds span{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;color:#92400e}
+.tp-msg{text-align:center;font-size:13px;font-weight:700;color:var(--ink2);min-height:20px}
+.tp-btns{display:flex;gap:8px;justify-content:center}
+@media (max-width:980px){
+  .tp-pop{left:0!important;right:0!important;bottom:0!important;top:auto!important;width:auto!important;max-height:46vh!important;border-radius:16px 16px 0 0;padding:10px 12px;gap:6px}
+  .tp-board{grid-template-columns:repeat(20,1fr);gap:3px;max-width:none}
+  .mc{font-size:0}
+  .tp-stat div{padding:2px 8px;font-size:11.5px}
+  .tp-stat b{font-size:15px}
+}
+@media (prefers-reduced-motion: reduce){ .mc.h,.mc.t,.ftbl td.done-pop{animation:none!important} }
 </style>
 </head>
 <body>
@@ -215,7 +248,24 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
   <span class="hdr-title">확률의 개념</span>
   <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
 </div>
-<script>document.getElementById('hubBackLink').href = 'index.html' + location.search;</script>
+<script>
+document.getElementById('hubBackLink').href = 'index.html' + location.search;
+(function(){
+  var _hb = document.getElementById('hubBackLink');
+  var _urlNum = new URLSearchParams(location.search).get('num');
+  var _isPreview = !_urlNum || _urlNum === '99'; // 관리자 미리보기(파라미터 없음 또는 99번) 때는 나가기 경고 안 띄움
+  _hb.addEventListener('click', function(e){
+    if(!_isPreview && !window._activityDone && !confirm('아직 다 끝내지 않았어요! 지금 나가면 처음부터 다시 해야 해요. 그래도 나갈까요?')){
+      e.preventDefault();
+    }
+  });
+  if(!_isPreview){
+    window.addEventListener('beforeunload', function(e){
+      if(!window._activityDone){ e.preventDefault(); e.returnValue=''; }
+    });
+  }
+})();
+</script>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -239,6 +289,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
   window._hubDb = _db;
   let _reported=false;
   window._reportHubComplete = function(){
+    window._activityDone = true;
     if(_reported || !_db || !s.cls || !s.num) return;
     _reported=true;
     window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
@@ -565,6 +616,7 @@ function graphSVG(pts, xMax, opt){
   s += `<text x="${L+pw/2}" y="${H-3}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1a1a2e">던진 횟수(번)</text><text x="11" y="${T+ph/2}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1a1a2e" transform="rotate(-90 11 ${T+ph/2})">상대도수</text>`;
   if(pts.length){
     s += `<polyline fill="none" stroke="#4f46e5" stroke-width="${opt.thin?1.4:2}" stroke-linejoin="round" points="${pts.map(p=>X(p.x).toFixed(1)+','+Y(p.y).toFixed(1)).join(' ')}"/>`;
+    if(opt.head){ const p=pts[pts.length-1]; s += `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="4.5" fill="#f59e0b" stroke="#fff" stroke-width="1.5"/>`; }
     if(pts.length<=60) s += pts.map(p=>`<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="3" fill="#4f46e5" stroke="#fff" stroke-width="1"/>`).join('');
   } else s += `<text x="${L+pw/2}" y="${T+ph/2}" text-anchor="middle" font-size="12" font-weight="700" fill="#9090b0">아직 결과가 없어요</text>`;
   return s + `</svg>`;
@@ -572,8 +624,8 @@ function graphSVG(pts, xMax, opt){
 // 도수 표: cols=[{n,h|null, q:true면 상대도수 칸을 '?'로}]
 function freqTable(cols){
   return `<div class="tbl-wrap"><table class="ftbl"><tr><th>던진 횟수(번)</th>${cols.map(c=>`<th>${c.n}</th>`).join('')}</tr>
-    <tr><th>앞면이 나온 횟수(번)</th>${cols.map(c=>c.h===null?'<td class="na">-</td>':`<td>${c.h}</td>`).join('')}</tr>
-    <tr><th>상대도수</th>${cols.map(c=>c.h===null?'<td class="na">-</td>':c.q?'<td class="q">?</td>':`<td>${round3(c.h,c.n)}</td>`).join('')}</tr></table></div>`;
+    <tr><th>앞면이 나온 횟수(번)</th>${cols.map(c=>c.live!=null?`<td class="live">${c.live}</td>`:c.h===null?'<td class="na">-</td>':`<td${c.pop?' class="done-pop"':''}>${c.h}</td>`).join('')}</tr>
+    <tr><th>상대도수</th>${cols.map(c=>c.live!=null?'<td class="live">…</td>':c.h===null?'<td class="na">-</td>':c.q?'<td class="q">?</td>':`<td${c.pop?' class="done-pop"':''}>${round3(c.h,c.n)}</td>`).join('')}</tr></table></div>`;
 }
 
 /* ════════════════════════════════
@@ -996,29 +1048,138 @@ function s1aCheck(){
 /* ════════════════════════════════
    3단계: 컴퓨터에게 맡기기 (공학 도구) → 팝업 ②
 ════════════════════════════════ */
-const SIM = { cum:[] };   // cum[i] = (i+1)번째까지의 앞면 횟수
+const SIM = { cum:[], vis:0 };   // cum[i] = (i+1)번째까지의 앞면 횟수, vis = 화면에 보여 준 횟수(애니메이션 진행)
 function simAdd(k){
   for(let i=0;i<k && SIM.cum.length<1000;i++){ const prev = SIM.cum.length ? SIM.cum[SIM.cum.length-1] : 0; SIM.cum.push(prev + (Math.random()<0.5?1:0)); }
 }
-function simH(n){ return SIM.cum[n-1]; }
+function simH(n){ return n>0 ? SIM.cum[n-1] : 0; }
 let s2HideCol = true;
 function simLeftHTML(){
-  const n = SIM.cum.length;
-  const cols = [...Array(10)].map((_,i)=>{ const c=(i+1)*100; return { n:c, h: n>=c ? simH(c) : null, q: s2HideCol && c===300 }; });
+  const n = SIM.vis, run = TP.run;
+  const cols = [...Array(10)].map((_,i)=>{ const c=(i+1)*100;
+    if(n>=c) return { n:c, h:simH(c), q: s2HideCol && c===300, pop: run && TP.popCol===c };
+    if(run && n>c-100 && c<=TP.target) return { n:c, h:null, live: simH(n)-simH(c-100) };   // 지금 채우는 칸: 앞면 수가 올라감
+    return { n:c, h:null }; });
   const pts = []; for(let i=1;i<=n;i++) pts.push({x:i, y:SIM.cum[i-1]/i});
+  const dis = (n>=1000||run)?'disabled':'';
   return `<div class="exp-head"><span class="exp-badge">공학 도구</span><span>컴퓨터로 한 개의 동전을 여러 번 던지는 실험을 한다.</span></div>
-    <div class="sim-btns"><button class="btn btn-soft" id="simBtn100" onclick="simGo(100)" ${n>=1000?'disabled':''}>🪙 100번 더 던지기</button><button class="btn" id="simBtnAll" onclick="simGo(1000)" ${n>=1000?'disabled':''}>🪙 1000번까지 한꺼번에</button></div>
+    <div class="sim-btns"><button class="btn btn-soft" id="simBtn100" onclick="simGo(100)" ${dis}>🪙 100번 더 던지기</button><button class="btn" id="simBtnAll" onclick="simGo(1000)" ${dis}>🪙 1000번까지 한꺼번에</button></div>
     <div style="text-align:center;font-size:13px;font-weight:800;color:var(--ink2)">지금까지 던진 횟수: ${n}번</div>
     ${freqTable(cols)}
-    <div class="graph-box">${graphSVG(pts, 1000, {step:100, thin:true})}</div>
+    <div class="graph-box">${graphSVG(pts, 1000, {step:100, thin:true, head:run && n>0})}</div>
     <p class="sub">상대도수는 반올림하여 소수 아래 셋째 자리까지 나타냈어요.</p>`;
 }
-function simGo(k){
-  if(SIM.cum.length>=1000) return;
-  simAdd(k);
-  stageBox('L',2).innerHTML = simLeftHTML();
-  if(SIM.cum.length>=1000) s2Ready();
+function simRefreshLeft(){ const b=$('ls2'); if(b) b.innerHTML = simLeftHTML(); }
+
+/* ── 동전 던지기 팝업: 100개 판을 차례로 던짐 (100번 버튼=5초, 1000번 버튼=판마다 2초) ── */
+const TP = { run:false, target:0, base:0, shown:0, round:-1, rounds:[], popCol:0, raf:0, muted:false, ac:null, lastSnd:0 };
+try{ TP.muted = localStorage.getItem('tossMute')==='1'; }catch(e){}
+function tpEl(){
+  let el = $('tossPop'); if(el) return el;
+  el = document.createElement('div'); el.id='tossPop'; el.className='tp-pop hide';
+  el.innerHTML = `<div class="tp-head">🪙 <span id="tpTitle">동전 던지는 중</span><span class="sp"></span><button class="tp-mute" id="tpMute" onclick="tpToggleMute()" title="소리 켜기/끄기"></button></div>
+    <div class="tp-stat"><div>이번 판<b id="tpRound">1판</b></div><div>던진 동전<b id="tpThrown">0</b></div><div class="hd">앞면<b id="tpHeads">0</b></div><div>지금까지 던진 횟수<b id="tpTotal">0번</b></div></div>
+    <div class="tp-board" id="tpBoard"></div>
+    <div class="tp-rounds" id="tpRounds"></div>
+    <div class="tp-msg" id="tpMsg"></div>
+    <div class="tp-btns"><button class="btn btn-soft" id="tpSkip" onclick="tpSkip()">⏩ 건너뛰기</button><button class="btn" id="tpClose" onclick="tpClose()" style="display:none">닫기</button></div>`;
+  document.body.appendChild(el);
+  window.addEventListener('resize', tpPlace);
+  return el;
 }
+// 넓은 화면: 오른쪽 문제 칸 위에 띄워 왼쪽 표·그래프를 가리지 않음 / 좁은 화면: CSS가 아래쪽 시트로 바꿈
+function tpPlace(){
+  const el=$('tossPop'); if(!el || el.classList.contains('hide')) return;
+  const r = document.querySelector('#scAct .split-right');
+  if(!r || window.innerWidth<=980) return;
+  const b = r.getBoundingClientRect();
+  el.style.left = Math.max(8,b.left)+'px'; el.style.width = Math.min(b.width, 560)+'px';
+  el.style.maxHeight = (window.innerHeight-32)+'px';
+  el.style.top = Math.max(16, Math.min(b.top, window.innerHeight - el.offsetHeight - 16))+'px';   // 오른쪽 칸 높이에 맞추되 화면 밖으로 안 나가게
+}
+function tpMuteIcon(){ const m=$('tpMute'); if(m) m.textContent = TP.muted?'🔇':'🔊'; }
+function tpToggleMute(){ TP.muted=!TP.muted; try{ localStorage.setItem('tossMute', TP.muted?'1':'0'); }catch(e){} tpMuteIcon(); }
+function tpTick(head){
+  if(TP.muted) return;
+  const now = performance.now(); if(now-TP.lastSnd<45) return; TP.lastSnd=now;   // 너무 촘촘하면 소리가 뭉개져서 간격 제한
+  try{
+    if(!TP.ac) TP.ac = new (window.AudioContext||window.webkitAudioContext)();
+    const ac=TP.ac, o=ac.createOscillator(), g=ac.createGain();
+    o.type='triangle'; o.frequency.value = head?1500:700;
+    g.gain.setValueAtTime(head?0.045:0.02, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+0.06);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+0.07);
+  }catch(e){}
+}
+function tpBoardReset(){ $('tpBoard').innerHTML = [...Array(100)].map((_,i)=>`<div class="mc" id="mc${i}"></div>`).join(''); }
+function simGo(k){
+  if(SIM.vis>=1000 || TP.run) return;
+  const base = SIM.vis, target = k===100 ? Math.min(1000, base+100) : 1000;
+  if(SIM.cum.length<target) simAdd(target-SIM.cum.length);
+  const el = tpEl();
+  Object.assign(TP, { run:true, target, base, shown:base, round:-1, rounds:[], popCol:0,
+    perRound: k===100 ? 5000 : 2000, gap: k===100 ? 0 : 450, start: performance.now() });
+  el.classList.toggle('fast', k!==100);
+  el.classList.remove('hide');
+  $('tpTitle').textContent = k===100 ? '동전 100번 던지는 중' : `동전 ${target-base}번 던지는 중 (100개씩 ${(target-base)/100}판)`;
+  $('tpRounds').innerHTML=''; $('tpMsg').textContent=''; $('tpSkip').style.display=''; $('tpClose').style.display='none';
+  tpBoardReset(); $('tpRound').textContent='1판'; $('tpThrown').textContent='0'; $('tpHeads').textContent='0'; $('tpTotal').textContent=base+'번';
+  tpMuteIcon(); tpPlace();
+  simRefreshLeft();
+  cancelAnimationFrame(TP.raf); TP.raf = requestAnimationFrame(tpFrame);
+}
+// 경과 시간 → 지금까지 공개해야 할 동전 수 (판 사이에 gap만큼 쉬며 판 결과를 보여 줌)
+function tpWant(now){
+  const t = Math.max(0, now - TP.start), slot = TP.perRound + TP.gap, total = TP.target-TP.base;
+  const r = Math.floor(t/slot), inR = t - r*slot;
+  return TP.base + Math.min(total, r*100 + Math.min(100, Math.floor(inR/(TP.perRound/100))+1));
+}
+function tpReveal(upto, quiet){
+  while(TP.shown < upto){
+    const idx = TP.shown, r = Math.floor((idx-TP.base)/100), i = (idx-TP.base)%100;
+    if(r!==TP.round){ TP.round=r; tpBoardReset(); $('tpRound').textContent=(r+1)+'판'; }
+    const head = simH(idx+1) - simH(idx);
+    const c = $('mc'+i); if(c){ c.className = 'mc '+(head?'h':'t'); c.textContent = head?'앞':'뒤'; }
+    if(!quiet) tpTick(head);
+    TP.shown++;
+    if((TP.shown-TP.base)%100===0){ TP.rounds.push(simH(TP.shown)-simH(TP.shown-100)); TP.popCol = TP.shown; }
+  }
+  const inRound = TP.shown>TP.base ? ((TP.shown-TP.base)%100 || 100) : 0;
+  $('tpThrown').textContent = inRound;
+  $('tpHeads').textContent = simH(TP.shown) - simH(TP.shown-inRound);
+  $('tpTotal').textContent = TP.shown+'번';
+  $('tpRounds').innerHTML = TP.rounds.map((h,i)=>`<span>${i+1}판 앞면 ${h}개</span>`).join('');
+  SIM.vis = TP.shown;
+  simRefreshLeft();
+}
+function tpFrame(now){
+  if(!TP.run) return;
+  const want = Math.min(TP.target, tpWant(now));
+  if(want>TP.shown) tpReveal(want);
+  if(TP.shown>=TP.target) return tpDone();
+  TP.raf = requestAnimationFrame(tpFrame);
+}
+function tpSkip(){
+  if(!TP.run) return;
+  cancelAnimationFrame(TP.raf);
+  tpReveal(TP.target, true);
+  tpDone();
+}
+function tpDone(){
+  TP.run = false; TP.popCol = 0;
+  SIM.vis = TP.target;
+  simRefreshLeft();
+  const n = TP.target;
+  $('tpTitle').textContent = '던지기 끝!';
+  $('tpMsg').innerHTML = TP.rounds.length>1
+    ? `판마다 앞면이 몇 개 나왔는지 살펴보세요. 지금까지 <b>${n}번</b> 중 앞면은 <b>${simH(n)}번</b>이에요.`
+    : `이번 100번 중 앞면은 <b>${TP.rounds[0]}번</b> 나왔어요. 지금까지 <b>${n}번</b> 던졌어요.`;
+  $('tpSkip').style.display='none'; $('tpClose').style.display='';
+}
+function tpClose(){
+  const el=$('tossPop'); if(el) el.classList.add('hide');
+  if(SIM.vis>=1000) s2Ready();
+}
+function tpAbort(){ if(TP.run){ cancelAnimationFrame(TP.raf); TP.run=false; } const el=$('tossPop'); if(el) el.classList.add('hide'); }
 function stage2(){
   enterStage(2); closeGate();
   L(simLeftHTML());
@@ -1028,7 +1189,7 @@ function stage2(){
       <p class="key-q task">왼쪽 버튼을 눌러 동전을 <span class="em">1000번</span>까지 던져 보자.</p>
       <p class="sub">100번씩 던지면 그래프가 조금씩 그려지는 모습을 볼 수 있어요.</p>
     </div>`);
-  if(SIM.cum.length>=1000) s2Ready();
+  if(SIM.vis>=1000) s2Ready();
 }
 function s2Ready(){
   if($('s2bBlock')) return;
@@ -1047,7 +1208,7 @@ function s2bCheck(){
   if(!graded('s2b', checkItems([{dec:'s2b', h:simH(300), n:300}], 's2bFb'))) return;
   firstTry('s2b', true);
   $('s2bBtn').disabled = true;
-  s2HideCol = false; stageBox('L',2).innerHTML = simLeftHTML();
+  s2HideCol = false; simRefreshLeft();
   setFb('s2bFb',true,'✅ 맞아요!');
   appendR(`<div class="qblock" id="s2cBlock">
     <p class="key-q">왼쪽 그래프를 보면, 던진 횟수가 많아질수록 상대도수는 <span class="em">어떻게 되나요</span>?</p>
@@ -1678,6 +1839,7 @@ function adminGo(i){
   closeGate();
   while(FLIP.res.length<30) FLIP.res.push(Math.random()<0.5?'H':'T');
   if(i>=2 && SIM.cum.length<1000) simAdd(1000);
+  if(i>=2){ SIM.vis = SIM.cum.length; tpAbort(); }
   const f=[stage0,stage1,stage2,stage3,stage4,stage5,()=>{ practiceOpened=true; goToPractice(); }];
   if(i<7) f[i](); else { practiceOpened=true; startLevel(1); }
 }

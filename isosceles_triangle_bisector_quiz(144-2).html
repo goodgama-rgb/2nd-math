@@ -149,12 +149,23 @@ canvas.fig{background:#fff;border-radius:8px}
   const _hb = document.getElementById('hubBackLink');
   const _hbHref = 'index.html' + location.search;
   _hb.href = _hbHref;
+  const _urlNum = new URLSearchParams(location.search).get('num');
+  const _isPreview = !_urlNum || _urlNum === '99'; // 관리자 미리보기(파라미터 없음 또는 99번) 때는 나가기 경고 안 띄움
   _hb.addEventListener('click', function(e){
+    if(!_isPreview && !window._activityDone && !confirm('아직 다 끝내지 않았어요! 지금 나가면 처음부터 다시 해야 해요. 그래도 나갈까요?')){
+      e.preventDefault();
+      return;
+    }
     if(window._pendingQuizComplete){
       e.preventDefault();
       Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(res=>setTimeout(res,800))]).then(()=>{ location.href = _hbHref; });
     }
   });
+  if(!_isPreview){
+    window.addEventListener('beforeunload', function(e){
+      if(!window._activityDone){ e.preventDefault(); e.returnValue=''; }
+    });
+  }
 })();
 </script>
   <span class="hdr-badge">수학</span>
@@ -362,6 +373,7 @@ canvas.fig{background:#fff;border-radius:8px}
     });
   }catch(e){ console.warn('hub firebase init:', e); }
   window._reportQuizComplete = function(){
+    window._activityDone = true;
     if(!s.cls || !s.num || !s.id) return;
     window._pendingQuizComplete = firebase.firestore().collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
       .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
