@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>확률의 기본 성질</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --bean:#7c2d12;--cream:#b45309;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+/* 강조 3단계: ① 핵심 질문(.key-q, 한 블록에 1개) ② 핵심어(.kw, 문단에 1~2개) ③ 보충(.sub) — 밑줄은 핵심 질문 안의 .em에만 */
+.key-q{display:block;font-size:17px;font-weight:800;line-height:1.7;color:var(--ink);background:#fffbeb;border:1.5px solid #fcd34d;border-left:6px solid #f59e0b;border-radius:10px;padding:9px 14px 10px;margin:10px 0}
+.key-q::before{content:'❓ 질문';display:block;font-size:11.5px;font-weight:800;color:#b45309;margin-bottom:1px}
+.key-q.task::before{content:'✏️ 해 보기'}
+.key-q .em{text-decoration:underline;text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
+.kw{font-weight:800;color:#be123c}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.reread{animation:rereadFlash 1.2s ease-out 2}
+@keyframes rereadFlash{0%{box-shadow:0 0 0 5px #f59e0b;background-color:#fef3c7}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+.it{font-style:italic;font-family:'Times New Roman',serif;font-weight:700;font-size:1.08em}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 450px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+  .split-left.board-sticky{position:sticky;top:0;z-index:5;max-height:50vh;overflow-y:auto}
+}
+
+.stepper{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.stepper .st{padding:5px 11px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12px;font-weight:700;color:var(--ink3);font-family:inherit}
+.stepper .st.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.stepper .st.done{background:var(--green-l);color:#14532d;border-color:var(--green);cursor:pointer}
+.stepper .st.done:hover{box-shadow:0 0 0 2px var(--green)}
+.stepper .st.viewing{background:#fef3c7;color:#92400e;border-color:#f59e0b}
+.stepper .st:disabled{cursor:default}
+.back-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:13px;font-weight:700;color:#92400e}
+.back-banner .btn{padding:6px 14px;font-size:12.5px}
+
+/* 왼쪽 */
+.exp-head{display:flex;gap:8px;align-items:flex-start;font-size:14px;font-weight:700;line-height:1.6;margin-bottom:10px}
+.exp-badge{flex-shrink:0;background:var(--ink);color:#fff;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:12px;margin-top:2px}
+.board-tip{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-top:8px}
+.graph-box{background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:12px;padding:6px;margin-top:8px}
+.graph-box svg{display:block;width:100%;height:auto}
+.fig{background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:12px;padding:12px;margin-bottom:10px;text-align:center}
+.fig-cap{font-size:13px;font-weight:800;color:var(--ink2);margin-top:8px}
+.fig-dice{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.cardg{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-width:300px;margin:0 auto}
+.cardg span{border:1.5px solid #4f46e5;border-radius:6px;background:#fff;font-weight:800;font-size:14px;padding:5px 0;color:var(--ink)}
+.pouch{position:relative;margin:22px auto 4px;width:250px;max-width:100%;min-height:120px;background:#ead2ac;border:2.5px solid #a07a46;border-radius:42% 42% 50% 50% / 26% 26% 74% 74%;padding:28px 22px 34px;display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-content:center}
+.pouch::before{content:'';position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:76px;height:18px;background:#ead2ac;border:2.5px solid #a07a46;border-bottom:none;border-radius:12px 12px 0 0}
+.pouch::after{content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:92px;height:7px;background:#b45309;border-radius:4px}
+.ball{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-style:normal;color:#fff;box-shadow:inset -3px -4px 0 rgba(0,0,0,.18)}
+.ball.red{background:#ef4444}.ball.blue{background:#3b82f6}.ball.q{background:#9ca3af}
+.peep{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:330px;margin:0 auto}
+.nl-legend{display:grid;grid-template-columns:1fr;gap:6px 10px;margin-top:8px;font-size:13px;font-weight:700;color:var(--ink2)}
+.nl-legend div{display:flex;align-items:center;gap:6px;line-height:1.4}
+.nl-legend .nb{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;font-weight:800}
+.s2-ctrl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 4px}
+.s2-ctrl .btn{padding:8px 14px}
+.s2-count{text-align:center;font-size:14px;font-weight:800;color:var(--ink2)}
+.s2-count b{font-size:17px}
+.s2-count .bn{color:var(--bean)}
+.s2-count .cr{color:var(--cream)}
+.s2-msg{text-align:center;font-size:13px;font-weight:800;color:var(--red);min-height:20px;margin-top:4px;border-radius:8px}
+.phone{max-width:260px;margin:4px auto;border:3px solid #374151;border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 6px 18px rgba(26,26,46,.15)}
+.ph-top{background:#1e3a8a;color:#fff;font-size:13px;font-weight:800;padding:8px 12px;display:flex;justify-content:space-between}
+.ph-head{background:#dbeafe;color:#1e3a8a;text-align:center;font-weight:800;font-size:15px;padding:8px}
+.phone ul{list-style:none;padding:8px 14px;min-height:150px}
+.phone li{font-size:15px;font-weight:700;padding:6px 0;border-bottom:1px dashed #e5e7eb}
+.phone li.sold{color:#9ca3af;text-decoration:line-through}
+.ph-foot{background:#e5e7eb;color:#6b7280;text-align:center;font-weight:800;font-size:15px;padding:9px}
+.ex-card{border:2px solid #fcd34d;background:#fffbeb;border-radius:12px;padding:10px 14px;margin:8px 0;line-height:1.75}
+.ex-card .nm{font-size:18px;font-weight:800;color:var(--ink)}
+.ex-card .mean{font-size:13.5px;color:var(--ink2);font-weight:600}
+.ex-card .ev{font-size:14px;font-weight:700;margin-top:2px}
+.ex-card.done{border-color:#bbf7d0;background:var(--green-ll)}
+
+/* 오른쪽 */
+.panel-title{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--indigo);color:#fff;font-size:12px;font-weight:800;flex-shrink:0}
+.qblock{border-top:1px dashed #e0e7ff;padding-top:12px;margin-top:12px}
+.qblock:first-child{border-top:none;padding-top:0;margin-top:0}
+.lead{font-size:14px;line-height:1.8;color:var(--ink2);margin-bottom:8px}
+.prob-box{background:#fbfcff;border:1.5px solid var(--indigo-l);border-radius:10px;padding:12px 14px;font-size:14.5px;line-height:1.85;margin-bottom:8px}
+.count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:14px;font-weight:700}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:15px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+/* 분수 입력칸: 분자 / 가로선 / 분모 */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px}
+.frac .blank{border:1.5px solid #a5b4fc;border-radius:6px;width:52px;height:30px;margin:1px 0;background:#fff}
+.frac .blank.correct{border-color:var(--green);background:var(--green-ll)}
+.frac .blank.wrong{border-color:var(--red);background:var(--red-l)}
+.frac .fbar{width:100%;min-width:60px;height:2.5px;background:var(--ink);border-radius:2px;margin:2px 0}
+.sfrac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:.92em;line-height:1.15;margin:0 3px}
+.sfrac>span:first-child{border-bottom:1.6px solid currentColor;padding:0 3px}
+.sfrac>span:last-child{padding:0 3px}
+.fline{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:15px;font-weight:800}
+.fline .lab{font-size:13px;color:var(--ink2);text-align:center;line-height:1.4}
+.choice-col{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.choice-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;justify-content:center}
+.choice-row .choice-btn{min-width:74px;text-align:center;font-size:16px}
+.choice-btn{padding:9px 16px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;text-align:left;line-height:1.5}
+.choice-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.choice-btn.correct{background:var(--green);color:#fff;border-color:var(--green)}
+.choice-btn.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.choice-btn:disabled{cursor:default}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-check:hover{background:#15803d}
+.btn-soft{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo)}
+.btn-soft:hover{background:var(--indigo-ll)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px;line-height:1.6}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.feedback.info{color:#b45309}
+.note-box{background:var(--green-ll);border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
+.def-box{background:var(--indigo-ll);border:2px solid var(--indigo);border-radius:12px;padding:14px 16px;font-size:15px;line-height:2;margin-top:12px;text-align:left}
+.def-box .dt{font-weight:800;color:var(--indigo);margin-bottom:2px}
+.def-box.term-wait{visibility:hidden}
+.hint-card{background:#fff;border:1.5px solid #d8ddfb;border-radius:12px;padding:14px;font-size:13.5px;line-height:1.9}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+.chip{font-size:12.5px;font-weight:800;border-radius:14px;padding:3px 11px;background:#f3f4f6;color:var(--ink3);border:1.5px dashed #d1d5db}
+.chip.on{background:var(--green-l);color:#14532d;border:1.5px solid var(--green)}
+.ox-row{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1.5px solid #e0e7ff;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:14px;font-weight:700;line-height:1.6;background:#fff}
+.ox-btns{display:flex;gap:6px;flex-shrink:0}
+.ox-b{width:42px;height:36px;border-radius:9px;border:1.5px solid #d8ddfb;background:#fff;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.ox-b.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.ox-b:disabled{cursor:default}
+/* 용어 팝업 (빈칸 + 둘 중 하나 고르기) */
+.modal-overlay.termpop{background:rgba(26,26,46,0.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.modal-box.term-box{max-width:660px;width:100%}
+.pp-line{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:4px 0}
+.pp-line .nw{white-space:nowrap}
+.term-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--indigo);border-radius:10px;padding:2px 10px;margin-bottom:8px}
+.term-box .def-box{margin-top:0;line-height:2.3}
+.term-box .def-box .blank{font-size:16px;color:#be123c;border:1.5px solid #a5b4fc;border-radius:6px;background:#fff;width:46px}
+.pp{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle;background:#fff;border:2px dashed #a5b4fc;border-radius:10px;padding:3px}
+.pp button{border:1.5px solid #d8ddfb;background:#fff;border-radius:8px;padding:3px 9px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.pp button.on{background:#be123c;color:#fff;border-color:#be123c}
+.pp.wrong{border-color:var(--red);background:var(--red-l)}
+.pp.correct{border-color:var(--green);background:var(--green-ll)}
+
+.progress{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:6px}
+.level-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.level-tab{padding:7px 16px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink2)}
+.level-tab.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.level-tab.done{background:var(--green-l);color:#14532d;border-color:var(--green)}
+.try-tag{display:inline-block;font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px;background:#eef2ff;color:var(--indigo);margin-bottom:6px}
+.try-tag.last{background:#fef3c7;color:#92400e}
+
+.result-wrap{text-align:center;padding:24px 10px}
+.result-icon{font-size:48px;margin-bottom:10px}
+.result-score{font-size:22px;font-weight:800;color:var(--indigo);margin:8px 0}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+@media (prefers-reduced-motion: reduce){ .reread{animation:none!important} }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">확률의 기본 성질</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>
+document.getElementById('hubBackLink').href = 'index.html' + location.search;
+(function(){
+  var _hb = document.getElementById('hubBackLink');
+  var _urlNum = new URLSearchParams(location.search).get('num');
+  var _isPreview = !_urlNum || _urlNum === '99'; // 관리자 미리보기(파라미터 없음 또는 99번) 때는 나가기 경고 안 띄움
+  _hb.addEventListener('click', function(e){
+    if(!_isPreview && !window._activityDone && !confirm('아직 다 끝내지 않았어요! 지금 나가면 처음부터 다시 해야 해요. 그래도 나갈까요?')){
+      e.preventDefault();
+    }
+  });
+  if(!_isPreview){
+    window.addEventListener('beforeunload', function(e){
+      if(!window._activityDone){ e.preventDefault(); e.returnValue=''; }
+    });
+  }
+})();
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'prob-basic' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._hubDb = _db;
+  let _reported=false;
+  window._reportHubComplete = function(){
+    window._activityDone = true;
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="screen active" id="scAct">
+    <div class="split-layout">
+      <div class="split-left card board-sticky" id="actLeft"></div>
+      <div class="split-right card"><div id="backBanner"></div><div id="actRight"></div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scPractice">
+    <div class="level-tabs" id="levelTabs"></div>
+    <div class="split-layout">
+      <div class="split-left card" id="pgLeft"></div>
+      <div class="split-right card">
+        <div class="progress" id="pgProgress"></div>
+        <div id="pgArea"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scLevelResult">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon" id="lrIcon">🎉</div>
+        <h2 id="lrTitle">통과했어요!</h2>
+        <div class="result-score" id="lrScore">2 / 3</div>
+        <p id="lrMsg" style="color:var(--ink2)"></p>
+        <button class="restart-btn" id="lrRetryBtn" onclick="lrRetry()" style="display:none">🔄 다시 도전하기</button>
+        <button class="primary-btn" id="lrNextBtn" onclick="lrNext()">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px;line-height:1.8">확률의 기본 성질을 알아보고, 문제풀이까지 모두 마쳤어요.</p>
+        <div class="result-score" id="doneStat" style="font-size:17px"></div>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 개념 정리 팝업: 빈칸(0, 1)을 쓰고 알맞은 말을 골라야 닫힘 -->
+<div class="modal-overlay termpop" id="termModal">
+  <div class="modal-box term-box" id="termBox"></div>
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:380px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:60;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pickN(arr,n){ return shuffle(arr).slice(0,n); }
+function pick1(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(lo,hi){ return lo+Math.floor(Math.random()*(hi-lo+1)); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function $(id){ return document.getElementById(id); }
+function setFb(id, ok, msg){ const fb=$(id); fb.className='feedback '+(ok===true?'success':ok==='info'?'info':'error'); fb.innerHTML=msg; }
+function parseCount(s){ const m=String(s||'').replace(/\s+/g,'').match(/^(\d+)(가지|개|번|명|장|회|석)?$/); return m?parseInt(m[1],10):null; }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function reduce(n,d){ const g=gcd(n,d)||1; return [n/g, d/g]; }
+function sfrac(n,d){ return `<span class="sfrac"><span>${n}</span><span>${d}</span></span>`; }
+function pval(p){ return p[1]===1 ? String(p[0]) : sfrac(p[0],p[1]); }    // 확률 값 보여 주기 (정수는 그대로)
+function itp(){ return '<span class="it">p</span>'; }
+function itv(c){ return `<span class="it">${c}</span>`; }
+function isPrime(n){ if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true; }
+// 받침에 따라 조사 고르기 (낱말, 숫자 모두)
+const NUM_BATCHIM = [true,true,false,true,false,false,true,true,true,false];   // 영 일 이 삼 사 오 육 칠 팔 구
+function hasBatchim(w){
+  if(typeof w==='number' || /^\d+$/.test(String(w))) return NUM_BATCHIM[Number(w)%10];   // 10, 20…은 '십'으로 끝나 받침 있음
+  const c = String(w).charCodeAt(String(w).length-1);
+  if(c>=0xAC00 && c<=0xD7A3) return (c-0xAC00)%28!==0;
+  return false;
+}
+function josa(w, withB, noB){ return String(w) + (hasBatchim(w)?withB:noB); }
+
+/* ════════════════════════════════
+   읽기 확인 · 찍기 방지 (앞 차시 파일들과 같은 방식)
+   - readGate: 질문이 뜨고 읽을 시간도 안 지나 고르면 채점하지 않고 질문을 다시 보게 함
+   - wrongLock: 틀리면 몇 초 동안 잠그고(틀릴수록 길게) 보기 순서를 다시 섞음
+   - firstTry: 질문마다 첫 시도만 기록 → 완료 화면에 '한 번에 맞힌 질문' 표시
+   - 틀려도 정답은 보여 주지 않음
+════════════════════════════════ */
+const GUARD = { on:true };            // 검증 스크립트·관리자 시연에서만 끔
+const LOCK_SECS = [3,5,8];
+const stat = { seen:{}, total:0, first:0 };
+const shown = {}, tries = {};
+function firstTry(qid, ok){ if(qid in stat.seen) return; stat.seen[qid]=ok; stat.total++; if(ok) stat.first++; }
+function graded(qid, r){ if(r===false) firstTry(qid,false); return r===true; }
+function flashRef(ref){
+  const el = typeof ref==='string' ? $(ref) : ref;
+  if(!el) return;
+  el.classList.remove('reread'); void el.offsetWidth; el.classList.add('reread');
+}
+function markShown(qid, blockId){
+  const el = $(blockId);
+  const len = el ? el.textContent.replace(/\s+/g,'').length : 40;
+  shown[qid] = { t:Date.now(), need:Math.min(4000, Math.max(1500, len*25)), block:blockId };
+}
+function readGate(qid, fbId){
+  const s = shown[qid];
+  if(!GUARD.on || !s || Date.now()-s.t >= s.need) return true;
+  setFb(fbId,false,'✋ 잠깐! 질문을 끝까지 읽고 골라 봐요.');
+  const kq = document.querySelector('#'+s.block+' .key-q');
+  if(kq) flashRef(kq);
+  return false;
+}
+function lockSecs(qid){
+  tries[qid] = (tries[qid]||0)+1;
+  return GUARD.on ? LOCK_SECS[Math.min(tries[qid],LOCK_SECS.length)-1] : 0;
+}
+// secs초 동안 안내문에 남은 시간을 보여 준 뒤 onDone. anchor가 화면에서 사라지면 멈춤
+function lockTimer(secs, fbId, msg, what, anchor, onDone){
+  if(!secs){ onDone(); return; }
+  let left = secs;
+  const paint = ()=>setFb(fbId,false,`${msg}<br><span class="lock-note">⏳ ${left}초 뒤에 ${what}</span>`);
+  paint();
+  const t = setInterval(()=>{
+    if(!document.body.contains(anchor)){ clearInterval(t); return; }
+    left--;
+    if(left<=0){ clearInterval(t); onDone(); } else paint();
+  }, 1000);
+}
+function wrongLock(o){
+  const row = $(o.row);
+  const btns = [...row.querySelectorAll('button')];
+  btns.forEach(b=>b.disabled=true);
+  lockTimer(lockSecs(o.qid), o.fb, o.msg, '다시 고를 수 있어요', row, ()=>{
+    btns.forEach(b=>{ b.disabled=false; b.classList.remove('wrong','active'); });
+    shuffle(btns).forEach(b=>b.parentNode.appendChild(b));
+    setFb(o.fb,false,o.msg+'<br><span class="sub">다시 골라 보세요.</span>');
+  });
+}
+// 객관식 한 문항 공통: 읽기 확인 → 첫 시도 기록 → 오답이면 잠금. 정답일 때만 true
+function choiceGrade(q, btn, ok, wrongMsg){
+  if(btn.disabled || !readGate(q, q+'Fb')) return false;
+  firstTry(q, ok);
+  markChoice(q+'Row', btn, ok);
+  if(!ok){ wrongLock({qid:q, row:q+'Row', fb:q+'Fb', msg:wrongMsg}); return false; }
+  return true;
+}
+const RETHINK = '❌ 다시 한 번 생각해 보세요!';
+const UNREDUCED = '🔎 약분까지 해야 완벽한 정답이 됩니다!';
+
+/* ════════════════════════════════
+   입력칸: 숫자 · 글자 · 확률(분자/분모 따로, 정수는 위 칸에만)
+════════════════════════════════ */
+function choiceCol(name, opts){
+  return `<div class="choice-col" id="${name}Row">`+shuffle(opts).map(o=>`<button class="choice-btn" data-k="${o.key}" onclick="${name}Pick('${o.key}',this)">${o.label}</button>`).join('')+`</div>`;
+}
+function markChoice(rowId, btn, ok){
+  document.querySelectorAll('#'+rowId+' .choice-btn').forEach(b=>b.classList.remove('active','wrong'));
+  btn.classList.add(ok?'correct':'wrong');
+  if(ok) document.querySelectorAll('#'+rowId+' .choice-btn').forEach(b=>b.disabled=true);
+}
+function probHTML(p){ return `<span class="frac"><input class="blank" id="${p}N" inputmode="numeric" autocomplete="off"><span class="fbar"></span><input class="blank" id="${p}D" inputmode="numeric" autocomplete="off"></span>`; }
+const PROB_NOTE = '<p class="sub">분수는 위 칸에 분자, 아래 칸에 분모를 써요.</p>';
+// 확률 칸 채점: ans는 기약분수 [분자,분모] (정수면 분모 1)
+// 답이 0이면 0/6, 0/1처럼 분자가 0이면 모두 정답 · 답이 1이면 6/6, 1/1처럼 분자=분모이면 모두 정답 (약분 안내 없음)
+// 답이 0이나 1일 때 분모 칸을 비우고 0, 1만 써도 정답. 그 밖의 답에서 분모 칸이 비어 있으면 빈칸으로 봄
+// 'ok' / 'wrong' / 'empty' / 'unreduced'
+function gradeProb(p, ans){
+  const nr=$(p+'N').value.trim(), dr=$(p+'D').value.trim();
+  const isInt = ans[1]===1;
+  if(nr==='') return 'empty';
+  const n = parseCount(nr);
+  if(dr===''){
+    if(!isInt) return 'empty';
+    return (n!==null && n===ans[0]) ? 'ok' : 'wrong';
+  }
+  const d = parseCount(dr);
+  if(n===null || d===null || d===0 || n*ans[1]!==d*ans[0]) return 'wrong';
+  if(isInt) return 'ok';
+  return gcd(n,d)===1 ? 'ok' : 'unreduced';
+}
+function normTxt(s){ return String(s||'').replace(/[\s'"‘’“”.,!]/g,''); }
+// 채점 항목: {id,val} 숫자 / {txt:id, acc:[…]} 글자 / {prob:p, ans:[n,d]} 확률
+// 결과: true / false / null(빈칸) / 'unreduced'(값은 맞지만 약분 안 함 — 오답으로 치지 않음)
+function checkItems(items, fbId){
+  let empty=false, wrong=0, unred=null;
+  const mark = (el, ok)=>{ el.classList.toggle('wrong',!ok); };
+  for(const it of items){
+    if(it.prob){
+      const r = gradeProb(it.prob, it.ans);
+      const nE=$(it.prob+'N'), dE=$(it.prob+'D');
+      if(r==='empty'){ empty=true; continue; }
+      if(r==='wrong'){ wrong++; mark(nE,false); mark(dE,false); continue; }
+      mark(nE,true); mark(dE,true);
+      if(r==='unreduced') unred = it.ans;
+    } else if(it.txt){
+      const el=$(it.txt); const raw=normTxt(el.value);
+      if(raw===''){ empty=true; continue; }
+      const ok = it.acc.some(a=>normTxt(a)===raw); if(!ok) wrong++; mark(el, ok);
+    } else {
+      const el=$(it.id); const raw=el.value.trim();
+      if(raw===''){ empty=true; continue; }
+      const ok = parseCount(raw)===it.val; if(!ok) wrong++; mark(el, ok);
+    }
+  }
+  if(wrong){ setFb(fbId,false,'❌ 빨간 칸을 다시 한 번 생각해 보세요!'); return false; }
+  if(empty){ setFb(fbId,false,'빈칸을 모두 채워 주세요.'); return null; }
+  if(unred){ setFb(fbId,'info', UNREDUCED); return 'unreduced'; }
+  items.forEach(it=>{
+    const els = it.prob ? [$(it.prob+'N'),$(it.prob+'D')] : [$(it.txt||it.id)];
+    els.forEach(el=>{ el.classList.add('correct'); el.disabled=true; });
+  });
+  return true;
+}
+
+/* ════════════════════════════════
+   그림
+════════════════════════════════ */
+// SVG 안의 세로 분수 (가운데가 y)
+function svgFrac(x, y, n, d, fs, color){
+  const w = Math.max(String(n).length, String(d).length)*fs*0.62 + 6;
+  return `<text x="${x}" y="${(y-3).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${color}">${n}</text>`+
+    `<line x1="${(x-w/2).toFixed(1)}" y1="${y}" x2="${(x+w/2).toFixed(1)}" y2="${y}" stroke="${color}" stroke-width="1.5"/>`+
+    `<text x="${x}" y="${(y+fs-0.5).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${color}">${d}</text>`;
+}
+// 0~1 수직선 + 동그라미 표지. marks:[{v, tag, color}] — 표지끼리 겹치면 위로 쌓음 (같은 자리의 값끼리만 겹쳐 쌓임)
+const NL = { W:420, X0:40, X1:380, r:12, gap:28 };
+function nlLayout(marks){
+  const X = v=>NL.X0+(NL.X1-NL.X0)*v;
+  const placed = [];
+  marks.forEach(m=>{
+    const px = X(m.v);
+    let r=0; while(placed.some(p=>p.r===r && Math.abs(p.px-px) < NL.r*2+3)) r++;
+    placed.push(Object.assign({}, m, {px, r}));
+  });
+  const nR = 1 + Math.max(0, ...placed.map(p=>p.r));
+  const axisY = 8 + nR*NL.gap + 14;
+  placed.forEach(p=>{ p.cy = axisY - 24 - p.r*NL.gap; });
+  return { placed, axisY, H:axisY+40, X };
+}
+function nlSVG(marks){
+  const { placed, axisY, H, X } = nlLayout(marks);
+  let s = `<svg viewBox="0 0 ${NL.W} ${H}">`;
+  s += `<line x1="${NL.X0}" y1="${axisY}" x2="${NL.X1}" y2="${axisY}" stroke="#1a1a2e" stroke-width="2.4" stroke-linecap="round"/>`;
+  [[0,1],[1,2],[1,1]].forEach(([n,d])=>{
+    const x = X(n/d);
+    s += `<line x1="${x}" y1="${axisY-6}" x2="${x}" y2="${axisY+6}" stroke="#1a1a2e" stroke-width="2"/>`;
+    s += d===1 ? `<text x="${x}" y="${axisY+24}" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a2e">${n}</text>` : svgFrac(x, axisY+20, n, d, 12, '#1a1a2e');
+  });
+  placed.forEach(p=>{ s += `<line x1="${p.px.toFixed(1)}" y1="${(p.cy+NL.r).toFixed(1)}" x2="${p.px.toFixed(1)}" y2="${axisY}" stroke="${p.color}" stroke-width="1.8"/>`; });
+  placed.forEach(p=>{ s += `<circle cx="${p.px.toFixed(1)}" cy="${axisY}" r="5" fill="${p.color}" stroke="#fff" stroke-width="1.6"/>`; });
+  placed.forEach(p=>{
+    s += `<circle cx="${p.px.toFixed(1)}" cy="${p.cy.toFixed(1)}" r="${NL.r}" fill="${p.color}" stroke="#fff" stroke-width="2"/>`+
+      `<text x="${p.px.toFixed(1)}" y="${(p.cy+4.5).toFixed(1)}" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">${p.tag}</text>`;
+  });
+  return s + `</svg>`;
+}
+
+/* ════════════════════════════════
+   단계 이동: 마친 단계는 언제든 다시 볼 수 있음 (안 한 단계는 잠김)
+════════════════════════════════ */
+const STAGES = ['내일은 무슨 날?','붕어빵 봉투','내가 만드는 봉투','확률의 성질','문제 1 (기차표)','문제 2 (생활 속 표현)','문제풀이'];
+const PRACTICE = 6;
+let frontier = 0, viewing = 0;
+const built = {};
+let practiceScreen = 'scPractice';
+function stageBox(side, i){
+  const id = (side==='L'?'ls':'rs')+i;
+  let el = $(id);
+  if(!el){
+    el = document.createElement('div'); el.id = id; el.style.display='none';
+    (side==='L' ? $('actLeft') : $('actRight')).appendChild(el);
+  }
+  return el;
+}
+function R(html){ stageBox('R',frontier).innerHTML = html; }
+function appendR(html){ stageBox('R',frontier).insertAdjacentHTML('beforeend', html); }
+function L(html){ stageBox('L',frontier).innerHTML = html; }
+function enterStage(i){
+  frontier = i; built[i] = true;
+  stageBox('L',i).innerHTML=''; stageBox('R',i).innerHTML='';
+  showStage(i);
+}
+function showStage(i){
+  if(!built[i]) return;
+  viewing = i;
+  if(i===PRACTICE){ showScreen(practiceScreen); renderStepper(); return; }
+  showScreen('scAct');
+  for(let k=0;k<PRACTICE;k++){ const l=$('ls'+k), r=$('rs'+k); if(l) l.style.display = k===i?'':'none'; if(r) r.style.display = k===i?'':'none'; }
+  $('backBanner').innerHTML = i<frontier ? `<div class="back-banner">👀 지난 단계를 다시 보고 있어요. <button class="btn" onclick="showStage(frontier)">지금 하던 단계로 돌아가기 →</button></div>` : '';
+  renderStepper();
+}
+function renderStepper(){
+  $('stepper').innerHTML = STAGES.map((s,i)=>{
+    const cls = i===viewing ? (i<frontier?'viewing':'active') : i===frontier ? 'active' : (built[i] ? 'done' : '');
+    const can = built[i] && i!==viewing;
+    return `<button class="st ${cls}" ${can?`onclick="showStage(${i})" style="cursor:pointer"`:'disabled'}>${i+1}. ${s}</button>`;
+  }).join('');
+}
+function scrollToEl(id){ const el=$(id); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+
+const CHANCE_OPTS = [
+  {key:'never', label:'절대로 일어나지 않아요.'},
+  {key:'maybe', label:'일어날 수도 있고, 일어나지 않을 수도 있어요.'},
+  {key:'always', label:'반드시 일어나요.'}];
+
+/* ════════════════════════════════
+   1단계: 내일은 무슨 날? (생각 열기)
+   오늘 = 2026년 11월 15일 일요일 (11월 1일이 일요일)
+════════════════════════════════ */
+function introSVG(){
+  let s = `<svg viewBox="0 0 420 270" style="width:100%;height:auto;display:block">`;
+  // 창문 (밤하늘)
+  s += `<rect x="16" y="18" width="148" height="140" rx="6" fill="#1e1b4b"/>`;
+  [[36,40],[60,70],[110,36],[40,120],[140,112],[100,128],[72,104]].forEach(([x,y],i)=>{ s += `<circle cx="${x}" cy="${y}" r="${i%2?1.6:2.3}" fill="#fef9c3"/>`; });
+  s += `<circle cx="126" cy="62" r="17" fill="#fde68a"/><circle cx="134" cy="55" r="15" fill="#1e1b4b"/>`;
+  s += `<rect x="16" y="18" width="148" height="140" rx="6" fill="none" stroke="#8a6a3f" stroke-width="7"/><line x1="90" y1="18" x2="90" y2="158" stroke="#8a6a3f" stroke-width="5"/><line x1="16" y1="88" x2="164" y2="88" stroke="#8a6a3f" stroke-width="5"/>`;
+  // 침대
+  s += `<rect x="14" y="196" width="152" height="40" rx="8" fill="#bfdbfe" stroke="#1e3a8a" stroke-width="2"/><rect x="14" y="186" width="18" height="62" rx="4" fill="#8a6a3f"/><rect x="148" y="200" width="18" height="48" rx="4" fill="#8a6a3f"/>`;
+  s += `<ellipse cx="50" cy="196" rx="16" ry="8" fill="#fff" stroke="#94a3b8" stroke-width="1.5"/><circle cx="50" cy="186" r="11" fill="#fde2c4" stroke="#1a1a2e" stroke-width="1.4"/><path d="M45 186 q2 2 4 0 M52 186 q2 2 4 0" fill="none" stroke="#1a1a2e" stroke-width="1.3"/>`;
+  s += `<path d="M64 196 Q100 182 146 196 L146 222 L64 222 Z" fill="#6366f1" opacity=".85"/>`;
+  s += `<text x="70" y="176" font-size="13" font-weight="800" fill="#6366f1">Z z z</text>`;
+  // 달력 (2026년 11월)
+  const x0=190, cw=216/7;
+  s += `<rect x="${x0}" y="14" width="216" height="242" rx="10" fill="#fff" stroke="#c7cdf5" stroke-width="2"/><rect x="${x0}" y="14" width="216" height="34" rx="10" fill="#dc2626"/><rect x="${x0}" y="36" width="216" height="12" fill="#dc2626"/>`;
+  s += `<text x="${x0+108}" y="37" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">2026년 11월</text>`;
+  ['일','월','화','수','목','금','토'].forEach((d,i)=>{ s += `<text x="${(x0+cw*i+cw/2).toFixed(1)}" y="66" text-anchor="middle" font-size="12" font-weight="800" fill="${i===0?'#dc2626':i===6?'#2563eb':'#4a4a6a'}">${d}</text>`; });
+  for(let day=1; day<=30; day++){
+    const idx = day-1, c = idx%7, r = Math.floor(idx/7);
+    const cx = x0+cw*c+cw/2, cy = 90+r*30;
+    if(day===15) s += `<circle cx="${cx.toFixed(1)}" cy="${cy-4}" r="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.4"/>`;
+    s += `<text x="${cx.toFixed(1)}" y="${cy}" text-anchor="middle" font-size="12.5" font-weight="${day===15?800:700}" fill="${c===0?'#dc2626':c===6?'#2563eb':'#1a1a2e'}">${day}</text>`;
+  }
+  s += `<text x="${x0+108}" y="244" text-anchor="middle" font-size="12.5" font-weight="800" fill="#b45309">○ 오늘: 11월 15일 일요일</text>`;
+  return s + `</svg>`;
+}
+function stage0(){
+  enterStage(0);
+  L(`<div class="exp-head"><span class="exp-badge">생각 열기</span><span>오늘은 11월 15일 일요일 밤이에요.</span></div>${introSVG()}`);
+  R(`<div class="panel-title"><span class="step-badge">1</span>내일은 무슨 날?</div>
+    <p class="lead">잠들기 전, 문득 이런 생각이 들었어요. 왼쪽 달력을 보며 답해 봐요.</p>
+    <div class="qblock" style="border-top:none" id="s0aBlock">
+      <p class="key-q">내일이 <span class="em">크리스마스</span>일 가능성은 어떨까요?</p>
+      <p class="sub">크리스마스는 12월 25일이에요.</p>
+      ${choiceCol('s0a', CHANCE_OPTS)}
+      <div class="feedback" id="s0aFb"></div>
+    </div>`);
+  markShown('s0a','s0aBlock');
+}
+function s0aPick(k, btn){
+  if(!choiceGrade('s0a', btn, k==='never', RETHINK)) return;
+  setFb('s0aFb',true,'✅ 맞아요. 내일은 11월 16일이라서, 크리스마스일 수는 절대로 없어요.');
+  appendR(`<div class="qblock" id="s0bBlock">
+    <p class="key-q">그럼 내일이 <span class="em">월요일</span>일 가능성은 어떨까요?</p>
+    ${choiceCol('s0b', CHANCE_OPTS)}
+    <div class="feedback" id="s0bFb"></div>
+  </div>`);
+  markShown('s0b','s0bBlock');
+  scrollToEl('s0bBlock');
+}
+function s0bPick(k, btn){
+  if(!choiceGrade('s0b', btn, k==='always', RETHINK)) return;
+  setFb('s0bFb',true,'✅ 맞아요. 일요일 다음 날은 반드시 월요일이에요.');
+  appendR(`<div class="qblock" id="s0End">
+    <div class="note-box">'절대로 일어나지 않는 일'과 '반드시 일어나는 일'의 가능성도 <span class="kw">확률</span>로 나타낼 수 있을까요? 붕어빵 봉투로 알아봐요.</div>
+    <div class="btn-row"><button class="btn" id="s0NextBtn" onclick="this.disabled=true;stage1()">다음: 붕어빵 봉투 →</button></div>
+  </div>`);
+  scrollToEl('s0End');
+}
+
+/* ════════════════════════════════
+   2단계: 붕어빵 봉투 A, B, C (함께 탐구)
+════════════════════════════════ */
+const BAGS = { A:{bean:4, cream:2}, B:{bean:0, cream:6}, C:{bean:6, cream:0} };
+const BAG_COLOR = { A:'#2563eb', B:'#9333ea', C:'#16a34a' };
+const S1 = { done:{} };
+function bagShape(cx, top, bot, letter, lines, color){
+  const w1=50, w2=56;
+  let zig = `M${cx-w1} ${top}`;
+  for(let i=0;i<10;i++){ const xa = cx-w1+(i+0.5)*w1/5, xb = cx-w1+(i+1)*w1/5; zig += ` L${xa.toFixed(1)} ${top-6} L${xb.toFixed(1)} ${top}`; }
+  let s = `<path d="${zig} L${cx+w2} ${bot} L${cx-w2} ${bot} Z" fill="#ead2ac" stroke="#a07a46" stroke-width="2" stroke-linejoin="round"/>`;
+  s += `<circle cx="${cx-31}" cy="${top+20}" r="13" fill="#fff" stroke="${color}" stroke-width="2.4"/><text x="${cx-31}" y="${top+25}" text-anchor="middle" font-size="15" font-weight="800" fill="${color}">${letter}</text>`;
+  lines.forEach((ln,i)=>{ s += `<text x="${cx}" y="${top+62+i*24}" text-anchor="middle" font-size="15" font-weight="800" fill="${ln.c}">${ln.t}</text>`; });
+  return s;
+}
+function bagLines(k){
+  const b = BAGS[k], out = [];
+  if(b.bean) out.push({t:`팥 ${b.bean}개`, c:'#7c2d12'});
+  if(b.cream) out.push({t:`슈크림 ${b.cream}개`, c:'#b45309'});
+  return out;
+}
+function bagsSVG(){
+  let s = `<svg viewBox="0 0 420 180" style="width:100%;height:auto;display:block">`;
+  [['A',72],['B',210],['C',348]].forEach(([k,cx])=>{ s += bagShape(cx, 30, 170, k, bagLines(k), BAG_COLOR[k]); });
+  return s + `</svg>`;
+}
+function s1Left(){
+  const marks = ['A','B','C'].filter(k=>S1.done[k]).map(k=>({ v:BAGS[k].bean/6, tag:k, color:BAG_COLOR[k] }));
+  return `<div class="exp-head"><span class="exp-badge">함께 탐구</span><span>세 봉투 A, B, C에 모양과 크기가 같은 붕어빵 6개가 각각 들어 있다.</span></div>
+    ${bagsSVG()}
+    <div class="graph-box">${nlSVG(marks)}</div>
+    <p class="board-tip">${marks.length ? 'A, B, C 표지 = 각 봉투에서 팥붕어빵을 꺼낼 확률' : '확률을 구하면 아래 수직선에 봉투 표지가 놓여요.'}</p>`;
+}
+function bagQHTML(k){
+  return `<div class="qblock" id="s1${k}Block">
+    <p class="key-q task">봉투 ${k}에서 붕어빵을 한 개 꺼낼 때, <span class="em">팥붕어빵을 꺼낼 확률</span>을 구해 보자.</p>
+    <div class="count-row">팥붕어빵을 꺼내는 경우의 수: <input class="blank" id="s1${k}a" autocomplete="off"></div>
+    <div class="count-row">일어날 수 있는 모든 경우의 수: <input class="blank" id="s1${k}b" autocomplete="off"></div>
+    <div class="fline"><span class="lab">(팥붕어빵을 꺼낼 확률)</span> = ${probHTML('s1'+k+'f')}</div>
+    ${k==='A' ? PROB_NOTE : ''}
+    <div class="btn-row"><button class="btn btn-check" id="s1${k}Btn" onclick="s1Check('${k}')">확인</button></div>
+    <div class="feedback" id="s1${k}Fb"></div>
+  </div>`;
+}
+function stage1(){
+  enterStage(1);
+  S1.done = {};
+  L(s1Left());
+  R(`<div class="panel-title"><span class="step-badge">2</span>붕어빵 봉투</div>
+    <div class="prob-box">세 봉투 A, B, C에 모양과 크기가 같은 붕어빵 6개가 각각 들어 있다. 각 봉투에서 붕어빵을 한 개씩 임의로 꺼낼 때, 팥붕어빵을 꺼낼 확률을 각각 구해 보자.</div>
+    ${bagQHTML('A')}`);
+}
+function s1Check(k){
+  if($('s1'+k+'Btn').disabled) return;
+  const b = BAGS[k];
+  const r = checkItems([{id:'s1'+k+'a', val:b.bean}, {id:'s1'+k+'b', val:6}, {prob:'s1'+k+'f', ans:reduce(b.bean,6)}], 's1'+k+'Fb');
+  if(!graded('s1'+k, r)) return;
+  firstTry('s1'+k, true);
+  $('s1'+k+'Btn').disabled = true;
+  S1.done[k] = true;
+  stageBox('L',1).innerHTML = s1Left();
+  const p = reduce(b.bean,6);
+  setFb('s1'+k+'Fb',true,`✅ 맞아요! 봉투 ${k}에서 팥붕어빵을 꺼낼 확률은 ${sfrac(b.bean,6)} = ${pval(p)}이에요. 왼쪽 수직선을 봐요.`);
+  if(k==='A'){ appendR(bagQHTML('B')); scrollToEl('s1BBlock'); }
+  else if(k==='B'){ s1AskKind('B'); }
+  else { s1AskKind('C'); }
+}
+function s1AskKind(k){
+  appendR(`<div class="qblock" id="s1${k}qBlock">
+    <p class="key-q">봉투 ${k}에서 붕어빵을 한 개 꺼낼 때, <span class="em">팥붕어빵이 나오는 일</span>은 어떨까요?</p>
+    ${choiceCol('s1'+k+'q', CHANCE_OPTS)}
+    <div class="feedback" id="s1${k}qFb"></div>
+  </div>`);
+  markShown('s1'+k+'q','s1'+k+'qBlock');
+  scrollToEl('s1'+k+'qBlock');
+}
+function s1BqPick(key, btn){
+  if(!choiceGrade('s1Bq', btn, key==='never', RETHINK)) return;
+  setFb('s1BqFb',true,'✅ 맞아요. 봉투 B에는 팥붕어빵이 하나도 없어요.');
+  appendR(bagQHTML('C')); scrollToEl('s1CBlock');
+}
+function s1CqPick(key, btn){
+  if(!choiceGrade('s1Cq', btn, key==='always', RETHINK)) return;
+  setFb('s1CqFb',true,'✅ 맞아요. 봉투 C의 붕어빵은 모두 팥붕어빵이에요.');
+  appendR(`<div class="qblock" id="s1End">
+    <div class="note-box">봉투 B처럼 <span class="kw">절대로 일어나지 않는 일</span>, 봉투 C처럼 <span class="kw">반드시 일어나는 일</span>도 확률로 나타낼 수 있어요. 왼쪽 수직선에서 세 확률의 위치를 비교해 봐요.</div>
+    <div class="btn-row"><button class="btn" id="s1NextBtn" onclick="this.disabled=true;stage2()">다음: 내가 만드는 봉투 →</button></div>
+  </div>`);
+  scrollToEl('s1End');
+}
+
+/* ════════════════════════════════
+   3단계: 내가 만드는 봉투 — 확률을 1보다 크게, 0보다 작게 만들 수 있을까?
+════════════════════════════════ */
+const S2 = { k:3, hitMax:false, hitMin:false, msg:'' };
+function fishSVG(x, y, bean){
+  const body = '#f0b960', edge = '#a16207';
+  return `<g transform="translate(${x} ${y})">
+    <path d="M24 0 L40 -13 L37 0 L40 13 Z" fill="${body}" stroke="${edge}" stroke-width="1.6" stroke-linejoin="round"/>
+    <ellipse cx="0" cy="0" rx="28" ry="16" fill="${body}" stroke="${edge}" stroke-width="1.8"/>
+    <path d="M-6 -15 q4 15 0 30 M4 -14 q4 14 0 28 M14 -11 q3 11 0 22" fill="none" stroke="${edge}" stroke-width="1" opacity=".55"/>
+    <circle cx="-16" cy="-4" r="2.6" fill="#1a1a2e"/>
+    <ellipse cx="2" cy="3" rx="9" ry="5.5" fill="${bean?'#7c2d12':'#fde68a'}" stroke="${bean?'#451a03':'#ca8a04'}" stroke-width="1.2"/>
+    <text x="0" y="31" text-anchor="middle" font-size="11.5" font-weight="800" fill="${bean?'#7c2d12':'#b45309'}">${bean?'팥':'슈크림'}</text>
+  </g>`;
+}
+function bagFishSVG(k){
+  let s = `<svg viewBox="0 0 420 170" style="width:100%;height:auto;display:block">`;
+  s += `<rect x="40" y="10" width="340" height="152" rx="18" fill="#f6ead6" stroke="#a07a46" stroke-width="2.4"/>`;
+  for(let i=0;i<6;i++){ const c=i%3, r=Math.floor(i/3); s += fishSVG(110+c*100, 50+r*66, i<k); }
+  return s + `</svg>`;
+}
+function s2LineSVG(k){
+  const W=420, X=v=>70+280*v, ay=62;
+  let s = `<svg viewBox="0 0 ${W} 112">`;
+  s += `<text x="${X(-0.155)}" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="#9090b0">0보다</text><text x="${X(-0.155)}" y="34" text-anchor="middle" font-size="11" font-weight="800" fill="#9090b0">작은 곳</text>`;
+  s += `<text x="${X(1.155)}" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="#9090b0">1보다</text><text x="${X(1.155)}" y="34" text-anchor="middle" font-size="11" font-weight="800" fill="#9090b0">큰 곳</text>`;
+  s += `<line x1="${X(-0.2)}" y1="${ay}" x2="${X(0)}" y2="${ay}" stroke="#9090b0" stroke-width="2" stroke-dasharray="5 4"/><line x1="${X(1)}" y1="${ay}" x2="${X(1.2)}" y2="${ay}" stroke="#9090b0" stroke-width="2" stroke-dasharray="5 4"/>`;
+  s += `<line x1="${X(0)}" y1="${ay}" x2="${X(1)}" y2="${ay}" stroke="#1a1a2e" stroke-width="2.6"/>`;
+  for(let j=0;j<=6;j++){
+    const x = X(j/6);
+    s += `<line x1="${x.toFixed(1)}" y1="${ay-6}" x2="${x.toFixed(1)}" y2="${ay+6}" stroke="#1a1a2e" stroke-width="${j%6===0?2.2:1.4}"/>`;
+    s += (j===0||j===6) ? `<text x="${x.toFixed(1)}" y="${ay+26}" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a2e">${j/6}</text>` : svgFrac(x, ay+22, j, 6, 11, '#4a4a6a');
+  }
+  const px = X(k/6);
+  s += `<circle cx="${px.toFixed(1)}" cy="${ay}" r="8" fill="#f59e0b" stroke="#fff" stroke-width="2.4"/>`;
+  s += `<polygon points="${(px-6).toFixed(1)},${ay-17} ${(px+6).toFixed(1)},${ay-17} ${px.toFixed(1)},${ay-11}" fill="#f59e0b"/>`;
+  s += `<rect x="${(px-17).toFixed(1)}" y="${ay-49}" width="34" height="32" rx="7" fill="#f59e0b"/>` + svgFrac(px, ay-34, k, 6, 11.5, '#fff');
+  return s + `</svg>`;
+}
+function s2Left(){
+  return `<div class="exp-head"><span class="exp-badge">실험</span><span>붕어빵 6개가 든 봉투에서 붕어빵을 한 개 임의로 꺼낸다.</span></div>
+    ${bagFishSVG(S2.k)}
+    <div class="s2-ctrl"><button class="btn btn-soft" id="s2Minus" onclick="s2Adj(-1)">▼ 팥붕어빵 줄이기</button><button class="btn btn-soft" id="s2Plus" onclick="s2Adj(1)">▲ 팥붕어빵 늘리기</button></div>
+    <div class="s2-count">팥붕어빵 <b class="bn">${S2.k}</b>개 · 슈크림붕어빵 <b class="cr">${6-S2.k}</b>개</div>
+    <div class="s2-msg" id="s2Msg">${S2.msg}</div>
+    <div class="graph-box">${s2LineSVG(S2.k)}</div>
+    <p class="board-tip">주황색 점 = 팥붕어빵을 꺼낼 확률</p>`;
+}
+function s2Adj(d){
+  const nk = S2.k+d;
+  if(nk>6){ S2.hitMax = true; S2.msg = '🚫 붕어빵 6개가 모두 팥붕어빵이에요. 더 늘릴 수 없어요!'; }
+  else if(nk<0){ S2.hitMin = true; S2.msg = '🚫 팥붕어빵이 하나도 없어요. 더 줄일 수 없어요!'; }
+  else { S2.k = nk; S2.msg = ''; }
+  stageBox('L',2).innerHTML = s2Left();
+  if(S2.msg) flashRef('s2Msg');
+  s2Status();
+}
+function s2ChipsHTML(){
+  return `<span class="chip ${S2.hitMax?'on':''}">${S2.hitMax?'✔':'○'} 1보다 크게 해 보기</span><span class="chip ${S2.hitMin?'on':''}">${S2.hitMin?'✔':'○'} 0보다 작게 해 보기</span>`;
+}
+function s2Status(){
+  const c = $('s2Chips'); if(c) c.innerHTML = s2ChipsHTML();
+  if(S2.hitMax && S2.hitMin && !$('s2bBlock') && $('s2aBlock')){
+    appendR(`<div class="qblock" id="s2bBlock">
+      <p class="key-q">팥붕어빵을 꺼낼 확률을 1보다 크게 하거나 0보다 작게 <span class="em">만들 수 있었나요</span>?</p>
+      ${choiceCol('s2b',[
+        {key:'none', label:'둘 다 만들 수 없었어요.'},
+        {key:'big', label:'1보다 크게는 만들 수 있었어요.'},
+        {key:'small', label:'0보다 작게는 만들 수 있었어요.'},
+        {key:'both', label:'둘 다 만들 수 있었어요.'}])}
+      <div class="feedback" id="s2bFb"></div>
+    </div>`);
+    markShown('s2b','s2bBlock');
+    scrollToEl('s2bBlock');
+  }
+}
+function stage2(){
+  enterStage(2);
+  S2.k = 3; S2.hitMax = false; S2.hitMin = false; S2.msg = '';
+  L(s2Left());
+  R(`<div class="panel-title"><span class="step-badge">3</span>내가 만드는 봉투</div>
+    <p class="lead">이번에는 봉투 속 붕어빵을 내 마음대로 바꿔 봐요. 붕어빵은 언제나 <b>6개</b>예요.</p>
+    <div class="qblock" style="border-top:none" id="s2aBlock">
+      <p class="key-q task">왼쪽 버튼으로 팥붕어빵의 개수를 바꿔서, 주황색 점을 <span class="em">1보다 큰 곳</span>과 <span class="em">0보다 작은 곳</span>으로 각각 옮겨 보자.</p>
+      <div class="chips" id="s2Chips">${s2ChipsHTML()}</div>
+    </div>`);
+}
+function s2bPick(k, btn){
+  if(!choiceGrade('s2b', btn, k==='none', RETHINK)) return;
+  setFb('s2bFb',true,'✅ 맞아요. 아무리 바꿔도 점은 0과 1 사이를 벗어나지 않았어요.');
+  appendR(`<div class="qblock" id="s2cBlock">
+    <p class="key-q task">왜 그럴까요? 붕어빵 6개가 든 봉투에서 빈칸을 채워 보자.</p>
+    <div class="fline"><input class="blank" id="s2c1" autocomplete="off"> ≤ (팥붕어빵의 개수) ≤ <input class="blank" id="s2c2" autocomplete="off"></div>
+    <p class="lead" style="text-align:center;margin:0">각 변을 6으로 나누면</p>
+    <div class="fline">${probHTML('s2c3')} ≤ (팥붕어빵을 꺼낼 확률) ≤ ${probHTML('s2c4')}</div>
+    <p class="lead" style="text-align:center;margin:0">약분하면</p>
+    <div class="fline"><input class="blank" id="s2c5" autocomplete="off"> ≤ (팥붕어빵을 꺼낼 확률) ≤ <input class="blank" id="s2c6" autocomplete="off"></div>
+    <div class="btn-row"><button class="btn btn-check" id="s2cBtn" onclick="s2cCheck()">확인</button></div>
+    <div class="feedback" id="s2cFb"></div>
+  </div>`);
+  scrollToEl('s2cBlock');
+}
+function s2cCheck(){
+  if($('s2cBtn').disabled) return;
+  if(!graded('s2c', checkItems([{id:'s2c1',val:0},{id:'s2c2',val:6},{id:'s2c3N',val:0},{id:'s2c3D',val:6},{id:'s2c4N',val:6},{id:'s2c4D',val:6},{id:'s2c5',val:0},{id:'s2c6',val:1}], 's2cFb'))) return;
+  firstTry('s2c', true);
+  $('s2cBtn').disabled = true;
+  setFb('s2cFb',true,'✅ 맞아요!');
+  appendR(`<div class="qblock" id="s2dBlock">
+    <p class="key-q task">이번에는 <span class="em">일반적인 경우</span>로 빈칸을 채워 보자.</p>
+    <div class="prob-box">어떤 사건이 일어나는 경우의 수를 ${itv('a')}, 일어날 수 있는 모든 경우의 수를 ${itv('n')}이라 하면 그 사건이 일어날 확률은 ${itp()} = ${sfrac(itv('a'),itv('n'))}이다.</div>
+    <div class="fline">0 ≤ ${itv('a')} ≤ <input class="blank" id="s2d1" autocomplete="off"></div>
+    <p class="lead" style="text-align:center;margin:0">각 변을 ${itv('n')}으로 나누면</p>
+    <div class="fline"><input class="blank" id="s2d2" autocomplete="off"> ≤ ${itp()} ≤ <input class="blank" id="s2d3" autocomplete="off"></div>
+    <p class="sub" style="text-align:center">문자는 영어 소문자로 써요.</p>
+    <div class="btn-row"><button class="btn btn-check" id="s2dBtn" onclick="s2dCheck()">확인</button></div>
+    <div class="feedback" id="s2dFb"></div>
+  </div>`);
+  scrollToEl('s2dBlock');
+}
+function s2dCheck(){
+  if($('s2dBtn').disabled) return;
+  if(!graded('s2d', checkItems([{txt:'s2d1',acc:['n','N','𝑛']},{id:'s2d2',val:0},{id:'s2d3',val:1}], 's2dFb'))) return;
+  firstTry('s2d', true);
+  $('s2dBtn').disabled = true;
+  setFb('s2dFb',true,'✅ 맞아요!');
+  appendR(`<div class="qblock" id="s2End">
+    <div class="note-box">사건이 일어나는 경우의 수는 0개보다 적을 수도, 모든 경우의 수보다 많을 수도 없어요. 그래서 어떤 사건이 일어날 확률 ${itp()}의 값의 범위는 <span class="kw">0 ≤ ${itp()} ≤ 1</span>이에요.</div>
+    <div class="btn-row"><button class="btn" id="s2NextBtn" onclick="this.disabled=true;stage3()">다음: 확률의 성질 →</button></div>
+  </div>`);
+  scrollToEl('s2End');
+}
+
+/* ════════════════════════════════
+   4단계: 확률의 성질 (정리 팝업 → O, X 확인)
+   팝업 빈칸: ❷❸의 수(0, 1)는 직접 쓰고, 사건의 말은 '절대로 일어나지 않는 사건 / 반드시 일어나는 사건' 중 하나를 고름
+   ❷와 ❸의 순서를 바꿔 써도 각 줄이 맞으면 인정
+════════════════════════════════ */
+const PP = { 2:null, 3:null };
+const PP_LABEL = { never:'절대로 일어나지 않는 사건', always:'반드시 일어나는 사건' };
+let termTimer = null;
+function propLeftSVG(revealed){
+  const X0=46, X1=374, ay=128;
+  let s = `<svg viewBox="0 0 420 200" style="width:100%;height:auto;display:block">`;
+  const bubble = (cx, lines, color)=>{
+    let t = `<rect x="${cx-74}" y="18" width="148" height="${lines.length*20+14}" rx="10" fill="#fff" stroke="${color}" stroke-width="2"/>`;
+    lines.forEach((ln,i)=>{ t += `<text x="${cx}" y="${40+i*20}" text-anchor="middle" font-size="13.5" font-weight="800" fill="${color}">${ln}</text>`; });
+    return t;
+  };
+  if(revealed){
+    s += bubble(84, ['절대로 일어나지','않는 사건의 확률'], '#2563eb') + bubble(336, ['반드시 일어나는','사건의 확률'], '#dc2626');
+  } else {
+    s += bubble(84, ['?'], '#9090b0') + bubble(336, ['?'], '#9090b0');
+  }
+  s += `<line x1="${X0}" y1="${revealed?72:52}" x2="${X0}" y2="${ay-12}" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="3 3"/><line x1="${X1}" y1="${revealed?72:52}" x2="${X1}" y2="${ay-12}" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="3 3"/>`;
+  s += `<rect x="${X0}" y="${ay-7}" width="${X1-X0}" height="14" rx="7" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.6"/>`;
+  s += `<circle cx="${X0}" cy="${ay}" r="9" fill="#2563eb"/><circle cx="${X1}" cy="${ay}" r="9" fill="#dc2626"/>`;
+  s += `<text x="${X0}" y="${ay+34}" text-anchor="middle" font-size="18" font-weight="800" fill="#2563eb">0</text><text x="${X1}" y="${ay+34}" text-anchor="middle" font-size="18" font-weight="800" fill="#dc2626">1</text>`;
+  s += `<text x="210" y="${ay+34}" text-anchor="middle" font-size="16" font-weight="800" fill="#1a1a2e">0 ≤ (확률) ≤ 1</text>`;
+  return s + `</svg>`;
+}
+function s3Left(revealed){
+  return `<div class="exp-head"><span class="exp-badge">정리</span><span>확률은 0부터 1까지의 수로 나타내요.</span></div>
+    <div class="graph-box">${propLeftSVG(revealed)}</div>`;
+}
+function stage3(){
+  enterStage(3);
+  PP[2] = null; PP[3] = null;
+  L(s3Left(false));
+  R(`<div class="panel-title"><span class="step-badge">4</span>확률의 성질</div>
+    <div class="def-box term-wait" id="s3def"><div class="dt">확률의 성질</div>
+      ❶ 어떤 사건이 일어날 확률을 ${itp()}라고 하면 0 ≤ ${itp()} ≤ 1이다.<br>
+      ❷ 절대로 일어나지 않는 사건의 확률은 <b class="kw">0</b>이다.<br>
+      ❸ 반드시 일어나는 사건의 확률은 <b class="kw">1</b>이다.</div>
+    <div id="s3After"></div>`);
+  clearTimeout(termTimer);
+  termTimer = setTimeout(()=>{ if($('s3def')) openPropPop(); }, 300);
+}
+function ppHTML(line){
+  const opts = shuffle(['never','always']);
+  return `<span class="pp" id="pp${line}">${opts.map(o=>`<button data-v="${o}" onclick="ppPick(${line},'${o}')">${PP_LABEL[o]}</button>`).join('')}</span>`;
+}
+function openPropPop(){
+  $('termBox').innerHTML = `<div class="term-tag">📘 개념 정리</div>
+    <div class="modal-text" style="margin-bottom:8px">지금까지 알아낸 <b>확률의 성질</b>을 정리해 봐요.<br><span style="color:var(--ink2);font-weight:600">빈칸에 알맞은 수를 쓰고, 알맞은 말을 하나씩 골라 보세요.</span></div>
+    <div class="def-box" id="ppBox"><div class="dt">확률의 성질</div>
+      <div class="pp-line">❶ 어떤 사건이 일어날 확률을 ${itp()}라고 하면 <input class="blank" id="ppN0" inputmode="numeric" autocomplete="off"> ≤ ${itp()} ≤ <input class="blank" id="ppN1" inputmode="numeric" autocomplete="off">이다.</div>
+      <div class="pp-line">❷ ${ppHTML(2)}<span class="nw">의 확률은 <input class="blank" id="ppN2" inputmode="numeric" autocomplete="off">이다.</span></div>
+      <div class="pp-line">❸ ${ppHTML(3)}<span class="nw">의 확률은 <input class="blank" id="ppN3" inputmode="numeric" autocomplete="off">이다.</span></div></div>
+    <div class="feedback" id="termFb"></div>
+    <div class="btn-row"><button class="modal-btn" id="termBtn" onclick="propCheck()">확인</button></div>`;
+  $('termModal').classList.add('show');
+  ['ppN0','ppN1','ppN2','ppN3'].forEach(id=>$(id).addEventListener('keydown', e=>{ if(e.key==='Enter') propCheck(); }));
+}
+function ppPick(line, v){
+  if($('termBtn') && $('termBtn').disabled) return;
+  PP[line] = v;
+  document.querySelectorAll('#pp'+line+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  $('pp'+line).classList.remove('wrong');
+}
+function closeTermPop(){ clearTimeout(termTimer); $('termModal').classList.remove('show'); }
+function propCheck(){
+  if(!$('termBtn') || $('termBtn').disabled) return;
+  const n0 = $('ppN0').value.trim(), n1 = $('ppN1').value.trim(), n2 = $('ppN2').value.trim(), n3 = $('ppN3').value.trim();
+  if(!PP[2] || !PP[3] || n0==='' || n1==='' || n2==='' || n3===''){ setFb('termFb',false,'말을 모두 고르고, 빈칸을 모두 채워 주세요.'); return; }
+  const want = v => v==='never' ? '0' : '1';
+  const ok = n0==='0' && n1==='1' && PP[2]!==PP[3] && n2===want(PP[2]) && n3===want(PP[3]);
+  firstTry('prop', ok);
+  if(!ok){
+    ['ppN0','ppN1','pp2','pp3','ppN2','ppN3'].forEach(id=>$(id).classList.add('wrong'));
+    setFb('termFb',false,RETHINK);
+    return;
+  }
+  ['ppN0','ppN1','pp2','pp3','ppN2','ppN3'].forEach(id=>{ $(id).classList.remove('wrong'); $(id).classList.add('correct'); });
+  setFb('termFb',true,'✅ 맞아요!');
+  $('termBtn').disabled = true;
+  document.querySelectorAll('#ppBox button, #ppBox input').forEach(x=>x.disabled=true);
+  setTimeout(()=>{
+    closeTermPop();
+    const el = $('s3def'); if(!el) return;
+    el.classList.remove('term-wait'); flashRef(el);
+    stageBox('L',3).innerHTML = s3Left(true);
+    s3StartOX();
+  }, 600);
+}
+// O, X 확인 — 세 문장을 모두 맞혀야 통과. 틀리면 잠깐 잠근 뒤 틀린 줄을 새 문장(참·거짓 무작위)으로 바꿈
+const OX_POOL = [
+  {t:'어떤 사건이 일어날 확률은 1보다 클 수 없다.', a:true},
+  {t:'어떤 사건이 일어날 확률은 0보다 작을 수 없다.', a:true},
+  {t:`확률이 ${sfrac(3,2)}인 사건이 있다.`, a:false},
+  {t:'확률이 1.2인 사건이 있다.', a:false},
+  {t:'확률이 0인 사건도 가끔은 일어난다.', a:false},
+  {t:'확률이 1인 사건은 일어나지 않을 수도 있다.', a:false},
+  {t:'한 개의 주사위를 던질 때, 7의 눈이 나올 확률은 0이다.', a:true},
+  {t:'한 개의 주사위를 던질 때, 6 이하의 눈이 나올 확률은 1이다.', a:true},
+  {t:'한 개의 동전을 던질 때, 앞면이 나올 확률은 1이다.', a:false},
+  {t:'주머니 속에 빨간 공만 5개 들어 있을 때, 파란 공이 나올 확률은 1이다.', a:false},
+];
+const S3 = { rows:[], sel:{}, locked:false };
+function s3StartOX(){
+  if($('s3bBlock')) return;
+  do { S3.rows = pickN(OX_POOL,3); } while(S3.rows.every(r=>r.a) || S3.rows.every(r=>!r.a));
+  S3.sel = {}; S3.locked = false;
+  $('s3After').innerHTML = `<div class="qblock" id="s3bBlock">
+    <p class="key-q task">위 성질을 떠올리며, 각 문장이 옳으면 <span class="em">O</span>, 옳지 않으면 <span class="em">X</span>를 골라 보자.</p>
+    <div id="oxList"></div>
+    <div class="btn-row"><button class="btn btn-check" id="s3bBtn" onclick="s3bCheck()">확인</button></div>
+    <div class="feedback" id="s3bFb"></div>
+  </div>`;
+  s3RenderOX();
+  markShown('s3b','s3bBlock');
+  scrollToEl('s3bBlock');
+}
+function s3RenderOX(){
+  $('oxList').innerHTML = S3.rows.map((it,i)=>`<div class="ox-row"><span>${it.t}</span><span class="ox-btns">${['O','X'].map(v=>`<button class="ox-b${S3.sel[i]===v?' on':''}" ${S3.locked?'disabled':''} onclick="oxPick(${i},'${v}')">${v}</button>`).join('')}</span></div>`).join('');
+}
+function oxPick(i, v){ if(S3.locked || $('s3bBtn').disabled) return; S3.sel[i] = v; s3RenderOX(); }
+function s3bCheck(){
+  if($('s3bBtn').disabled) return;
+  if(S3.rows.some((_,i)=>!S3.sel[i])){ setFb('s3bFb',false,'모든 문장에 O 또는 X를 골라 주세요.'); return; }
+  if(!readGate('s3b','s3bFb')) return;
+  const wrong = S3.rows.map((it,i)=>((S3.sel[i]==='O')!==it.a) ? i : -1).filter(i=>i>=0);
+  firstTry('s3b', !wrong.length);
+  $('s3bBtn').disabled = true; S3.locked = true; s3RenderOX();
+  if(!wrong.length){
+    setFb('s3bFb',true,'✅ 모두 맞았어요!');
+    appendR(`<div class="qblock" id="s3End">
+      <div class="btn-row"><button class="btn" id="s3NextBtn" onclick="this.disabled=true;stage4()">다음: 문제 1 (기차표) →</button></div>
+    </div>`);
+    scrollToEl('s3End');
+    return;
+  }
+  lockTimer(lockSecs('s3b'), 's3bFb', RETHINK, '다시 고를 수 있어요', $('s3bBtn'), ()=>{
+    const used = new Set(S3.rows.map(r=>r.t));
+    wrong.forEach(i=>{ const nx = pick1(OX_POOL.filter(x=>!used.has(x.t))); used.add(nx.t); S3.rows[i] = nx; delete S3.sel[i]; });
+    S3.locked = false; $('s3bBtn').disabled = false; s3RenderOX();
+    setFb('s3bFb',false,RETHINK+'<br><span class="sub">새 문장으로 바뀐 줄이 있어요. 다시 골라 보세요.</span>');
+    markShown('s3b','s3bBlock');
+  });
+}
+
+/* ════════════════════════════════
+   5단계: 문제 1 (기차표 예매)
+════════════════════════════════ */
+const TRAIN = [['1호차',4],['2호차',1],['3호차',2],['4호차',0]];
+function trainLeft(){
+  return `<div class="exp-head"><span class="exp-badge">문제 1</span><span>기차표 예매 앱 화면</span></div>
+    <div class="phone"><div class="ph-top"><span>‹</span><span>좌석 선택</span><span>☰</span></div>
+      <div class="ph-head">일반실(잔여 7석)</div>
+      <ul>${TRAIN.map(([c,n])=>`<li class="${n?'':'sold'}">${c}(${n?n+'석':'매진'})</li>`).join('')}</ul>
+      <div class="ph-foot">특실(매진)</div></div>`;
+}
+const TRAIN_Q = {
+  a:{ no:'(1)', what:'일반실 좌석', fav:7 },
+  b:{ no:'(2)', what:'4호차 좌석', fav:0 },
+  c:{ no:'(3)', what:'2호차 좌석', fav:1 }
+};
+function trainQHTML(k){
+  const q = TRAIN_Q[k];
+  return `<div class="qblock" id="s4${k}Block">
+    <p class="key-q task">${q.no} <span class="em">${josa(q.what,'이','가')} 배정될 확률</span>을 구해 보자.</p>
+    <div class="count-row">${josa(q.what,'이','가')} 배정되는 경우의 수: <input class="blank" id="s4${k}1" autocomplete="off"></div>
+    <div class="fline"><span class="lab">(${josa(q.what,'이','가')} 배정될 확률)</span> = ${probHTML('s4'+k+'f')}</div>
+    <div class="btn-row"><button class="btn btn-check" id="s4${k}Btn" onclick="s4Check('${k}')">확인</button></div>
+    <div class="feedback" id="s4${k}Fb"></div>
+  </div>`;
+}
+function stage4(){
+  enterStage(4);
+  L(trainLeft());
+  R(`<div class="panel-title"><span class="step-badge">5</span>문제 1 (기차표)</div>
+    <div class="prob-box"><b>문제 1</b> 민수가 기차표를 예매하는데 좌석이 임의로 배정된다고 한다. 왼쪽 그림과 같이 일반실만 7석이 남아 있는 상태에서 한 좌석을 예매할 때, 다음을 구하시오.<br>(1) 일반실 좌석이 배정될 확률<br>(2) 4호차 좌석이 배정될 확률<br>(3) 2호차 좌석이 배정될 확률</div>
+    <div class="qblock" style="border-top:none" id="s4tBlock">
+      <p class="key-q task">먼저, 한 좌석이 배정될 때 <span class="em">일어날 수 있는 모든 경우의 수</span>를 구해 보자.</p>
+      <div class="count-row">모든 경우의 수: <input class="blank" id="s4t" autocomplete="off"></div>
+      <div class="btn-row"><button class="btn btn-check" id="s4tBtn" onclick="s4tCheck()">확인</button></div>
+      <div class="feedback" id="s4tFb"></div>
+    </div>`);
+}
+function s4tCheck(){
+  if($('s4tBtn').disabled) return;
+  if(!graded('s4t', checkItems([{id:'s4t', val:7}], 's4tFb'))) return;
+  firstTry('s4t', true);
+  $('s4tBtn').disabled = true;
+  setFb('s4tFb',true,'✅ 맞아요!');
+  appendR(trainQHTML('a') + `<div style="margin-top:-4px">${PROB_NOTE}</div>`);
+  scrollToEl('s4aBlock');
+}
+function s4Check(k){
+  if($('s4'+k+'Btn').disabled) return;
+  const q = TRAIN_Q[k];
+  if(!graded('s4'+k, checkItems([{id:'s4'+k+'1', val:q.fav}, {prob:'s4'+k+'f', ans:reduce(q.fav,7)}], 's4'+k+'Fb'))) return;
+  firstTry('s4'+k, true);
+  $('s4'+k+'Btn').disabled = true;
+  setFb('s4'+k+'Fb',true,'✅ 정답이에요!');
+  if(k==='a'){ appendR(trainQHTML('b')); scrollToEl('s4bBlock'); }
+  else if(k==='b'){ appendR(trainQHTML('c')); scrollToEl('s4cBlock'); }
+  else {
+    appendR(`<div class="qblock" id="s4End">
+      <div class="note-box">(1) 남은 좌석이 모두 일반실이라서 일반실 좌석은 <span class="kw">반드시</span> 배정돼요. → 확률 1<br>(2) 4호차는 매진이라서 4호차 좌석은 <span class="kw">절대로</span> 배정되지 않아요. → 확률 0</div>
+      <div class="btn-row"><button class="btn" id="s4NextBtn" onclick="this.disabled=true;stage5()">다음: 문제 2 (생활 속 표현) →</button></div>
+    </div>`);
+    scrollToEl('s4End');
+  }
+}
+
+/* ════════════════════════════════
+   6단계: 문제 2 (생활 속 확률 표현) — 표현에 해당하는 확률 고르기
+════════════════════════════════ */
+const VALS = { v0:[0,1], v1e4:[1,10000], v10:[1,10], v2:[1,2], v910:[9,10], v1:[1,1] };
+const EXPR = {
+  baekbal:{ name:'백발백중', short:'백발백중', mean:'백 번 쏘아 백 번 맞힌다.', ev:'화살이 과녁에 맞을 확률', v:'v1', color:'#4f46e5' },
+  sun:{ name:'해가 서쪽에서 뜬다', short:'해가 서쪽에서 뜬다', mean:'절대로 있을 수 없는 일을 이르는 말이다.', ev:'해가 서쪽에서 뜰 확률', v:'v0', color:'#ea580c',
+    ok:'해는 언제나 동쪽에서 떠요. 절대로 일어나지 않는 일이에요.' },
+  half:{ name:'반반', short:'반반', mean:'어떤 일이 일어날 가능성과 일어나지 않을 가능성이 서로 같다.<br><span class="sub">예) "내일 비가 올지 안 올지는 반반이야."</span>', ev:'내일 비가 올 확률', v:'v2', color:'#0891b2',
+    ok:'일어날 가능성과 일어나지 않을 가능성이 같으니까 확률은 2가지 중 1가지예요.' },
+  gusa:{ name:'구사일생(九死一生)', short:'구사일생', mean:'아홉 번 죽을 뻔하다가 한 번 살아난다.', ev:'살아날 확률', v:'v10', color:'#16a34a',
+    ok:'모두 10번 중에 살아난 것은 1번이에요.' },
+  yeol9:{ name:'열에 아홉', short:'열에 아홉', mean:'열 번 가운데 아홉 번은 그렇다.', ev:'그 일이 일어날 확률', v:'v910', color:'#9333ea',
+    ok:'10번 중 9번이니까 1에 가까운 확률이에요.' },
+  man1:{ name:'만에 하나', short:'만에 하나', mean:'만 번 가운데 한 번 있을까 말까 할 만큼 아주 드물다.', ev:'그 일이 일어날 확률', v:'v1e4', color:'#be123c',
+    ok:'0은 아니지만, 0에 아주 가까운 확률이에요.' },
+  baekseung:{ name:'백전백승(百戰百勝)', short:'백전백승', mean:'백 번 싸워 백 번 모두 이긴다.', ev:'싸워서 이길 확률', v:'v1', color:'#0f766e',
+    ok:'싸우면 반드시 이기니까 확률은 1이에요.' },
+  tree:{ name:'열 번 찍어 안 넘어가는 나무 없다', short:'열 번 찍어 안 넘어가는 나무 없다', mean:'어떤 나무든 도끼로 열 번 찍으면 결국 넘어간다.', ev:'나무를 열 번 찍었을 때 나무가 넘어갈 확률', v:'v1', color:'#a16207',
+    ok:'어떤 나무든 반드시 넘어가니까 확률은 1이에요.' }
+};
+const S5 = { seq:[], i:0, placed:[] };
+function s5Left(){
+  const marks = S5.placed.map((k,i)=>({ v:VALS[EXPR[k].v][0]/VALS[EXPR[k].v][1], tag:i+1, color:EXPR[k].color }));
+  return `<div class="exp-head"><span class="exp-badge">문제 2</span><span>생활 속 표현을 확률로 나타내어 수직선 위에 놓아 봐요.</span></div>
+    <div class="graph-box">${nlSVG(marks)}</div>
+    <div class="nl-legend">${S5.placed.map((k,i)=>`<div><span class="nb" style="background:${EXPR[k].color}">${i+1}</span>${EXPR[k].short} <b>→ ${pval(VALS[EXPR[k].v])}</b></div>`).join('')}</div>
+    <p class="board-tip">확률을 맞게 고르면 표현이 수직선 위에 놓여요.</p>`;
+}
+function exCardHTML(k, done){
+  const e = EXPR[k];
+  return `<div class="ex-card${done?' done':''}"><div class="nm">${e.name}</div><div class="mean">뜻: ${e.mean}</div><div class="ev">→ ${e.ev}${done?` = <b>${pval(VALS[e.v])}</b>`:''}</div></div>`;
+}
+function stage5(){
+  enterStage(5);
+  S5.seq = shuffle(['sun','half','gusa', pick1(['yeol9','man1']), pick1(['baekseung','tree'])]);
+  S5.i = 0; S5.placed = ['baekbal'];
+  L(s5Left());
+  R(`<div class="panel-title"><span class="step-badge">6</span>문제 2 (생활 속 표현)</div>
+    <div class="prob-box"><b>문제 2</b> 우리 생활 주변에서 확률과 관련된 표현을 찾고, 그 표현을 확률로 나타내어 보자.</div>
+    <p class="lead"><b>예시</b> 교과서에 나온 표현이에요.</p>
+    ${exCardHTML('baekbal', true)}
+    <p class="sub">백 번 쏘아 백 번 모두 맞히니까, 화살이 과녁에 반드시 맞아요.</p>
+    ${s5QHTML(0)}`);
+  markShown('s5q0','s5q0Block');
+}
+function s5QHTML(i){
+  const k = S5.seq[i], e = EXPR[k];
+  const others = pickN(Object.keys(VALS).filter(v=>v!==e.v), 3);
+  const opts = shuffle([e.v, ...others]);
+  return `<div class="qblock" id="s5q${i}Block">
+    <div class="progress" style="text-align:left">표현 ${i+1} / ${S5.seq.length}</div>
+    ${exCardHTML(k, false)}
+    <p class="key-q">이 표현에 해당하는 <span class="em">확률</span>을 골라 보자.</p>
+    <div class="choice-row" id="s5q${i}Row">${opts.map(v=>`<button class="choice-btn" data-k="${v}" onclick="s5Pick(${i},'${v}',this)">${pval(VALS[v])}</button>`).join('')}</div>
+    <div class="feedback" id="s5q${i}Fb"></div>
+  </div>`;
+}
+function s5Pick(i, v, btn){
+  const k = S5.seq[i];
+  if(!choiceGrade('s5q'+i, btn, v===EXPR[k].v, RETHINK)) return;
+  setFb('s5q'+i+'Fb',true,'✅ 맞아요! '+EXPR[k].ok);
+  S5.placed.push(k);
+  stageBox('L',5).innerHTML = s5Left();
+  S5.i = i+1;
+  if(S5.i < S5.seq.length){
+    appendR(s5QHTML(S5.i));
+    markShown('s5q'+S5.i, 's5q'+S5.i+'Block');
+    scrollToEl('s5q'+S5.i+'Block');
+  } else {
+    appendR(`<div class="qblock" id="s5End">
+      <div class="note-box">생활 속 표현도 확률로 나타내면 모두 <span class="kw">0과 1 사이</span>(0과 1 포함)에 놓여요. 왼쪽 수직선을 확인해 봐요.</div>
+      <div class="btn-row"><button class="btn" id="s5NextBtn" onclick="this.disabled=true;goToPractice()">문제풀이 시작 →</button></div>
+    </div>`);
+    scrollToEl('s5End');
+  }
+}
+
+/* ════════════════════════════════
+   문제 만들기
+   레벨1(방식1): 확률 구하기 — 0인 문제, 1인 문제, 그 사이인 문제를 한 문제씩 섞음
+   레벨2(방식2): 확률을 주고 개수·수를 구하기 (주어진 값 ↔ 미지수 바꿔치기)
+════════════════════════════════ */
+const DICE_EV = [
+  ['짝수의 눈', v=>v%2===0], ['홀수의 눈', v=>v%2===1], ['3의 배수의 눈', v=>v%3===0], ['4 이상의 눈', v=>v>=4],
+  ['2 이하의 눈', v=>v<=2], ['6의 약수의 눈', v=>6%v===0], ['소수의 눈', isPrime], ['5 이상의 눈', v=>v>=5], ['3 이하의 눈', v=>v<=3]
+];
+const DICE_ZERO = [['7의 눈', v=>v===7], ['7 이상의 눈', v=>v>=7], ['6보다 큰 눈', v=>v>6]];
+const DICE_ONE = [['6 이하의 눈', v=>v<=6], ['1 이상의 눈', v=>v>=1], ['7보다 작은 눈', v=>v<7]];
+function genDice(type){
+  const [nm,f] = pick1(type==='zero' ? DICE_ZERO : type==='one' ? DICE_ONE : DICE_EV);
+  const fav = [1,2,3,4,5,6].filter(f).length;
+  return { gen:'dice', type, text:`한 개의 주사위를 던질 때, ${josa(nm,'이','가')} 나올 확률을 구하시오.`, total:6, fav, p:reduce(fav,6),
+    evLabel:`${josa(nm,'이','가')} 나오는 경우의 수`, evName:`${josa(nm,'이','가')} 나올`, fig:{kind:'dice'} };
+}
+function genCards(type){
+  const N = pick1([10,12,15,20]);
+  let evs;
+  if(type==='zero'){ const m = N+randInt(1,5); evs = [[`${m} 이상의 수`, v=>v>=m], [`${N}보다 큰 수`, v=>v>N]]; }
+  else if(type==='one'){ const m = N+randInt(1,5); evs = [[`${N} 이하의 수`, v=>v<=N], [`${m}보다 작은 수`, v=>v<m], ['자연수', v=>v>=1]]; }
+  else { const k = randInt(3, N-3); evs = [['짝수', v=>v%2===0], ['홀수', v=>v%2===1], ['3의 배수', v=>v%3===0], ['4의 배수', v=>v%4===0], ['5의 배수', v=>v%5===0], ['소수', isPrime], [`${k} 이하의 수`, v=>v<=k]]; }
+  const [nm,f] = pick1(evs);
+  const fav = [...Array(N)].map((_,i)=>i+1).filter(f).length;
+  return { gen:'cards', type, text:`1부터 ${N}까지의 자연수가 각각 하나씩 적힌 ${N}장의 카드 중에서 한 장을 뽑을 때, ${josa(nm,'이','가')} 적힌 카드가 나올 확률을 구하시오.`, total:N, fav, p:reduce(fav,N),
+    evLabel:`${josa(nm,'이','가')} 적힌 카드가 나오는 경우의 수`, evName:`${josa(nm,'이','가')} 적힌 카드가 나올`, fig:{kind:'cards', N} };
+}
+function genBag(type){
+  const r = randInt(2,6), b = randInt(2,6), total = r+b;
+  let nm, fav;
+  if(type==='zero'){ nm = pick1(['노란 공','흰 공','검은 공']); fav = 0; }
+  else if(type==='one'){ nm = '빨간 공 또는 파란 공'; fav = total; }
+  else { const red = Math.random()<0.5; nm = red ? '빨간 공' : '파란 공'; fav = red ? r : b; }
+  return { gen:'bag', type, text:`주머니 속에 빨간 공 ${r}개, 파란 공 ${b}개가 들어 있다. 이 중에서 공 한 개를 꺼낼 때, ${josa(nm,'이','가')} 나올 확률을 구하시오.`, total, fav, p:reduce(fav,total),
+    evLabel:`${josa(nm,'이','가')} 나오는 경우의 수`, evName:`${josa(nm,'이','가')} 나올`, fig:{kind:'bag', r, b} };
+}
+// 레벨2
+function genBagRev01(){
+  const n = randInt(5,12), one = Math.random()<0.5, askRed = Math.random()<0.5;
+  const ans = one ? (askRed ? n : 0) : (askRed ? 0 : n);
+  return { gen:'bagRev01', rev:true, fig:{kind:'bagq', n}, unit:'개', what:askRed?'빨간 공의 개수':'파란 공의 개수', ans,
+    text:`주머니 속에 빨간 공과 파란 공이 모두 ${n}개 들어 있다. 이 중에서 공 한 개를 꺼낼 때, 빨간 공이 나올 확률이 ${one?1:0}이다. ${askRed?'빨간':'파란'} 공은 몇 개인지 구하시오.` };
+}
+function genClassRev01(){
+  const n = randInt(20,32), one = Math.random()<0.5, askYes = Math.random()<0.5;
+  const ans = one ? (askYes ? n : 0) : (askYes ? 0 : n);
+  return { gen:'classRev01', rev:true, fig:{kind:'class', n}, unit:'명', what:askYes?'안경을 쓴 학생 수':'안경을 쓰지 않은 학생 수', ans,
+    text:`어느 반 학생 ${n}명 중에서 한 명을 임의로 뽑을 때, 안경을 쓴 학생이 뽑힐 확률이 ${one?1:0}이다. 이 반에서 안경을 ${askYes?'쓴':'쓰지 않은'} 학생은 몇 명인지 구하시오.` };
+}
+function genCardRev(){
+  const N = randInt(10,20), one = Math.random()<0.5;
+  return { gen:'cardRev', rev:true, fig:{kind:'cards', N}, unit:'', what:'자연수 k의 값 중 가장 작은 수', ans: one ? N : N+1,
+    text: one ? `1부터 ${N}까지의 자연수가 각각 하나씩 적힌 ${N}장의 카드 중에서 한 장을 뽑을 때, <span class="it">k</span> 이하의 수가 적힌 카드가 나올 확률이 1이다. 이때 자연수 <span class="it">k</span>의 값 중 가장 작은 수를 구하시오.`
+              : `1부터 ${N}까지의 자연수가 각각 하나씩 적힌 ${N}장의 카드 중에서 한 장을 뽑을 때, <span class="it">k</span> 이상의 수가 적힌 카드가 나올 확률이 0이다. 이때 자연수 <span class="it">k</span>의 값 중 가장 작은 수를 구하시오.` };
+}
+// 약분이 되는 경우만 (그대로 읽으면 안 되게)
+function genBagRevMid(){
+  let n, c;
+  do { n = randInt(8,20); c = randInt(2,n-2); } while(gcd(n,c)===1);
+  const p = reduce(c,n);
+  return { gen:'bagRevMid', rev:true, fig:{kind:'bagq', n}, unit:'개', what:'빨간 공의 개수', ans:c,
+    text:`주머니 속에 빨간 공과 파란 공이 모두 ${n}개 들어 있다. 이 중에서 공 한 개를 꺼낼 때, 빨간 공이 나올 확률이 ${sfrac(p[0],p[1])}이다. 빨간 공은 몇 개인지 구하시오.` };
+}
+const GEN = { dice:genDice, cards:genCards, bag:genBag, bagRev01:genBagRev01, classRev01:genClassRev01, cardRev:genCardRev, bagRevMid:genBagRevMid };
+function makeLevel(levelIdx){
+  if(levelIdx===0){
+    const types = shuffle(['zero','one','mid']);
+    return shuffle(['dice','cards','bag']).map((g,i)=>GEN[g](types[i]));
+  }
+  return shuffle([pick1(['bagRev01','classRev01']), 'cardRev', 'bagRevMid']).map(g=>GEN[g]());
+}
+
+/* 문제풀이 그림: 주사위 · 카드 · 주머니 · 학생 */
+const PIPS = {1:[[.5,.5]],2:[[.28,.28],[.72,.72]],3:[[.27,.27],[.5,.5],[.73,.73]],4:[[.28,.28],[.72,.28],[.28,.72],[.72,.72]],5:[[.27,.27],[.73,.27],[.5,.5],[.27,.73],[.73,.73]],6:[[.28,.24],[.72,.24],[.28,.5],[.72,.5],[.28,.76],[.72,.76]]};
+function dieSVG(n,s){
+  const r=s*0.085;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="display:block"><rect x="1.5" y="1.5" width="${s-3}" height="${s-3}" rx="${(s*.18).toFixed(1)}" fill="#fff" stroke="#1a1a2e" stroke-width="1.4"/>`+
+    PIPS[n].map(([x,y])=>`<circle cx="${(x*s).toFixed(1)}" cy="${(y*s).toFixed(1)}" r="${(n===1?r*1.6:r).toFixed(1)}" fill="${n===1?'#dc2626':'#1a1a2e'}"/>`).join('')+`</svg>`;
+}
+const PERSON = `<svg width="24" height="30" viewBox="0 0 24 30"><circle cx="12" cy="8" r="6" fill="#fde2c4" stroke="#1a1a2e" stroke-width="1.3"/><path d="M2 29 Q2 16 12 16 Q22 16 22 29 Z" fill="#a5b4fc" stroke="#1a1a2e" stroke-width="1.3"/></svg>`;
+function figHTML(f){
+  if(!f) return '';
+  let body = '', cap = '';
+  if(f.kind==='dice'){ body = `<div class="fig-dice">${[1,2,3,4,5,6].map(n=>dieSVG(n,44)).join('')}</div>`; cap = '한 개의 주사위 (눈: 1, 2, 3, 4, 5, 6)'; }
+  else if(f.kind==='cards'){ body = `<div class="cardg">${[...Array(f.N)].map((_,i)=>`<span>${i+1}</span>`).join('')}</div>`; cap = `1부터 ${f.N}까지의 카드 ${f.N}장`; }
+  else if(f.kind==='bag'){ body = `<div class="pouch">${'<i class="ball red"></i>'.repeat(f.r)}${'<i class="ball blue"></i>'.repeat(f.b)}</div>`; cap = `<b style="color:#dc2626">빨간 공 ${f.r}개</b> · <b style="color:#2563eb">파란 공 ${f.b}개</b>`; }
+  else if(f.kind==='bagq'){ body = `<div class="pouch">${'<i class="ball q">?</i>'.repeat(f.n)}</div>`; cap = `빨간 공과 파란 공이 모두 ${f.n}개 (색은 가려 두었어요)`; }
+  else if(f.kind==='class'){ body = `<div class="peep">${PERSON.repeat(f.n)}</div>`; cap = `학생 ${f.n}명`; }
+  return `<div class="fig">${body}<div class="fig-cap">${cap}</div></div>`;
+}
+
+/* ════════════════════════════════
+   7단계: 문제풀이 — 레벨마다 3문제, 2문제 이상 맞히면 통과
+   한 문제에 두 번까지 입력 가능 (첫 오답은 봐줌). 두 번째도 틀리면 틀린 것으로 하고 다음 문제로. 정답은 보여 주지 않음
+════════════════════════════════ */
+const LEVELS = [ { label:'레벨1 · 확률 구하기', passNeeded:2 }, { label:'레벨2 · 거꾸로 생각하기', passNeeded:2 } ];
+const pst = { levelIdx:0, idx:0, correct:0, order:[], tries:0, passedLevels:{} };
+function goToPractice(){ startLevel(0); }
+function updateLevelTabs(){
+  $('levelTabs').innerHTML = LEVELS.map((lv,i)=>`<div class="level-tab ${i===pst.levelIdx?'active':(pst.passedLevels[i]?'done':'')}">${lv.label}</div>`).join('');
+}
+function pgLeftHTML(){
+  return `<div id="pgFig"></div><div class="hint-card"><div style="font-weight:800;margin-bottom:6px">📌 확률의 성질</div>
+    ① 어떤 사건이 일어날 확률을 ${itp()}라고 하면 0 ≤ ${itp()} ≤ 1<br>② 절대로 일어나지 않는 사건의 확률은 0<br>③ 반드시 일어나는 사건의 확률은 1</div>
+    <div class="hint-card" style="margin-top:10px"><div style="font-weight:800;margin-bottom:6px">🔎 확률 구하기</div>
+    ${itp()} = ${sfrac('(사건이 일어나는 경우의 수)','(모든 경우의 수)')}</div>
+    <p class="board-tip">한 문제에 두 번까지 답을 쓸 수 있어요.</p>`;
+}
+function startLevel(levelIdx){
+  frontier = PRACTICE; built[PRACTICE] = true; viewing = PRACTICE; practiceScreen = 'scPractice';
+  pst.levelIdx = levelIdx; pst.idx = 0; pst.correct = 0;
+  pst.order = makeLevel(levelIdx);
+  $('pgLeft').innerHTML = pgLeftHTML();
+  showScreen('scPractice'); renderStepper(); updateLevelTabs(); renderPQuestion();
+}
+function renderPQuestion(){
+  const lv = LEVELS[pst.levelIdx], q = pst.order[pst.idx];
+  pst.tries = 0;
+  $('pgProgress').textContent = `${lv.label} · ${pst.idx+1} / ${pst.order.length}`;
+  let body;
+  if(!q.rev){
+    body = `<div class="prob-box">${q.text}</div>
+      <p class="key-q task">빈칸에 알맞은 수를 써 보자.</p>
+      <div class="count-row">${q.evLabel}: <input class="blank" id="pgb" autocomplete="off"></div>
+      <div class="count-row">일어날 수 있는 모든 경우의 수: <input class="blank" id="pga" autocomplete="off"></div>
+      <div class="fline"><span class="lab">(${q.evName} 확률)</span> = ${probHTML('pgf')}</div>
+      ${PROB_NOTE}`;
+  } else {
+    body = `<div class="prob-box">${q.text}</div>
+      <p class="key-q task">답을 써 보자.</p>
+      <div class="fline"><span class="lab">${q.what}</span>: <input class="blank" id="pgc" autocomplete="off"> ${q.unit}</div>`;
+  }
+  $('pgArea').innerHTML = `<div class="try-tag" id="pgTry">✍️ 첫 번째 기회</div>${body}
+    <div class="btn-row"><button class="btn btn-check" id="pgBtn" onclick="pgCheck()">확인</button></div>
+    <div class="feedback" id="pgFb"></div><div class="btn-row" id="pgNextRow"></div>`;
+  $('pgArea').querySelectorAll('input').forEach(x=>x.addEventListener('keydown', e=>{ if(e.key==='Enter') pgCheck(); }));
+  $('pgFig').innerHTML = figHTML(q.fig);
+}
+function pgItems(q){
+  if(q.rev) return [{id:'pgc', val:q.ans}];
+  return [{id:'pga', val:q.total}, {id:'pgb', val:q.fav}, {prob:'pgf', ans:q.p}];
+}
+function pgNextBtn(){
+  $('pgNextRow').innerHTML = `<button class="btn" id="pgNextBtn" onclick="this.disabled=true;pgNext()">${pst.idx<pst.order.length-1?'다음 문제 →':'결과 보기 →'}</button>`;
+}
+function pgCheck(){
+  if($('pgBtn').disabled) return;   // 이미 끝난 문제는 다시 채점하지 않음
+  const q = pst.order[pst.idx];
+  const r = checkItems(pgItems(q), 'pgFb');
+  if(r===null || r==='unreduced') return;
+  if(r===false){
+    if(pst.tries===0){
+      pst.tries = 1;
+      $('pgTry').textContent = '✍️ 마지막 기회'; $('pgTry').classList.add('last');
+      setFb('pgFb',false, RETHINK+'<br><span class="sub">한 번 더 답을 쓸 수 있어요.</span>');
+      return;
+    }
+    $('pgArea').querySelectorAll('input').forEach(x=>x.disabled=true); $('pgBtn').disabled = true;
+    setFb('pgFb',false,'❌ 아쉬워요. 이 문제는 틀린 것으로 할게요.');
+    pgNextBtn();
+    return;
+  }
+  $('pgBtn').disabled = true;
+  pst.correct++;
+  setFb('pgFb',true, pst.tries ? '✅ 맞아요! 다시 생각해서 맞혔어요.' : '✅ 정답이에요!');
+  pgNextBtn();
+}
+function pgNext(){ pst.idx++; if(pst.idx < pst.order.length) renderPQuestion(); else levelFinish(); }
+function levelFinish(){
+  const lv = LEVELS[pst.levelIdx];
+  const pass = pst.correct >= lv.passNeeded;
+  if(pass) pst.passedLevels[pst.levelIdx] = true;
+  updateLevelTabs(); showScreen('scLevelResult'); practiceScreen = 'scLevelResult';
+  $('lrIcon').textContent = pass?'🎉':'💪';
+  $('lrTitle').textContent = pass ? `${lv.label.split(' ·')[0]} 통과!` : `${lv.label.split(' ·')[0]} 아쉬워요`;
+  $('lrScore').textContent = `${pst.correct} / ${pst.order.length}`;
+  $('lrMsg').textContent = pass ? '잘했어요! 다음으로 넘어가 볼까요?' : `${pst.order.length}문제 중 ${lv.passNeeded}문제 이상 맞혀야 통과해요. 다시 도전해 볼까요?`;
+  $('lrRetryBtn').style.display = pass ? 'none' : '';
+  $('lrNextBtn').style.display = pass ? '' : 'none';
+  $('lrNextBtn').disabled = false;
+  $('lrNextBtn').textContent = (pst.levelIdx < LEVELS.length-1) ? '다음 레벨 →' : '결과 보기 →';
+}
+function lrRetry(){ startLevel(pst.levelIdx); }
+function lrNext(){
+  if(pst.levelIdx < LEVELS.length-1){ startLevel(pst.levelIdx+1); }
+  else {
+    showScreen('scDone'); practiceScreen = 'scDone';
+    $('doneStat').innerHTML = stat.total ? `탐구하면서 한 번에 맞힌 질문: ${stat.first} / ${stat.total}` : '';
+    if(window._reportHubComplete) window._reportHubComplete();
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  const cur = (pst.order && pst.order[pst.idx]) ? pst.order[pst.idx] : null;
+  $('adminPanelBody').innerHTML =
+    '<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">'+
+      STAGES.map((s,i)=>btn(`${i+1}.${s}`,`adminGo(${i})`)).join('')+btn('레벨2','adminGo(7)')+btn('정리 팝업 통과','adminPassProp()')+
+    '</div>'+
+    '<div><strong>숫자 칸</strong>: 6 (= 6가지 = 6개 = 6번 = 6명 = 6장 = 6회 = 6석, 띄어쓰기 무시)</div>'+
+    '<div><strong>확률 칸</strong>: 분자·분모 따로. 값이 같고 기약분수여야 정답. 답이 0이면 분자가 0인 분수(0/6, 0/1 등) 모두 정답, 답이 1이면 분자=분모인 분수(6/6, 1/1 등) 모두 정답 (분모를 비우고 0이나 1만 써도 정답). 그 밖의 답이 4/6처럼 약분 전이면 오답이 아니라 "약분까지 해야 완벽한 정답이 됩니다!" 안내 후 다시 입력. 분자만 쓰고 분모를 비우면 빈칸 안내(기회 차감 없음)</div>'+
+    '<div><strong>1단계</strong>: 크리스마스 = 절대로 일어나지 않아요 / 월요일 = 반드시 일어나요 (오늘 = 2026년 11월 15일 일요일)</div>'+
+    '<div><strong>2단계</strong>: A 4, 6, 2/3 · B 0, 6, 0 → 절대로 일어나지 않아요 · C 6, 6, 1 → 반드시 일어나요</div>'+
+    '<div><strong>3단계</strong>: 버튼으로 6개 초과·0개 미만을 각각 한 번 시도하면 질문이 열림 → 둘 다 만들 수 없었어요 / 0 ≤ 개수 ≤ 6, 0/6 ≤ 확률 ≤ 6/6 (분모 6으로), 약분하면 0 ≤ 확률 ≤ 1 / 0 ≤ a ≤ n (n, N), 0 ≤ p ≤ 1</div>'+
+    '<div><strong>4단계 정리 팝업</strong>: ❶ 0 ≤ p ≤ 1, ❷ 절대로 일어나지 않는 사건 → 0, ❸ 반드시 일어나는 사건 → 1 (❷❸ 순서를 바꿔 반드시→1, 절대로→0으로 써도 인정. 두 줄이 같은 말이면 오답)</div>'+
+    '<div><strong>4단계 O, X</strong>: '+OX_POOL.map(o=>`${o.t.replace(/<[^>]+>/g,'')}(${o.a?'O':'X'})`).join(' / ')+' — 세 문장을 한꺼번에 채점, 틀리면 잠금 뒤 틀린 줄만 새 문장으로</div>'+
+    '<div><strong>5단계</strong>: 모든 경우의 수 7 / (1) 7, 1 (2) 0, 0 (3) 1, 1/7</div>'+
+    '<div><strong>6단계</strong>: '+Object.values(EXPR).map(e=>`${e.short} ${VALS[e.v][1]===1?VALS[e.v][0]:VALS[e.v].join('/')}`).join(' · ')+' (백발백중은 예시, 나머지 중 5개 출제)</div>'+
+    '<div><strong>레벨1</strong>: 주사위·카드·공 한 문제씩, 확률이 0인 문제·1인 문제·그 사이인 문제가 하나씩 (칸 순서: 사건이 일어나는 경우의 수 → 모든 경우의 수 → 확률). 왼쪽에 주사위·카드·주머니 그림</div>'+
+    '<div><strong>레벨2</strong>: 확률이 0 또는 1인 공·학생 개수 1 + 카드 k의 최솟값 1 (k 이하 확률 1 → N, k 이상 확률 0 → N+1) + 약분된 확률로 빨간 공 개수 1</div>'+
+    '<div><strong>통과</strong>: 레벨마다 3문제 중 2문제 이상. 한 문제에 두 번까지 입력 (첫 오답은 봐줌), 두 번째 오답이면 틀린 것으로 하고 다음 문제. 정답 공개 없음, 힌트 없음</div>'+
+    (cur ? `<div style="margin-top:4px;background:#fef3c7;border-radius:6px;padding:3px 6px"><strong>지금 문제 정답</strong>: ${cur.rev ? cur.ans+(cur.unit||'') : `${cur.fav}, ${cur.total}, ${cur.p[1]===1?cur.p[0]:cur.p.join('/')}`}</div>` : '')+
+    '<div style="color:var(--red);margin-top:6px">미인정: "다섯"처럼 한글 수사 / 확률을 소수로 쓴 경우(0.5) / 분수 칸의 분모에만 쓴 경우 / 3단계 문자 칸에 n(N) 이외의 문자</div>'+
+    '<div style="margin-top:6px"><strong>찍기 방지</strong>: 질문이 뜬 뒤 1.5~4초 안에 고르면 채점 안 함 · 객관식은 틀리면 3→5→8초 잠금 후 보기 다시 섞기 (정답 공개 안 함)</div>'+
+    `<label style="display:block;margin-top:6px"><input type="checkbox" ${GUARD.on?'':'checked'} onchange="GUARD.on=!this.checked"> 시연용: 읽기 확인·잠금 끄기</label>`;
+  $('adminPanel').style.display='block';
+}
+function adminPassProp(){
+  if(!$('s3def') || !$('s3def').classList.contains('term-wait')) return;
+  closeTermPop();
+  const el = $('s3def'); if(el) el.classList.remove('term-wait');
+  stageBox('L',3).innerHTML = s3Left(true);
+  s3StartOX();
+}
+function adminGo(i){
+  closeTermPop();
+  const f = [stage0,stage1,stage2,stage3,stage4,stage5,()=>startLevel(0)];
+  if(i<7) f[i](); else startLevel(1);
+  if($('adminPanel').style.display==='block') showAdminPanel();
+}
+
+stage0();
+</script>
+</body>
+</html>
