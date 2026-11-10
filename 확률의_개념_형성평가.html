@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>확률의 개념 형성평가</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.key-q{display:block;font-size:16.5px;font-weight:800;line-height:1.7;color:var(--ink);background:#fffbeb;border:1.5px solid #fcd34d;border-left:6px solid #f59e0b;border-radius:10px;padding:9px 14px 10px;margin:10px 0}
+.key-q::before{content:'✏️ 해 보기';display:block;font-size:11.5px;font-weight:800;color:#b45309;margin-bottom:1px}
+.key-q.ask::before{content:'❓ 질문'}
+.key-q .em{text-decoration:underline;text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.it{font-style:italic;font-family:'Times New Roman',serif;font-weight:700;font-size:1.08em}
+.reread{animation:rereadFlash 1.2s ease-out 2}
+@keyframes rereadFlash{0%{box-shadow:0 0 0 5px #f59e0b;background-color:#fef3c7}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 450px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+
+/* 진행 표시 */
+.qdots{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.qdot{min-width:44px;height:36px;border-radius:18px;border:2px solid #d8ddfb;background:#fff;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:14px;color:var(--ink3);padding:0 10px}
+.qdot.pop{min-width:36px;padding:0 6px;font-size:15px}
+.qdot.cur{border-color:var(--indigo);background:var(--indigo);color:#fff}
+.qdot.done{border-color:var(--green);background:var(--green-l);color:#14532d}
+.qtitle{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qbadge{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:12px;background:var(--indigo);color:#fff;font-size:13px;font-weight:800;padding:0 7px}
+.try-tag{display:inline-block;font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px;background:#eef2ff;color:var(--indigo)}
+.try-tag.last{background:#fef3c7;color:#92400e}
+.variant-banner{background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px}
+
+.prob-box{display:block;font-size:16.5px;font-weight:800;line-height:1.75;color:var(--ink);background:#f0fdf4;border:1.5px solid #86efac;border-left:6px solid #16a34a;border-radius:10px;padding:9px 14px 10px;margin:10px 0}
+.prob-box::before{content:'📋 문제';display:block;font-size:11.5px;font-weight:800;color:#15803d;margin-bottom:1px}
+.prob-box .sub{font-weight:700}
+/* 계산기 (직각삼각형이_되는_조건.html 방식) */
+.calc-wrap{text-align:center;margin:0 0 10px}
+.calc-toggle{border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;background:var(--ink);color:#fff;font-family:inherit}
+.calc-toggle.active{background:var(--indigo)}
+.calc-panel{display:none;width:230px;margin:10px auto 0;background:#fbfcff;border-radius:14px;border:1.5px solid #d8ddfb;box-shadow:var(--shadow);padding:12px}
+.calc-panel.show{display:block}
+.calc-display{background:#1a1a2e;color:#fff;border-radius:8px;padding:10px 12px;text-align:right;font-size:20px;font-weight:700;margin-bottom:8px;min-height:30px;overflow-x:auto;white-space:nowrap}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.calc-btn{border:none;border-radius:8px;padding:10px 0;font-size:14px;font-weight:700;cursor:pointer;background:var(--indigo-ll);color:var(--ink);font-family:inherit}
+.calc-btn:hover{background:var(--indigo-l)}
+.calc-btn.op{background:var(--indigo);color:#fff}
+.calc-btn.fn{background:#f3f0ff;color:#6d28d9}
+.calc-btn.eq{background:var(--green);color:#fff}
+.calc-btn.clear{background:var(--red-l);color:var(--red)}
+.part{border-top:1px dashed #e0e7ff;padding-top:8px;margin-top:8px}
+.part-h{font-size:13.5px;font-weight:800;color:var(--indigo);margin-bottom:2px}
+.count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:14px;font-weight:700}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:15px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank.wide{width:80px}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px}
+.frac .blank{border:1.5px solid #a5b4fc;border-radius:6px;width:52px;height:30px;margin:1px 0;background:#fff}
+.frac .blank.correct{border-color:var(--green);background:var(--green-ll)}
+.frac .blank.wrong{border-color:var(--red);background:var(--red-l)}
+.frac .fbar{width:100%;min-width:60px;height:2.5px;background:var(--ink);border-radius:2px;margin:2px 0}
+.sfrac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:.92em;line-height:1.15;margin:0 3px}
+.sfrac>span:first-child{border-bottom:1.6px solid currentColor;padding:0 3px}
+.sfrac>span:last-child{padding:0 3px}
+.fline{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:15px;font-weight:800}
+.fline .lab{font-size:13px;color:var(--ink2);text-align:center;line-height:1.4}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-check:hover{background:#15803d}
+.btn-soft{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo)}
+.btn-soft:hover{background:var(--indigo-ll)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px;line-height:1.6}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.feedback.info{color:#b45309}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+
+/* 문제 그림 */
+.fig{background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:12px;padding:12px;margin-bottom:10px;text-align:center}
+.fig-cap{font-size:13px;font-weight:800;color:var(--ink2);margin-top:8px;line-height:1.6}
+.fig-row{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.dcard{display:inline-flex;width:42px;height:56px;align-items:center;justify-content:center;font-size:24px;font-weight:800;border:2px solid #4f46e5;border-radius:7px;background:#fff;color:var(--ink)}
+.ftbl{border-collapse:collapse;margin:0 auto;font-size:13px}
+.ftbl th,.ftbl td{border:1px solid #c7cdf5;padding:5px 8px;text-align:center;white-space:nowrap}
+.ftbl th{background:var(--indigo-ll);font-weight:800}
+.ftbl td{font-weight:700}
+.ftbl td.q{background:#fef3c7;color:#b45309;font-weight:900}
+.ftbl.small{font-size:11px}
+.ftbl.small th,.ftbl.small td{padding:3px}
+.tbl-wrap{overflow-x:auto}
+
+/* 계산 연습장 */
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn,.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active,.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:6px}
+.scratch-area{position:relative;height:320px;background:#fbfcff;border:1px dashed #d8ddfb;border-radius:10px;background-image:repeating-linear-gradient(#fbfcff 0 29px,#eef0fb 29px 30px)}
+.ref-area:not(:empty)+.scratch-area{border-top:none;border-radius:0 0 10px 10px;height:160px}
+.ref-area:not(:empty){border:1px dashed #d8ddfb;border-bottom:none;border-radius:10px 10px 0 0;padding:6px;background:#fff}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.board-tip{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-top:8px}
+.help-btn{border:2px dashed #a5b4fc;background:#fff;color:var(--indigo);border-radius:12px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+.help-btn:disabled{opacity:.5;cursor:default}
+
+/* 팝업 */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-overlay.blur{background:rgba(26,26,46,0.62);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-box.wide{max-width:640px}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:12px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.modal-btn:disabled{opacity:.4;cursor:default}
+.pop-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:#f59e0b;border-radius:10px;padding:2px 10px;margin-bottom:6px}
+.pop-tag.fb{background:#e11d48}
+.pop-step{font-size:12px;font-weight:800;color:var(--ink3);margin-bottom:4px}
+.pop-q{font-size:15px;font-weight:700;line-height:2.1;text-align:left;background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:10px;padding:10px 12px;margin:6px 0}
+.pop-q .blank{font-size:15px}
+.choice-col{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.choice-btn{padding:9px 14px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;text-align:left;line-height:1.5}
+.choice-btn.correct{background:var(--green);color:#fff;border-color:var(--green)}
+.choice-btn.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.choice-btn:disabled{cursor:default}
+.ox-row{display:flex;gap:10px;justify-content:center;margin:8px 0}
+.ox-row .choice-btn{min-width:90px;text-align:center;font-size:22px;font-weight:900}
+.slot-frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 6px}
+.slot-frac .sl{min-width:170px;min-height:30px;border:2px dashed #a5b4fc;border-radius:8px;padding:2px 8px;font-size:13px;font-weight:800;color:var(--ink3);display:flex;align-items:center;justify-content:center;line-height:1.4}
+.slot-frac .sl.on{border-color:#f59e0b;background:#fffbeb;color:#b45309}
+.slot-frac .sl.filled{border-style:solid;border-color:var(--green);color:#14532d;background:var(--green-ll)}
+.slot-frac .bar{width:100%;height:2.5px;background:var(--ink);margin:4px 0}
+.pick-grid{display:grid;gap:5px;margin:8px 0}
+.pick-grid button{border:1.5px solid #c7d2fe;background:#fff;border-radius:8px;padding:6px 2px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.pick-grid button.on{background:#fef3c7;border-color:#f59e0b;color:#92400e;box-shadow:0 0 0 2px #f59e0b inset}
+.pick-grid button:disabled{cursor:default}
+
+/* 결과 */
+.result-wrap{text-align:center;padding:24px 10px}
+.result-icon{font-size:48px;margin-bottom:10px}
+.result-score{font-size:20px;font-weight:800;color:var(--indigo);margin:8px 0}
+.res-list{list-style:none;max-width:520px;margin:12px auto;text-align:left}
+.res-list li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;font-weight:700;font-size:14px;margin-bottom:6px;background:#f8fafc;border:1.5px solid #e2e8f0}
+.res-list .tag{margin-left:auto;font-size:12.5px;font-weight:800;border-radius:10px;padding:2px 10px;white-space:nowrap}
+.res-list .tag.one{background:var(--green-l);color:#14532d}
+.res-list .tag.fb{background:#fef3c7;color:#92400e}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">확률의 개념 형성평가</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>
+document.getElementById('hubBackLink').href = 'index.html' + location.search;
+(function(){
+  var _hb = document.getElementById('hubBackLink');
+  var _urlNum = new URLSearchParams(location.search).get('num');
+  var _isPreview = !_urlNum || _urlNum === '99'; // 관리자 미리보기(파라미터 없음 또는 99번) 때는 나가기 경고 안 띄움
+  _hb.addEventListener('click', function(e){
+    if(!_isPreview && !window._activityDone && !confirm('아직 다 끝내지 않았어요! 지금 나가면 처음부터 다시 해야 해요. 그래도 나갈까요?')){
+      e.preventDefault();
+    }
+  });
+  if(!_isPreview){
+    window.addEventListener('beforeunload', function(e){
+      if(!window._activityDone){ e.preventDefault(); e.returnValue=''; }
+    });
+  }
+})();
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'prob-concept-assessment' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    window._activityDone = true;
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete || e.defaultPrevented) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+
+  <div class="screen active" id="scQuiz">
+    <div class="qdots" id="qdots"></div>
+    <div class="split-layout">
+      <div class="split-left card" id="qLeft">
+        <div id="qFig"></div>
+        <div class="calc-wrap" id="calcWrap" style="display:none">
+          <button class="calc-toggle" id="calcToggleBtn" onclick="calcToggle()">🧮 계산기</button>
+          <div class="calc-panel" id="calcPanel">
+            <div class="calc-display" id="calcDisplay">0</div>
+            <div class="calc-grid">
+              <button class="calc-btn clear" onclick="calcClear()">C</button>
+              <button class="calc-btn fn" onclick="calcBackspace()" style="grid-column:span 2">⌫</button>
+              <button class="calc-btn op" onclick="calcOp('÷')">÷</button>
+              <button class="calc-btn" onclick="calcDigit('7')">7</button>
+              <button class="calc-btn" onclick="calcDigit('8')">8</button>
+              <button class="calc-btn" onclick="calcDigit('9')">9</button>
+              <button class="calc-btn op" onclick="calcOp('×')">×</button>
+              <button class="calc-btn" onclick="calcDigit('4')">4</button>
+              <button class="calc-btn" onclick="calcDigit('5')">5</button>
+              <button class="calc-btn" onclick="calcDigit('6')">6</button>
+              <button class="calc-btn op" onclick="calcOp('-')">−</button>
+              <button class="calc-btn" onclick="calcDigit('1')">1</button>
+              <button class="calc-btn" onclick="calcDigit('2')">2</button>
+              <button class="calc-btn" onclick="calcDigit('3')">3</button>
+              <button class="calc-btn op" onclick="calcOp('+')">+</button>
+              <button class="calc-btn" onclick="calcDigit('0')" style="grid-column:span 2">0</button>
+              <button class="calc-btn" onclick="calcDigit('.')">.</button>
+              <button class="calc-btn eq" onclick="calcEquals()">=</button>
+            </div>
+          </div>
+        </div>
+        <div id="pgPen">
+          <div class="draw-toolbar">
+            <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+            <button class="mode-btn" id="pgPenBtn" onclick="drawSetMode('pg','pen')">✏️ 펜(필기)</button>
+            <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('pg','#1a1a2e',this)" title="검정"></button>
+            <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('pg','#dc2626',this)" title="빨강"></button>
+            <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('pg','#2563eb',this)" title="파랑"></button>
+            <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('pg','#16a34a',this)" title="초록"></button>
+            <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('pg','#eab308',this)" title="노랑"></button>
+          </div>
+          <div class="draw-toolbar">
+            <button class="eraser-btn" id="pgEraserBtn" onclick="drawToggleEraser('pg')">🧽 지우개</button>
+            <button class="mode-btn" id="pgPointerBtn" onclick="drawSetMode('pg','pointer')">🖱️ 마우스(화면 움직이기)</button>
+          </div>
+          <div class="draw-wrap" id="pgDrawWrap">
+            <div class="ref-area" id="pgRef"></div>
+            <div class="scratch-area"></div>
+            <canvas id="pgInk" class="ink-canvas"></canvas>
+          </div>
+          <div class="board-tip">문제가 바뀌면 연습장은 새로 비워져요.</div>
+        </div>
+      </div>
+      <div class="split-right card" id="qArea"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scResult">
+    <div class="card"><div class="result-wrap" id="resultBox"></div></div>
+  </div>
+
+</div>
+
+<!-- 피드백·개념 확인 팝업: 맞혀야 닫힘 -->
+<div class="modal-overlay blur" id="popModal"><div class="modal-box wide" id="popBox"></div></div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:400px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:70;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pick1(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(lo,hi){ return lo+Math.floor(Math.random()*(hi-lo+1)); }
+function $(id){ return document.getElementById(id); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); $(id).classList.add('active'); window.scrollTo(0,0); }
+function setFb(id, ok, msg){ const fb=$(id); if(!fb) return; fb.className='feedback '+(ok===true?'success':ok==='info'?'info':'error'); fb.innerHTML=msg; }
+function parseCount(s){ const m=String(s||'').replace(/\s+/g,'').match(/^(\d+)(가지|개|번|명|장|회)?$/); return m?parseInt(m[1],10):null; }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function reduce(n,d){ const g=gcd(n,d)||1; return [n/g, d/g]; }
+function sfrac(n,d){ return `<span class="sfrac"><span>${n}</span><span>${d}</span></span>`; }
+function isPrime(n){ if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true; }
+const NUM_BATCHIM = [true,true,false,true,false,false,true,true,true,false];
+function hasBatchim(w){
+  if(typeof w==='number' || /^\d+$/.test(String(w))) return NUM_BATCHIM[Number(w)%10];
+  const c = String(w).charCodeAt(String(w).length-1);
+  if(c>=0xAC00 && c<=0xD7A3) return (c-0xAC00)%28!==0;
+  return false;
+}
+function josa(w, withB, noB){ return String(w) + (hasBatchim(w)?withB:noB); }
+function flashRef(el){ if(!el) return; el.classList.remove('reread'); void el.offsetWidth; el.classList.add('reread'); }
+const RETHINK = '❌ 다시 한 번 생각해 보세요!';
+const UNREDUCED = '🔎 약분까지 해야 완벽한 정답이 됩니다!';
+const GUARD = { on:true };          // 관리자 시연에서만 끔 (잠금·읽기 확인)
+const LOCK_MS = 2000, READ_MS = 1500;
+
+/* ── 입력 채점 ── */
+function probHTML(p){ return `<span class="frac"><input class="blank" id="${p}N" inputmode="numeric" autocomplete="off"><span class="fbar"></span><input class="blank" id="${p}D" inputmode="numeric" autocomplete="off"></span>`; }
+function gradeProb(p, ans){
+  const nr=$(p+'N').value.trim(), dr=$(p+'D').value.trim();
+  if(nr==='' || dr==='') return 'empty';
+  const n = parseCount(nr), d = parseCount(dr);
+  if(n===null || d===null || d===0 || n*ans[1]!==d*ans[0]) return 'wrong';
+  return gcd(n,d)===1 ? 'ok' : 'unreduced';
+}
+function round3(h, n){ return Math.round(h*1000/n)/1000; }
+// 상대도수: 0.352, .352 모두 인정. 소수 아래 셋째 자리까지(끝의 0은 생략 가능)이고 값이 같아야 정답
+function decOk(raw, h, n){
+  const s = String(raw||'').replace(/\s+/g,'');
+  const m = s.match(/^(0|1)?(?:\.(\d{1,3}))?$/);
+  if(!m || s==='' || s==='.') return false;
+  return Number(s)===round3(h,n);
+}
+function lockBtn(btn){
+  if(!GUARD.on || !btn) return;
+  btn.disabled = true;
+  setTimeout(()=>{ if(document.body.contains(btn)) btn.disabled = false; }, LOCK_MS);
+}
+
+/* ════════════════════════════════
+   그림
+════════════════════════════════ */
+const PIPS = {1:[[.5,.5]],2:[[.28,.28],[.72,.72]],3:[[.27,.27],[.5,.5],[.73,.73]],4:[[.28,.28],[.72,.28],[.28,.72],[.72,.72]],5:[[.27,.27],[.73,.27],[.5,.5],[.27,.73],[.73,.73]],6:[[.28,.24],[.72,.24],[.28,.5],[.72,.5],[.28,.76],[.72,.76]]};
+function dieSVG(n,s){
+  const r=s*0.085;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="display:block"><rect x="1.5" y="1.5" width="${s-3}" height="${s-3}" rx="${(s*.18).toFixed(1)}" fill="#fff" stroke="#1a1a2e" stroke-width="1.4"/>`+
+    PIPS[n].map(([x,y])=>`<circle cx="${(x*s).toFixed(1)}" cy="${(y*s).toFixed(1)}" r="${(n===1?r*1.6:r).toFixed(1)}" fill="${n===1?'#dc2626':'#1a1a2e'}"/>`).join('')+`</svg>`;
+}
+function coinSVG(label, s){
+  return `<svg width="${s}" height="${s}" viewBox="0 0 100 100" style="display:block"><circle cx="50" cy="50" r="46" fill="#fde68a" stroke="#b45309" stroke-width="3"/><circle cx="50" cy="50" r="37" fill="none" stroke="#d97706" stroke-width="1.5" stroke-dasharray="2 3"/><text x="50" y="60" text-anchor="middle" font-size="24" font-weight="800" fill="#92400e">${label}</text></svg>`;
+}
+function freqTableHTML(q){
+  return `<div class="tbl-wrap"><table class="ftbl"><tr><th>던진 횟수(번)</th>${q.cols.map(c=>`<th>${c.n}</th>`).join('')}</tr>
+    <tr><th>${josa(q.evName,'이','가')} 나온 횟수(번)</th>${q.cols.map(c=>`<td>${c.h}</td>`).join('')}</tr>
+    <tr><th>상대도수</th>${q.cols.map(c=>c.n===q.askN?'<td class="q">?</td>':`<td>${round3(c.h,c.n)}</td>`).join('')}</tr></table></div>`;
+}
+function figHTML(q){
+  let body = '', cap = '';
+  const f = q.fig;
+  if(f.kind==='freq'){ body = `<div class="fig-row" style="margin-bottom:8px">${f.obj==='coin' ? coinSVG('동전',64) : dieSVG(5,56)}</div>${freqTableHTML(q)}`; cap = '상대도수는 반올림하여 소수 아래 셋째 자리까지 나타냈어요.'; }
+  else if(f.kind==='coinDie'){ body = `<div class="fig-row">${coinSVG('동전',70)}${dieSVG(5,60)}</div>`; cap = '동전 한 개(앞면, 뒷면)와 주사위 한 개(1~6의 눈)'; }
+  else if(f.kind==='dice2'){ body = `<div class="fig-row">${dieSVG(3,56)}${dieSVG(5,56)}</div>`; cap = '서로 다른 두 개의 주사위 (첫째, 둘째)'; }
+  else if(f.kind==='cards'){ body = `<div class="fig-row">${[1,2,3,4].map(d=>`<span class="dcard">${d}</span>`).join('')}</div>`; cap = '숫자 카드 4장'; }
+  return `<div class="fig">${body}<div class="fig-cap">${cap}</div></div>`;
+}
+// 수형도 틀: 첫 가지 이름만 쓰고, 둘째 가지는 빈 상자 (학생이 펜으로 채움)
+function treeSVG(heads, firsts, per){
+  const rowH = 19, top = 24, leaves = firsts.length*per, H = top + leaves*rowH + 6, W = 410;
+  const x1 = 120, x2 = 270;
+  let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`;
+  s += `<text x="${x1}" y="15" text-anchor="middle" font-size="12" font-weight="800" fill="#4f46e5">${heads[0]}</text><text x="${x2+18}" y="15" text-anchor="middle" font-size="12" font-weight="800" fill="#4f46e5">${heads[1]}</text>`;
+  firsts.forEach((lab,i)=>{
+    const y0 = top + i*per*rowH, cy = y0 + per*rowH/2;
+    s += `<line x1="40" y1="${top + leaves*rowH/2}" x2="${x1-24}" y2="${cy}" stroke="#9090b0" stroke-width="1.3"/>`;
+    s += `<rect x="${x1-24}" y="${cy-10}" width="48" height="20" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.3"/><text x="${x1}" y="${cy+4.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#1a1a2e">${lab}</text>`;
+    for(let j=0;j<per;j++){
+      const ly = y0 + j*rowH + rowH/2;
+      s += `<line x1="${x1+24}" y1="${cy}" x2="${x2}" y2="${ly}" stroke="#c7cdf5" stroke-width="1.2"/><rect x="${x2}" y="${ly-7.5}" width="36" height="15" rx="4" fill="#fff" stroke="#a5b4fc" stroke-width="1.2" stroke-dasharray="3 2"/>`;
+    }
+  });
+  s += `<circle cx="36" cy="${top + leaves*rowH/2}" r="4" fill="#4f46e5"/>`;
+  return s + `</svg>`;
+}
+function diceGridHTML(){
+  let s = '<table class="ftbl small"><tr><th></th>'+[1,2,3,4,5,6].map(b=>`<th>${b}</th>`).join('')+'</tr>';
+  for(let a=1;a<=6;a++){ s += `<tr><th>${a}</th>`+[1,2,3,4,5,6].map(b=>`<td>(${a}, ${b})</td>`).join('')+'</tr>'; }
+  return `<div class="tbl-wrap">${s}</table></div><p class="sub" style="text-align:center">세로: 첫째 주사위의 눈, 가로: 둘째 주사위의 눈</p>`;
+}
+
+/* ════════════════════════════════
+   문제 만들기 — 모든 확률은 0과 1 사이, 곱의 법칙 없이 직접 나열해서 셀 수 있는 문제
+   q: {key, text, total, fav, p, ev(칸 이름), evp(확률 이름), fig, outs:[{lab,ok}], cols(고르기 칸 수), struct(모든 경우 세기 빈칸)}
+════════════════════════════════ */
+const DICE_EV = [
+  ['짝수의 눈', v=>v%2===0], ['홀수의 눈', v=>v%2===1], ['3의 배수의 눈', v=>v%3===0], ['4 이상의 눈', v=>v>=4],
+  ['2 이하의 눈', v=>v<=2], ['6의 약수의 눈', v=>6%v===0], ['소수의 눈', isPrime], ['5 이상의 눈', v=>v>=5], ['3 이하의 눈', v=>v<=3]
+];
+// 1. 확률의 뜻 — 실험 결과 표의 상대도수를 직접 계산하고, 가까워지는 값을 경우의 수로 구함
+const FREQ_EV = [
+  { obj:'coin', evName:'앞면', outs:['앞면','뒷면'], ok:[0] },
+  { obj:'coin', evName:'뒷면', outs:['앞면','뒷면'], ok:[1] },
+  { obj:'die', evName:'1의 눈', ok:[0] },
+  { obj:'die', evName:'짝수의 눈', ok:[1,3,5] },
+  { obj:'die', evName:'3의 배수의 눈', ok:[2,5] },
+  { obj:'die', evName:'5 이상의 눈', ok:[4,5] },
+  { obj:'die', evName:'2 이하의 눈', ok:[0,1] }
+];
+function genFreq(){
+  const E = pick1(FREQ_EV);
+  const outsLab = E.obj==='coin' ? E.outs : ['1','2','3','4','5','6'];
+  const total = outsLab.length, fav = E.ok.length, pr = fav/total;
+  const Ns = [100, 300, 500, 1000];
+  let cols, askN;
+  do {
+    let h = 0, k = 0; cols = [];
+    for(let i=1;i<=1000;i++){ if(Math.random()<pr) h++; if(i===Ns[k]){ cols.push({n:i, h}); k++; } }
+    askN = pick1([300, 500, 1000]);
+  } while(round3(cols.find(c=>c.n===askN).h, askN)===round3(fav,total));
+  const askH = cols.find(c=>c.n===askN).h;
+  const objName = E.obj==='coin' ? '동전' : '주사위';
+  return { key:'freq', evName:E.evName, cols, askN, askH,
+    text:`한 개의 ${josa(objName,'을','를')} 여러 번 던지면서 ${josa(E.evName,'이','가')} 나온 횟수를 조사하였더니 왼쪽 표와 같았다.`,
+    total, fav, p:reduce(fav,total), ev:`${josa(E.evName,'이','가')} 나오는 경우의 수`, evp:`${josa(E.evName,'이','가')} 나올`,
+    fig:{kind:'freq', obj:E.obj}, outs:outsLab.map((lab,i)=>({lab:E.obj==='coin'?lab:`${lab}의 눈`, ok:E.ok.includes(i)})), cols6:total,
+    struct:{ html: E.obj==='coin' ? `한 개의 동전을 던질 때 나올 수 있는 면은 앞면, 뒷면이에요.<br>그래서 일어날 수 있는 모든 경우의 수는 [[t]]가지예요.`
+                                   : `한 개의 주사위를 던질 때 나올 수 있는 눈은 1, 2, 3, 4, 5, 6이에요.<br>그래서 일어날 수 있는 모든 경우의 수는 [[t]]가지예요.`, ans:{t:total} } };
+}
+// 2. 동전 1개와 주사위 1개
+function genCoinDie(){
+  const face = pick1(['앞면','뒷면']), [nm,f] = pick1(DICE_EV);
+  const outs = []; ['앞면','뒷면'].forEach(c=>[1,2,3,4,5,6].forEach(d=>outs.push({ lab:`(${c[0]}, ${d})`, ok: c===face && f(d) })));
+  const fav = outs.filter(o=>o.ok).length;
+  const core = `동전은 ${josa(face,'이','가')} 나오고 주사위는 ${josa(nm,'이','가')}`;
+  return { key:'coinDie', text:`동전 한 개와 주사위 한 개를 동시에 던질 때, ${core} 나올 확률을 구하시오.`,
+    total:12, fav, p:reduce(fav,12), ev:`${core} 나오는 경우의 수`, evp:`${core} 나올`, fig:{kind:'coinDie'}, help:'tree',
+    outs, cols6:6, pickNote:'(앞, 1)은 동전은 앞면, 주사위는 1의 눈이 나오는 경우예요.',
+    struct:{ html:`동전이 <b>앞면</b>일 때 주사위의 눈은 [[a]]가지, 동전이 <b>뒷면</b>일 때도 주사위의 눈은 [[b]]가지예요.<br>그래서 일어날 수 있는 모든 경우의 수는 [[t]]가지예요.`, ans:{a:6,b:6,t:12} } };
+}
+// 3. 주사위 2개
+function genDice2(){
+  const kind = pick1(['sum','sum','diff','same']);
+  let ev, evp, f, note='';
+  if(kind==='sum'){ const k = randInt(3,11); ev = `두 눈의 수의 합이 ${k}인`; evp = `두 눈의 수의 합이 ${k}일`; f=(a,b)=>a+b===k; }
+  else if(kind==='diff'){ const k = randInt(1,4); ev = `두 눈의 수의 차가 ${k}인`; evp = `두 눈의 수의 차가 ${k}일`; f=(a,b)=>Math.abs(a-b)===k; note='<br><span class="sub">(두 수의 차는 큰 수에서 작은 수를 뺀 값이에요.)</span>'; }
+  else { ev = '두 눈의 수가 서로 같은'; evp = '두 눈의 수가 서로 같을'; f=(a,b)=>a===b; }
+  const outs = []; for(let a=1;a<=6;a++) for(let b=1;b<=6;b++) outs.push({ lab:`(${a}, ${b})`, ok:f(a,b) });
+  const fav = outs.filter(o=>o.ok).length;
+  return { key:'dice2', text:`서로 다른 두 개의 주사위를 동시에 던질 때, ${evp} 확률을 구하시오.${note}`,
+    total:36, fav, p:reduce(fav,36), ev:`${ev} 경우의 수`, evp, fig:{kind:'dice2'}, help:'grid',
+    outs, cols6:6, pickNote:'(첫째 주사위의 눈, 둘째 주사위의 눈)이에요.',
+    struct:{ html:`첫째 주사위의 눈이 1일 때, 둘째 주사위의 눈은 [[a]]가지예요.<br>첫째 주사위의 눈 1, 2, 3, 4, 5, 6 각각마다 그러니까, 모든 경우의 수는 6+6+6+6+6+6 = [[t]]가지예요.`, ans:{a:6,t:36} } };
+}
+// 4. 카드 1, 2, 3, 4 중 2장으로 두 자리 수
+const CARD_EV = [
+  { t:'그 수가 짝수일', ev:'만든 수가 짝수인', f:n=>n%2===0 },
+  { t:'그 수가 홀수일', ev:'만든 수가 홀수인', f:n=>n%2===1 },
+  { t:'그 수가 3의 배수일', ev:'만든 수가 3의 배수인', f:n=>n%3===0 },
+  { t:'그 수가 4의 배수일', ev:'만든 수가 4의 배수인', f:n=>n%4===0 },
+  { t:'그 수가 30 이상일', ev:'만든 수가 30 이상인', f:n=>n>=30 },
+  { t:'그 수가 40 이상일', ev:'만든 수가 40 이상인', f:n=>n>=40 },
+  { t:'그 수가 20 이하일', ev:'만든 수가 20 이하인', f:n=>n<=20 },
+  { t:'각 자리의 숫자의 합이 5일', ev:'각 자리의 숫자의 합이 5인', f:n=>Math.floor(n/10)+n%10===5 }
+];
+function genCards(){
+  const E = pick1(CARD_EV);
+  const nums = []; [1,2,3,4].forEach(a=>[1,2,3,4].forEach(b=>{ if(a!==b) nums.push(a*10+b); }));
+  const outs = nums.map(n=>({ lab:String(n), ok:E.f(n) }));
+  const fav = outs.filter(o=>o.ok).length;
+  return { key:'cards', text:`1, 2, 3, 4의 숫자가 각각 하나씩 적힌 4장의 카드 중에서 2장을 차례로 뽑아 두 자리 자연수를 만들 때, ${E.t} 확률을 구하시오.<br><span class="sub">(먼저 뽑은 카드의 숫자가 십의 자리 숫자가 돼요.)</span>`,
+    total:12, fav, p:reduce(fav,12), ev:`${E.ev} 경우의 수`, evp:E.t.replace(/^그 수가 /,'만든 수가 '), fig:{kind:'cards'}, help:'tree',
+    outs, cols6:4, pickNote:'만들 수 있는 두 자리 자연수예요.',
+    struct:{ html:`십의 자리에 1이 올 때, 일의 자리에 올 수 있는 숫자는 [[a]]가지예요.<br>십의 자리에 올 수 있는 숫자는 [[b]]가지이고 각각마다 그러니까, 모든 경우의 수는 3+3+3+3 = [[t]]가지예요.`, ans:{a:3,b:4,t:12} } };
+}
+const GEN = { freq:genFreq, coinDie:genCoinDie, dice2:genDice2, cards:genCards };
+function variantOf(q){ let v; do { v = GEN[q.key](); } while(v.text===q.text && v.askN===q.askN && JSON.stringify(v.cols)===JSON.stringify(q.cols)); v.variant = true; return v; }
+
+/* ════════════════════════════════
+   진행 — 본문제 4개 + 개념 확인 팝업 2개. 모두 통과해야 끝
+   본문제: 두 번 입력 기회 → 두 번째도 틀리면 피드백 팝업(빈칸을 맞혀야 닫힘) → 숫자가 바뀐 변형 문제 → … 맞혀야 다음
+════════════════════════════════ */
+const STEPS = [
+  { type:'main', key:'freq',    label:'확률의 뜻 (상대도수와 확률)' },
+  { type:'pop',  key:'formula', label:'확률을 구하는 방법' },
+  { type:'main', key:'coinDie', label:'동전 1개와 주사위 1개' },
+  { type:'main', key:'dice2',   label:'주사위 2개' },
+  { type:'pop',  key:'interp',  label:'확률의 뜻 바르게 이해하기' },
+  { type:'main', key:'cards',   label:'카드로 두 자리 수 만들기' }
+];
+const ST = { step:0, q:null, tries:0, rec:{}, err:null };
+function mainNo(i){ return STEPS.slice(0,i+1).filter(s=>s.type==='main').length; }
+function startQuiz(){
+  ST.step = 0; ST.rec = {};
+  STEPS.forEach(s=>{ ST.rec[s.key] = { first:null, fb:0 }; });
+  showScreen('scQuiz');
+  enterStep();
+}
+function renderDots(){
+  $('qdots').innerHTML = STEPS.map((s,i)=>{
+    const cls = i<ST.step ? 'done' : i===ST.step ? 'cur' : '';
+    return s.type==='pop' ? `<div class="qdot pop ${cls}" title="개념 확인">💬</div>` : `<div class="qdot ${cls}">${mainNo(i)}${i<ST.step?' ✔':''}</div>`;
+  }).join('');
+}
+function enterStep(){
+  closePop();
+  renderDots();
+  const s = STEPS[ST.step];
+  if(s.type==='main'){ ST.q = GEN[s.key](); renderMain(); }
+  else {
+    $('qFig').innerHTML = `<div class="fig"><div style="font-size:40px">💬</div><div class="fig-cap">개념 확인 시간이에요.</div></div>`;
+    $('pgPen').style.display = 'none'; $('calcWrap').style.display = 'none';
+    $('qArea').innerHTML = `<div class="qtitle">💬 개념 확인</div><p class="sub">팝업의 질문에 답해 주세요.</p>`;
+    if(s.key==='formula') openFormulaPop(); else openInterpPop();
+  }
+}
+function renderMain(){
+  const q = ST.q, s = STEPS[ST.step];
+  ST.tries = 0; ST.err = { dec:false, tot:false, fav:false, prob:false };
+  $('qFig').innerHTML = figHTML(q);
+  $('calcWrap').style.display = q.key==='freq' ? '' : 'none';
+  if(q.key!=='freq'){ $('calcPanel').classList.remove('show'); $('calcToggleBtn').classList.remove('active'); }
+  calcClear();
+  $('pgPen').style.display = '';
+  $('pgRef').innerHTML = '';
+  const help = q.help==='tree' ? `<div class="btn-row" style="justify-content:flex-start"><button class="help-btn" id="helpBtn" onclick="showHelp()">🌳 수형도 그리기 도움</button></div>`
+             : q.help==='grid' ? `<div class="btn-row" style="justify-content:flex-start"><button class="help-btn" id="helpBtn" onclick="showHelp()">📋 순서쌍 표 도움</button></div>` : '';
+  const guide = q.key==='freq' ? '왼쪽의 🧮 계산기나 연습장을 써서 나눗셈을 해 보자.'
+    : q.help==='tree' ? '왼쪽 연습장에 <span class="em">수형도를 그려</span> 일어날 수 있는 모든 경우를 나열해 보자.'
+    : '왼쪽 연습장에 <span class="em">순서쌍을 나열</span>하여 일어날 수 있는 모든 경우를 나타내 보자.';
+  const rows = `<div class="count-row">${q.ev}: <input class="blank" id="qb" autocomplete="off"></div>
+      <div class="count-row">일어날 수 있는 모든 경우의 수: <input class="blank" id="qa" autocomplete="off"></div>
+      <div class="fline"><span class="lab">(${q.evp} 확률)</span> = ${probHTML('qf')}</div>
+      <p class="sub">분수는 위 칸에 분자, 아래 칸에 분모를 써요.</p>`;
+  let body;
+  if(q.key==='freq'){
+    body = `<div class="part"><div class="part-h">(1) 상대도수 구하기</div>
+        <p class="key-q">던진 횟수가 <span class="em">${q.askN}번</span>일 때, ${josa(q.evName,'이','가')} 나온 횟수의 상대도수를 반올림하여 소수 아래 셋째 자리까지 구해 보자. <span class="sub">(왼쪽 표의 ? 칸)</span></p>
+        <div class="count-row">상대도수: <input class="blank wide" id="qd" autocomplete="off" inputmode="decimal"></div>
+        <p class="sub">${guide}</p></div>
+      <div class="part"><div class="part-h">(2) 확률 구하기</div>
+        <p class="key-q">던진 횟수가 많아질수록 상대도수는 일정한 값, 곧 ${josa(q.evName,'이','가')} 나올 <span class="em">확률</span>에 가까워져요. 경우의 수를 이용해 그 확률을 구해 보자.</p>
+        ${rows}</div>`;
+  } else {
+    body = `<p class="key-q">${guide}</p>${help}<p class="sub" style="margin-top:6px">나열한 것을 보고 빈칸에 알맞은 수를 써 보자.</p>${rows}`;
+  }
+  $('qArea').innerHTML = `<div class="qtitle"><span class="qbadge">${mainNo(ST.step)}</span>문제 ${mainNo(ST.step)} · ${s.label} <span class="try-tag" id="qTry">✍️ 첫 번째 기회</span></div>
+    ${q.variant ? '<div class="variant-banner">🔁 숫자가 바뀐 비슷한 문제예요. 이 문제를 맞히면 다음으로 넘어가요.</div>' : ''}
+    <div class="prob-box">${q.text}</div>
+    ${body}
+    <div class="btn-row"><button class="btn btn-check" id="qBtn" onclick="qCheck()">확인</button></div>
+    <div class="feedback" id="qFb"></div><div class="btn-row" id="qNextRow"></div>`;
+  $('qArea').querySelectorAll('input').forEach(x=>x.addEventListener('keydown', e=>{ if(e.key==='Enter') qCheck(); }));
+  drawBindOnce('pg'); drawSetupCanvas('pg');
+}
+function showHelp(){
+  const q = ST.q; if(!q || $('helpBtn').disabled) return;
+  if(q.key==='coinDie') $('pgRef').innerHTML = treeSVG(['동전','주사위'], ['앞면','뒷면'], 6);
+  else if(q.key==='cards') $('pgRef').innerHTML = treeSVG(['십의 자리','일의 자리'], ['1','2','3','4'], 3);
+  else if(q.key==='dice2') $('pgRef').innerHTML = diceGridHTML();
+  $('helpBtn').disabled = true;
+  drawSetupCanvas('pg');
+  setFb('qFb','info', q.help==='tree' ? '왼쪽에 수형도 틀이 생겼어요. 빈 상자를 펜으로 채워 보세요.' : '왼쪽에 순서쌍 표가 생겼어요. 조건에 맞는 칸에 펜으로 동그라미를 쳐 보세요.');
+}
+// 칸별로 맞았는지 따로 판단 (피드백 팝업에서 어디를 다시 볼지 정하는 데 씀)
+function qFieldState(){
+  const q = ST.q, r = {};
+  if(q.key==='freq'){ const v=$('qd').value.trim(); r.decEmpty = v===''; r.dec = decOk(v, q.askH, q.askN); }
+  const b=$('qb').value.trim(), a=$('qa').value.trim();
+  r.favEmpty = b===''; r.totEmpty = a==='';
+  r.fav = parseCount(b)===q.fav; r.tot = parseCount(a)===q.total;
+  r.prob = gradeProb('qf', q.p);
+  return r;
+}
+function qCheck(){
+  if(!$('qBtn') || $('qBtn').disabled) return;
+  const q = ST.q, r = qFieldState();
+  if(r.decEmpty || r.favEmpty || r.totEmpty || r.prob==='empty'){ setFb('qFb',false,'빈칸을 모두 채워 주세요.'); return; }
+  const mark = (id, ok)=>{ const el=$(id); el.classList.toggle('wrong',!ok); el.classList.toggle('correct',false); };
+  if(q.key==='freq') mark('qd', r.dec);
+  mark('qb', r.fav); mark('qa', r.tot);
+  const pOk = r.prob!=='wrong'; mark('qfN', pOk); mark('qfD', pOk);
+  const allOk = (q.key!=='freq' || r.dec) && r.fav && r.tot && pOk;
+  if(allOk && r.prob==='unreduced'){ setFb('qFb','info',UNREDUCED); return; }
+  if(allOk){
+    $('qArea').querySelectorAll('input').forEach(x=>{ x.classList.add('correct'); x.disabled = true; });
+    $('qBtn').disabled = true;
+    const rec = ST.rec[STEPS[ST.step].key]; if(rec.first===null) rec.first = (ST.tries===0);
+    setFb('qFb',true, ST.tries ? '✅ 맞아요! 다시 생각해서 맞혔어요.' : '✅ 정답이에요!');
+    $('qNextRow').innerHTML = `<button class="btn" id="qNextBtn" onclick="this.disabled=true;nextStep()">${ST.step<STEPS.length-1?'다음 →':'결과 보기 →'}</button>`;
+    return;
+  }
+  const rec = ST.rec[STEPS[ST.step].key]; if(rec.first===null) rec.first = false;
+  // 두 번의 시도에서 틀린 곳을 모두 모아 피드백 단계를 정함
+  if(q.key==='freq' && !r.dec) ST.err.dec = true;
+  if(!r.tot) ST.err.tot = true; if(!r.fav) ST.err.fav = true; if(!pOk) ST.err.prob = true;
+  if(ST.tries===0){
+    ST.tries = 1;
+    $('qTry').textContent = '✍️ 마지막 기회'; $('qTry').classList.add('last');
+    setFb('qFb',false, RETHINK+'<br><span class="sub">빨간 칸을 다시 확인해 보세요. 한 번 더 답을 쓸 수 있어요.</span>');
+    lockBtn($('qBtn'));
+    return;
+  }
+  // 두 번째도 틀림 → 피드백 팝업
+  $('qArea').querySelectorAll('input').forEach(x=>x.disabled = true); $('qBtn').disabled = true;
+  setFb('qFb',false,'❌ 아쉬워요. 왜 틀렸는지 함께 확인해 봐요!');
+  $('qNextRow').innerHTML = `<button class="btn" id="fbOpenBtn" onclick="this.disabled=true;openFeedback()">🔍 함께 확인하기</button>`;
+}
+function nextStep(){ ST.step++; if(ST.step < STEPS.length) enterStep(); else finishQuiz(); }
+
+/* ════════════════════════════════
+   팝업 공통
+════════════════════════════════ */
+function openPop(html){ $('popBox').innerHTML = html; $('popModal').classList.add('show'); POP.shownAt = Date.now(); }
+function closePop(){ $('popModal').classList.remove('show'); }
+const POP = { shownAt:0 };
+function readOk(fbId){
+  if(!GUARD.on || Date.now()-POP.shownAt >= READ_MS) return true;
+  setFb(fbId,false,'✋ 잠깐! 질문을 끝까지 읽고 골라 봐요.');
+  return false;
+}
+// [[k]] 자리에 숫자 빈칸
+function blanksHTML(tpl){ return tpl.replace(/\[\[(\w+)\]\]/g, (s,k)=>`<input class="blank fp-in" data-k="${k}" id="fp_${k}" autocomplete="off" inputmode="numeric">`); }
+function checkBlanks(ans){
+  let empty=false, wrong=false;
+  Object.keys(ans).forEach(k=>{
+    const el = $('fp_'+k), v = el.value.trim();
+    if(v===''){ empty=true; return; }
+    const ok = parseCount(v)===ans[k];
+    el.classList.toggle('wrong',!ok); el.classList.toggle('correct',ok);
+    if(!ok) wrong=true;
+  });
+  return empty ? null : !wrong;
+}
+function bindEnter(fn){ $('popBox').querySelectorAll('input').forEach(x=>x.addEventListener('keydown', e=>{ if(e.key==='Enter') fn(); })); }
+
+/* ════════════════════════════════
+   피드백 팝업 — 틀린 곳에 따라 단계를 고름. 각 단계는 빈칸을 맞혀야 넘어감
+   dec: 상대도수 계산 / struct: 모든 경우의 수 세기 / pick: 조건에 맞는 경우 고르기 / formula: 확률 = 사건/모든 경우
+════════════════════════════════ */
+const FP = { stages:[], i:0, q:null, sel:new Set() };
+function openFeedback(){
+  const q = ST.q, e = ST.err || {};
+  FP.q = q; FP.i = 0;
+  FP.stages = [];
+  if(e.dec) FP.stages.push('dec');
+  if(e.tot) FP.stages.push('struct');
+  if(e.fav) FP.stages.push('pick');
+  FP.stages.push('formula');
+  renderStage();
+}
+function stageHead(){ return `<div class="pop-tag fb">🔍 함께 확인하기</div><div class="pop-step">${FP.i+1} / ${FP.stages.length} 단계</div>`; }
+function renderStage(){
+  const q = FP.q, st = FP.stages[FP.i];
+  let html;
+  if(st==='dec'){
+    html = `${stageHead()}<div class="modal-text">상대도수를 구하는 방법을 다시 확인해 봐요.</div>
+      <div class="pop-q">(상대도수) = (${josa(q.evName,'이','가')} 나온 횟수) ÷ (던진 횟수)<br>
+        던진 횟수가 ${q.askN}번일 때 = [[h]] ÷ [[n]]<br>
+        = <input class="blank wide" id="fp_d" autocomplete="off" inputmode="decimal"> <span class="sub">(반올림하여 소수 아래 셋째 자리까지)</span></div>`;
+    html = blanksHTML(html);
+  } else if(st==='struct'){
+    html = `${stageHead()}<div class="modal-text">일어날 수 있는 <b>모든 경우의 수</b>를 다시 세어 봐요.</div><div class="pop-q">${blanksHTML(q.struct.html)}</div>`;
+  } else if(st==='pick'){
+    FP.sel = new Set();
+    html = `${stageHead()}<div class="modal-text"><b>${q.ev.replace(/ 경우의 수$/,'')}</b> 경우를 아래에서 <b>모두</b> 골라 봐요.<br><span class="sub">${q.pickNote||''}</span></div>
+      <div class="pick-grid" id="pickGrid" style="grid-template-columns:repeat(${q.cols6},1fr)">${q.outs.map((o,i)=>`<button data-i="${i}" onclick="fpPick(${i})">${o.lab}</button>`).join('')}</div>
+      <div class="pop-q" style="text-align:center">고른 경우는 모두 [[c]]가지예요.</div>`;
+    html = blanksHTML(html);
+  } else {
+    const [rn, rd] = q.p, red = rn!==q.fav;
+    html = `${stageHead()}<div class="modal-text">확률을 구하는 방법으로 정리해 봐요.</div>
+      <div class="pop-q" style="text-align:center">(${q.evp} 확률) = ${sfrac('(사건이 일어나는 경우의 수)','(모든 경우의 수)')}<br>
+        = <span class="frac"><input class="blank fp-in" id="fp_fa" autocomplete="off" inputmode="numeric"><span class="fbar"></span><input class="blank fp-in" id="fp_fb" autocomplete="off" inputmode="numeric"></span>
+        ${red ? ` = <span class="frac"><input class="blank fp-in" id="fp_ra" autocomplete="off" inputmode="numeric"><span class="fbar"></span><input class="blank fp-in" id="fp_rb" autocomplete="off" inputmode="numeric"></span> <span class="sub">(약분)</span>` : ''}</div>`;
+  }
+  html += `<div class="feedback" id="fpFb"></div><div class="btn-row"><button class="modal-btn" id="fpBtn" onclick="fpCheck()">확인</button></div>`;
+  openPop(html);
+  bindEnter(fpCheck);
+}
+function fpPick(i){
+  const b = document.querySelector(`#pickGrid [data-i="${i}"]`); if(!b || b.disabled) return;
+  if(FP.sel.has(i)) FP.sel.delete(i); else FP.sel.add(i);
+  b.classList.toggle('on', FP.sel.has(i));
+}
+function fpCheck(){
+  const btn = $('fpBtn'); if(!btn || btn.disabled) return;
+  const q = FP.q, st = FP.stages[FP.i];
+  let ok;
+  if(st==='dec'){
+    const r = checkBlanks({h:q.askH, n:q.askN});
+    const d = $('fp_d'), dv = d.value.trim();
+    if(r===null || dv===''){ setFb('fpFb',false,'빈칸을 모두 채워 주세요.'); return; }
+    const dOk = decOk(dv, q.askH, q.askN); d.classList.toggle('wrong',!dOk); d.classList.toggle('correct',dOk);
+    ok = r && dOk;
+  } else if(st==='struct'){
+    const r = checkBlanks(q.struct.ans); if(r===null){ setFb('fpFb',false,'빈칸을 모두 채워 주세요.'); return; } ok = r;
+  } else if(st==='pick'){
+    if(!FP.sel.size){ setFb('fpFb',false,'먼저 조건에 맞는 경우를 골라 주세요.'); return; }
+    const want = new Set(q.outs.map((o,i)=>o.ok?i:-1).filter(i=>i>=0));
+    const selOk = FP.sel.size===want.size && [...FP.sel].every(i=>want.has(i));
+    const r = checkBlanks({c:q.fav}); if(r===null){ setFb('fpFb',false,'빈칸을 모두 채워 주세요.'); return; }
+    ok = selOk && r;
+    if(!selOk){ setFb('fpFb',false,RETHINK+'<br><span class="sub">조건에 맞는 경우를 빠짐없이, 맞지 않는 것은 빼고 골랐는지 하나씩 확인해 봐요.</span>'); lockBtn(btn); return; }
+  } else {
+    const ans = {fa:q.fav, fb:q.total}; if($('fp_ra')){ ans.ra = q.p[0]; ans.rb = q.p[1]; }
+    const r = checkBlanks(ans); if(r===null){ setFb('fpFb',false,'빈칸을 모두 채워 주세요.'); return; } ok = r;
+  }
+  if(!ok){ setFb('fpFb',false,RETHINK); lockBtn(btn); return; }
+  btn.disabled = true;
+  $('popBox').querySelectorAll('input,#pickGrid button').forEach(x=>x.disabled = true);
+  FP.i++;
+  if(FP.i < FP.stages.length){ setFb('fpFb',true,'✅ 맞아요!'); setTimeout(renderStage, 500); return; }
+  ST.rec[STEPS[ST.step].key].fb++;
+  openPop(`<div class="modal-icon">👍</div><div class="modal-text" style="font-size:15.5px">잘했어요! 이제 <b>숫자가 바뀐 비슷한 문제</b>를 혼자 풀어 봐요.</div>
+    <div class="btn-row"><button class="modal-btn" id="fpDone" onclick="fpDone()">비슷한 문제 풀기 →</button></div>`);
+}
+function fpDone(){
+  if(!$('fpDone')) return;
+  closePop();
+  ST.q = variantOf(FP.q);
+  renderMain();
+}
+
+/* ════════════════════════════════
+   개념 확인 팝업 ① 확률을 구하는 방법 (분자 → 분모 차례로 고르기)
+════════════════════════════════ */
+const FM = { step:0, first:true };
+const FM_OPTS = ['사건 A가 일어나는 경우의 수','모든 경우의 수','사건 A가 일어나지 않는 경우의 수'];
+function openFormulaPop(){ FM.step = 0; FM.first = true; renderFormulaPop(''); }
+function renderFormulaPop(fbHTML){
+  const part = FM.step===0 ? '분자' : '분모';
+  openPop(`<div class="pop-tag">💬 개념 확인</div><div class="modal-text">각 경우가 일어날 가능성이 모두 같을 때, 사건 <span class="it">A</span>가 일어날 확률 <span class="it">p</span>를 구하는 방법이에요.</div>
+    <div class="pop-q" id="fmQ" style="text-align:center"><span class="it">p</span> =
+      <span class="slot-frac"><span class="sl ${FM.step===0?'on':'filled'}">${FM.step===0?'분자 ?':FM_OPTS[0]}</span><span class="bar"></span><span class="sl ${FM.step===1?'on':''}">${FM.step===1?'분모 ?':'분모'}</span></span></div>
+    <p class="key-q ask" style="text-align:left">노란 칸(<span class="em">${part}</span>)에 들어갈 것을 골라 보자.</p>
+    <div class="choice-col" id="fmRow">${shuffle(FM_OPTS).map(o=>`<button class="choice-btn" data-o="${o}" onclick="fmPick(this)">${o}</button>`).join('')}</div>
+    <div class="feedback" id="fmFb">${fbHTML}</div>`);
+}
+function fmPick(btn){
+  if(btn.disabled || !readOk('fmFb')) return;
+  const want = FM.step===0 ? FM_OPTS[0] : FM_OPTS[1];
+  if(btn.dataset.o !== want){
+    FM.first = false; btn.classList.add('wrong');
+    const btns = [...document.querySelectorAll('#fmRow button')];
+    btns.forEach(b=>b.disabled=true);
+    setFb('fmFb',false,RETHINK);
+    setTimeout(()=>{ if(!document.body.contains(btn)) return; renderFormulaPop(RETHINK+'<br><span class="sub">다시 골라 보세요.</span>'); }, GUARD.on ? LOCK_MS : 0);
+    return;
+  }
+  if(FM.step===0){ FM.step = 1; renderFormulaPop('<span style="color:var(--green)">✅ 맞아요! 이번에는 분모예요.</span>'); return; }
+  if(ST.rec.formula.first===null) ST.rec.formula.first = FM.first;
+  openPop(`<div class="modal-icon">✅</div><div class="modal-text" style="font-size:15.5px"><span class="it">p</span> = ${sfrac('(사건 <span class="it">A</span>가 일어나는 경우의 수)','(모든 경우의 수)')}</div>
+    <div class="btn-row"><button class="modal-btn" id="popNext" onclick="popNext()">다음 문제로 →</button></div>`);
+}
+function popNext(){ if(!$('popNext')) return; closePop(); nextStep(); }
+
+/* ════════════════════════════════
+   개념 확인 팝업 ② 확률의 뜻 바르게 이해하기 (O/X → 이유)
+════════════════════════════════ */
+const INTERP = [
+  { s:`한 개의 주사위를 던질 때 1의 눈이 나올 확률은 ${sfrac(1,6)}이다. 그러므로 주사위를 6번 던지면 1의 눈이 반드시 한 번 나온다.`, ans:'X',
+    why:'확률은 많이 반복할 때 상대도수가 가까워지는 값이에요. 6번 던졌을 때의 결과를 정해 주지는 않아요.',
+    wrong:['1의 눈은 다른 눈보다 잘 나오지 않기 때문이에요.','주사위를 6번 던지면 1의 눈이 반드시 두 번 나오기 때문이에요.'] },
+  { s:`한 개의 동전을 던졌더니 앞면이 4번 연속으로 나왔다. 그러므로 다음에 던질 때는 뒷면이 나올 확률이 ${sfrac(1,2)}보다 크다.`, ans:'X',
+    why:'동전을 던질 때마다 앞면과 뒷면이 나올 가능성은 같아요. 앞의 결과가 다음 결과에 영향을 주지 않아요.',
+    wrong:['앞면이 많이 나왔으니 이제는 앞면이 나올 확률이 더 커지기 때문이에요.','4번 던졌으니 뒷면이 나올 확률은 4/5이기 때문이에요.'] },
+  { s:`한 개의 주사위를 6000번 던지면, 1의 눈은 1000번에 가까운 횟수만큼 나올 것이라고 예상할 수 있다.`, ans:'O',
+    why:`던진 횟수가 많아질수록 1의 눈이 나온 상대도수가 ${sfrac(1,6)}에 가까워지기 때문이에요.`,
+    wrong:['1의 눈은 정확히 1000번 나오기 때문이에요.','1의 눈은 6000번 중 6번만 나오기 때문이에요.'] },
+  { s:`한 개의 동전을 10번 던져 앞면이 7번 나왔다. 그러므로 이 동전을 던질 때 앞면이 나올 확률은 ${sfrac(7,10)}이다.`, ans:'X',
+    why:`10번은 너무 적은 횟수예요. 던진 횟수가 많아질수록 상대도수는 ${sfrac(1,2)}에 가까워져요.`,
+    wrong:['앞면이 나온 횟수를 뒷면이 나온 횟수로 나누어야 하기 때문이에요.','동전을 던질 때 앞면이 나올 확률은 언제나 7/10이기 때문이에요.'] }
+];
+const IP = { it:null, step:0, first:true };
+function openInterpPop(){ IP.it = pick1(INTERP); IP.step = 0; IP.first = true; renderInterpPop(''); }
+function renderInterpPop(fbHTML){
+  const it = IP.it;
+  const head = `<div class="pop-tag">💬 개념 확인</div><div class="pop-q">${it.s}</div>`;
+  if(IP.step===0){
+    openPop(`${head}<p class="key-q ask" style="text-align:left">이 말이 옳으면 <span class="em">O</span>, 옳지 않으면 <span class="em">X</span>를 골라 보자.</p>
+      <div class="ox-row" id="ipRow">${shuffle(['O','X']).map(v=>`<button class="choice-btn" data-o="${v}" onclick="ipPick(this)">${v}</button>`).join('')}</div>
+      <div class="feedback" id="ipFb">${fbHTML}</div>`);
+  } else {
+    openPop(`${head}<p class="key-q ask" style="text-align:left">${it.ans==='O'?'옳은':'옳지 않은'} <span class="em">이유</span>로 알맞은 것을 골라 보자.</p>
+      <div class="choice-col" id="ipRow">${shuffle([it.why, ...it.wrong]).map((v,i)=>`<button class="choice-btn" data-ok="${v===it.why?1:0}" onclick="ipPick(this)">${v}</button>`).join('')}</div>
+      <div class="feedback" id="ipFb">${fbHTML}</div>`);
+  }
+}
+function ipPick(btn){
+  if(btn.disabled || !readOk('ipFb')) return;
+  const ok = IP.step===0 ? btn.dataset.o===IP.it.ans : btn.dataset.ok==='1';
+  if(!ok){
+    IP.first = false; btn.classList.add('wrong');
+    document.querySelectorAll('#ipRow button').forEach(b=>b.disabled=true);
+    setFb('ipFb',false,RETHINK);
+    setTimeout(()=>{ if(!document.body.contains(btn)) return; renderInterpPop(RETHINK+'<br><span class="sub">다시 골라 보세요.</span>'); }, GUARD.on ? LOCK_MS : 0);
+    return;
+  }
+  if(IP.step===0){ IP.step = 1; renderInterpPop('<span style="color:var(--green)">✅ 맞아요! 이번에는 이유를 골라 봐요.</span>'); return; }
+  if(ST.rec.interp.first===null) ST.rec.interp.first = IP.first;
+  openPop(`<div class="modal-icon">✅</div><div class="modal-text" style="font-size:15px">${IP.it.why}</div>
+    <div class="btn-row"><button class="modal-btn" id="popNext" onclick="popNext()">다음 문제로 →</button></div>`);
+}
+
+/* ════════════════════════════════
+   결과
+════════════════════════════════ */
+function finishQuiz(){
+  closePop();
+  const mains = STEPS.filter(s=>s.type==='main');
+  const oneShot = mains.filter(s=>ST.rec[s.key].first===true).length;
+  $('resultBox').innerHTML = `<div class="result-icon">🏁</div>
+    <h2>형성평가 완료!</h2>
+    <div class="result-score">한 번에 맞힌 문제 ${oneShot} / ${mains.length}</div>
+    <ul class="res-list">${STEPS.map((s,i)=>{
+      const r = ST.rec[s.key];
+      const tag = s.type==='pop' ? (r.first ? '<span class="tag one">한 번에 통과</span>' : '<span class="tag fb">다시 생각해서 통과</span>')
+        : r.fb ? `<span class="tag fb">함께 확인 ${r.fb}번 후 통과</span>` : r.first ? '<span class="tag one">한 번에 통과</span>' : '<span class="tag one">두 번째 기회에 통과</span>';
+      return `<li>${s.type==='pop'?'💬':mainNo(i)+'번'} · ${s.label}${tag}</li>`;
+    }).join('')}</ul>
+    <p style="color:var(--ink2);line-height:1.8">${oneShot===mains.length ? '모든 문제를 한 번에 맞혔어요! 확률의 개념을 잘 이해했어요.' : '함께 확인한 문제는 노트에 다시 한 번 풀어 보면 좋아요.'}</p>
+    <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button><button class="restart-btn" onclick="startQuiz()">🔄 처음부터 다시</button>`;
+  showScreen('scResult');
+  if(window._reportHubComplete) window._reportHubComplete();
+}
+
+/* ════════════════════════════════
+   계산기 (직각삼각형이_되는_조건.html과 같은 방식, 문제 1에서만 보임)
+════════════════════════════════ */
+const calcSt = { display:'0', prev:null, op:null, fresh:true };
+function calcToggle(){ $('calcPanel').classList.toggle('show'); $('calcToggleBtn').classList.toggle('active'); }
+function calcRender(){ $('calcDisplay').textContent = calcSt.display; }
+function calcDigit(d){
+  if(calcSt.fresh){ calcSt.display = (d==='.') ? '0.' : d; calcSt.fresh=false; }
+  else {
+    if(d==='.' && calcSt.display.includes('.')) return;
+    calcSt.display = (calcSt.display==='0' && d!=='.') ? d : calcSt.display+d;
+  }
+  calcRender();
+}
+function calcOp(op){
+  if(calcSt.op && !calcSt.fresh) calcEquals();
+  const v = parseFloat(calcSt.display);
+  calcSt.prev = Number.isFinite(v) ? v : 0; calcSt.op = op; calcSt.fresh = true;
+}
+function calcEquals(){
+  if(calcSt.op===null || calcSt.prev===null) return;
+  const cur = parseFloat(calcSt.display);
+  let result = cur;
+  if(calcSt.op==='+') result = calcSt.prev+cur;
+  else if(calcSt.op==='-') result = calcSt.prev-cur;
+  else if(calcSt.op==='×') result = calcSt.prev*cur;
+  else if(calcSt.op==='÷') result = cur===0 ? NaN : calcSt.prev/cur;
+  calcSt.display = Number.isFinite(result) ? String(Math.round(result*1e8)/1e8) : '0으로 나눌 수 없어요';
+  calcSt.op = null; calcSt.prev = null; calcSt.fresh = true;
+  calcRender();
+}
+function calcClear(){ calcSt.display='0'; calcSt.prev=null; calcSt.op=null; calcSt.fresh=true; calcRender(); }
+function calcBackspace(){
+  if(calcSt.fresh) return;
+  calcSt.display = calcSt.display.length>1 ? calcSt.display.slice(0,-1) : '0';
+  calcRender();
+}
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스)
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pen' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key); d.mode = mode;
+  $(key+'PenBtn').classList.toggle('active', mode==='pen');
+  $(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  $(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = $(key+'DrawWrap'), canvas = $(key+'Ink');
+  const rect = wrap.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr)); canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px'; canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d'); if(!ctx) return;
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){ const rect = $(key+'Ink').getBoundingClientRect(); return { x: evt.clientX-rect.left, y: evt.clientY-rect.top }; }
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = $(key+'Ink'), d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{ d.drawing=true; canvas.setPointerCapture(evt.pointerId); const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y; });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt), ctx=canvas.getContext('2d'); if(!ctx) return;
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke(); d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(n=>canvas.addEventListener(n, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{ if($('pgPen').style.display!=='none') drawSetupCanvas(key); });
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  document.querySelectorAll('#pgPen .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  $(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false; $(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('#pgPen .color-swatch'); if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true; document.querySelectorAll('#pgPen .color-swatch').forEach(b=>b.classList.remove('active'));
+    $(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){ const c=document.createElement('canvas'); c.width=size; c.height=size; const cx = c.getContext('2d'); if(!cx) return ''; draw(cx, size); return c.toDataURL('image/png'); }
+function drawUpdateCursor(key){
+  const canvas = $(key+'Ink'); if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL(cx=>{ cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2); cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill(); cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke(); }, size);
+    canvas.style.cursor = url ? `url(${url}) ${size/2} ${size/2}, cell` : 'cell';
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL(cx=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = url ? `url(${url}) 10 10, crosshair` : 'crosshair';
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function adminAnswer(){
+  const s = STEPS[ST.step];
+  if(!s || !$('scQuiz').classList.contains('active')) return '문제를 푸는 중이 아니에요.';
+  if(s.key==='formula') return '분자 = 사건 A가 일어나는 경우의 수, 분모 = 모든 경우의 수';
+  if(s.key==='interp') return IP.it ? `${IP.it.ans} / 이유: ${IP.it.why.replace(/<[^>]+>/g,'')}` : '-';
+  const q = ST.q;
+  return (q.key==='freq' ? `상대도수 ${round3(q.askH,q.askN)} (${q.askH}÷${q.askN}), ` : '') + `사건 ${q.fav}, 모든 경우 ${q.total}, 확률 ${q.p[0]}/${q.p[1]}`;
+}
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  $('adminPanelBody').innerHTML =
+    '<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">'+STEPS.map((s,i)=>btn(s.type==='pop'?'💬'+(i+1):`문제${mainNo(i)}`,`adminGo(${i})`)).join('')+btn('결과 화면','adminFinish()')+'</div>'+
+    `<div style="background:#fef3c7;border-radius:8px;padding:4px 8px;margin-bottom:6px"><strong>지금 정답</strong>: ${adminAnswer()}</div>`+
+    '<div><strong>순서</strong>: 문제1 확률의 뜻(실험 결과 표의 ? 칸 상대도수 계산 + 그 확률을 경우의 수로) → 💬 확률을 구하는 방법(분자·분모 고르기) → 문제2 동전 1개와 주사위 1개(수형도) → 문제3 주사위 2개(순서쌍) → 💬 확률의 뜻 바르게 이해하기(O/X+이유) → 문제4 카드 1·2·3·4로 두 자리 수(수형도). 모든 확률은 0과 1 사이</div>'+
+    '<div><strong>본문제</strong>: 두 번 입력 기회. 두 번째도 틀리면 "함께 확인하기" 팝업(두 번의 시도에서 틀린 곳을 모두 모아: 상대도수 틀림 → 계산 빈칸, 모든 경우의 수 틀림 → 세는 방법 빈칸, 사건의 경우의 수 틀림 → 조건에 맞는 경우 모두 고르기, 마지막은 늘 확률 공식 빈칸) → 숫자가 바뀐 비슷한 문제. 맞혀야 다음으로</div>'+
+    '<div><strong>계산기</strong>: 문제 1(상대도수)에서만 왼쪽에 🧮 계산기 (사칙연산, 소수 아래 8자리까지 표시 — 반올림은 학생이 직접)</div><div><strong>도움 버튼</strong>: 문제2·4는 🌳 수형도 틀(첫 가지만, 둘째 가지는 빈 상자), 문제3은 📋 순서쌍 표 (연습장 위쪽에 깔림, 펜으로 채움)</div>'+
+    '<div><strong>숫자 칸</strong>: 6 = 6가지 = 6개 = 6번 (띄어쓰기 무시) / <strong>상대도수</strong>: 0.352 = .352, 끝의 0 생략 가능(0.52 = 0.520) / <strong>확률</strong>: 기약분수만 정답, 약분 전이면 안내만(기회 차감 없음), 빈칸이 있으면 안내만</div>'+
+    '<div style="color:var(--red);margin-top:6px">미인정: 한글 수사("여섯") / 상대도수를 분수로 쓴 경우 / 확률을 소수로 쓴 경우</div>'+
+    `<label style="display:block;margin-top:6px"><input type="checkbox" ${GUARD.on?'':'checked'} onchange="GUARD.on=!this.checked"> 시연용: 읽기 확인·잠금 끄기</label>`;
+  $('adminPanel').style.display='block';
+}
+function adminGo(i){
+  if(!$('scQuiz').classList.contains('active')) showScreen('scQuiz');
+  ST.step = i; enterStep(); showAdminPanel();
+}
+function adminFinish(){ STEPS.forEach(s=>{ if(ST.rec[s.key].first===null) ST.rec[s.key].first = true; }); finishQuiz(); }
+
+startQuiz();
+</script>
+</body>
+</html>
