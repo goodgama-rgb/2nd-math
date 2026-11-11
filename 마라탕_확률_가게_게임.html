@@ -147,6 +147,9 @@ body.wide .main{max-width:1320px;padding-top:10px}
 .order b.k{color:var(--red);text-decoration:underline;text-underline-offset:3px}
 .bowl-wrap{position:relative;width:100%;max-width:400px;margin:0 auto;aspect-ratio:838/668}
 .bowl-wrap>img.bowl{position:absolute;inset:0;width:100%;height:100%}
+.bowl-reset{position:absolute;right:-6px;top:-4px;z-index:6;border:2px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:12px;padding:6px 10px;font-size:13.5px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.bowl-reset:hover{background:#fef2f2}
+.bowl-reset:disabled{opacity:.4;cursor:default}
 .slot{position:absolute;width:12.5%;aspect-ratio:1/1;transform:translate(-50%,-50%);cursor:pointer;border:none;background:none;padding:0}
 .slot img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
 .slot.pop img{animation:dropIn .35s ease-out}
@@ -376,7 +379,7 @@ document.getElementById('hubBackLink').href = 'index.html' + location.search;
       <button class="coolbar" id="coolBar" onclick="toggleCool()"><span class="lab" id="coolLab"></span><span class="cps" id="coolCps"></span></button></div>
       <div class="counter">
         <div class="ticket" id="ticket"></div>
-        <div class="bowl-wrap" id="bowlWrap"><img class="bowl" id="bowlImg" alt="마라탕 그릇"></div>
+        <div class="bowl-wrap" id="bowlWrap"><img class="bowl" id="bowlImg" alt="마라탕 그릇"><button class="bowl-reset" id="bowlReset" onclick="clearBowl()" title="그릇에 담은 재료를 모두 빼요">🔄 재료 초기화</button></div>
         <div class="tally" id="tally"></div>
         <div class="bowl-tip">그릇 속 재료를 누르면 빠져요. · 🥢 모든 재료는 크기·무게가 같고, 손님은 재료 하나를 임의로 집어요.</div>
       </div>
@@ -489,8 +492,7 @@ function makeOrder(lv){
   const r = Math.random();
   if(r<0.55) return makeL3(pick(['triple','orProb','ratio','group']));
   if(r<0.72) return makeL2(pick(['frac2','fracZero']));
-  if(r<0.94) return pick([()=>makeL3('trapSum'), ()=>makeL1('trapGt1'), ()=>makeL1('trapContra'), ()=>makeL1('trapNeg')])();
-  return makeTrapSize();
+  return pick([()=>makeL3('trapSum'), ()=>makeL1('trapGt1'), ()=>makeL1('trapContra'), ()=>makeL1('trapNeg')])();
 }
 // 레벨 3 복합 주문: 먼저 정답 그릇을 만들고, 그 그릇에 맞는 조건을 말함 → 만들 수 있는 주문은 반드시 풀 수 있음
 function addTo(counts, id){ counts[id] = (counts[id]||0) + 1; }
@@ -916,6 +918,7 @@ function renderBowl(popIdx){
   $('tally').innerHTML = CATS.map(c=>`<span>${CAT[c]} <b>${cnt(c)}</b></span>`).join('') + `<span class="all">모두 <b>${G.bowl.length}</b>개</span>`;
   ING.forEach(i=>{ const k = G.bowl.filter(x=>x===i.id).length, el = $('cnt_'+i.id); if(el){ el.style.display = k?'':'none'; el.textContent = k; } });
   document.querySelectorAll('#shelf .ing').forEach(b=>b.disabled = G.over || G.bowl.length>=MAX_BOWL);
+  if($('bowlReset')) $('bowlReset').disabled = G.over || !G.bowl.length;
 }
 function addIng(id){
   if(!G || G.over || G.bowl.length>=MAX_BOWL) return;
@@ -1306,7 +1309,7 @@ function showAdminPanel(){
     `<div><strong>🥤 쿨피스 서비스</strong>: 영업마다 10병. 쿨피스 칸을 누르고 테이블을 누르면 인내심 +${COOL_ADD}초(최대치까지), 손님당 1병. 레벨 3은 끝날 때 남은 병당 +${COOL_BONUS}코인(하트로 끝나면 없음)</div>`+
     `<div><strong>레벨 1</strong>(테이블 2, 손님 6명, 하트 3): 절대로(0)·반드시(1)·"○○은 꼭 넣고 △△는 절대로"·"반드시 ○○만" + 함정(분모가 재료 개수인 확률 &gt; 1, 모순). 하트를 지키며 손님을 모두 받으면 통과</div>`+
     `<div><strong>레벨 2</strong>(테이블 3, 손님 8명, 하트 3): "재료 n개로 확률 a/b", 두 사건 확률, 확률+절대로, 재료 수 자유 + 함정(확률 &gt; 1, 음수)</div>`+
-    `<div><strong>레벨 3</strong>(테이블 4, 3분, 100코인 이상 통과, 순위표=최고 코인): 복합 주문(조건 3개+버섯 절대로, '고기 또는 당면' 확률, 'A가 B의 2·3배', 두 사람 단체 주문) + 함정(두 확률의 합 &gt; 1, 확률 &gt; 1, 음수, 모순, 크기 다름)</div>`+
+    `<div><strong>레벨 3</strong>(테이블 4, 3분, 100코인 이상 통과, 순위표=최고 코인): 복합 주문(조건 3개+버섯 절대로, '고기 또는 당면' 확률, 'A가 B의 2·3배', 두 사람 단체 주문) + 함정(두 확률의 합 &gt; 1, 확률 &gt; 1, 음수, 모순)</div>`+
     `<div><strong>코인과 배움 팝업</strong>(팝업 동안 영업 시간·인내심 멈춤): 성공 10 + 팁(남은 인내심 비율×10). 함정을 잘 돌려보내면 10, 같은 함정 종류는 레벨마다 처음 한 번 '왜 만들 수 없을까요?'(첫 시도 +5). 확률 0·1 주문은 테이블에 '20번 집기' 결과 표시. 분수 확률 주문 첫 성공(레벨 2·3, 한 번) = 🔬 오늘의 실험(20번 → 1000번 그래프·그림 판). 레벨 1·2는 성공 3번마다 사장님 퀴즈(방금 낸 그릇 그림을 보고 확률, 첫 시도 +5)</div>`+
     `<div><strong>순위표</strong>: Firestore <code>gameRank/mala_{반}</code> (1인 최고 1개, 내 최고를 넘을 때만 기록)</div>`;
   $('adminPanel').style.display = 'block';
