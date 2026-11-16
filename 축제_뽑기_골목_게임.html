@@ -171,6 +171,9 @@ body.wide .main{max-width:1280px;padding-top:10px}
 .mini .rule{font-size:13px;font-weight:800;line-height:1.5;margin-top:3px;min-height:58px}
 .mini .rule b.k{color:var(--fest)}
 .mini .pv{font-size:12px;font-weight:900;color:var(--ink2);margin-top:2px}
+.l3-steps{font-size:13.5px;font-weight:800;line-height:1.8;color:var(--ink2);background:#fdf2f8;border-radius:10px;padding:6px 10px;margin:4px 0 6px}
+.big-btn.save{background:#fff;color:var(--fest);border:2.5px solid var(--fest);box-shadow:none}
+.decide-box{margin-top:12px;border-top:2px dashed #fbcfe8;padding-top:8px}
 .tix{display:flex;gap:2px;justify-content:center}
 .tix i{font-style:normal;font-size:16px}
 .tix i.used{opacity:.2;filter:grayscale(1)}
@@ -909,11 +912,12 @@ function nextBooth(){
 
 /* ── 레벨 3: 골목 (부스 3곳 중 고르기) ── */
 function newTrio(){
-  G.trio = makeL3Trio(); G.sel = null; G.booth = null; G.step = 'choose'; G.tries = 0; G.closed = false; G.revealed = false; G.marks = new Set();
+  G.trio = makeL3Trio(); G.sel = null; G.booth = null; G.step = 'choose'; G.tries = 0; G.closed = false; G.revealed = false; G.marks = new Set(); G.saved = {};
   renderHud();
   $('stage').innerHTML = alleyHTML() + `<div id="boardBox"><div class="board"><div class="board-h">부스를 고르면 모든 경우가 여기에 나와요.</div></div></div><div id="playArea"></div>`;
   $('panel').innerHTML = host('host_hi', '뽑기권은 한정! 어느 부스가 가장 유리할까요?') +
     `<div class="key-q">세 부스 중 <span class="em">당첨될 확률이 가장 높은 부스</span>를 골라 보세요.</div>
+    <div class="l3-steps">① 부스를 눌러 당첨될 확률을 구하고 <b>📝 적어 두기</b><br>② 세 부스를 비교해서 가장 유리한 부스를 <b>🎟 결정!</b></div>
     <div class="tix">${[...Array(G.L.tickets)].map((_,i)=>`<i class="${i < G.L.tickets-G.tix ? 'used':''}">🎟</i>`).join('')}</div>
     <div id="ansArea"><div class="sub" style="text-align:center;margin-top:10px">왼쪽에서 부스를 눌러 골라요.</div></div><div class="feedback" id="fb"></div>` + shelfHTML();
 }
@@ -926,13 +930,42 @@ function pickBooth(i){
   G.sel = i; G.booth = G.trio[i]; G.marks = new Set(); sfx('pick');
   G.trio.forEach((_,k)=>$('mini'+k).classList.toggle('on', k===i));
   $('boardBox').innerHTML = boardHTML(G.booth, false);
-  $('ansArea').innerHTML = `<div class="qline" style="margin-top:8px"><span><b>${i+1}번째 부스</b>의 (당첨될 확률)</span> = ${probInputs(false)}</div>${PROB_NOTE}
-    <button class="big-btn" id="aBtn" onclick="checkL3()">이 부스로 결정! 확인</button><div class="sub" style="text-align:center;margin-top:4px">확인을 누르기 전에는 다른 부스로 바꿀 수 있어요.</div>`;
+  const sv = G.saved[i] || { n:'', d:'' };
+  $('ansArea').innerHTML = `<div class="qline" style="margin-top:8px"><span><b>${i+1}번째 부스</b>의 (당첨될 확률)</span> = <span class="fbox"><input class="num" id="aN" inputmode="numeric" value="${sv.n}" onkeydown="if(event.key==='Enter')saveL3()"><hr><input class="num" id="aD" inputmode="numeric" value="${sv.d}" onkeydown="if(event.key==='Enter')saveL3()"></span></div>${PROB_NOTE}
+    <button class="big-btn save" id="saveBtn" onclick="saveL3()">📝 적어 두기</button>
+    <div class="sub" id="saveNote" style="text-align:center;margin-top:4px">적어 두면 부스 카드에 남아요. 다른 부스도 계산해 보고 비교해요.</div>
+    <div class="decide-box"><div class="sub" id="decideNote" style="text-align:center">⚠️ 결정하면 다른 부스로 <b>바꿀 수 없어요</b>.</div>
+    <button class="big-btn" id="aBtn" onclick="checkL3()">🎟 ${i+1}번째 부스로 결정!</button></div>`;
+  setFb('', '');
   focusFirst();
+}
+// 적어 두기: 채점하지 않고 저장만 (부스 카드에 '내 계산' 표시)
+function readL3(){
+  const n = ($('aN').value||'').trim(), d = ($('aD').value||'').trim();
+  if(!/^\d+$/.test(n) || !(d==='' || /^\d+$/.test(d))){ setFb('info', '분자와 분모 칸에 숫자를 써 주세요.'); return null; }
+  if(d!=='' && +d===0){ setFb('info', '분모에는 0이 올 수 없어요.'); return null; }
+  return { n, d };
+}
+function showSaved(i){
+  const v = G.saved[i], el = $('pv'+i); if(!el) return;
+  el.innerHTML = v ? `📝 내 계산: ${v.d==='' || v.d==='1' ? v.n : fr(v.n, v.d)}` : '';
+}
+function saveL3(){
+  if(!G || G.over || G.step!=='choose' || G.sel===null) return;
+  const v = readL3(); if(!v) return;
+  G.saved[G.sel] = v; showSaved(G.sel); sfx('pick');
+  const left = [0,1,2].filter(k=>!G.saved[k]).map(k=>`${k+1}번째`);
+  setFb('ok', `📝 ${G.sel+1}번째 부스의 확률을 적어 두었어요.` + (left.length ? `<br><span style="font-size:13px">${left.join(', ')} 부스도 계산해 보고 비교해요!</span>` : `<br><span style="font-size:13px">세 부스를 모두 적었어요. 가장 유리한 부스를 골라 결정해요!</span>`));
 }
 function checkL3(){
   if(!G || G.over || !G.booth || locked() || G.revealed) return;
-  if(G.step==='choose'){ G.step = 'ans'; G.trio.forEach((_,k)=>$('mini'+k).disabled = true); }
+  if(G.step==='choose'){
+    const v = readL3(); if(!v) return;
+    G.saved[G.sel] = v; showSaved(G.sel);
+    G.step = 'ans'; G.trio.forEach((_,k)=>$('mini'+k).disabled = true);
+    ['saveBtn','saveNote'].forEach(id=>{ const x=$(id); if(x) x.remove(); });
+    if($('decideNote')) $('decideNote').innerHTML = `🎟 <b>${G.sel+1}번째 부스</b>로 결정했어요!`;
+  }
   const A = boothAnswer(G.booth), res = fracJudge('aN','aD', A.n, A.d);
   if(res==='unred') return setFb('info', '약분까지 해야 완벽한 정답이 됩니다!');
   if(res==='ok'){
@@ -955,7 +988,8 @@ function checkL3(){
     $('panel').insertAdjacentHTML('beforeend', `<button class="big-btn next" id="nextBtn" onclick="nextBooth()">${nextLabel()}</button>`);
     return;
   }
-  setFb('no', RETHINK + '<br><span style="font-size:13px">기회가 한 번 남았어요.</span>');
+  setFb('no', RETHINK + '<br><span style="font-size:13px">기회가 한 번 남았어요. 확률을 고쳐 쓰고 다시 확인해요.</span>');
+  if($('aBtn')) $('aBtn').textContent = '다시 확인';
   say('host_wow', '어라? 다시 한 번 차근차근 생각해 봐요!');
   G.lockUntil = Date.now() + LOCK_MS;
   const btn = $('aBtn'); btn.disabled = true; setTimeout(()=>{ if($('aBtn')===btn) btn.disabled = false; }, LOCK_MS);
