@@ -405,6 +405,17 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .frame h4{font-size:13.5px;margin-bottom:2px}
 .frame.or h4{color:#1d4ed8}.frame.and h4{color:#6d28d9}
 @media (max-width:520px){ .frames{grid-template-columns:1fr} .sw{width:56px} }
+/* 계산 연습장 */
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn,.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active,.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:6px}
+.scratch-area{position:relative;height:320px;background:#fbfcff;border:1px dashed #d8ddfb;border-radius:10px;background-image:repeating-linear-gradient(#fbfcff 0 29px,#eef0fb 29px 30px)}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.ref-area .fig{margin-bottom:0;border:none;background:transparent}
 @media (prefers-reduced-motion: reduce){ .reread{animation:none!important} }
 </style>
 </head>
@@ -1841,6 +1852,83 @@ function rtFor(q){
     ok: and ? `두 사건이 모두 일어나야 하는 '동시에' 문제이고, ${q.rt.why2} 서로 영향을 끼치지 않으니 <span class="kw">곱해요</span>.`
             : `둘 중 하나만 일어나도 되는 '또는' 문제이고, ${q.rt.why2} 동시에 일어나지 않으니 <span class="kw">더해요</span>.` } ] };
 }
+/* ── 계산 연습장 (필기 캔버스) — 확률의_개념_형성평가.html에서 가져옴 ── */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pen' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key); d.mode = mode;
+  $(key+'PenBtn').classList.toggle('active', mode==='pen');
+  $(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  $(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = $(key+'DrawWrap'), canvas = $(key+'Ink');
+  const rect = wrap.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr)); canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px'; canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d'); if(!ctx) return;
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){ const rect = $(key+'Ink').getBoundingClientRect(); return { x: evt.clientX-rect.left, y: evt.clientY-rect.top }; }
+let drawResizeOn = false;
+function drawBindOnce(key){
+  const canvas = $(key+'Ink'), d = drawGetSt(key);
+  if(!canvas || canvas._bound) return;      // 레벨마다 왼쪽 판을 새로 그리므로 캔버스마다 한 번씩 연결
+  canvas._bound = true;
+  canvas.addEventListener('pointerdown', evt=>{ d.drawing=true; canvas.setPointerCapture(evt.pointerId); const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y; });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt), ctx=canvas.getContext('2d'); if(!ctx) return;
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke(); d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(n=>canvas.addEventListener(n, ()=>{ d.drawing=false; }));
+  if(!drawResizeOn){ drawResizeOn = true; window.addEventListener('resize', ()=>{ if($('pgInk') && $('scPractice').classList.contains('active')) drawSetupCanvas('pg'); }); }
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  document.querySelectorAll('#pgPen .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  $(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false; $(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('#pgPen .color-swatch'); if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true; document.querySelectorAll('#pgPen .color-swatch').forEach(b=>b.classList.remove('active'));
+    $(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){ const c=document.createElement('canvas'); c.width=size; c.height=size; const cx = c.getContext('2d'); if(!cx) return ''; draw(cx, size); return c.toDataURL('image/png'); }
+function drawUpdateCursor(key){
+  const canvas = $(key+'Ink'); if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL(cx=>{ cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2); cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill(); cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke(); }, size);
+    canvas.style.cursor = url ? `url(${url}) ${size/2} ${size/2}, cell` : 'cell';
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL(cx=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = url ? `url(${url}) 10 10, crosshair` : 'crosshair';
+  }
+}
+
+
 /* 문제풀이 그림 */
 function boxFig(name, n, w){
   return `<div style="display:inline-block;margin:0 8px;vertical-align:top"><div style="border:2.5px solid #a07a46;background:#fef3c7;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:3px;max-width:120px;justify-content:center">${
@@ -1881,13 +1969,32 @@ function updateLevelTabs(){
   $('levelTabs').innerHTML = LEVELS.map((lv,i)=>`<div class="level-tab ${i===pst.levelIdx?'active':(pst.passedLevels[i]?'done':'')}">${lv.label}</div>`).join('');
 }
 function pgLeftHTML(){
-  return `<div id="pgFig"></div><div class="hint-card"><div style="font-weight:800;margin-bottom:6px">📌 사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률</div>
+  const tip = `${pst.levelIdx===0 ? '판단 질문에 답하면 답 칸이 나와요.' : pst.levelIdx===1 ? '바로 답을 구해 보세요.' : '판단 질문에 답하면 답 칸이 나와요.'} 답은 한 문제에 두 번까지 쓸 수 있어요. <b>두 문제를 맞히면 바로 통과</b>예요.`;
+  if(pst.levelIdx===0) return `<div id="pgFig"></div><div class="hint-card"><div style="font-weight:800;margin-bottom:6px">📌 사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률</div>
     두 사건 ${itv('A')}, ${itv('B')}가 <b>서로 영향을 끼치지 않을 때</b>, 사건 ${itv('A')}가 일어날 확률을 ${itp()}, 사건 ${itv('B')}가 일어날 확률을 ${itv('q')}라고 하면<br>(사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률) = ${itp()} × ${itv('q')}</div>
     <div class="frames" style="margin-top:10px">
       <div class="frame or"><h4>➕ '또는' 문제</h4>② 동시에 일어날 수 있나?<br>③ 일어나지 않으면 <b>더해요</b></div>
       <div class="frame and"><h4>✖️ '동시에' 문제</h4>② 서로 영향을 끼치나?<br>③ 끼치지 않으면 <b>곱해요</b></div>
     </div>
-    <p class="board-tip">${pst.levelIdx===1 ? '바로 답을 구해 보세요.' : '판단 질문에 답하면 답 칸이 나와요.'} 답은 한 문제에 두 번까지 쓸 수 있어요. <b>두 문제를 맞히면 바로 통과</b>예요.</p>`;
+    <p class="board-tip">${tip}</p>`;
+  // 레벨2·3: 그림 아래 정리 대신 계산 연습장(펜)
+  return `<div id="pgPen">
+      <div class="draw-toolbar">
+        <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+        <button class="mode-btn" id="pgPenBtn" onclick="drawSetMode('pg','pen')">✏️ 펜(필기)</button>
+        ${[['#1a1a2e','검정'],['#dc2626','빨강'],['#2563eb','파랑'],['#16a34a','초록'],['#eab308','노랑']].map(([c,n],i)=>`<button class="color-swatch${(drawGetSt('pg').color===c && !drawGetSt('pg').erasing)?' active':''}" style="background:${c}" onclick="drawSelectColor('pg','${c}',this)" title="${n}"></button>`).join('')}
+      </div>
+      <div class="draw-toolbar">
+        <button class="eraser-btn${drawGetSt('pg').erasing?' active':''}" id="pgEraserBtn" onclick="drawToggleEraser('pg')">🧽 지우개</button>
+        <button class="mode-btn" id="pgPointerBtn" onclick="drawSetMode('pg','pointer')">🖱️ 마우스(화면 움직이기)</button>
+      </div>
+      <div class="draw-wrap" id="pgDrawWrap">
+        <div class="ref-area" id="pgFig"></div>
+        <div class="scratch-area"></div>
+        <canvas id="pgInk" class="ink-canvas"></canvas>
+      </div>
+      <div class="board-tip">문제가 바뀌면 연습장은 새로 비워져요. ${tip}</div>
+    </div>`;
 }
 function startLevel(levelIdx){
   frontier = PRACTICE; built[PRACTICE] = true; viewing = PRACTICE; practiceScreen = 'scPractice';
@@ -1906,6 +2013,7 @@ function renderPQuestion(){
     ${rt ? routineHTML(rid, Object.assign({}, rt, { after:()=>pgShowAnswer() })) : ''}
     <div id="pgAns"></div>`;
   $('pgFig').innerHTML = figHTML(q.fig);
+  if($('pgInk')){ drawBindOnce('pg'); drawSetupCanvas('pg'); }   // 문제가 바뀌면 연습장도 새로
   if(rt) markShown(rid+'s0', rid+'s0Block'); else pgShowAnswer(true);
 }
 function pgShowAnswer(noScroll){
