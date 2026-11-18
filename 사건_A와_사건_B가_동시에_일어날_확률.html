@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사건 A와 사건 B가 동시에 일어날 확률</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --orange:#e05a20;--red:#dc2626;--red-l:#fee2e2;
+  --bean:#7c2d12;--cream:#b45309;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+/* 강조 3단계: ① 핵심 질문(.key-q, 한 블록에 1개) ② 핵심어(.kw, 문단에 1~2개) ③ 보충(.sub) — 밑줄은 핵심 질문 안의 .em에만 */
+.key-q{display:block;font-size:17px;font-weight:800;line-height:1.7;color:var(--ink);background:#fffbeb;border:1.5px solid #fcd34d;border-left:6px solid #f59e0b;border-radius:10px;padding:9px 14px 10px;margin:10px 0}
+.key-q::before{content:'❓ 질문';display:block;font-size:11.5px;font-weight:800;color:#b45309;margin-bottom:1px}
+.key-q.task::before{content:'✏️ 해 보기'}
+.key-q .em{text-decoration:underline;text-decoration-color:#f59e0b;text-decoration-thickness:3px;text-underline-offset:4px}
+.kw{font-weight:800;color:#be123c}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+.reread{animation:rereadFlash 1.2s ease-out 2}
+@keyframes rereadFlash{0%{box-shadow:0 0 0 5px #f59e0b;background-color:#fef3c7}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+.lock-note{display:inline-block;margin-top:4px;font-size:12.5px;color:#b45309;background:#fef3c7;border-radius:8px;padding:2px 10px}
+.it{font-style:italic;font-family:'Times New Roman',serif;font-weight:700;font-size:1.08em}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 450px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+  .split-left.board-sticky{position:sticky;top:0;z-index:5;max-height:50vh;overflow-y:auto}
+}
+
+.stepper{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.stepper .st{padding:5px 11px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12px;font-weight:700;color:var(--ink3);font-family:inherit}
+.stepper .st.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.stepper .st.done{background:var(--green-l);color:#14532d;border-color:var(--green);cursor:pointer}
+.stepper .st.done:hover{box-shadow:0 0 0 2px var(--green)}
+.stepper .st.viewing{background:#fef3c7;color:#92400e;border-color:#f59e0b}
+.stepper .st:disabled{cursor:default}
+.back-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:13px;font-weight:700;color:#92400e}
+.back-banner .btn{padding:6px 14px;font-size:12.5px}
+
+/* 왼쪽 */
+.exp-head{display:flex;gap:8px;align-items:flex-start;font-size:14px;font-weight:700;line-height:1.6;margin-bottom:10px}
+.exp-badge{flex-shrink:0;background:var(--ink);color:#fff;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:12px;margin-top:2px}
+.board-tip{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-top:8px}
+.graph-box{background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:12px;padding:6px;margin-top:8px}
+.graph-box svg{display:block;width:100%;height:auto}
+.fig{background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:12px;padding:12px;margin-bottom:10px;text-align:center}
+.fig-cap{font-size:13px;font-weight:800;color:var(--ink2);margin-top:8px}
+.fig-dice{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.cardg{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-width:300px;margin:0 auto}
+.cardg span{border:1.5px solid #4f46e5;border-radius:6px;background:#fff;font-weight:800;font-size:14px;padding:5px 0;color:var(--ink)}
+.pouch{position:relative;margin:22px auto 4px;width:250px;max-width:100%;min-height:120px;background:#ead2ac;border:2.5px solid #a07a46;border-radius:42% 42% 50% 50% / 26% 26% 74% 74%;padding:28px 22px 34px;display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-content:center}
+.pouch::before{content:'';position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:76px;height:18px;background:#ead2ac;border:2.5px solid #a07a46;border-bottom:none;border-radius:12px 12px 0 0}
+.pouch::after{content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:92px;height:7px;background:#b45309;border-radius:4px}
+.ball{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-style:normal;color:#fff;box-shadow:inset -3px -4px 0 rgba(0,0,0,.18)}
+.ball.red{background:#ef4444}.ball.blue{background:#3b82f6}.ball.q{background:#9ca3af}
+.peep{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:330px;margin:0 auto}
+.nl-legend{display:grid;grid-template-columns:1fr;gap:6px 10px;margin-top:8px;font-size:13px;font-weight:700;color:var(--ink2)}
+.nl-legend div{display:flex;align-items:center;gap:6px;line-height:1.4}
+.nl-legend .nb{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;font-weight:800}
+.s2-ctrl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 4px}
+.s2-ctrl .btn{padding:8px 14px}
+.s2-count{text-align:center;font-size:14px;font-weight:800;color:var(--ink2)}
+.s2-count b{font-size:17px}
+.s2-count .bn{color:var(--bean)}
+.s2-count .cr{color:var(--cream)}
+.s2-msg{text-align:center;font-size:13px;font-weight:800;color:var(--red);min-height:20px;margin-top:4px;border-radius:8px}
+.phone{max-width:260px;margin:4px auto;border:3px solid #374151;border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 6px 18px rgba(26,26,46,.15)}
+.ph-top{background:#1e3a8a;color:#fff;font-size:13px;font-weight:800;padding:8px 12px;display:flex;justify-content:space-between}
+.ph-head{background:#dbeafe;color:#1e3a8a;text-align:center;font-weight:800;font-size:15px;padding:8px}
+.phone ul{list-style:none;padding:8px 14px;min-height:150px}
+.phone li{font-size:15px;font-weight:700;padding:6px 0;border-bottom:1px dashed #e5e7eb}
+.phone li.sold{color:#9ca3af;text-decoration:line-through}
+.ph-foot{background:#e5e7eb;color:#6b7280;text-align:center;font-weight:800;font-size:15px;padding:9px}
+.ex-card{border:2px solid #fcd34d;background:#fffbeb;border-radius:12px;padding:10px 14px;margin:8px 0;line-height:1.75}
+.ex-card .nm{font-size:18px;font-weight:800;color:var(--ink)}
+.ex-card .mean{font-size:13.5px;color:var(--ink2);font-weight:600}
+.ex-card .ev{font-size:14px;font-weight:700;margin-top:2px}
+.ex-card.done{border-color:#bbf7d0;background:var(--green-ll)}
+
+/* 오른쪽 */
+.panel-title{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--indigo);color:#fff;font-size:12px;font-weight:800;flex-shrink:0}
+.qblock{border-top:1px dashed #e0e7ff;padding-top:12px;margin-top:12px}
+.qblock:first-child{border-top:none;padding-top:0;margin-top:0}
+.lead{font-size:14px;line-height:1.8;color:var(--ink2);margin-bottom:8px}
+.prob-box{display:block;font-size:16.5px;font-weight:800;line-height:1.75;color:var(--ink);background:#f0fdf4;border:1.5px solid #86efac;border-left:6px solid #16a34a;border-radius:10px;padding:9px 14px 10px;margin:10px 0}
+.prob-box::before{content:'📋 문제';display:block;font-size:11.5px;font-weight:800;color:#15803d;margin-bottom:1px}
+.prob-box u{text-underline-offset:3px}
+.count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:14px;font-weight:700}
+.blank{display:inline-block;width:56px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:15px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.blank.correct{border-bottom-color:var(--green);background:var(--green-ll);color:#14532d}
+.blank.wrong{border-bottom-color:var(--red);background:var(--red-l);color:var(--red)}
+/* 분수 입력칸: 분자 / 가로선 / 분모 */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px}
+.frac .blank{border:1.5px solid #a5b4fc;border-radius:6px;width:52px;height:30px;margin:1px 0;background:#fff}
+.frac .blank.correct{border-color:var(--green);background:var(--green-ll)}
+.frac .blank.wrong{border-color:var(--red);background:var(--red-l)}
+.frac .fbar{width:100%;min-width:60px;height:2.5px;background:var(--ink);border-radius:2px;margin:2px 0}
+.sfrac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:.92em;line-height:1.15;margin:0 3px}
+.sfrac>span:first-child{border-bottom:1.6px solid currentColor;padding:0 3px}
+.sfrac>span:last-child{padding:0 3px}
+.fline{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:15px;font-weight:800}
+.fline .lab{font-size:13px;color:var(--ink2);text-align:center;line-height:1.4}
+.choice-col{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.choice-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;justify-content:center}
+.choice-row .choice-btn{min-width:74px;text-align:center;font-size:16px}
+.choice-btn{padding:9px 16px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;text-align:left;line-height:1.5}
+.choice-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.choice-btn.correct{background:var(--green);color:#fff;border-color:var(--green)}
+.choice-btn.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.choice-btn:disabled{cursor:default}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-check:hover{background:#15803d}
+.btn-soft{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo)}
+.btn-soft:hover{background:var(--indigo-ll)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px;line-height:1.6}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.feedback.info{color:#b45309}
+.note-box{background:var(--green-ll);border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.85;margin-top:10px}
+.def-box{background:var(--indigo-ll);border:2px solid var(--indigo);border-radius:12px;padding:14px 16px;font-size:15px;line-height:2;margin-top:12px;text-align:left}
+.def-box .dt{font-weight:800;color:var(--indigo);margin-bottom:2px}
+.def-box.term-wait{visibility:hidden}
+.hint-card{background:#fff;border:1.5px solid #d8ddfb;border-radius:12px;padding:14px;font-size:13.5px;line-height:1.9}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+.chip{font-size:12.5px;font-weight:800;border-radius:14px;padding:3px 11px;background:#f3f4f6;color:var(--ink3);border:1.5px dashed #d1d5db}
+.chip.on{background:var(--green-l);color:#14532d;border:1.5px solid var(--green)}
+.ox-row{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1.5px solid #e0e7ff;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:14px;font-weight:700;line-height:1.6;background:#fff}
+.ox-btns{display:flex;gap:6px;flex-shrink:0}
+.ox-b{width:42px;height:36px;border-radius:9px;border:1.5px solid #d8ddfb;background:#fff;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.ox-b.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.ox-b:disabled{cursor:default}
+/* 용어 팝업 (빈칸 + 둘 중 하나 고르기) */
+.modal-overlay.termpop{background:rgba(26,26,46,0.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.modal-box.term-box{max-width:660px;width:100%}
+.pp-line{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:4px 0}
+.pp-line .nw{white-space:nowrap}
+.term-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--indigo);border-radius:10px;padding:2px 10px;margin-bottom:8px}
+.term-box .def-box{margin-top:0;line-height:2.3}
+.term-box .def-box .blank{font-size:16px;color:#be123c;border:1.5px solid #a5b4fc;border-radius:6px;background:#fff;width:46px}
+.pp{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle;background:#fff;border:2px dashed #a5b4fc;border-radius:10px;padding:3px}
+.pp button{border:1.5px solid #d8ddfb;background:#fff;border-radius:8px;padding:3px 9px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.pp button.on{background:#be123c;color:#fff;border-color:#be123c}
+.pp.wrong{border-color:var(--red);background:var(--red-l)}
+.pp.correct{border-color:var(--green);background:var(--green-ll)}
+
+.progress{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-bottom:6px}
+.level-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.level-tab{padding:7px 16px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink2)}
+.level-tab.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.level-tab.done{background:var(--green-l);color:#14532d;border-color:var(--green)}
+.try-tag{display:inline-block;font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px;background:#eef2ff;color:var(--indigo);margin-bottom:6px}
+.try-tag.last{background:#fef3c7;color:#92400e}
+
+.result-wrap{text-align:center;padding:24px 10px}
+.result-icon{font-size:48px;margin-bottom:10px}
+.result-score{font-size:22px;font-weight:800;color:var(--indigo);margin:8px 0}
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:16px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+/* 이번 차시: 사건 A 또는 사건 B가 일어날 확률 */
+@keyframes nope{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes popIn{0%{transform:scale(.6);opacity:.2}100%{transform:scale(1);opacity:1}}
+.help-btn{border:1.5px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:16px;padding:4px 12px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+.help-btn:hover{background:#fef3c7}
+.cb{color:#1d4ed8}.co{color:#c2410c}.cj{color:#1d4ed8}.ch{color:#be185d}
+/* 인물 말풍선 */
+.talk{display:flex;gap:8px;align-items:flex-end;margin:6px 0 10px}
+.talk img{height:84px;flex-shrink:0}
+.talk.r{flex-direction:row-reverse}
+.bub{position:relative;background:#fff;border:2px solid #c7d2fe;border-radius:14px;padding:7px 12px 8px;font-size:14px;line-height:1.7;font-weight:600;color:var(--ink)}
+.bub .who{display:block;font-size:11.5px;font-weight:800;margin-bottom:1px}
+.talk.j .bub{border-color:#fcd34d;background:#fffdf3}.talk.j .who{color:#b45309}
+.talk.h .bub{border-color:#f9a8d4;background:#fff7fb}.talk.h .who{color:#be185d}
+/* 지도 */
+.map svg{display:block;width:100%;height:auto}
+.pin{cursor:default}
+.pin.live{cursor:pointer}
+.pin.live:hover path{stroke:#312e81;stroke-width:2.6}
+.pin.hl path{stroke:#f59e0b;stroke-width:4}
+.pin.bad path{stroke:#dc2626;stroke-width:4}
+.pin.pick{animation:pinBounce .6s ease-out;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes pinBounce{0%{transform:translateY(0)}40%{transform:translateY(-12px) scale(1.25)}100%{transform:translateY(0) scale(1)}}
+.brushes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0 2px}
+.brush{border:2px solid #d8ddfb;background:#fff;border-radius:20px;padding:6px 14px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink2)}
+.brush.a.on{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+.brush.c.on{background:#fb923c;border-color:#c2410c;color:#fff}
+.brush.j.on{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+.brush.h.on{background:#ec4899;border-color:#be185d;color:#fff}
+.brush:disabled{opacity:.45;cursor:default}
+.pstat{text-align:center;font-size:13.5px;font-weight:700;color:var(--ink2);min-height:22px;margin-top:6px;line-height:1.6;border-radius:8px}
+.pstat b{font-size:16px}
+.dlog{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:4px;min-height:24px}
+.dlog span{font-size:12px;font-weight:800;border-radius:10px;padding:2px 8px}
+.dlog .ok{background:#dcfce7;color:#14532d}.dlog .no{background:#f3f4f6;color:#6b7280}
+.mini-tbl{border-collapse:collapse;margin:6px auto 0;font-size:13.5px}
+.mini-tbl th,.mini-tbl td{border:1.5px solid #c7d2fe;padding:4px 10px;text-align:center}
+.mini-tbl th{background:#eef2ff;font-weight:800}
+.mini-tbl td{font-weight:700;background:#fff}
+/* 띠 */
+.strip-row{display:flex;align-items:center;gap:8px;margin:4px 0}
+.strip-name{flex:0 0 92px;font-size:12px;font-weight:800;color:var(--ink2);line-height:1.3;text-align:right}
+.strip{flex:1 1 auto;display:grid;border:2px solid #1a1a2e;border-radius:6px;overflow:hidden;background:#fff}
+.cell{height:30px;background:#f3f4f6;border-right:1px solid #fff}
+.cell:last-child{border-right:none}
+.cell.a{background:#3b82f6}
+.cell.c{background:#fb923c}
+.cell.slide{animation:slideIn .9s ease-out}
+@keyframes slideIn{0%{transform:translateX(-600%);opacity:.3}100%{transform:translateX(0);opacity:1}}
+.strip-val{flex:0 0 52px;font-size:15px;font-weight:800;text-align:center}
+.merge-arrow{text-align:center;font-size:13px;font-weight:800;color:#16a34a;margin:2px 0}
+/* 공 */
+.bagfig{position:relative;text-align:center}
+.bagfig img{height:70px}
+.balls{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:330px;margin:6px auto 0}
+.bl{position:relative;width:46px;height:46px;border-radius:50%;margin:0 auto;border:2px solid #94a3b8;background:#fff;font-size:17px;font-weight:800;color:var(--ink);font-family:inherit;display:flex;align-items:center;justify-content:center;box-shadow:inset -3px -4px 0 rgba(0,0,0,.08)}
+.bl.live{cursor:pointer}
+.bl.live:hover{border-color:var(--indigo)}
+.bl.a{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+.bl.c{background:#fb923c;border-color:#c2410c;color:#fff}
+.bl.ac{background:linear-gradient(90deg,#3b82f6 50%,#fb923c 50%);border-color:#7c2d12;color:#fff}
+.bl.ac::after{content:'두 번';position:absolute;top:-9px;right:-14px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:1px 5px;white-space:nowrap}
+.bl.bad{border-color:#dc2626;border-width:3px;animation:nope .45s}
+.bl.dim{opacity:.35}
+.meter svg{display:block;width:100%;height:auto}
+.meter.shake{animation:nope .5s 2}
+/* 분류 */
+.ox-row .ox-b{width:auto;padding:0 10px;font-size:13px}
+.ox-row.bad{border-color:var(--red);background:var(--red-l)}
+.ox-row.good{border-color:#86efac;background:var(--green-ll)}
+.ox-row .ctx{display:block;font-size:11.5px;font-weight:800;color:var(--ink3)}
+.refs{display:flex;flex-direction:column;gap:8px}
+.ref{border:1.5px solid #e0e7ff;border-radius:10px;padding:6px 8px;background:#fff}
+.ref-h{font-size:12.5px;font-weight:800;color:var(--ink2);margin-bottom:4px;text-align:left}
+.ref-b{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.ref-b span{min-width:28px;border:1.5px solid #c7d2fe;border-radius:6px;font-weight:800;font-size:13.5px;padding:2px 4px;text-align:center}
+/* 달걀 */
+.egg-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.ebk{border:2px solid #e5e7eb;background:#fff;border-radius:12px;padding:4px 2px;font-family:inherit;text-align:center;cursor:pointer;transition:transform .2s}
+.ebk img{height:44px;display:block;margin:0 auto}
+.ebk b{display:block;font-size:13px}
+.ebk small{display:block;font-size:11.5px;font-weight:700;color:var(--ink2)}
+.ebk:hover{border-color:var(--indigo)}
+.ebk.in{visibility:hidden}
+.ebk:disabled{cursor:default;color:var(--ink)}
+.giftbox{margin-top:10px;border:2.5px dashed #f59e0b;border-radius:14px;background:#fffbeb;padding:6px;display:flex;align-items:center;gap:8px;min-height:84px}
+.giftbox>img{height:62px;flex-shrink:0}
+.gift-in{display:flex;flex-wrap:wrap;gap:6px;flex:1;align-items:center}
+.gift-in .ebk{visibility:visible;border-color:#86efac;background:#f0fdf4;padding:2px 6px}
+.gift-in .ebk img{height:32px}
+.gift-h{font-size:12.5px;font-weight:800;color:#92400e}
+.ebar{display:flex;height:26px;border:2px solid #1a1a2e;border-radius:6px;overflow:hidden;margin-top:10px}
+.ebar span{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#6b7280;background:#f3f4f6;border-right:1px solid #fff;transition:background .4s}
+.ebar span.on{background:#22c55e;color:#fff}
+.ebar span:last-child{border-right:none}
+/* 주사위 합 표 */
+.duo{display:flex;justify-content:space-around;align-items:flex-end;margin-bottom:6px}
+.duo .pp2{text-align:center}
+.duo img{height:74px;display:block;margin:0 auto}
+.duo .tagj,.duo .tagh{display:inline-block;font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px;color:#fff;margin-top:2px}
+.duo .tagj{background:#3b82f6}.duo .tagh{background:#ec4899}
+.stbl{border-collapse:separate;border-spacing:3px;margin:0 auto}
+.stbl th{font-size:12px;font-weight:800;padding:0 3px;color:var(--ink2)}
+.stbl th.corner{font-size:10px;line-height:1.25;text-align:right;color:var(--ink3);white-space:nowrap}
+.stbl td{width:40px;height:30px;border-radius:6px;text-align:center;font-weight:800;font-size:14px;background:#f3f4f6;color:#6b7280;transition:background .25s}
+.stbl td.j{background:#3b82f6;color:#fff}
+.stbl td.h{background:#ec4899;color:#fff}
+.chiprow{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:8px 0 2px}
+.schip{width:31px;height:34px;padding:0;border-radius:9px;border:2px solid #d1d5db;background:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink)}
+.schip.j{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+.schip.h{background:#ec4899;border-color:#be185d;color:#fff}
+.schip:disabled{cursor:default}
+.schip.fixed{opacity:.75}
+.fair{margin-top:8px}
+.fair-row{display:flex;align-items:center;gap:6px;margin:4px 0;font-size:13px;font-weight:800}
+.fair-row .nm{flex:0 0 40px}
+.fair-bar{flex:1;height:20px;background:#f3f4f6;border-radius:6px;overflow:hidden}
+.fair-bar i{display:block;height:100%;transition:width .35s}
+.fair-row .v{flex:0 0 56px;text-align:right}
+.stamp{text-align:center;font-size:15px;font-weight:900;min-height:24px;margin-top:4px}
+.stamp.ok{color:#16a34a;animation:popIn .4s ease-out}
+.stamp.no{color:#9ca3af;font-size:13px}
+.sim{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.sim-c{border:1.5px solid #e0e7ff;border-radius:10px;padding:6px 8px;background:#fff}
+.sim-c h4{font-size:12.5px;margin-bottom:4px;text-align:center}
+.sim-r{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;margin:3px 0}
+.sim-r .nm{flex:0 0 52px}
+.sim-r .fair-bar{height:14px}
+.sim-r .v{flex:0 0 34px;text-align:right}
+.calc{margin:0 auto;border-collapse:collapse}
+.calc td{text-align:center;padding:0 5px;vertical-align:middle}
+.calc td.v,.calc td.op{font-size:18px;font-weight:800}
+.calc td.cl{font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35;padding-top:4px;vertical-align:top;white-space:nowrap}
+.calc-box{line-height:1.6!important}
+@media (max-width:520px){ .balls{gap:5px} .bl{width:40px;height:40px;font-size:15px} .stbl td{width:32px;height:26px;font-size:12px} .strip-name{flex-basis:70px;font-size:11px} .egg-row{grid-template-columns:repeat(3,1fr)} }
+/* 틀린 줄 확인 */
+.inv-btn{display:block;margin-top:6px;border:1.5px solid #dc2626;background:#fff;color:#b91c1c;border-radius:14px;padding:3px 10px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit}
+.inv-btn:hover{background:#fef2f2}
+.ochip{position:relative}
+.schip.a{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+.schip.c{background:#fb923c;border-color:#c2410c;color:#fff}
+.schip.ac{background:linear-gradient(90deg,#3b82f6 50%,#fb923c 50%);border-color:#7c2d12;color:#fff}
+.schip.ac::after{content:'두 번';position:absolute;top:-10px;right:-10px;background:#dc2626;color:#fff;font-size:9.5px;font-weight:800;border-radius:8px;padding:0 4px;white-space:nowrap}
+#invChips{margin:14px 0 6px;gap:8px}
+#termBox{max-height:94vh;overflow-y:auto}
+/* 식 세우기 칸 */
+.opsel{display:inline-flex;flex-direction:column;gap:2px;border:2px dashed #a5b4fc;border-radius:9px;padding:2px;background:#fff;vertical-align:middle}
+.opsel button{width:28px;height:22px;border:1.5px solid #d8ddfb;border-radius:6px;background:#fff;font-size:15px;font-weight:900;line-height:1;cursor:pointer;font-family:inherit;color:var(--ink2);padding:0}
+.opsel button.on{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.opsel.wrong{border-color:var(--red);background:var(--red-l)}
+.opsel.done{border-style:solid;border-color:#86efac}
+.opsel.done button{cursor:default}
+.opsel.done button:not(.on){display:none}
+.calc.expr td.v .frac{margin:0}
+/* '또는' 문제 3단계 */
+.routine{border:2px solid #c4b5fd;background:#faf5ff;border-radius:14px;padding:8px 12px 4px;margin:10px 0}
+.rt-head{font-size:13.5px;font-weight:900;color:#6d28d9;margin-bottom:2px}
+.rt-step{padding:6px 0 2px;border-top:1px dashed #ddd6fe}
+.rt-step:first-of-type{border-top:none}
+.rt-h{font-size:12px;font-weight:800;color:#7c3aed}
+.routine .key-q{margin:4px 0 6px}
+.rt-guide{border:1.5px solid #c4b5fd;background:#faf5ff;border-radius:12px;padding:8px 12px;margin-top:10px;font-size:14px;line-height:1.8}
+.rt-guide b.n{display:inline-block;min-width:20px;color:#6d28d9}
+.opsel.lock{pointer-events:none;opacity:.6}
+
+.ebar span.rest{background:#fb923c;color:#fff}
+.ebar-sum{display:flex;height:24px;margin-top:4px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:800;color:#fff}
+.ebar-sum span{display:flex;align-items:center;justify-content:center;gap:4px}
+.ebar-sum span.on{background:#16a34a}.ebar-sum span.rest{background:#ea580c}
+.ebar-sum .frac{font-size:10px}
+.ebar-all{text-align:center;font-size:12px;font-weight:700;color:#4338ca;margin-top:4px}
+
+/* ── 이번 차시: 사건 A와 사건 B가 동시에 일어날 확률 ── */
+.fridge-wrap{display:flex;justify-content:center}
+.fridge-wrap svg{display:block;height:auto}
+.sw-row{display:flex;align-items:center;gap:8px;justify-content:center;margin:6px 0;flex-wrap:wrap}
+.sw-lab{font-size:12.5px;font-weight:800;color:var(--ink2);min-width:56px;text-align:right}
+.sw{width:64px;padding:4px 0 3px;border-radius:10px;border:2px solid #d1d5db;background:#fff;cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:800;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:2px}
+.sw i{display:block;width:26px;height:18px;border-radius:5px;border:1.5px solid #64748b}
+.sw.on{border-color:var(--indigo);box-shadow:0 0 0 2px var(--indigo);color:var(--indigo)}
+.sw:disabled{opacity:.35;cursor:not-allowed}
+.sw.x{position:relative}
+.sw.x::after{content:'✕';position:absolute;top:2px;right:5px;color:#dc2626;font-size:14px;font-weight:900}
+.shelf{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:86px;margin-top:8px;padding:8px 6px;border:2px dashed #c7d2fe;border-radius:12px;background:#fbfcff}
+.shelf .slot{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10.5px;font-weight:800;color:var(--ink3)}
+.shelf .slot.want{background:#fef3c7;border-radius:8px;box-shadow:0 0 0 2px #f59e0b}
+.shelf .empty{font-size:12.5px;color:var(--ink3);font-weight:700;align-self:center}
+.shelf-msg{text-align:center;font-size:13px;font-weight:800;min-height:20px;margin-top:4px}
+.shelf-msg.bad{color:var(--red)}.shelf-msg.ok{color:var(--green)}
+.store-tag{display:inline-block;font-size:12px;font-weight:800;color:#fff;border-radius:10px;padding:2px 10px}
+.store-tag.a{background:#0ea5e9}.store-tag.b{background:#a855f7}
+.rule-note{font-size:12.5px;font-weight:800;color:#7e22ce;background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:8px;padding:4px 10px;margin:6px auto 0;text-align:center;max-width:360px}
+.tree svg,.area svg,.simg svg{display:block;width:100%;height:auto}
+.grid8 svg{display:block;width:100%;max-width:290px;height:auto;margin:0 auto}
+.op-cards{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0;font-size:20px;font-weight:900}
+.op-card{border:2px solid #c7d2fe;background:#fff;border-radius:12px;padding:6px 12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.op-card .cap{font-size:11px;font-weight:800;color:var(--ink3);line-height:1.3;text-align:center}
+.op-card.goal{border-color:#f59e0b;background:#fffbeb}
+.opsel.wide{flex-direction:row}
+.opsel.wide button{width:34px;height:32px;font-size:18px}
+.area-tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.spin-res{display:flex;gap:10px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+.spin-res .who{border:1.5px solid #e0e7ff;border-radius:10px;padding:4px 10px;font-size:13px;font-weight:800;background:#fff;min-width:130px;text-align:center}
+.spin-res .who b.win{color:#16a34a}.spin-res .who b.lose{color:#ea580c}
+#spinArrowJ,#spinArrowH{transition:transform 1.6s cubic-bezier(.15,.7,.2,1)}
+.sim-now{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;margin-bottom:2px;font-size:13.5px;font-weight:800}
+.simg .sim-now svg{display:inline-block;width:auto;height:auto}
+.sim-now span{min-width:110px}
+.sim-now .ok{color:#15803d}.sim-now .no{color:var(--ink3)}
+.sim-stat{text-align:center;font-size:13.5px;font-weight:800;color:var(--ink2);margin-top:6px;line-height:1.7}
+.sim-stat b{font-size:16px;color:#15803d}
+.sort-row{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1.5px solid #e0e7ff;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:14px;font-weight:700;line-height:1.6;background:#fff}
+.sort-row.bad{border-color:var(--red);background:var(--red-l)}
+.sort-row.good{border-color:#86efac;background:var(--green-ll)}
+.sort-row .ox-b{width:auto;padding:0 10px;font-size:13px;white-space:nowrap}
+.frames{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.frame{border:2px solid #c4b5fd;background:#faf5ff;border-radius:12px;padding:8px 10px;font-size:13px;line-height:1.75}
+.frame.or{border-color:#93c5fd;background:#eff6ff}
+.frame h4{font-size:13.5px;margin-bottom:2px}
+.frame.or h4{color:#1d4ed8}.frame.and h4{color:#6d28d9}
+@media (max-width:520px){ .frames{grid-template-columns:1fr} .sw{width:56px} }
+@media (prefers-reduced-motion: reduce){ .reread{animation:none!important} }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">사건 A와 사건 B가 동시에 일어날 확률</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>
+document.getElementById('hubBackLink').href = 'index.html' + location.search;
+(function(){
+  var _hb = document.getElementById('hubBackLink');
+  var _urlNum = new URLSearchParams(location.search).get('num');
+  var _isPreview = !_urlNum || _urlNum === '99'; // 관리자 미리보기(파라미터 없음 또는 99번) 때는 나가기 경고 안 띄움
+  _hb.addEventListener('click', function(e){
+    if(!_isPreview && !window._activityDone && !confirm('아직 다 끝내지 않았어요! 지금 나가면 처음부터 다시 해야 해요. 그래도 나갈까요?')){
+      e.preventDefault();
+    }
+  });
+  if(!_isPreview){
+    window.addEventListener('beforeunload', function(e){
+      if(!window._activityDone){ e.preventDefault(); e.returnValue=''; }
+    });
+  }
+})();
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'prob-and' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  window._hubDb = _db;
+  let _reported=false;
+  window._reportHubComplete = function(){
+    window._activityDone = true;
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  // 완료 기록이 서버에 닿기 전에 페이지를 떠나지 않도록 잠깐 기다렸다가 이동
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="screen active" id="scAct">
+    <div class="split-layout">
+      <div class="split-left card board-sticky" id="actLeft"></div>
+      <div class="split-right card"><div id="backBanner"></div><div id="actRight"></div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scPractice">
+    <div class="level-tabs" id="levelTabs"></div>
+    <div class="split-layout">
+      <div class="split-left card" id="pgLeft"></div>
+      <div class="split-right card">
+        <div class="progress" id="pgProgress"></div>
+        <div id="pgArea"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scLevelResult">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon" id="lrIcon">🎉</div>
+        <h2 id="lrTitle">통과했어요!</h2>
+        <div class="result-score" id="lrScore">2 / 3</div>
+        <p id="lrMsg" style="color:var(--ink2)"></p>
+        <button class="restart-btn" id="lrRetryBtn" onclick="lrRetry()" style="display:none">🔄 다시 도전하기</button>
+        <button class="primary-btn" id="lrNextBtn" onclick="lrNext()">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="scDone">
+    <div class="card">
+      <div class="result-wrap">
+        <div class="result-icon">🏁</div>
+        <h2>학습 완료!</h2>
+        <p style="color:var(--ink2);margin-top:8px;line-height:1.8">사건 A와 사건 B가 동시에 일어날 확률을 알아보고, 문제풀이까지 모두 마쳤어요.</p>
+        <div class="result-score" id="doneStat" style="font-size:17px"></div>
+        <button class="primary-btn" onclick="finishToHub()">✅ 학습 완료</button>
+        <button class="restart-btn" onclick="location.reload()">🔄 처음부터 다시</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 개념 정리 팝업: 빈칸을 맞게 써야 닫힘 -->
+<div class="modal-overlay termpop" id="termModal">
+  <div class="modal-box term-box" id="termBox"></div>
+</div>
+
+<!-- 도움 팝업 -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-box" id="helpBox" style="max-width:520px"></div>
+</div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:380px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:60;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 헬퍼
+════════════════════════════════ */
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pickN(arr,n){ return shuffle(arr).slice(0,n); }
+function pick1(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(lo,hi){ return lo+Math.floor(Math.random()*(hi-lo+1)); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function $(id){ return document.getElementById(id); }
+function setFb(id, ok, msg){ const fb=$(id); fb.className='feedback '+(ok===true?'success':ok==='info'?'info':'error'); fb.innerHTML=msg; }
+function parseCount(s){ const m=String(s||'').replace(/\s+/g,'').match(/^(\d+)(가지|개|번|명|장|회|석|곳|권)?$/); return m?parseInt(m[1],10):null; }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function reduce(n,d){ const g=gcd(n,d)||1; return [n/g, d/g]; }
+function sfrac(n,d){ return `<span class="sfrac"><span>${n}</span><span>${d}</span></span>`; }
+function pval(p){ return p[1]===1 ? String(p[0]) : sfrac(p[0],p[1]); }    // 확률 값 보여 주기 (정수는 그대로)
+function itp(){ return '<span class="it">p</span>'; }
+function itv(c){ return `<span class="it">${c}</span>`; }
+function isPrime(n){ if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true; }
+// 받침에 따라 조사 고르기 (낱말, 숫자 모두)
+const NUM_BATCHIM = [true,true,false,true,false,false,true,true,true,false];   // 영 일 이 삼 사 오 육 칠 팔 구
+function hasBatchim(w){
+  if(typeof w==='number' || /^\d+$/.test(String(w))) return NUM_BATCHIM[Number(w)%10];   // 10, 20…은 '십'으로 끝나 받침 있음
+  const c = String(w).charCodeAt(String(w).length-1);
+  if(c>=0xAC00 && c<=0xD7A3) return (c-0xAC00)%28!==0;
+  return false;
+}
+function josa(w, withB, noB){ return String(w) + (hasBatchim(w)?withB:noB); }
+
+/* ════════════════════════════════
+   읽기 확인 · 찍기 방지 (앞 차시 파일들과 같은 방식)
+   - readGate: 질문이 뜨고 읽을 시간도 안 지나 고르면 채점하지 않고 질문을 다시 보게 함
+   - wrongLock: 틀리면 몇 초 동안 잠그고(틀릴수록 길게) 보기 순서를 다시 섞음
+   - firstTry: 질문마다 첫 시도만 기록 → 완료 화면에 '한 번에 맞힌 질문' 표시
+   - 틀려도 정답은 보여 주지 않음
+════════════════════════════════ */
+const GUARD = { on:true };            // 검증 스크립트·관리자 시연에서만 끔
+const LOCK_SECS = [3,5,8];
+const stat = { seen:{}, total:0, first:0 };
+const shown = {}, tries = {};
+function firstTry(qid, ok){ if(qid in stat.seen) return; stat.seen[qid]=ok; stat.total++; if(ok) stat.first++; }
+function graded(qid, r){ if(r===false) firstTry(qid,false); return r===true; }
+function flashRef(ref){
+  const el = typeof ref==='string' ? $(ref) : ref;
+  if(!el) return;
+  el.classList.remove('reread'); void el.offsetWidth; el.classList.add('reread');
+}
+function markShown(qid, blockId){
+  const el = $(blockId);
+  const len = el ? el.textContent.replace(/\s+/g,'').length : 40;
+  shown[qid] = { t:Date.now(), need:Math.min(4000, Math.max(1500, len*25)), block:blockId };
+}
+function readGate(qid, fbId){
+  const s = shown[qid];
+  if(!GUARD.on || !s || Date.now()-s.t >= s.need) return true;
+  setFb(fbId,false,'✋ 잠깐! 질문을 끝까지 읽고 골라 봐요.');
+  const kq = document.querySelector('#'+s.block+' .key-q');
+  if(kq) flashRef(kq);
+  return false;
+}
+function lockSecs(qid){
+  tries[qid] = (tries[qid]||0)+1;
+  return GUARD.on ? LOCK_SECS[Math.min(tries[qid],LOCK_SECS.length)-1] : 0;
+}
+// secs초 동안 안내문에 남은 시간을 보여 준 뒤 onDone. anchor가 화면에서 사라지면 멈춤
+function lockTimer(secs, fbId, msg, what, anchor, onDone){
+  if(!secs){ onDone(); return; }
+  let left = secs;
+  const paint = ()=>setFb(fbId,false,`${msg}<br><span class="lock-note">⏳ ${left}초 뒤에 ${what}</span>`);
+  paint();
+  const t = setInterval(()=>{
+    if(!document.body.contains(anchor)){ clearInterval(t); return; }
+    left--;
+    if(left<=0){ clearInterval(t); onDone(); } else paint();
+  }, 1000);
+}
+function wrongLock(o){
+  const row = $(o.row);
+  const btns = [...row.querySelectorAll('button')];
+  btns.forEach(b=>b.disabled=true);
+  lockTimer(lockSecs(o.qid), o.fb, o.msg, '다시 고를 수 있어요', row, ()=>{
+    btns.forEach(b=>{ b.disabled=false; b.classList.remove('wrong','active'); });
+    shuffle(btns).forEach(b=>b.parentNode.appendChild(b));
+    setFb(o.fb,false,o.msg+'<br><span class="sub">다시 골라 보세요.</span>');
+  });
+}
+// 객관식 한 문항 공통: 읽기 확인 → 첫 시도 기록 → 오답이면 잠금. 정답일 때만 true
+function choiceGrade(q, btn, ok, wrongMsg){
+  if(btn.disabled || !readGate(q, q+'Fb')) return false;
+  firstTry(q, ok);
+  markChoice(q+'Row', btn, ok);
+  if(!ok){ wrongLock({qid:q, row:q+'Row', fb:q+'Fb', msg:wrongMsg}); return false; }
+  return true;
+}
+const RETHINK = '❌ 다시 한 번 생각해 보세요!';
+const UNREDUCED = '🔎 약분까지 해야 완벽한 정답이 됩니다!';
+
+/* ════════════════════════════════
+   입력칸: 숫자 · 글자 · 확률(분자/분모 따로, 정수는 위 칸에만)
+════════════════════════════════ */
+function choiceCol(name, opts){
+  return `<div class="choice-col" id="${name}Row">`+shuffle(opts).map(o=>`<button class="choice-btn" data-k="${o.key}" onclick="${name}Pick('${o.key}',this)">${o.label}</button>`).join('')+`</div>`;
+}
+function markChoice(rowId, btn, ok){
+  document.querySelectorAll('#'+rowId+' .choice-btn').forEach(b=>b.classList.remove('active','wrong'));
+  btn.classList.add(ok?'correct':'wrong');
+  if(ok) document.querySelectorAll('#'+rowId+' .choice-btn').forEach(b=>b.disabled=true);
+}
+function probHTML(p){ return `<span class="frac"><input class="blank" id="${p}N" inputmode="numeric" autocomplete="off"><span class="fbar"></span><input class="blank" id="${p}D" inputmode="numeric" autocomplete="off"></span>`; }
+const PROB_NOTE = '<p class="sub">분수는 위 칸에 분자, 아래 칸에 분모를 써요.</p>';
+// 확률 칸 채점: ans는 기약분수 [분자,분모] (정수면 분모 1)
+// 답이 0이면 0/6, 0/1처럼 분자가 0이면 모두 정답 · 답이 1이면 6/6, 1/1처럼 분자=분모이면 모두 정답 (약분 안내 없음)
+// 답이 0이나 1일 때 분모 칸을 비우고 0, 1만 써도 정답. 그 밖의 답에서 분모 칸이 비어 있으면 빈칸으로 봄
+// 'ok' / 'wrong' / 'empty' / 'unreduced'
+function gradeProb(p, ans){
+  const nr=$(p+'N').value.trim(), dr=$(p+'D').value.trim();
+  const isInt = ans[1]===1;
+  if(nr==='') return 'empty';
+  const n = parseCount(nr);
+  if(dr===''){
+    if(!isInt) return 'empty';
+    return (n!==null && n===ans[0]) ? 'ok' : 'wrong';
+  }
+  const d = parseCount(dr);
+  if(n===null || d===null || d===0 || n*ans[1]!==d*ans[0]) return 'wrong';
+  if(isInt) return 'ok';
+  return gcd(n,d)===1 ? 'ok' : 'unreduced';
+}
+function normTxt(s){ return String(s||'').replace(/[\s'"‘’“”.,!]/g,''); }
+// 채점 항목: {id,val} 숫자 / {txt:id, acc:[…]} 글자 / {prob:p, ans:[n,d]} 확률
+// 결과: true / false / null(빈칸) / 'unreduced'(값은 맞지만 약분 안 함 — 오답으로 치지 않음)
+function checkItems(items, fbId){
+  let empty=false, wrong=0, unred=null;
+  const mark = (el, ok)=>{ el.classList.toggle('wrong',!ok); };
+  for(const it of items){
+    if(it.prob){
+      const r = gradeProb(it.prob, it.ans);
+      const nE=$(it.prob+'N'), dE=$(it.prob+'D');
+      if(r==='empty'){ empty=true; continue; }
+      if(r==='wrong'){ wrong++; mark(nE,false); mark(dE,false); continue; }
+      mark(nE,true); mark(dE,true);
+      if(r==='unreduced' && !it.eq) unred = it.ans;
+    } else if(it.expr){
+      const g = gradeExpr(it);
+      if(g==='empty'){ empty=true; continue; }
+      if(g==='wrong'){ wrong++; continue; }
+    } else if(it.txt){
+      const el=$(it.txt); const raw=normTxt(el.value);
+      if(raw===''){ empty=true; continue; }
+      const ok = it.acc.some(a=>normTxt(a)===raw); if(!ok) wrong++; mark(el, ok);
+    } else {
+      const el=$(it.id); const raw=el.value.trim();
+      if(raw===''){ empty=true; continue; }
+      const ok = parseCount(raw)===it.val; if(!ok) wrong++; mark(el, ok);
+    }
+  }
+  if(wrong){ setFb(fbId,false,'❌ 빨간 칸을 다시 한 번 생각해 보세요!'); return false; }
+  if(empty){ setFb(fbId,false,'빈칸을 모두 채워 주세요.'); return null; }
+  if(unred){ setFb(fbId,'info', UNREDUCED); return 'unreduced'; }
+  items.forEach(it=>{
+    const els = it.expr ? exprEls(it) : it.prob ? [$(it.prob+'N'),$(it.prob+'D')] : [$(it.txt||it.id)];
+    els.forEach(el=>{ el.classList.add('correct'); el.disabled=true; });
+  });
+  return true;
+}
+
+/* ════════════════════════════════
+   그림
+════════════════════════════════ */
+// SVG 안의 세로 분수 (가운데가 y)
+function svgFrac(x, y, n, d, fs, color){
+  const w = Math.max(String(n).length, String(d).length)*fs*0.62 + 6;
+  return `<text x="${x}" y="${(y-3).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${color}">${n}</text>`+
+    `<line x1="${(x-w/2).toFixed(1)}" y1="${y}" x2="${(x+w/2).toFixed(1)}" y2="${y}" stroke="${color}" stroke-width="1.5"/>`+
+    `<text x="${x}" y="${(y+fs-0.5).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${color}">${d}</text>`;
+}
+// 0~1 수직선 + 동그라미 표지. marks:[{v, tag, color}] — 표지끼리 겹치면 위로 쌓음 (같은 자리의 값끼리만 겹쳐 쌓임)
+const NL = { W:420, X0:40, X1:380, r:12, gap:28 };
+function nlLayout(marks){
+  const X = v=>NL.X0+(NL.X1-NL.X0)*v;
+  const placed = [];
+  marks.forEach(m=>{
+    const px = X(m.v);
+    let r=0; while(placed.some(p=>p.r===r && Math.abs(p.px-px) < NL.r*2+3)) r++;
+    placed.push(Object.assign({}, m, {px, r}));
+  });
+  const nR = 1 + Math.max(0, ...placed.map(p=>p.r));
+  const axisY = 8 + nR*NL.gap + 14;
+  placed.forEach(p=>{ p.cy = axisY - 24 - p.r*NL.gap; });
+  return { placed, axisY, H:axisY+40, X };
+}
+function nlSVG(marks){
+  const { placed, axisY, H, X } = nlLayout(marks);
+  let s = `<svg viewBox="0 0 ${NL.W} ${H}">`;
+  s += `<line x1="${NL.X0}" y1="${axisY}" x2="${NL.X1}" y2="${axisY}" stroke="#1a1a2e" stroke-width="2.4" stroke-linecap="round"/>`;
+  [[0,1],[1,2],[1,1]].forEach(([n,d])=>{
+    const x = X(n/d);
+    s += `<line x1="${x}" y1="${axisY-6}" x2="${x}" y2="${axisY+6}" stroke="#1a1a2e" stroke-width="2"/>`;
+    s += d===1 ? `<text x="${x}" y="${axisY+24}" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a2e">${n}</text>` : svgFrac(x, axisY+20, n, d, 12, '#1a1a2e');
+  });
+  placed.forEach(p=>{ s += `<line x1="${p.px.toFixed(1)}" y1="${(p.cy+NL.r).toFixed(1)}" x2="${p.px.toFixed(1)}" y2="${axisY}" stroke="${p.color}" stroke-width="1.8"/>`; });
+  placed.forEach(p=>{ s += `<circle cx="${p.px.toFixed(1)}" cy="${axisY}" r="5" fill="${p.color}" stroke="#fff" stroke-width="1.6"/>`; });
+  placed.forEach(p=>{
+    s += `<circle cx="${p.px.toFixed(1)}" cy="${p.cy.toFixed(1)}" r="${NL.r}" fill="${p.color}" stroke="#fff" stroke-width="2"/>`+
+      `<text x="${p.px.toFixed(1)}" y="${(p.cy+4.5).toFixed(1)}" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">${p.tag}</text>`;
+  });
+  return s + `</svg>`;
+}
+const IMG = {"j_hi":"data:image/webp;base64,UklGRhQTAABXRUJQVlA4WAoAAAAQAAAAbwAAnwAAQUxQSB8BAAABDzD/ERECcm27cRvweOCSJbCMLNlKOiFLYyEZmArCpQcdYYEPgpRdQET/J4CO+GnozuCH+l8cKcxppA9V2pnzALONLUEpIBvYIUInVFBAFUXUUUI3lNFm2BFbHOCxMus0o2p+XdPCuq7FGTctiW1WFrvGFmcgIupaMoQZ7d14UY9xEsVQNS+aFkQ/RhS3Jf0YYUbTvKjaSRQDaQQ3lFBHHhXk5hAidZ+RtU0k7WboImpNBK0KrxXhtCaCdhNJ20VWCkOHKjqhhgLqcyK6zUloe7WMWAVVO4mmBdG1KDYtGbLYNRY86IjKvBNRHfFEbV4g6vMi0W1eItqOkm37PLbxAmcpr3JaU1f4Ne04YU1/R3HN7VXSmu1NfI388wctBQBWUDggzhEAAFBHAJ0BKnAAoAA+PRqLQ6IhoRRajkQgA8SyAGexIC3vLH7z+YXs72H+8/hrkYjH9hv9b7qvmj/hfU75gf6m9J3zFftv6pn+8/bD3df2X7M/kA/nf9362j0EP2y9OH91Pht/dz9ovadzXr+k9rX9f/JT+o/9XzJfMv178lP617O39B0vP9r5Hfrd99/p/7Wf2z91/k7/M+H/vy/a/tP+QL8i/lH+J/Lf+1ft3yfIAvyn+c/43+1/t5/mvQ61Du+n+W/JL6AP43/Ov8j+VP9p///u8+CL9l/x/+y/En6AP47/RP85/dP2y/2P//+Yj/C/x35de1b8x/vv+8/y37uf4b7Bv5D/PP8n/ev8v/3f75////T963sK/Yz2Lf1hbel8ir2rwA3fofsfbn/B0woES4291zZG77p4UcttDhJ9swbZJt6YCF+e0XH52frLCWOBLdMC+orophr37D6QPjg2aglUiXSHWB4CF8YW8K3mJIjry7g9WLPITW7FEr301wrOqX5as9h7fB9vyHF6sBCbeMdTRsUYwqfZ4PSK9jRxSTdm15SUPxMgi7S+YC2T3pbWTdEWSzJeBsktbfnH9tb5P2dYFPv8WsAk6Th7OeAygaQi3PmYesnWNBBuoaSSO6+8A41/863B5dRYb603FRDd4RLeV7hOXOVH8f89NlV0TvgSpxgJzsj9Vd9nOe5wiBBDXVvvbWkNhBOo4ej/qxz1OyIQ7TLWBY1mKAxzk6e6FOQGC06RRpQXafPalyCT+I1EexZbGAD+/z1Zt/+u6tgSVHjJ5Xs7m/+G2nfo5CQBfoEWj1UaFYJkhNEl6IPu4Gw0ka9U4DR7Kh5iLnabZ0QH/L9H5oyJWhc1TqQceozLVlK91pVcNCCf1YFT8KmpJPNKG6al27stKiLxnFPJ4rLEqfQt5IHu7clSpBCdi36NYv9M2eqe5hQpn1WTv4ufpncJsCUSa45S42y480X3n3X5Onq10u17Kger3U0oNiFkVe+tb+pwl30jBccTpgfZS/4dcWxuaYS2HqMxgbJ0zwheoyFFXqdF4daqFvlJcKF/FfeUe+eFM3ZN13XfkeW5BIp7Rsxa3C2vGxrj5qOOoWsS3S0K/TYxeuFKdca1UjpAiRsYh0kpiXipgte7OKPHUyHe3oLIzZTP38zcakHFGiPzwtofuAjmIAYZLFw8XQJFKWprHcbe6RgxoQyxSiMjHqouf+22TtE/S+aT/31+NU8feBxJDUO++6k75gDSb7RO0N+X+9BunviBZiU/HEGTRRUy7JeHG8PRfVRP5kkweL91LD/w7dJO9qA7dG7cdQK1FDHUhpQuZvJlZoWgN7En46AvakTfZ02Lge7wqTLGHgFkt0OvoAYgS6R6V6He3HyeHEOL3rnvIz4vwiblMYKMJG+D6HdKGwgqGYaCikDXfK8RcRjjmaH5osWU2KFhLIEaz+ati0S0955Vgcb2ZkJfa/gAzG/F7j92ylFUOBZEfJ4f3NkebtK+uHEKUPNeb0OHiylOujdpn4ljXbO3rOpS2JsGx669UsjVY644l+DUAL0SBv1USI7mT2VqvUQMRpgP/Xcyh+EVPb6dBXLp5F78bBjuVoKkuYddCPVr8bWT5s6+Yd6+z58biDd+qFIqCW/w4XSUWPPMmorusuXzZjOprki8oroLIlg49DZy9NR0RrdzJNzPQ1fhXdmmESPP+Tm3cT4f3RzyuQniQlwHGaRcDqD+ymAQ6d+8A90PH0T7vnWT7RUcSXy9UT2SS3EvS6BcXp8UZGRUuvgvF3hjaufx23Xx/6wAwTg05bzyuovtt5TdfX8m2K5250WRcaHkPmd3y9KlbbOQsFHKSccPcwyBFEE4Nc6FPvyjwIP2npeiF7HSnUrBPQe2i+tCNl5DICyeuRH0xnr50A395H6J80oY6hja4708qMFvej56skCDFFAsAQjKoc353NfNGlqWIm3/+mOgFw+hQP/ymH1TbyzHu7tU8MforizMmyrMT0FGzDlZvqT4r09sXO1L1nDUyp6eZk7+U4nHIssENEmsri+sv4ealMB1htiJSOclhjOA2Ky6wmpEUwptAqtnFlN3aQ1aAdKXjthsWMHCPBWpKVgaACOQWw/T37yQlR3IedodH9RS/8Ju5a004lcxuyCAAfoe5ldDS1fzTZlna9qTZU7sbIaRBPGiyOfIxtsUzfiMxdyjeT23Sy0CIkbQUYzoA0PA9wUNpfIzRB5xvdsdOMEf4XkQDY1NhVp4Dn5FZSfJnosBIKhAjpy2sHYcES/ZWDJTTQ9MSyblajmpAH3r3TjpXsVnaF1TXF+PR7pRIe3bNG95HldOp64aBixNp8eDQ7d75zSItCXFBONcKfNfVG3wzx+V1fZqyB4rRMBQ3EgDInKqIgu8DWH8s8lpzqsYDxCdFyLFTsnnwm1glMQftsspji380/9F/sCO2MnxRyqmvj0D2g5zFRHKPBsNzG9Yr8V/oCCnIiIVa6zScg/bBoJODFpRvNCZjtxf7713E0zKvwiPcJi0aTIJNfe+cMzGrpC6aqJvcDTu4ie9Txs9y57/RtAP/tgLrB1NpWPDNOo+ZclpfNL6ohNEi5TSdEiNHAqtESeAjWIRNquB+FcpXBKeTW/js7XGQSNVvql9edD9TIFSSKuC8Wyv9EfFWsfj9yRHRR47D0VIjPp7jNXgBDkV4+QoVWKiVk977d0lDmmg6wDEPXfVFozuJv0H3eU9mPeLWK7H8GlmdQaCsQpttes81kltWmc1qdivFFwtTBpXqaaqELdENRQN9gtU6b8wDgobbuXcR1tfkADTCThnzwUc0EPbqrv3JvXEfjYr3SHW7Jlp/RQHKNMjzK84epbHsPng9f6CiBrNLZe3GoaAPZIUGFUxm+rXRuK0BthK9iemGuEStMfGfsHPzW/BRQi3HoIR///I/xs81Il44jShc6+yvROSiHYZ/py1rvc5UnDHo8w7UI8vBMR/P9nTX5c/TqmlnYl41R5s3qjlGtCX0RqfvnGCRVmbKgZ8Lyu5nLKesiKOnCmyiWBjSVZrHWd03Cs+EEgAUKzhwTgWqTmChMSXKXnPE79CO4Gju9/K5ixAY4YMQlrAQ4gxzjFiT5iKexo1A7n8BaQkk8uwINDgauUngas6zua92QvVfQ39vYSRVAeVScCxKIJ3lj/lTXhmSpTL7+ZyzvZzREzxNkCYRs0XEhuIbTtekjIKadO+BhgeQDTuUrXNywysFno+d40dgW8OyKTGUwv4e9QkeH8ErWZNQrtnU4FyBcNZSO/+KyZNCnwfft9eMG3NL6CaQDv8hXd4yrxmyGG+AkrAJq2VffpQp2uhimATB1gDu44WOypnEfVvzOmW5wFMAftDnnxdi7XjjiEUP9cCp0fE/StnTKLijP3lfrOoNJ83iU1lgO10mEdD3fi5T9+8N8Y97C0JE5cT+TkVoeh/q0y6M6rScAVhW6pEezeNk6KthDUwIFqLlOK/yBqlr5IAu7rFNK5YYn/eiX8ZnKuKxkGpPyEDSORq7uGsRpyGBH+sk2pbmOH2cXSbdX+B88uhSdw9FZ3Bsu9gaGyXOQWPuZeFov5H9mbbqxvTo+tyWC0Nfy1Gtadyk5+stQyXaGlga0dl9RARo6Hz1C+U7inV6ekbhLpeT3Xfcfz7T/zLLYf8qPudS+29Gx9YdxJltWsE63ZUhp4/PJdBhLndR8PjA80j99Yf0SbPOPs7im6rGGEpzRNk26afElNvcbasC8d7SDelscFfCwKWjHFkV3ahYRtyQeNoOr8YyAfmH/511RBk3UrG4Kt167ENWRgeoNCTWWiPKXG8wbcD8tztlWSTHbtRmmDmmjq+ypVO8ZHsXo6Dbjfh6hKXewcgaHQ5i30Pt01810ens+G48GkYEg1mOWBkP/1gVuT7Uc5GrIvMMAEe+yQ2c1WgJA0eWRwz89/YL/j6JxNRra9xu6eW9UazDG4bj0n2SVHMENzod5sOI807BvvW52YOaZpvZQtcrScfb61P8ERJdVTAGUfzsJ3AacyVH4uIXPjYq/Y2EuP+C57hFs3e6K2HytZVWedHjhpo61tqikGCBsTXrRW9X1/Vb+2W1oSfkGB7qQJQdOCe6ox3KehZCBqUm9YAT2xdSuaO6mI5iLe90+5EOqiMKLGQRCEw2zjWtpRzDRqtB53O3bv6geX8gT4ciSLOiZak1DtBy1OJWJLu3FIsii4rJSRs20iIzGHrYLUhYdqsCRfhX9Cu7kzLidRVVRrONcCcTsCI/HTDkVN1ew0jcKDVhpDTpj+0Lf7W0/ZDMeX7cuoNh8p/FNC1O+GNfJM5eQb9TCERXRQKeNhfFj/43v+6FbnKZax1Miy2rKOjQw+81v0dKvsl6Q+5PBlt1hJ5cJOCPQj2eukikbzMW8MHwwAgZJho4gzLOwwUstR0T4eJYXyP5XkmLcvOAVnvL4ms0YrPkNlFXZb9XlmVpYqFjhZZnx3WrsH6CRe0h2ozJ99sFwoDjZMXYuaGP7gDVFoL/VdlFaozWMPQ9JJJRnODx1b8/mYCVOw0mrH5tjOi2CjI7kp/o5ZTQyVoBIQPd6cYO1jn/wa8oOwSUaqZ2vQ7+MACHVBIyc6TyDqq/qUWwafGiEm4payHFh703yRaG5lsYY3Olk9j64nKsgdPTh6LVKzpE0OLhRBI29Uc1W9bc1K4WGankKHMSvlYLMnTwyhT1K3F4PTe/piUV4WZ2QM+WK9AV6aJV2E93K38mJVjqlUFkYueO5V1ppIrvxGKoXM69qBK4uGor8JrpmopTISNjJs80Mo7m4NmCnOlHqqjScLOTYQ4/WWOgG8mLVNQkvtNBnG+qKTGTPpRPEcIuNpvbTiWGyGUPqqgLqmnGhHQR0jQlBw8r6SFxNYuDN3olDN8uN6pMWCOL14WIEsq+C1Pfnf3qHPgPpDcvxi+VFO99c+EEo8W4I0vidqbySWZJD/BZ+pk0+Tu2Z0GhC2XmMukzh2hVaGUI/octvfAxc7w4cwwmzIyyrxHokRDfyYzN610rd3mN+457pXn1VdN7b09kyd9ndYVLlllm6hu1gqllQTalHBxMTBg4rd0PG8V/yy7QZr5oguVm2Etbb7/CQbszcI0QUE+YXXMco91Bk8biZaFHHfAJEBpZZtLNQ1QexGEcEqp79Rthan4ZJYIGNZSGu/zucqaTWfWAQvmND49JEpU6Y9nHMv+FPCmrQrSnJrfAf5L7Zti9jSgm3rJKRcyk5T9wLJeIH/tvmCe4hDbv+KfLS/8RyZvhkuPGBJS09cYYicFPfprCHHbB7fxqzxoeJwQ0WFbCTN2gacOtcWqMwpx2pfQd76jY/zT4uX4bvlYtD3DqwFfAZ8V7vuwwv7PihnkQ0oHbFm3XXV/Gas6Me/it9bfMaJz6UKWyhhzyE6Bfev486EM3r1aVDAff17WDuZ/a4kNK5rPv/s11SaYhdHvorTuxbNXDkf15NVB/UyQTSO57Io5rwZre1POP7U2lAj06D8sj54BfD8+p9Yzc/qLB5XjSBFc7fCQTgLrvSZDh+ZHU4173Jkl3fr+aG+2AJGzZ0V7+nXwIzJjnUZ6MQAo3NsFY6nfvqllGKsV46HcdoOdfBG3D+Nfu1gcNCOWFUti4t/NVDfGXqO783JrnBxjquB3eXCjhWPi/ROGQxKOP0asW6skwTyxcoef4z+j3sREIlzKUfffycRull6VbC/CwXfBR54U0UZf+HFcVjfWgInSL2MyZv/QJ5JFsvDC/l/naOXCmrhp0JlQEat/n5MGK6Kiba6G74NZKjyJLOQXptn1sATeoW5dltshEMS62Gv9gFZJHFS+fAFlffWKI6gGpn28KVjL6ZFBiufC+oquZcFcJaVtghED62b8aWUOjKTHzDQ7YqbrRFa42IQJ92hSrEoyKK0IV/owVuvSVAlenx0q6G6dejthtMatI1BMCpeO0ClAl91hEZFy61d/wtF1oGXeRUE/bTeU9jRxqWFaxVYEeOcBhL6zvmN4fb1bl4hGigr3V3a5FZyibxb17FCCtq31UOGbVvx2XzLKibKO/b7a9EF3VYGFqziswDflXl8vzv770Ur5ak7tlfJwAAA=","j_think":"data:image/webp;base64,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","j_wow":"data:image/webp;base64,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","j_yay":"data:image/webp;base64,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","h_hi":"data:image/webp;base64,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","h_think":"data:image/webp;base64,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","h_wow":"data:image/webp;base64,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","h_yay":"data:image/webp;base64,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"};
+
+/* ── 식 세우기 칸: [□] (+ − × 고르기) [□] = [답]
+   채점 항목 {expr:id, terms:[[n,d],…], op:'×'|'+'} — 칸의 순서는 상관없고 값이 같으면 정답(약분 전 꼴도 됨) */
+const OPS = ['+','−','×'];
+function opSel(id, ops, wide){
+  ops = ops || OPS;
+  return `<span class="opsel${wide?' wide':''}" id="${id}" data-v="">${ops.map(o=>`<button type="button" onclick="opPick('${id}','${o}')">${o}</button>`).join('')}</span>`;
+}
+function opPick(id, o){
+  const el = $(id); if(!el || el.classList.contains('done') || el.classList.contains('lock')) return;
+  el.dataset.v = o; el.classList.remove('wrong');
+  el.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.textContent===o));
+}
+// labels: 칸 아래 이름표(없으면 빈칸), ansId/ansLab: 답 칸
+function exprRow(id, k, labels, ansId, ansLab){
+  const cols = [];
+  for(let t=0; t<k; t++){
+    if(t) cols.push([opSel(id+'o'+t)]);
+    cols.push([probHTML(id+'t'+t), (labels&&labels[t])||'']);
+  }
+  cols.push(['='], [probHTML(ansId), ansLab||'']);
+  return `<div class="def-box calc-box expr" style="margin-top:4px">${calcRow(cols)}</div>
+    <p class="sub">□에는 확률을, 가운데 ○에서는 알맞은 계산 기호를 골라요.</p>`;
+}
+function exprEls(it){
+  const els = [];
+  it.terms.forEach((_,t)=>{ els.push($(it.expr+'t'+t+'N'), $(it.expr+'t'+t+'D')); });
+  return els;
+}
+function gradeExpr(it){
+  const k = it.terms.length, vals = [];
+  let empty = false;
+  for(let t=0; t<k; t++){
+    const n = parseCount($(it.expr+'t'+t+'N').value.trim()), d = parseCount($(it.expr+'t'+t+'D').value.trim());
+    if($(it.expr+'t'+t+'N').value.trim()==='' || $(it.expr+'t'+t+'D').value.trim()==='') empty = true;
+    vals.push(n===null || d===null || d===0 ? null : [n,d]);
+  }
+  const ops = []; for(let t=1; t<k; t++) ops.push($(it.expr+'o'+t));
+  if(empty || ops.some(o=>!o.dataset.v)) return 'empty';
+  const left = it.terms.slice(); let wrong = false;
+  vals.forEach((v,t)=>{
+    const j = v ? left.findIndex(a=>a[0]*v[1]===a[1]*v[0]) : -1;
+    const ok = j>=0; if(ok) left.splice(j,1); else wrong = true;
+    [$(it.expr+'t'+t+'N'), $(it.expr+'t'+t+'D')].forEach(el=>el.classList.toggle('wrong', !ok));
+  });
+  const want = it.op || '×';
+  ops.forEach(o=>{ const ok = o.dataset.v===want; o.classList.toggle('wrong', !ok); if(!ok) wrong = true; });
+  if(!wrong) ops.forEach(o=>o.classList.add('done'));
+  return wrong ? 'wrong' : 'ok';
+}
+
+/* ── 확률 문제 3단계 (판단 틀)
+   '동시에': ① '동시에' 문제인가? → ② 두 사건이 서로 영향을 끼치나? → ③ 곱하기
+   '또는'  : ① '또는' 문제인가?  → ② 두 사건이 동시에 일어날 수 있나? → ③ 더하기
+   cfg: { kind:'and'|'or', evs:'두 사건(문장)…는', why2:'②의 까닭', target:'구하는 확률', after } 또는 steps를 직접 줌 */
+const RT = {};
+function rtStd(cfg){
+  const and = cfg.kind==='and';
+  return [
+    { h:'① 무엇을 묻는 문제일까?', q:'이 문제는 어떤 문제일까?',
+      opts:[{key:'or', label:`'또는' 문제예요.`}, {key:'and', label:`'동시에' 문제예요.`}], good:cfg.kind,
+      ok: and ? `두 사건이 <b>모두</b> 일어나야 하는 '동시에' 문제예요.` : `둘 중 <b>하나만</b> 일어나도 되는 '또는' 문제예요.` },
+    and ? { h:'② 두 사건이 서로 영향을 끼칠까?', q:`${cfg.evs} <span class="em">서로 영향을 끼칠까?</span>`,
+        opts:[{key:'no', label:'영향을 끼치지 않아요.'}, {key:'yes', label:'영향을 끼쳐요.'}], good:'no',
+        ok:`${cfg.why2} 그래서 두 사건은 <span class="kw">서로 영향을 끼치지 않아요</span>.` }
+      : { h:'② 두 사건이 동시에 일어날 수 있을까?', q:`${cfg.evs} <span class="em">동시에 일어날 수 있을까?</span>`,
+        opts:[{key:'no', label:'없어요.'}, {key:'yes', label:'있어요.'}], good:'no',
+        ok:`${cfg.why2} 그래서 두 사건은 <span class="kw">동시에 일어나지 않아요</span>.` },
+    { h:'③ 그럼 확률을 어떻게 구할까?', q:`그럼 <span class="em">${cfg.target}</span>을 어떻게 구할까?`,
+      opts:[{key:'add', label:'두 확률을 더해요.'}, {key:'mul', label:'두 확률을 곱해요.'}], good: and?'mul':'add',
+      ok: and ? `서로 영향을 끼치지 않으니 <span class="kw">두 확률을 곱해요</span>.` : `동시에 일어나지 않으니 <span class="kw">두 확률을 더해요</span>.` }
+  ];
+}
+function routineHTML(id, cfg){
+  RT[id] = Object.assign({}, cfg, { steps: cfg.steps || rtStd(cfg) });
+  return `<div class="routine" id="${id}Block"><div class="rt-head">${cfg.head||'🧭 확률 문제 3단계'}</div>${rtStepHTML(id, 0)}</div>`;
+}
+function rtStepHTML(id, s){
+  const cfg = RT[id], st = cfg.steps[s], q = id+'s'+s;
+  window[q+'Pick'] = function(k, btn){
+    if(!choiceGrade(q, btn, k===st.good, RETHINK)) return;
+    setFb(q+'Fb', true, '✅ 맞아요. '+st.ok);
+    if(s < cfg.steps.length-1){
+      $(id+'Block').insertAdjacentHTML('beforeend', rtStepHTML(id, s+1));
+      markShown(id+'s'+(s+1), id+'s'+(s+1)+'Block');
+      scrollToEl(id+'s'+(s+1)+'Block');
+    } else cfg.after();
+  };
+  return `<div class="rt-step" id="${q}Block"><div class="rt-h">${st.h}</div><p class="key-q">${st.q}</p>${choiceCol(q, st.opts)}<div class="feedback" id="${q}Fb"></div></div>`;
+}
+function appendRoutine(id, cfg){
+  appendQ(routineHTML(id, cfg), id);
+  markShown(id+'s0', id+'s0Block');
+}
+
+// 인물 말풍선: who 'j'(재이) / 'h'(해이), face hi·think·wow·yay
+const WHO = { j:'재이', h:'해이' };
+function talk(who, face, html, right){
+  return `<div class="talk ${who}${right?' r':''}"><img src="${IMG[who+'_'+face]}" alt="${WHO[who]}"><div class="bub"><span class="who">${WHO[who]}</span>${html}</div></div>`;
+}
+function F(n,d){ return sfrac(n,d); }
+
+/* ════════════════════════════════
+   그림: 냉장고 · 나뭇가지 · 넓이 정사각형 · 주사위 · 동전 · 원판 · 8×8 표
+════════════════════════════════ */
+const TOPC = [ {k:'br', nm:'갈색', c:'#a0703f'}, {k:'sky', nm:'하늘색', c:'#8fd3f4'}, {k:'wh', nm:'흰색', c:'#f8fafc'} ];
+const BOTC = [ {k:'pk', nm:'분홍색', c:'#f9a8d4'}, {k:'gy', nm:'회색', c:'#a3a9b3'} ];
+const colT = k=>TOPC.find(x=>x.k===k), colB = k=>BOTC.find(x=>x.k===k);
+// 냉장고 (t, b: 색 키 또는 null). o: {w, x, y, lab}
+function fridgeSVG(t, b, o){
+  o = o || {};
+  const w = o.w || 120, h = w*1.75;
+  const ft = t ? colT(t).c : '#eef2f7', fb = b ? colB(b).c : '#eef2f7';
+  const pos = (o.x!=null) ? ` x="${o.x}" y="${o.y}"` : '';
+  return `<svg${pos} viewBox="0 0 100 175" width="${w}" height="${h.toFixed(1)}">
+    <rect x="9" y="165" width="10" height="8" rx="2" fill="#475569"/><rect x="81" y="165" width="10" height="8" rx="2" fill="#475569"/>
+    <rect x="4" y="3" width="92" height="104" rx="9" fill="${ft}" stroke="#334155" stroke-width="${o.w&&o.w<40?4:2.5}"/>
+    <rect x="4" y="109" width="92" height="57" rx="9" fill="${fb}" stroke="#334155" stroke-width="${o.w&&o.w<40?4:2.5}"/>
+    <rect x="79" y="28" width="6" height="42" rx="3" fill="#64748b"/><rect x="79" y="121" width="6" height="28" rx="3" fill="#64748b"/>
+    <path d="M15,13 L15,92" stroke="#fff" stroke-opacity=".6" stroke-width="5" stroke-linecap="round"/>
+    ${t?'':`<text x="50" y="66" text-anchor="middle" font-size="26" fill="#94a3b8" font-weight="800">?</text>`}
+    ${b?'':`<text x="50" y="148" text-anchor="middle" font-size="22" fill="#94a3b8" font-weight="800">?</text>`}
+    ${o.lab?`<text x="44" y="98" text-anchor="middle" font-size="9" font-weight="800" fill="#334155">냉장 칸</text><text x="44" y="159" text-anchor="middle" font-size="9" font-weight="800" fill="#334155">냉동 칸</text>`:''}
+  </svg>`;
+}
+function swBtn(fn, side, c, on, dis, x){
+  return `<button class="sw${on?' on':''}${x?' x':''}" onclick="${fn}('${side}','${c.k}')"${dis?' disabled':''}><i style="background:${c.c}"></i>${c.nm}</button>`;
+}
+// 나뭇가지 그림: 냉장 칸 3가지 → 냉동 칸 2가지씩 → 냉장고 6가지
+function treeSVG(want){
+  let s = `<svg viewBox="0 0 420 262" role="img" aria-label="나뭇가지 그림">`;
+  const rx = 34, ry = 131;
+  s += `<text x="8" y="16" font-size="11.5" font-weight="800" fill="#64748b">냉장 칸</text><text x="196" y="16" font-size="11.5" font-weight="800" fill="#64748b">냉동 칸</text>`;
+  TOPC.forEach((t,i)=>{
+    const y1 = 48 + i*84;
+    const hot1 = want && t.k==='sky';
+    s += `<line x1="${rx}" y1="${ry}" x2="104" y2="${y1}" stroke="${hot1?'#f59e0b':'#94a3b8'}" stroke-width="${hot1?4:2}"/>`;
+    BOTC.forEach((b,j)=>{
+      const y2 = y1 - 21 + j*42;
+      const hot = hot1 && b.k==='pk';
+      s += `<line x1="160" y1="${y1}" x2="226" y2="${y2}" stroke="${hot?'#f59e0b':'#94a3b8'}" stroke-width="${hot?4:2}"/>`;
+      s += `<rect x="226" y="${y2-12}" width="66" height="24" rx="12" fill="${b.c}" stroke="${hot?'#f59e0b':'#334155'}" stroke-width="${hot?3:1.5}"/>
+        <text x="259" y="${y2+5}" text-anchor="middle" font-size="12" font-weight="800" fill="#1a1a2e">${b.nm}</text>
+        <line x1="296" y1="${y2}" x2="330" y2="${y2}" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+      s += fridgeSVG(t.k, b.k, {w:20, x:336, y:y2-17.5});
+      if(hot) s += `<text x="364" y="${y2+5}" font-size="12" font-weight="800" fill="#b45309">← 재이</text>`;
+    });
+    s += `<rect x="104" y="${y1-13}" width="56" height="26" rx="13" fill="${t.c}" stroke="${hot1?'#f59e0b':'#334155'}" stroke-width="${hot1?3:1.5}"/>
+      <text x="132" y="${y1+5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#1a1a2e">${t.nm}</text>`;
+  });
+  s += `<circle cx="${rx}" cy="${ry}" r="7" fill="#4f46e5"/>`;
+  return s + `</svg>`;
+}
+// 넓이 정사각형: phase 0 전체, 1 세로 3칸(하늘색 줄), 2 가로 2칸까지(6칸)
+function areaSVG(phase){
+  const X0 = 64, Y0 = 44, S = 270, cw = S/3, rh = S/2;
+  let s = `<svg viewBox="0 0 350 330" role="img" aria-label="넓이 그림">`;
+  if(phase===0){
+    s += `<rect x="${X0}" y="${Y0}" width="${S}" height="${S}" fill="#eef2ff" stroke="#1a1a2e" stroke-width="3"/>
+      <text x="${X0+S/2}" y="${Y0+S/2-6}" text-anchor="middle" font-size="22" font-weight="800" fill="#4338ca">전체 = 1</text>
+      <text x="${X0+S/2}" y="${Y0+S/2+20}" text-anchor="middle" font-size="13" font-weight="700" fill="#64748b">추천 버튼이 고를 수 있는 모든 냉장고</text>`;
+    return s + `</svg>`;
+  }
+  TOPC.forEach((t,i)=>{
+    const x = X0 + i*cw;
+    s += `<rect x="${x+4}" y="10" width="${cw-8}" height="24" rx="12" fill="${t.c}" stroke="#334155" stroke-width="1.4"/>
+      <text x="${x+cw/2}" y="27" text-anchor="middle" font-size="12.5" font-weight="800" fill="#1a1a2e">${t.nm}</text>`;
+    BOTC.forEach((b,j)=>{
+      const y = Y0 + j*rh, hh = phase>=2 ? rh : S, yy = phase>=2 ? y : Y0;
+      if(phase<2 && j>0) return;
+      const sky = t.k==='sky', hit = phase>=2 && sky && b.k==='pk';
+      const fill = hit ? '#f472b6' : ({br:'#e2c29f', sky:'#bae6fd', wh:'#ffffff'})[t.k];
+      s += `<rect x="${x}" y="${yy}" width="${cw}" height="${hh}" fill="${fill}" stroke="#94a3b8" stroke-width="1"/>`;
+      if(phase>=2) s += fridgeSVG(t.k, b.k, {w:30, x:x+cw/2-15, y:y+rh/2-26});
+    });
+  });
+  if(phase===1) s += `<rect x="${X0+cw}" y="${Y0}" width="${cw}" height="${S}" fill="none" stroke="#f59e0b" stroke-width="4"/>`;
+  if(phase>=2){
+    BOTC.forEach((b,j)=>{
+      const y = Y0 + j*rh;
+      s += `<rect x="6" y="${y+rh/2-13}" width="52" height="26" rx="13" fill="${b.c}" stroke="#334155" stroke-width="1.4"/>
+        <text x="32" y="${y+rh/2+5}" text-anchor="middle" font-size="12" font-weight="800" fill="#1a1a2e">${b.nm}</text>`;
+    });
+    s += `<line x1="${X0}" y1="${Y0+rh}" x2="${X0+S}" y2="${Y0+rh}" stroke="#1a1a2e" stroke-width="2.4" class="slide"/>`;
+    s += `<rect x="${X0+cw}" y="${Y0}" width="${cw}" height="${rh}" fill="none" stroke="#f59e0b" stroke-width="4"/>`;
+  }
+  s += `<line x1="${X0+cw}" y1="${Y0}" x2="${X0+cw}" y2="${Y0+S}" stroke="#1a1a2e" stroke-width="2.4"/><line x1="${X0+2*cw}" y1="${Y0}" x2="${X0+2*cw}" y2="${Y0+S}" stroke="#1a1a2e" stroke-width="2.4"/>`;
+  s += `<rect x="${X0}" y="${Y0}" width="${S}" height="${S}" fill="none" stroke="#1a1a2e" stroke-width="3"/>`;
+  return s + `</svg>`;
+}
+// 주사위 눈
+const PIPS = {1:[[2,2]],2:[[1,1],[3,3]],3:[[1,1],[2,2],[3,3]],4:[[1,1],[3,1],[1,3],[3,3]],5:[[1,1],[3,1],[2,2],[1,3],[3,3]],6:[[1,1],[3,1],[1,2],[3,2],[1,3],[3,3]]};
+function dieSVG(v, size, hl){
+  size = size || 30;
+  return `<svg viewBox="0 0 40 40" width="${size}" height="${size}" style="display:inline-block;vertical-align:middle"><rect x="2" y="2" width="36" height="36" rx="7" fill="${hl?'#dcfce7':'#fff'}" stroke="${hl?'#16a34a':'#334155'}" stroke-width="2.4"/>`+
+    PIPS[v].map(([a,b])=>`<circle cx="${a*10}" cy="${b*10}" r="3.6" fill="${v===1?'#dc2626':'#1a1a2e'}"/>`).join('')+`</svg>`;
+}
+function coinSVG(face, size, hl){
+  size = size || 40;
+  return `<svg viewBox="0 0 40 40" width="${size}" height="${size}" style="display:inline-block;vertical-align:middle"><circle cx="20" cy="20" r="17" fill="${face==='앞'?'#fcd34d':'#fbbf24'}" stroke="${hl?'#16a34a':'#b45309'}" stroke-width="${hl?3.5:2.2}"/><circle cx="20" cy="20" r="12.5" fill="none" stroke="#b45309" stroke-width="1" stroke-dasharray="2 2"/><text x="20" y="25.5" text-anchor="middle" font-size="14" font-weight="900" fill="#78350f">${face}</text></svg>`;
+}
+// 원판: k등분, lose = 꽝 칸 번호 집합, winTxt = 당첨 칸 글자
+function spinLose(k, w){ const s = new Set(); for(let i=0;i<k;i++){ if(Math.floor((i+1)*(k-w)/k) > Math.floor(i*(k-w)/k)) s.add(i); } return s; }
+function spinSVG(k, lose, o){
+  o = o || {};
+  const c = 110, r = 100, W = ['#fde68a','#bae6fd','#bbf7d0','#fbcfe8'];
+  let s = `<svg viewBox="0 0 220 236" role="img" aria-label="원판"${o.w?` width="${o.w}"`:''} style="display:block;margin:0 auto;max-width:100%;height:auto">`;
+  let wi = 0;
+  for(let i=0;i<k;i++){
+    const a0 = (-90 + i*360/k)*Math.PI/180, a1 = (-90 + (i+1)*360/k)*Math.PI/180, am = (a0+a1)/2;
+    const x0 = c + r*Math.cos(a0), y0 = c + r*Math.sin(a0), x1 = c + r*Math.cos(a1), y1 = c + r*Math.sin(a1);
+    const L = lose.has(i);
+    const fill = L ? '#fb923c' : W[(wi++)%W.length];
+    s += `<path d="M${c},${c} L${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${fill}" stroke="#fff" stroke-width="2.5"/>`;
+    const tx = c + r*0.64*Math.cos(am), ty = c + r*0.64*Math.sin(am);
+    s += L ? `<text x="${tx.toFixed(1)}" y="${(ty+6).toFixed(1)}" text-anchor="middle" font-size="${k>8?13:16}" font-weight="900" fill="#fff">꽝</text>`
+           : `<text x="${tx.toFixed(1)}" y="${(ty+6).toFixed(1)}" text-anchor="middle" font-size="${o.icon?20:(k>8?11:13)}" font-weight="800" fill="#78350f">${o.icon?'🍦':'당첨'}</text>`;
+  }
+  s += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#334155" stroke-width="3"/>`;
+  if(o.needle) s += `<g id="${o.needle}" style="transform:rotate(${o.rot||0}deg);transform-origin:${c}px ${c}px"><polygon points="${c-7},${c} ${c},${c-r+14} ${c+7},${c}" fill="#1f2937"/></g>`;
+  s += `<circle cx="${c}" cy="${c}" r="10" fill="#1f2937" stroke="#fff" stroke-width="2"/>`;
+  return s + `</svg>`;
+}
+const SP_LOSE = new Set([1,5]);     // 교과서 원판: 8칸 중 꽝 2칸
+// 8×8 표: 재이(세로) × 해이(가로). mode 'both' | 'miss' | 'atleast' | ''
+function grid8SVG(mode){
+  const X0 = 66, Y0 = 62, C = 34, n = 8;
+  let s = `<svg viewBox="0 0 352 346" role="img" aria-label="두 사람의 결과 표">`;
+  s += `<text x="${X0+C*4}" y="16" text-anchor="middle" font-size="12.5" font-weight="800" fill="#be185d">해이가 돌린 결과 →</text>`;
+  s += `<text x="14" y="${Y0+C*4}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#1d4ed8" transform="rotate(-90 14 ${Y0+C*4})">재이가 돌린 결과 →</text>`;
+  const head = (i)=> SP_LOSE.has(i) ? ['#fb923c','꽝','#fff'] : ['#fde68a','🍦','#78350f'];
+  for(let i=0;i<n;i++){
+    const [f,t,tc] = head(i);
+    s += `<rect x="${X0+i*C+2}" y="${Y0-28}" width="${C-4}" height="24" rx="6" fill="${f}"/><text x="${X0+i*C+C/2}" y="${Y0-11}" text-anchor="middle" font-size="12" font-weight="900" fill="${tc}">${t}</text>`;
+    s += `<rect x="${X0-30}" y="${Y0+i*C+2}" width="26" height="${C-4}" rx="6" fill="${f}"/><text x="${X0-17}" y="${Y0+i*C+C/2+5}" text-anchor="middle" font-size="12" font-weight="900" fill="${tc}">${t}</text>`;
+  }
+  for(let a=0;a<n;a++) for(let b=0;b<n;b++){
+    const wa = !SP_LOSE.has(a), wb = !SP_LOSE.has(b);
+    let fill = '#f1f5f9';
+    if(mode==='both' && wa && wb) fill = '#60a5fa';
+    if(mode==='miss' && !wa && !wb) fill = '#f87171';
+    if(mode==='atleast') fill = (!wa && !wb) ? '#f87171' : '#34d399';
+    s += `<rect x="${X0+b*C+1}" y="${Y0+a*C+1}" width="${C-2}" height="${C-2}" rx="4" fill="${fill}"/>`;
+  }
+  s += `<rect x="${X0}" y="${Y0}" width="${C*n}" height="${C*n}" fill="none" stroke="#334155" stroke-width="2"/>`;
+  return s + `</svg>`;
+}
+
+/* ════════════════════════════════
+   단계 이동
+════════════════════════════════ */
+const STAGES = ['냉장고 색은 내 마음대로?','둘 다 원하는 색일 확률은?','더할까, 곱할까?','언제나 곱해도 될까?','동전과 주사위를 함께 던지면?','두 사람 모두 공짜 아이스크림?','더할까, 곱할까? 다시 한 번','문제풀이'];
+const PRACTICE = 7;
+let frontier = 0, viewing = 0;
+const built = {};
+let practiceScreen = 'scPractice';
+function stageBox(side, i){
+  const id = (side==='L'?'ls':'rs')+i;
+  let el = $(id);
+  if(!el){
+    el = document.createElement('div'); el.id = id; el.style.display='none';
+    (side==='L' ? $('actLeft') : $('actRight')).appendChild(el);
+  }
+  return el;
+}
+function R(html){ stageBox('R',frontier).innerHTML = html; }
+function L(html){ stageBox('L',frontier).innerHTML = html; }
+function enterStage(i){
+  frontier = i; built[i] = true;
+  stageBox('L',i).innerHTML=''; stageBox('R',i).innerHTML='';
+  showStage(i);
+}
+function showStage(i){
+  if(!built[i]) return;
+  viewing = i;
+  if(i===PRACTICE){ showScreen(practiceScreen); renderStepper(); return; }
+  showScreen('scAct');
+  for(let k=0;k<PRACTICE;k++){ const l=$('ls'+k), r=$('rs'+k); if(l) l.style.display = k===i?'':'none'; if(r) r.style.display = k===i?'':'none'; }
+  $('backBanner').innerHTML = i<frontier ? `<div class="back-banner">👀 지난 단계를 다시 보고 있어요. <button class="btn" onclick="showStage(frontier)">지금 하던 단계로 돌아가기 →</button></div>` : '';
+  renderStepper();
+}
+function renderStepper(){
+  $('stepper').innerHTML = STAGES.map((s,i)=>{
+    const cls = i===viewing ? (i<frontier?'viewing':'active') : i===frontier ? 'active' : (built[i] ? 'done' : '');
+    const can = built[i] && i!==viewing;
+    return `<button class="st ${cls}" ${can?`onclick="showStage(${i})" style="cursor:pointer"`:'disabled'}>${i+1}. ${s}</button>`;
+  }).join('');
+}
+function scrollToEl(id){ const el=$(id); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+function fmtP(p){ return p[1]===1 ? String(p[0]) : p.join('/'); }
+function flashL(id){ const el = $(id); if(el) flashRef(el); }
+
+/* ════════════════════════════════
+   질문 블록 공통
+════════════════════════════════ */
+const CHK = {};
+function chkBlock(id, inner, items, ok, msg){
+  CHK[id] = { items, ok, msg };
+  return `<div class="qblock" id="${id}Block">${inner}
+    <div class="btn-row"><button class="btn btn-check" id="${id}Btn" onclick="runChk('${id}')">확인</button></div>
+    <div class="feedback" id="${id}Fb"></div></div>`;
+}
+function runChk(id){
+  const c = CHK[id];
+  if(!c || !$(id+'Btn') || $(id+'Btn').disabled) return;
+  const items = typeof c.items==='function' ? c.items() : c.items;
+  if(!graded(id, checkItems(items, id+'Fb'))) return;
+  firstTry(id, true);
+  $(id+'Btn').disabled = true;
+  setFb(id+'Fb', true, c.msg || '✅ 맞아요!');
+  c.ok();
+}
+function choiceBlock(id, inner, opts, good, okMsg, after){
+  window[id+'Pick'] = function(k, btn){
+    if(!choiceGrade(id, btn, k===good, RETHINK)) return;
+    setFb(id+'Fb', true, okMsg);
+    after();
+  };
+  return `<div class="qblock" id="${id}Block">${inner}${choiceCol(id, opts)}<div class="feedback" id="${id}Fb"></div></div>`;
+}
+function appendQ(html, id, kind){
+  stageBox('R',frontier).insertAdjacentHTML('beforeend', html);
+  const b = $(id+'Block');
+  if(b && kind!=='choice') b.querySelectorAll('input').forEach(x=>x.addEventListener('keydown', ev=>{ if(ev.key==='Enter') runChk(id); }));
+  if(kind==='choice') markShown(id, id+'Block');
+  scrollToEl(id+'Block');
+}
+function nextBlock(id, note, label, fn){
+  stageBox('R',frontier).insertAdjacentHTML('beforeend', `<div class="qblock" id="${id}End">
+    ${note ? `<div class="note-box">${note}</div>` : ''}
+    <div class="btn-row"><button class="btn" id="${id}NextBtn" onclick="this.disabled=true;${fn}()">${label}</button></div></div>`);
+  scrollToEl(id+'End');
+}
+function numIn(id){ return `<input class="blank" id="${id}" inputmode="numeric" autocomplete="off">`; }
+function calcRow(cols){
+  return `<table class="calc"><tr>${cols.map(c=>`<td class="${c.length===1?'op':'v'}">${c[0]}</td>`).join('')}</tr>
+    <tr>${cols.map(c=>`<td class="cl">${c[1]||''}</td>`).join('')}</tr></table>`;
+}
+
+/* ════════════════════════════════
+   1단계: 냉장고 색은 내 마음대로? — 직접 꾸미기 · 추천 버튼 3번 → 1/3, 1/2
+════════════════════════════════ */
+const S0 = { t:null, b:null, recs:0, busy:false, log:[] };
+const STORE_TXT = `어느 매장에서는 냉장고의 <b>냉장 칸</b> 색을 <b>갈색, 하늘색, 흰색</b> 중 하나로, <b>냉동 칸</b> 색을 <b>분홍색, 회색</b> 중 하나로 고를 수 있다. 냉장 칸 색과 냉동 칸 색은 각각 따로 고르고, <u>각 색을 고를 가능성은 모두 같다</u>.`;
+function s0Left(){
+  return `<div class="exp-head"><span class="exp-badge">매장</span><span>냉장고 색 고르기 화면</span></div>
+    <div class="fig" id="s0Fig">
+      <div class="fridge-wrap" id="s0Fridge">${fridgeSVG(S0.t, S0.b, {w:118, lab:true})}</div>
+      <div class="sw-row"><span class="sw-lab">냉장 칸</span>${TOPC.map(c=>swBtn('s0Pick','t',c,S0.t===c.k,S0.busy)).join('')}</div>
+      <div class="sw-row"><span class="sw-lab">냉동 칸</span>${BOTC.map(c=>swBtn('s0Pick','b',c,S0.b===c.k,S0.busy)).join('')}</div>
+    </div>
+    <div class="btn-row" style="margin-top:0"><button class="btn" id="recBtn" onclick="s0Rec()"${S0.busy?' disabled':''}>🎲 아무거나 추천</button></div>
+    <div class="dlog" id="s0Log">${S0.log.map((x,i)=>`<span class="no">${i+1}회: ${x}</span>`).join('')}</div>`;
+}
+function s0Redraw(){ stageBox('L',0).innerHTML = s0Left(); }
+function s0Pick(side, k){ if(S0.busy) return; S0[side] = k; s0Redraw(); }
+function stage0(){
+  enterStage(0);
+  Object.assign(S0, { t:null, b:null, recs:0, busy:false, log:[] });
+  L(s0Left());
+  R(`<div class="panel-title"><span class="step-badge">1</span>냉장고 색은 내 마음대로?</div>
+    ${talk('j','hi','우리 집 냉장고를 새로 사기로 했어! 이 매장에서는 <b>냉장 칸</b>과 <b>냉동 칸</b>의 색을 따로 고를 수 있대.')}
+    <div class="prob-box">${STORE_TXT}</div>
+    <div class="qblock" style="border-top:none" id="s0aBlock">
+      <p class="key-q task">왼쪽에서 색을 눌러 냉장고를 꾸며 보고, <span class="em">🎲 아무거나 추천</span> 버튼을 3번 눌러 보자.</p>
+      <p class="sub">추천 버튼은 냉장 칸 색 하나, 냉동 칸 색 하나를 아무렇게나 골라 줘요.</p>
+    </div>`);
+}
+function s0Rec(){
+  if(S0.busy) return;
+  S0.busy = true;
+  let step = 0;
+  const tick = ()=>{
+    if(!$('s0Fridge')){ S0.busy = false; return; }
+    S0.t = pick1(TOPC).k; S0.b = pick1(BOTC).k;
+    if(step < 9){ step++; $('s0Fridge').innerHTML = fridgeSVG(S0.t, S0.b, {w:118, lab:true}); setTimeout(tick, 60+step*12); return; }
+    S0.busy = false; S0.recs++;
+    S0.log.push(`${colT(S0.t).nm}·${colB(S0.b).nm}`);
+    s0Redraw(); flashL('s0Fridge');
+    if(S0.recs===3 && !$('s0bBlock')) s0After();
+  };
+  s0Redraw();
+  tick();
+}
+function s0After(){
+  appendQ(choiceBlock('s0b',
+    `<p class="lead">추천 결과는 누를 때마다 달라요. 무엇이 나올지 미리 알 수 없지요.</p>
+     <p class="key-q">추천 버튼이 냉장 칸 색을 고를 때, <span class="em">하늘색이 나올 가능성</span>은 다른 색과 비교하면 어떨까?</p>`,
+    [{key:'same', label:'갈색, 하늘색, 흰색이 나올 가능성이 모두 같아요.'}, {key:'more', label:'하늘색이 다른 색보다 더 잘 나와요.'}, {key:'many', label:'추천을 많이 할수록 하늘색이 더 잘 나와요.'}],
+    'same', `✅ 맞아요. 문제에서 <span class="kw">각 색을 고를 가능성은 모두 같다</span>고 했어요. 그래서 경우의 수로 확률을 구할 수 있어요.`,
+    ()=>appendQ(chkBlock('s0c',
+      `<p class="key-q task">추천 버튼이 고른 냉장고에서 <span class="em">냉장 칸이 하늘색일 확률</span>과 <span class="em">냉동 칸이 분홍색일 확률</span>을 각각 구해 보자.</p>
+       <div class="fline"><span class="lab">(냉장 칸이 하늘색일 확률)</span> = ${probHTML('s0c1')}</div>
+       <div class="fline"><span class="lab">(냉동 칸이 분홍색일 확률)</span> = ${probHTML('s0c2')}</div>${PROB_NOTE}`,
+      [{prob:'s0c1', ans:[1,3], eq:true}, {prob:'s0c2', ans:[1,2], eq:true}],
+      ()=>nextBlock('s0', `냉장 칸 색은 3가지 중 하나라서 하늘색일 확률은 ${F(1,3)}, 냉동 칸 색은 2가지 중 하나라서 분홍색일 확률은 ${F(1,2)}이에요.<br>그런데 재이가 원하는 냉장고는 따로 있대요. 다음 단계에서 들어 봐요.`,
+        '다음: 둘 다 원하는 색일 확률은? →', 'stage1')), 's0c')), 's0b', 'choice');
+}
+
+/* ════════════════════════════════
+   진열대 (2단계 매장 A, 4단계 매장 B): 색을 골라 냉장고를 만들어 빠짐없이·중복 없이 진열
+════════════════════════════════ */
+const BST = {
+  1:{ t:null, b:null, shelf:[], done:false, want:false, need:6, store:'A', ban:null, onDone:null },
+  3:{ t:null, b:null, shelf:[], done:false, want:false, need:5, store:'B', ban:(t,b)=>t==='wh'&&b==='pk', onDone:null }
+};
+function bReset(key){ Object.assign(BST[key], { t:null, b:null, shelf:[], done:false, want:false }); }
+function shelfHTML(key){
+  const s = BST[key];
+  if(!s.shelf.length) return `<span class="empty">아직 진열한 냉장고가 없어요.</span>`;
+  return s.shelf.map(([t,b],i)=>`<div class="slot${s.want&&t==='sky'&&b==='pk'?' want':''}" id="slot${key}_${i}">${fridgeSVG(t,b,{w:30})}<span>${i+1}</span></div>`).join('');
+}
+function builderLeft(key){
+  const s = BST[key], dis = s.done;
+  const tagCls = key===1 ? 'a' : 'b';
+  return `<div class="exp-head"><span class="exp-badge"><span class="store-tag ${tagCls}" style="padding:0">매장 ${s.store}</span></span><span>색을 골라 냉장고를 만들고 🛒 진열하기를 눌러요.</span></div>
+    <div class="fig" id="bFig${key}" style="padding:8px">
+      <div style="display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap">
+        <div class="fridge-wrap" id="bPrev${key}">${fridgeSVG(s.t, s.b, {w:62})}</div>
+        <div>
+          <div class="sw-row"><span class="sw-lab">냉장 칸</span>${TOPC.map(c=>swBtn('bPick'+key,'t',c,s.t===c.k,dis)).join('')}</div>
+          <div class="sw-row"><span class="sw-lab">냉동 칸</span>${BOTC.map(c=>{ const ban = s.ban && s.ban(s.t, c.k); return swBtn('bPick'+key,'b',c,s.b===c.k,dis||ban,ban); }).join('')}</div>
+        </div>
+      </div>
+      ${s.ban ? `<div class="rule-note">📢 매장 B 규칙: 냉장 칸이 흰색이면 냉동 칸은 회색만 골라요.</div>` : ''}
+      <div class="btn-row"><button class="btn" onclick="bAdd(${key})"${dis?' disabled':''}>🛒 진열하기</button><button class="btn btn-soft" onclick="bFull(${key})"${dis?' disabled':''}>✅ 다 진열했어요</button></div>
+      <div class="shelf" id="shelf${key}">${shelfHTML(key)}</div>
+      <div class="shelf-msg" id="shelfMsg${key}"></div>
+    </div>
+    ${key===1 && s.done ? `<div class="fig tree" id="treeFig"><div class="fig-cap" style="margin:0 0 4px">🌳 나뭇가지 그림으로 정리하면</div>${treeSVG(s.want)}</div>` : ''}`;
+}
+function bRedraw(key, msg, ok){
+  stageBox('L',key).innerHTML = builderLeft(key);
+  if(msg){ const m = $('shelfMsg'+key); m.className = 'shelf-msg '+(ok?'ok':'bad'); m.innerHTML = msg; }
+}
+function bPick(key, side, k){
+  const s = BST[key]; if(s.done) return;
+  s[side] = k;
+  let msg = '';
+  if(s.ban && s.t && s.b && s.ban(s.t, s.b)){ s.b = null; msg = '매장 B에서는 흰색 냉장 칸에 분홍색 냉동 칸을 고를 수 없어요.'; }
+  bRedraw(key, msg, false);
+}
+function bPick1(side,k){ bPick(1,side,k); }
+function bPick3(side,k){ bPick(3,side,k); }
+function bAdd(key){
+  const s = BST[key]; if(s.done) return;
+  if(!s.t || !s.b){ bRedraw(key, '냉장 칸과 냉동 칸 색을 모두 골라요.', false); return; }
+  const i = s.shelf.findIndex(([t,b])=>t===s.t && b===s.b);
+  if(i>=0){ bRedraw(key, '이미 진열한 냉장고예요! 다른 냉장고를 만들어 봐요.', false); flashRef('slot'+key+'_'+i); return; }
+  s.shelf.push([s.t, s.b]);
+  s.t = null; s.b = null;
+  bRedraw(key, `진열했어요! (지금 ${s.shelf.length}대)`, true);
+}
+function bFull(key){
+  const s = BST[key]; if(s.done) return;
+  const ok = s.shelf.length===s.need;
+  firstTry('shelf'+key, ok);
+  if(!ok){ bRedraw(key, '❌ 아직 만들 수 있는 냉장고가 더 있어요. 다시 한 번 살펴보세요!', false); return; }
+  s.done = true;
+  const ti = k=>TOPC.findIndex(x=>x.k===k), bi = k=>BOTC.findIndex(x=>x.k===k);
+  s.shelf.sort((x,y)=> ti(x[0])-ti(y[0]) || bi(x[1])-bi(y[1]));
+  bRedraw(key, '✅ 빠짐없이, 중복 없이 모두 진열했어요! (냉장 칸 색 순서로 다시 정리했어요)', true);
+  flashL('shelf'+key);
+  if(s.onDone) s.onDone();
+}
+
+/* ════════════════════════════════
+   2단계: 둘 다 원하는 색일 확률은? — 매장 A 진열 → 나뭇가지 그림 → 6가지 중 1가지 → 1/6
+════════════════════════════════ */
+function stage1(){
+  enterStage(1);
+  bReset(1);
+  BST[1].onDone = s1Done;
+  L(builderLeft(1));
+  R(`<div class="panel-title"><span class="step-badge">2</span>둘 다 원하는 색일 확률은?</div>
+    ${talk('j','think','나는 <b>냉장 칸은 하늘색, 냉동 칸은 분홍색</b>인 냉장고가 갖고 싶어. 추천 버튼이 딱 이렇게 골라 줄 확률은 얼마일까?')}
+    ${talk('h','hi','추천 버튼이 고를 수 있는 냉장고를 <b>모두</b> 늘어놓아 보면 알 수 있지 않을까?', true)}
+    <div class="qblock" style="border-top:none" id="s1aBlock">
+      <p class="key-q task">왼쪽 진열대에 이 매장에서 만들 수 있는 냉장고를 <span class="em">빠짐없이, 중복 없이</span> 모두 진열해 보자.</p>
+      <p class="sub">다 진열했으면 ✅ 다 진열했어요 버튼을 눌러요.</p>
+    </div>`);
+}
+function s1Done(){
+  flashL('treeFig');
+  appendQ(chkBlock('s1b',
+    `<p class="lead">진열대를 정리했더니 왼쪽 아래에 <b>나뭇가지 그림</b>이 생겼어요.</p>
+     <p class="key-q task">추천 버튼이 고를 수 있는 냉장고는 모두 몇 가지이고, 그중 <span class="em">재이가 원하는 냉장고</span>는 몇 가지일까? 그리고 그 확률은?</p>
+     <div class="count-row">모든 경우의 수: ${numIn('s1b1')} 가지</div>
+     <div class="count-row">냉장 칸은 하늘색, 냉동 칸은 분홍색인 경우의 수: ${numIn('s1b2')} 가지</div>
+     <div class="fline"><span class="lab">(냉장 칸은 하늘색, 냉동 칸은<br>분홍색일 확률)</span> = ${probHTML('s1bf')}</div>${PROB_NOTE}`,
+    [{id:'s1b1', val:6}, {id:'s1b2', val:1}, {prob:'s1bf', ans:[1,6], eq:true}],
+    ()=>{
+      BST[1].want = true; bRedraw(1); flashL('treeFig');
+      nextBlock('s1', `냉장 칸 색 3가지 각각에 냉동 칸 색이 2가지씩 있어서 모든 경우의 수는 <b>3 × 2 = 6</b>(가지)예요. 경우의 수 단원에서 배운 <span class="kw">곱의 법칙</span>이지요.<br>그중 재이가 원하는 냉장고는 1가지라서 확률은 ${F(1,6)}이에요.<br>그럼 앞에서 구한 ${F(1,3)}, ${F(1,2)}과 지금 구한 ${F(1,6)} 사이에는 어떤 관계가 있을까요?`,
+        '다음: 더할까, 곱할까? →', 'stage2');
+    }), 's1b');
+}
+
+/* ════════════════════════════════
+   3단계: 더할까, 곱할까? — 기호 고르기 → 넓이 정사각형을 나누어 '1/3의 1/2' 확인
+════════════════════════════════ */
+const S2 = { phase:0, live:0 };
+function s2Left(){
+  const cap = S2.phase===0 ? '정사각형 전체 = 추천 버튼이 고를 수 있는 모든 냉장고 (확률 1)'
+    : S2.phase===1 ? '냉장 칸 색으로 세로 3줄로 나누었어요 (하늘색 줄 = 냉장 칸이 하늘색인 냉장고)'
+    : '하늘색 줄을 냉동 칸 색으로 다시 2칸으로 나누었어요 (분홍 칸 = 재이가 원하는 냉장고)';
+  return `<div class="exp-head"><span class="exp-badge">넓이</span><span>정사각형의 넓이로 확률을 나타내 봐요.</span></div>
+    <div class="fig area" id="s2Fig">${areaSVG(S2.phase)}<div class="fig-cap">${cap}</div></div>
+    <div class="area-tools">
+      <button class="btn" id="s2Cut1" onclick="s2Cut(1)"${S2.live===1?'':' disabled'}>① 냉장 칸 색으로 나누기</button>
+      <button class="btn" id="s2Cut2" onclick="s2Cut(2)"${S2.live===2?'':' disabled'}>② 냉동 칸 색으로 나누기</button>
+    </div>`;
+}
+function s2Redraw(){ stageBox('L',2).innerHTML = s2Left(); }
+function stage2(){
+  enterStage(2);
+  S2.phase = 0; S2.live = 0;
+  L(s2Left());
+  const card = (n,d,cap,goal)=>`<div class="op-card${goal?' goal':''}">${F(n,d)}<span class="cap">${cap}</span></div>`;
+  R(`<div class="panel-title"><span class="step-badge">3</span>더할까, 곱할까?</div>
+    ${talk('h','think',`지금까지 구한 확률을 모아 보자. 세 확률 사이에 어떤 계산이 숨어 있을까?`, true)}
+    <div class="qblock" style="border-top:none" id="s2aBlock">
+      <div class="op-cards">${card(1,3,'냉장 칸이<br>하늘색일 확률')}${opSel('s2op',['+','−','×','÷'],true)}${card(1,2,'냉동 칸이<br>분홍색일 확률')}<span>=</span>${card(1,6,'냉장 칸은 하늘색, 냉동<br>칸은 분홍색일 확률',true)}</div>
+      <p class="key-q">○ 안에 <span class="em">어떤 계산 기호</span>가 들어가야 식이 맞을까?</p>
+      <div class="btn-row"><button class="btn btn-check" id="s2aBtn" onclick="s2Check()">확인</button></div>
+      <div class="feedback" id="s2aFb"></div>
+    </div>`);
+}
+function s2Check(){
+  const btn = $('s2aBtn'); if(!btn || btn.disabled) return;
+  const v = $('s2op').dataset.v;
+  if(!v){ setFb('s2aFb', false, '○ 안에 들어갈 기호를 골라 주세요.'); return; }
+  const ok = v==='×';
+  firstTry('s2a', ok);
+  if(!ok){
+    const val = v==='+' ? F(5,6) : v==='−' ? '−'+F(1,6) : F(2,3);
+    $('s2op').classList.add('wrong');
+    const msg = `${F(1,3)} ${v} ${F(1,2)} = ${val} 이에요. ${RETHINK}`;
+    btn.disabled = true; $('s2op').classList.add('lock');
+    lockTimer(lockSecs('s2a'), 's2aFb', msg, '다시 고를 수 있어요', btn, ()=>{ btn.disabled = false; $('s2op').classList.remove('lock'); setFb('s2aFb', false, msg); });
+    return;
+  }
+  btn.disabled = true; $('s2op').classList.add('done');
+  setFb('s2aFb', true, `✅ 맞아요! ${F(1,3)} × ${F(1,2)} = ${F(1,6)}이에요.`);
+  S2.live = 1; s2Redraw(); flashL('s2Cut1');
+  stageBox('R',2).insertAdjacentHTML('beforeend', `<div class="qblock" id="s2bBlock">${talk('j','think','정말 곱하기가 맞을까? 우연히 맞은 건 아닐까?')}
+    <p class="key-q task">그림으로 확인해 보자. 왼쪽 <span class="em">① 냉장 칸 색으로 나누기</span> 버튼을 눌러 보자.</p></div>`);
+  scrollToEl('s2bBlock');
+}
+function s2Cut(n){
+  if(S2.live!==n) return;
+  S2.phase = n; S2.live = 0; s2Redraw(); flashL('s2Fig');
+  if(n===1){
+    appendQ(chkBlock('s2c',
+      `<p class="key-q task">정사각형 전체를 1로 보면, <span class="em">하늘색 줄</span>은 전체의 얼마일까?</p>
+       <div class="fline"><span class="lab">(하늘색 줄)</span> = 전체의 ${probHTML('s2c1')}</div>`,
+      [{prob:'s2c1', ans:[1,3], eq:true}],
+      ()=>{
+        S2.live = 2; s2Redraw(); flashL('s2Cut2');
+        stageBox('R',2).insertAdjacentHTML('beforeend', `<div class="qblock" id="s2dBlock"><div class="note-box">하늘색 줄의 넓이는 <b>냉장 칸이 하늘색일 확률 ${F(1,3)}</b>을 나타내요.</div>
+          <p class="key-q task">이번에는 왼쪽 <span class="em">② 냉동 칸 색으로 나누기</span> 버튼을 눌러 보자.</p></div>`);
+        scrollToEl('s2dBlock');
+      }, '✅ 맞아요! 세 줄 중 한 줄이에요.'), 's2c');
+  } else {
+    appendQ(chkBlock('s2e',
+      `<p class="lead">하늘색 줄이 위아래 두 칸으로 나뉘었고, 그중 분홍 칸이 재이가 원하는 냉장고예요.</p>
+       <p class="key-q task">분홍 칸은 <span class="em">하늘색 줄의 얼마</span>이고, <span class="em">전체의 얼마</span>일까?</p>
+       <div class="fline"><span class="lab">(분홍 칸)</span> = 하늘색 줄의 ${probHTML('s2e1')}</div>
+       <div class="fline"><span class="lab">(분홍 칸)</span> = 전체의 ${probHTML('s2e2')}</div>`,
+      [{prob:'s2e1', ans:[1,2], eq:true}, {prob:'s2e2', ans:[1,6], eq:true}],
+      ()=>nextBlock('s2', `전체의 ${F(1,3)}인 하늘색 줄에서, 다시 그 ${F(1,2)}만큼이 분홍 칸이에요.<br>
+          '${F(1,3)}의 ${F(1,2)}'은 <span class="kw">${F(1,3)} × ${F(1,2)} = ${F(1,6)}</span>이에요.<br>
+          칸으로 보면 세로 3줄 × 가로 2줄 = 6칸 중 1칸이지요. 경우의 수를 곱하던 곱의 법칙이 확률에서는 <b>확률의 곱</b>이 돼요.<br>그런데 이렇게 언제나 곱해도 될까요?`,
+        '다음: 언제나 곱해도 될까? →', 'stage3'), '✅ 맞아요!'), 's2e');
+  }
+}
+
+/* ════════════════════════════════
+   4단계: 언제나 곱해도 될까? — 매장 B(흰색이면 회색만) 진열 → 5가지, 1/5 ≠ 1/6 → 영향 분류 → 정리 팝업
+════════════════════════════════ */
+const SORT3 = [
+  { a:'동전 한 개를 던져 나오는 면', b:'주사위 한 개를 던져 나오는 눈', dep:false },
+  { a:'재이가 원판을 한 번 돌린 결과', b:'해이가 같은 원판을 한 번 돌린 결과', dep:false },
+  { a:'매장 B에서 고른 냉장 칸 색', b:'매장 B에서 고른 냉동 칸 색', dep:true },
+  { a:'주머니에서 꺼낸 첫 번째 공의 색', b:'그 공을 <u>다시 넣지 않고</u> 꺼낸 두 번째 공의 색', dep:true },
+  { a:'주머니에서 꺼낸 첫 번째 공의 색', b:'그 공을 <u>다시 넣은 뒤</u> 꺼낸 두 번째 공의 색', dep:false }
+];
+const S3 = { rows:[], sel:{}, done:false };
+function stage3(){
+  enterStage(3);
+  bReset(3);
+  BST[3].onDone = s3Done;
+  S3.rows = shuffle(SORT3); S3.sel = {}; S3.done = false;
+  L(builderLeft(3));
+  R(`<div class="panel-title"><span class="step-badge">4</span>언제나 곱해도 될까?</div>
+    ${talk('h','hi','옆에 있는 <b>매장 B</b>는 규칙이 조금 달라. <b>냉장 칸을 흰색으로 고르면 냉동 칸은 회색만</b> 고를 수 있대!', true)}
+    ${talk('j','think',`여기서도 추천 버튼이 냉장 칸은 하늘색, 냉동 칸은 분홍색으로 골라 줄 확률이 ${F(1,3)} × ${F(1,2)} = ${F(1,6)}일까?`)}
+    <div class="qblock" style="border-top:none" id="s3aBlock">
+      <p class="key-q task">왼쪽 진열대에 <span class="em">매장 B</span>에서 만들 수 있는 냉장고를 빠짐없이, 중복 없이 모두 진열해 보자.</p>
+      <p class="sub">매장 B의 추천 버튼은 진열대의 냉장고 중 하나를 똑같은 가능성으로 골라 준다고 해요.</p>
+    </div>`);
+}
+function s3Done(){
+  appendQ(chkBlock('s3b',
+    `<p class="key-q task">매장 B에서 모든 경우의 수와, 냉장 칸은 하늘색, 냉동 칸은 분홍색일 확률을 구해 보자.</p>
+     <div class="count-row">모든 경우의 수: ${numIn('s3b1')} 가지</div>
+     <div class="fline"><span class="lab">(냉장 칸은 하늘색, 냉동 칸은<br>분홍색일 확률)</span> = ${probHTML('s3bf')}</div>`,
+    [{id:'s3b1', val:5}, {prob:'s3bf', ans:[1,5], eq:true}],
+    ()=>appendQ(choiceBlock('s3c',
+      `<p class="lead">매장 B에서는 ${F(1,5)}, 매장 A에서는 ${F(1,3)} × ${F(1,2)} = ${F(1,6)}이었어요.</p>
+       <p class="key-q">매장 B에서는 왜 <span class="em">두 확률을 곱한 값과 다를까?</span></p>`,
+      [{key:'dep', label:'냉장 칸 색이 냉동 칸 색을 고르는 데 영향을 끼치기 때문이에요.'},
+       {key:'kind', label:'매장 B는 고를 수 있는 색의 종류가 매장 A와 다르기 때문이에요.'},
+       {key:'like', label:'재이가 하늘색을 더 좋아하기 때문이에요.'}],
+      'dep', `✅ 맞아요. 매장 B에서는 냉장 칸이 흰색이면 냉동 칸에서 분홍색을 고를 수 없어요. 냉장 칸 색이 냉동 칸 색에 <span class="kw">영향을 끼치면</span> 두 확률을 그냥 곱할 수 없어요.<br>매장 A에서는 냉장 칸 색이 무엇이든 냉동 칸은 늘 2가지 중 하나였어요. <span class="kw">서로 영향을 끼치지 않았지요</span>.`,
+      s3Sort), 's3c', 'choice'), '✅ 맞아요! 흰색 냉장 칸에는 회색 냉동 칸 하나뿐이라 5가지예요.'), 's3b');
+}
+function sortRowHTML(i){
+  const r = S3.rows[i], v = S3.sel[i];
+  return `<div class="sort-row" id="s3r${i}"><span>${r.a}<br><span class="sub">와(과)</span> ${r.b}</span>
+    <span class="ox-btns"><button class="ox-b${v==='no'?' on':''}" onclick="s3Sel(${i},'no')"${S3.done?' disabled':''}>끼치지 않아요</button><button class="ox-b${v==='yes'?' on':''}" onclick="s3Sel(${i},'yes')"${S3.done?' disabled':''}>끼쳐요</button></span></div>`;
+}
+function s3Sel(i, v){ if(S3.done) return; S3.sel[i] = v; $('s3Rows').innerHTML = S3.rows.map((_,k)=>sortRowHTML(k)).join(''); }
+function s3Sort(){
+  stageBox('R',3).insertAdjacentHTML('beforeend', `<div class="qblock" id="s3dBlock">
+    <p class="key-q task">다음 두 결과는 <span class="em">서로 영향을 끼칠까?</span> 하나씩 골라 보자.</p>
+    <div id="s3Rows">${S3.rows.map((_,k)=>sortRowHTML(k)).join('')}</div>
+    <div class="btn-row"><button class="btn btn-check" id="s3dBtn" onclick="s3SortCheck()">확인</button></div>
+    <div class="feedback" id="s3dFb"></div></div>`);
+  scrollToEl('s3dBlock');
+}
+function s3SortCheck(){
+  if(S3.done || $('s3dBtn').disabled) return;
+  if(S3.rows.some((_,i)=>!S3.sel[i])){ setFb('s3dFb', false, '모든 줄을 골라 주세요.'); return; }
+  const bad = S3.rows.map((r,i)=> (S3.sel[i]==='yes') !== r.dep);
+  const ok = !bad.some(x=>x);
+  firstTry('s3d', ok);
+  S3.rows.forEach((_,i)=>{ const el = $('s3r'+i); el.classList.toggle('bad', bad[i]); el.classList.toggle('good', !bad[i] && ok); });
+  if(!ok){ setFb('s3dFb', false, '❌ 빨간 줄을 다시 한 번 생각해 보세요!'); return; }
+  S3.done = true; $('s3dBtn').disabled = true;
+  $('s3Rows').innerHTML = S3.rows.map((_,k)=>sortRowHTML(k)).join('');
+  S3.rows.forEach((_,i)=>$('s3r'+i).classList.add('good'));
+  setFb('s3dFb', true, '✅ 모두 맞아요! 앞의 결과가 뒤의 결과를 바꾸면 영향을 끼치는 거예요.');
+  stageBox('R',3).insertAdjacentHTML('beforeend', `<div class="qblock" id="s3eBlock"><div class="def-box term-wait" id="s3Def"><div class="dt">📘 사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률</div>
+    두 사건 ${itv('A')}, ${itv('B')}가 <span class="kw">서로 영향을 끼치지 않을 때</span>, 사건 ${itv('A')}가 일어날 확률을 ${itp()}, 사건 ${itv('B')}가 일어날 확률을 ${itv('q')}라고 하면<br>
+    (사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률) = <b>${itp()} × ${itv('q')}</b></div></div>`);
+  termAfter({ qid:'termAnd', box:'s3Def', title:'사건 A와 사건 B가 동시에 일어날 확률',
+    ask:'빈칸에 알맞은 식을 써 보세요. (키보드에 없는 기호는 x나 *로 써도 돼요)',
+    html:`두 사건 ${itv('A')}, ${itv('B')}가 <b>서로 영향을 끼치지 않을 때</b>, 사건 ${itv('A')}가 일어날 확률을 ${itp()}, 사건 ${itv('B')}가 일어날 확률을 ${itv('q')}라고 하면<br>(사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률) = [[BLANK]]`,
+    ans:['p×q','q×p','p*q','q*p','pxq','qxp','pq','qp','p·q','q·p'], after:s3After });
+}
+function s3After(){
+  stageBox('R',3).insertAdjacentHTML('beforeend', `<div class="qblock" id="s3fBlock"><div class="rt-guide"><div class="rt-head">🧭 '동시에' 문제 3단계</div>
+    <b class="n">①</b> 두 사건이 <b>모두</b> 일어나야 하는 '동시에' 문제인지 확인<br>
+    <b class="n">②</b> 두 사건이 <b>서로 영향을 끼치는지</b> 판단<br>
+    <b class="n">③</b> 영향을 끼치지 않으면 두 확률을 <b>곱해요</b></div></div>`);
+  nextBlock('s3', `이제부터 문제를 풀 때마다 이 3단계로 생각해 봐요.`, '다음: 동전과 주사위를 함께 던지면? →', 'stage4');
+}
+
+/* ════════════════════════════════
+   5단계: 동전과 주사위를 함께 던지면? (예제 3) — 3단계 → 1/2 × 3/6 = 1/4 → 컴퓨터로 던져 확인
+════════════════════════════════ */
+const S4 = { n:0, hit:0, pts:[], last:[], simOn:false, asked:false };
+function cdFigHTML(){
+  return `<div class="fig cd" id="s4Fig"><div style="display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap">
+      <div>${coinSVG('앞',38)} ${coinSVG('뒤',38,true)}<div class="fig-cap" style="margin-top:2px">동전: 앞면, 뒷면</div></div>
+      <div>${[1,2,3,4,5,6].map(v=>dieSVG(v,28,v%2===0)).join(' ')}<div class="fig-cap" style="margin-top:2px">주사위: 1 ~ 6</div></div>
+    </div><div class="fig-cap">초록 테두리 = 동전은 뒷면, 주사위는 짝수의 눈</div></div>`;
+}
+function simSVG(){
+  const W = 400, H = 200, X0 = 40, X1 = 388, Y0 = 14, Y1 = 170, maxN = Math.max(200, S4.n);
+  const X = n=>X0+(X1-X0)*n/maxN, Y = r=>Y1-(Y1-Y0)*r;
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  [[0,'0'],[0.25,'1/4'],[0.5,'1/2'],[0.75,'3/4'],[1,'1']].forEach(([v,t])=>{
+    s += `<line x1="${X0}" y1="${Y(v)}" x2="${X1}" y2="${Y(v)}" stroke="#e5e7eb" stroke-width="1"/><text x="${X0-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" font-weight="700" fill="#64748b">${t}</text>`;
+  });
+  s += `<line x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}" stroke="#1a1a2e" stroke-width="1.6"/><line x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y1}" stroke="#1a1a2e" stroke-width="1.6"/>`;
+  s += `<text x="${X1}" y="${H-6}" text-anchor="end" font-size="11" font-weight="700" fill="#64748b">던진 횟수 (${maxN}번까지)</text>`;
+  if(S4.pts.length) s += `<polyline points="${S4.pts.map(([n,r])=>`${X(n).toFixed(1)},${Y(r).toFixed(1)}`).join(' ')}" fill="none" stroke="#16a34a" stroke-width="2.2"/>`;
+  return s + `</svg>`;
+}
+function s4SimInner(){
+  const now = S4.last.length ? S4.last[S4.last.length-1] : null, hitNow = now && now[0]==='뒤' && now[1]%2===0;
+  return `<div class="fig-cap" style="margin:0 0 4px">'뒷면이면서 짝수'가 나온 비율</div>
+      <div class="sim-now">${now ? `${coinSVG(now[0],34,hitNow)} ${dieSVG(now[1],32,hitNow)} <span class="${hitNow?'ok':'no'}">${hitNow?'뒷면이면서 짝수!':'아니에요'}</span>` : '<span class="no">아직 던지지 않았어요</span>'}</div>
+      ${simSVG()}
+      <div class="sim-stat">던진 횟수 <b style="color:var(--ink)">${S4.n}</b>번 · 뒷면이면서 짝수 <b>${S4.hit}</b>번${S4.n?` · 비율 약 <b>${(S4.hit/S4.n).toFixed(3)}</b>`:''}</div>
+      <div class="dlog">${S4.last.map(([c,d])=>`<span class="${c==='뒤'&&d%2===0?'ok':'no'}">${c}·${d}</span>`).join('')}</div>
+      <div class="btn-row"><button class="btn" id="simBtn" onclick="s4Run()"${S4.n>=2000||S4.busy?' disabled':''}>${S4.busy ? `🎲 던지는 중… (${S4.busyK}/200)` : '💻 컴퓨터로 200번 더 던지기'}</button></div>`;
+}
+function s4Left(){
+  return `<div class="exp-head"><span class="exp-badge">실험</span><span>동전 한 개와 주사위 한 개를 동시에 던져요.</span></div>
+    ${cdFigHTML()}
+    ${S4.simOn ? `<div class="fig simg" id="s4Sim" style="padding:8px">${s4SimInner()}</div>` : ''}`;
+}
+function stage4(){
+  enterStage(4);
+  Object.assign(S4, { n:0, hit:0, pts:[], last:[], simOn:false, asked:false, busy:false, busyK:0 });
+  S4.gen = (S4.gen||0) + 1;
+  L(s4Left());
+  R(`<div class="panel-title"><span class="step-badge">5</span>동전과 주사위를 함께 던지면?</div>
+    ${talk('j','hi','이번엔 동전과 주사위를 함께 던져 보자! 3단계로 생각하면 금방 구할 수 있을 것 같아.')}
+    <div class="prob-box">동전 한 개와 주사위 한 개를 동시에 던질 때, 동전은 <u>뒷면</u>이 나오고 주사위는 <u>짝수의 눈</u>이 나올 확률을 구하시오.</div>`);
+  appendRoutine('s4r', { kind:'and', evs:'동전에서 나오는 면과 주사위에서 나오는 눈은',
+    why2:'동전이 어느 면이 나오든 주사위는 그대로 1부터 6까지의 눈이 똑같이 나올 수 있어요.',
+    target:'동전은 뒷면, 주사위는 짝수의 눈이 나올 확률', after:s4Expr });
+}
+function s4Expr(){
+  appendQ(chkBlock('s4b',
+    `<p class="key-q task">식을 세워 확률을 구해 보자.</p>
+     ${exprRow('s4x', 2, ['(동전이 뒷면이<br>나올 확률)', '(주사위가 짝수의<br>눈이 나올 확률)'], 's4f', '(구하는 확률)')}${PROB_NOTE}`,
+    [{expr:'s4x', terms:[[1,2],[3,6]], op:'×'}, {prob:'s4f', ans:[1,4], eq:true}],
+    ()=>{
+      S4.simOn = true; stageBox('L',4).innerHTML = s4Left(); flashL('s4Sim');
+      stageBox('R',4).insertAdjacentHTML('beforeend', `<div class="qblock" id="s4cBlock"><p class="key-q task">계산한 확률이 실제로도 맞을까? 왼쪽 <span class="em">💻 컴퓨터로 200번 더 던지기</span>를 눌러 확인해 보자.</p></div>`);
+      scrollToEl('s4cBlock');
+    }, `✅ 맞아요! ${F(1,2)} × ${F(3,6)} = ${F(1,4)}이에요.`), 's4b');
+}
+function s4Run(){
+  if(S4.n>=2000 || S4.busy) return;
+  S4.busy = true; S4.busyK = 0;
+  const gen = S4.gen, box = $('s4Sim');
+  if(box) box.innerHTML = s4SimInner();
+  const t0 = Date.now();
+  const toss = ()=>{
+    const c = Math.random()<0.5 ? '앞' : '뒤', d = randInt(1,6);
+    S4.n++; S4.busyK++; if(c==='뒤' && d%2===0) S4.hit++;
+    if(S4.n%5===0) S4.pts.push([S4.n, S4.hit/S4.n]);
+    S4.last.push([c,d]); if(S4.last.length>12) S4.last.shift();
+  };
+  const tick = ()=>{
+    if(gen!==S4.gen) return;                       // 단계를 벗어나면 멈춤
+    const goal = Math.min(200, Math.max(S4.busyK+1, Math.ceil((Date.now()-t0)/5000*200)));   // 5초에 걸쳐 200번
+    while(S4.busyK<goal) toss();
+    const bx = $('s4Sim');
+    if(S4.busyK>=200){ S4.busy = false; if(bx) bx.innerHTML = s4SimInner(); s4After(); return; }
+    if(bx) bx.innerHTML = s4SimInner();
+    setTimeout(tick, 25);
+  };
+  setTimeout(tick, 25);
+}
+function s4After(){
+  if(S4.n>=600 && !S4.asked){
+    S4.asked = true;
+    appendQ(choiceBlock('s4d',
+      `<p class="lead">왼쪽 그래프를 보세요. 600번 넘게 던졌어요.</p>
+       <p class="key-q">던진 횟수가 많아질수록 '뒷면이면서 짝수'가 나온 비율은 <span class="em">어떤 값에 가까워지고</span> 있을까?</p>`,
+      [{key:'q', label:`${F(1,4)}에 가까워져요.`}, {key:'h', label:`${F(1,2)}에 가까워져요.`}, {key:'t', label:`${F(3,4)}에 가까워져요.`}],
+      'q', `✅ 맞아요. 실제로 많이 던져 보면 계산한 확률 ${F(1,4)}에 가까워져요.`,
+      ()=>nextBlock('s4', `동전과 주사위는 서로 영향을 끼치지 않으니 ${F(1,2)} × ${F(3,6)} = ${F(1,4)}로 구할 수 있었어요.`, '다음: 두 사람 모두 공짜 아이스크림? →', 'stage5')), 's4d', 'choice');
+  } else if(S4.n<600 && !$('s4cMore')){
+    stageBox('R',4).insertAdjacentHTML('beforeend', `<p class="sub" id="s4cMore" style="text-align:center">조금 더 던져 볼까요? 600번 이상 던지면 질문이 나와요.</p>`);
+  }
+}
+
+/* ════════════════════════════════
+   6단계: 두 사람 모두 공짜 아이스크림? (문제 7) — 원판 돌리기 → 3단계 → 9/16 → 8×8 표 → 모두 꽝 1/16 → 적어도 한 명 15/16
+════════════════════════════════ */
+const S5 = { rot:0, res:{j:null, h:null}, busy:false, grid:'' };
+function s5Left(){
+  const r = S5.res, show = w=> w===null ? '<span class="sub">아직 안 돌렸어요</span>' : (w ? '<b class="win">🍦 당첨!</b>' : '<b class="lose">꽝</b>');
+  return `<div class="exp-head"><span class="exp-badge">원판</span><span>8등분된 원판 · 🍦 당첨, 꽝</span></div>
+    <div class="fig spin" id="s5Fig">${spinSVG(8, SP_LOSE, {icon:true, needle:'spinNeedle', rot:S5.rot, w:S5.grid?150:200})}
+      <div class="spin-res"><div class="who" style="color:#1d4ed8">재이: ${show(r.j)}</div><div class="who" style="color:#be185d">해이: ${show(r.h)}</div></div>
+      <div class="btn-row"><button class="btn" onclick="s5Spin('j')"${S5.busy||r.j!==null?' disabled':''}>🔵 재이 돌리기</button><button class="btn" onclick="s5Spin('h')"${S5.busy||r.h!==null?' disabled':''}>🩷 해이 돌리기</button></div>
+    </div>
+    ${S5.grid ? `<div class="fig grid8" id="s5Grid">${grid8SVG(S5.grid)}<div class="fig-cap">${S5.grid==='both' ? '🟦 두 사람 모두 당첨 (가로 6칸 × 세로 6칸)' : S5.grid==='miss' ? '🟥 두 사람 모두 꽝 (가로 2칸 × 세로 2칸)' : '🟩 적어도 한 사람은 당첨 · 🟥 두 사람 모두 꽝'} · 전체 64칸</div></div>` : ''}`;
+}
+function s5Redraw(){ stageBox('L',5).innerHTML = s5Left(); }
+function stage5(){
+  enterStage(5);
+  Object.assign(S5, { rot:0, res:{j:null, h:null}, busy:false, grid:'' });
+  L(s5Left());
+  R(`<div class="panel-title"><span class="step-badge">6</span>두 사람 모두 공짜 아이스크림?</div>
+    ${talk('h','wow','아이스크림 가게에서 원판 이벤트를 한대! 🍦 칸이 나오면 아이스크림이 공짜야.', true)}
+    <div class="prob-box">왼쪽 그림과 같이 8등분된 원판을 재이와 해이가 각각 한 번씩 돌린다. 바늘이 가리키는 칸이 🍦이면 당첨일 때, <u>두 사람 모두 당첨</u>될 확률을 구하시오. (단, 바늘이 경계선을 가리키는 경우는 생각하지 않는다.)</div>
+    <div class="qblock" style="border-top:none" id="s5aBlock">
+      <p class="key-q task">먼저 왼쪽에서 <span class="em">재이와 해이가 한 번씩</span> 원판을 돌려 보자.</p>
+    </div>`);
+}
+function s5Spin(who){
+  if(S5.busy || S5.res[who]!==null) return;
+  S5.busy = true;
+  const sec = randInt(0,7), target = sec*45 + 22.5 + randInt(-14,14);
+  const cur = ((S5.rot%360)+360)%360;
+  S5.rot += 360*4 + ((target - cur + 360) % 360);
+  s5Redraw();
+  // 다시 그린 뒤 바늘을 돌림 (transition)
+  const nd = $('spinNeedle');
+  if(nd){ nd.style.transition = 'none'; nd.style.transform = `rotate(${S5.rot - 360*4 - ((target - cur + 360) % 360)}deg)`; void nd.getBoundingClientRect(); nd.style.transition = 'transform 1.6s cubic-bezier(.15,.7,.2,1)'; nd.style.transform = `rotate(${S5.rot}deg)`; }
+  setTimeout(()=>{
+    S5.busy = false; S5.res[who] = !SP_LOSE.has(sec);
+    s5Redraw(); flashL('s5Fig');
+    if(S5.res.j!==null && S5.res.h!==null && !$('s5rBlock')) s5Ask();
+  }, 1700);
+}
+function s5Ask(){
+  const both = S5.res.j && S5.res.h;
+  stageBox('R',5).insertAdjacentHTML('beforeend', `<div class="qblock" id="s5bBlock"><div class="note-box" style="margin-top:0">${both ? '두 사람 모두 당첨! 운이 좋았네요. 🎉' : '이번에는 두 사람 모두 당첨되지는 않았어요.'} 그럼 두 사람 모두 당첨될 확률은 얼마일까요?</div></div>`);
+  appendRoutine('s5r', { kind:'and', evs:'재이가 돌린 결과와 해이가 돌린 결과는',
+    why2:'재이에게 무엇이 나오든 해이가 돌릴 때 원판은 그대로예요.', target:'두 사람 모두 당첨될 확률', after:s5Expr });
+}
+function s5Expr(){
+  appendQ(chkBlock('s5c',
+    `<p class="key-q task">식을 세워 <span class="em">두 사람 모두 당첨될 확률</span>을 구해 보자.</p>
+     ${exprRow('s5x', 2, ['(재이가 당첨될<br>확률)', '(해이가 당첨될<br>확률)'], 's5f', '(두 사람 모두<br>당첨될 확률)')}${PROB_NOTE}`,
+    [{expr:'s5x', terms:[[6,8],[6,8]], op:'×'}, {prob:'s5f', ans:[9,16], eq:true}],
+    ()=>{
+      S5.grid = 'both'; s5Redraw(); flashL('s5Grid');
+      appendQ(chkBlock('s5d',
+        `<div class="note-box" style="margin-top:0">왼쪽 표는 두 사람이 돌린 결과 64가지를 모두 나타낸 거예요. 파란 칸은 6 × 6 = 36칸, ${F(36,64)} = ${F(9,16)}이에요.</div>
+         <p class="key-q task">그럼 <span class="em">두 사람 모두 꽝</span>일 확률은 얼마일까?</p>
+         <div class="fline"><span class="lab">(두 사람 모두 꽝일 확률)</span> = ${probHTML('s5d1')}</div>`,
+        [{prob:'s5d1', ans:[1,16], eq:true}],
+        ()=>{
+          S5.grid = 'miss'; s5Redraw(); flashL('s5Grid');
+          appendQ(chkBlock('s5e',
+            `${talk('j','think','가게 사장님이 “두 사람 중 <b>적어도 한 사람은</b> 당첨될 확률도 알려 줄래요?”라고 물어보셨어.')}
+             <p class="key-q task"><span class="em">적어도 한 사람은 당첨</span>될 확률을 구해 보자.</p>
+             <p class="sub">왼쪽 표에서 칸을 세어도 되고, 앞 차시에서 배운 방법을 써도 돼요.</p>
+             <div class="fline"><span class="lab">(적어도 한 사람은<br>당첨될 확률)</span> = ${probHTML('s5e1')}</div>`,
+            [{prob:'s5e1', ans:[15,16], eq:true}],
+            ()=>{
+              S5.grid = 'atleast'; s5Redraw(); flashL('s5Grid');
+              nextBlock('s5', `'적어도 한 사람은 당첨'이 일어나지 않는 경우는 <b>'두 사람 모두 꽝'</b> 하나뿐이에요.<br>
+                그래서 <span class="kw">1 − ${F(1,16)} = ${F(15,16)}</span>이에요. 초록 칸 60칸을 하나하나 세는 것보다 훨씬 편하지요!`,
+                '다음: 더할까, 곱할까? 다시 한 번 →', 'stage6');
+            }, '✅ 맞아요!'), 's5e');
+        }, `✅ 맞아요! ${F(2,8)} × ${F(2,8)} = ${F(1,16)}이에요.`), 's5d');
+    }, `✅ 맞아요! ${F(6,8)} × ${F(6,8)} = ${F(9,16)}이에요.`), 's5c');
+}
+
+/* ════════════════════════════════
+   7단계: 더할까, 곱할까? 다시 한 번 — '또는'·'동시에' 섞은 4문제 분류
+════════════════════════════════ */
+const MIX6 = {
+  or:[ '주사위 한 개를 던질 때, 1의 눈 또는 6의 눈이 나올 확률',
+       '1부터 10까지의 수가 적힌 카드 10장 중 한 장을 뽑을 때, 3의 배수 또는 7이 적힌 카드가 나올 확률',
+       '우리 반 학생 중 한 명을 뽑을 때, 그 학생의 혈액형이 A형 또는 B형일 확률' ],
+  and:[ '주사위 한 개를 두 번 던질 때, 첫 번째에는 1의 눈, 두 번째에는 6의 눈이 나올 확률',
+        '동전 두 개를 동시에 던질 때, 두 동전 모두 앞면이 나올 확률',
+        '두 상자에서 제비를 각각 한 개씩 뽑을 때, 두 제비 모두 당첨 제비일 확률' ]
+};
+const S6 = { rows:[], sel:{}, done:false };
+function s6Left(){
+  return `<div class="exp-head"><span class="exp-badge">정리</span><span>두 가지 3단계를 나란히 놓고 비교해 봐요.</span></div>
+    <div class="frames">
+      <div class="frame or"><h4>➕ '또는' 문제 3단계</h4>① '또는' 문제인지 확인<br>② 두 사건이 <b>동시에 일어날 수 있는지</b> 판단<br>③ 동시에 일어나지 않으면 <b>확률을 더해요</b></div>
+      <div class="frame and"><h4>✖️ '동시에' 문제 3단계</h4>① '동시에' 문제인지 확인<br>② 두 사건이 <b>서로 영향을 끼치는지</b> 판단<br>③ 영향을 끼치지 않으면 <b>확률을 곱해요</b></div>
+    </div>`;
+}
+function stage6(){
+  enterStage(6);
+  S6.rows = shuffle([...pickN(MIX6.or,2).map(t=>({t, k:'add'})), ...pickN(MIX6.and,2).map(t=>({t, k:'mul'}))]);
+  S6.sel = {}; S6.done = false;
+  L(s6Left());
+  R(`<div class="panel-title"><span class="step-badge">7</span>더할까, 곱할까? 다시 한 번</div>
+    ${talk('j','think',`앞 차시에서는 확률을 <b>더했고</b>, 이번 차시에서는 <b>곱했어</b>. 문제를 보고 어느 쪽인지 헷갈리지 않게 구별할 수 있을까?`)}
+    <div class="qblock" style="border-top:none" id="s6aBlock">
+      <p class="key-q task">각 확률을 구할 때 두 확률을 <span class="em">더해야 할지, 곱해야 할지</span> 골라 보자.</p>
+      <div id="s6Rows">${s6RowsHTML()}</div>
+      <div class="btn-row"><button class="btn btn-check" id="s6aBtn" onclick="s6Check()">확인</button></div>
+      <div class="feedback" id="s6aFb"></div>
+    </div>`);
+}
+function s6RowsHTML(){
+  return S6.rows.map((r,i)=>{ const v = S6.sel[i]; return `<div class="sort-row" id="s6r${i}"><span>${r.t}</span>
+    <span class="ox-btns"><button class="ox-b${v==='add'?' on':''}" onclick="s6Sel(${i},'add')"${S6.done?' disabled':''}>➕ 더해요</button><button class="ox-b${v==='mul'?' on':''}" onclick="s6Sel(${i},'mul')"${S6.done?' disabled':''}>✖️ 곱해요</button></span></div>`; }).join('');
+}
+function s6Sel(i, v){ if(S6.done) return; S6.sel[i] = v; $('s6Rows').innerHTML = s6RowsHTML(); }
+function s6Check(){
+  if(S6.done || $('s6aBtn').disabled) return;
+  if(S6.rows.some((_,i)=>!S6.sel[i])){ setFb('s6aFb', false, '모든 줄을 골라 주세요.'); return; }
+  const bad = S6.rows.map((r,i)=>S6.sel[i]!==r.k), ok = !bad.some(x=>x);
+  firstTry('s6a', ok);
+  S6.rows.forEach((_,i)=>$('s6r'+i).classList.toggle('bad', bad[i]));
+  if(!ok){ setFb('s6aFb', false, '❌ 빨간 줄을 다시 한 번 생각해 보세요!'); return; }
+  S6.done = true; $('s6aBtn').disabled = true;
+  $('s6Rows').innerHTML = s6RowsHTML(); S6.rows.forEach((_,i)=>$('s6r'+i).classList.add('good'));
+  setFb('s6aFb', true, '✅ 모두 맞아요!');
+  nextBlock('s6', `한 번 해서 <b>둘 중 하나</b>가 나오면 되는 '또는' 문제는 확률을 <b>더하고</b>,<br>두 가지를 따로 해서 <b>둘 다</b> 일어나야 하는 '동시에' 문제는 확률을 <b>곱해요</b>.<br>이제 문제풀이에서 3단계로 생각하며 풀어 봐요!`,
+    '문제풀이 시작 →', 'goToPractice');
+}
+
+/* ════════════════════════════════
+   문제풀이 문제 만들기
+   레벨1: 두 확률을 구해 곱하기 (동전·주사위 / 두 상자 제비 / 원판 두 사람)
+   레벨2: 거꾸로 (빨간 공 개수 / 한쪽 확률) + 두 사람 모두 꽝
+   레벨3: '또는'·'동시에' 섞기 (같은 상황에서 묻는 것만 다르게) + 적어도 한 사람
+════════════════════════════════ */
+const DIEEV = [
+  {nm:'짝수의 눈', f:v=>v%2===0}, {nm:'홀수의 눈', f:v=>v%2===1}, {nm:'3의 배수의 눈', f:v=>v%3===0},
+  {nm:'4 이상의 눈', f:v=>v>=4}, {nm:'2 이하의 눈', f:v=>v<=2}, {nm:'소수의 눈', f:v=>v===2||v===3||v===5},
+  {nm:'6의 약수의 눈', f:v=>6%v===0}, {nm:'5 이상의 눈', f:v=>v>=5}, {nm:'4의 약수의 눈', f:v=>4%v===0}
+];
+DIEEV.forEach(e=>{ e.c = [1,2,3,4,5,6].filter(e.f).length; });
+const DIE_SAME = '주사위에서 어떤 눈이 나오든';
+function rtAnd(evs, why2, target){ return { kind:'and', evs, why2, target }; }
+function rtOr(evs, why2, target){ return { kind:'or', evs, why2, target }; }
+
+// 레벨1 ① 동전과 주사위 / 서로 다른 두 주사위
+function genCoinDie(){
+  if(Math.random()<0.5){
+    const face = pick1(['앞면','뒷면']), ev = pick1(DIEEV);
+    return { gen:'coinDie', text:`동전 한 개와 주사위 한 개를 동시에 던질 때, 동전은 ${face}이 나오고 주사위는 ${ev.nm}이 나올 확률을 구하시오.`,
+      p:reduce(ev.c, 12), label:'(구하는 확률)', fig:{kind:'coindie'}, note:`1/2 × ${ev.c}/6`,
+      rt:rtAnd('동전에서 나오는 면과 주사위에서 나오는 눈은', '동전이 어느 면이 나오든 주사위의 눈이 나오는 것과는 상관없어요.', `동전은 ${face}, 주사위는 ${ev.nm}이 나올 확률`),
+      ex:{ terms:[[1,2],[ev.c,6]], op:'×', labels:[`(${face}이<br>나올 확률)`, `(${ev.nm}이<br>나올 확률)`] } };
+  }
+  const [e1, e2] = pickN(DIEEV, 2);
+  return { gen:'dice2', text:`서로 다른 두 개의 주사위 A, B를 동시에 던질 때, 주사위 A는 ${e1.nm}이 나오고 주사위 B는 ${e2.nm}이 나올 확률을 구하시오.`,
+    p:reduce(e1.c*e2.c, 36), label:'(구하는 확률)', fig:{kind:'dice2'}, note:`${e1.c}/6 × ${e2.c}/6`,
+    rt:rtAnd('주사위 A의 눈과 주사위 B의 눈은', '주사위 A에서 어떤 눈이 나오든 주사위 B의 눈이 나오는 것과는 상관없어요.', `주사위 A는 ${e1.nm}, 주사위 B는 ${e2.nm}이 나올 확률`),
+    ex:{ terms:[[e1.c,6],[e2.c,6]], op:'×', labels:[`(A에서 ${e1.nm}이<br>나올 확률)`, `(B에서 ${e2.nm}이<br>나올 확률)`] } };
+}
+// 레벨1 ② / 레벨2 두 상자 제비 (mode 'win' 모두 당첨 | 'miss' 모두 당첨 아님)
+function boxNums(){
+  for(;;){
+    const n1 = randInt(4,10), a = randInt(1,n1-1), n2 = randInt(4,10), b = randInt(1,n2-1);
+    if(n1===n2 && a===b) continue;
+    return { n1, a, n2, b };
+  }
+}
+function genBoxes(mode){
+  const { n1, a, n2, b } = boxNums(), miss = mode==='miss';
+  const x = miss ? n1-a : a, y = miss ? n2-b : b;
+  const what = miss ? '두 제비 모두 당첨 제비가 아닐' : '두 제비 모두 당첨 제비일';
+  return { gen:'boxes', text:`상자 A에는 제비 ${n1}개 중 당첨 제비가 ${a}개, 상자 B에는 제비 ${n2}개 중 당첨 제비가 ${b}개 들어 있다. 두 상자에서 제비를 각각 한 개씩 임의로 뽑을 때, ${what} 확률을 구하시오.`,
+    p:reduce(x*y, n1*n2), label:'(구하는 확률)', fig:{kind:'boxes', n1, a, n2, b}, note:`${x}/${n1} × ${y}/${n2}`,
+    rt:rtAnd('상자 A에서 뽑은 제비와 상자 B에서 뽑은 제비는', '상자 A에서 무엇을 뽑든 상자 B의 제비는 그대로예요.', `${what} 확률`),
+    ex:{ terms:[[x,n1],[y,n2]], op:'×', labels:[miss?'(상자 A에서 당첨 제비가<br>아닌 것을 뽑을 확률)':'(상자 A에서 당첨<br>제비를 뽑을 확률)', miss?'(상자 B에서 당첨 제비가<br>아닌 것을 뽑을 확률)':'(상자 B에서 당첨<br>제비를 뽑을 확률)'] } };
+}
+// 레벨1 ③ / 레벨2 원판 두 사람 (mode 'win' | 'miss')
+function genSpin(mode){
+  const k = pick1([4,5,6,8,10]), w = randInt(1,k-1), miss = mode==='miss';
+  const x = miss ? k-w : w;
+  const what = miss ? '두 사람 모두 꽝일' : '두 사람 모두 당첨될';
+  return { gen:'spin', text:`${k}등분된 원판 중 ${w}칸이 당첨 칸이고 나머지는 꽝이다. 재이와 해이가 이 원판을 각각 한 번씩 돌릴 때, ${what} 확률을 구하시오. (단, 바늘이 경계선을 가리키는 경우는 생각하지 않는다.)`,
+    p:reduce(x*x, k*k), label:'(구하는 확률)', fig:{kind:'spin', k, w}, note:`${x}/${k} × ${x}/${k}`,
+    rt:rtAnd('재이가 돌린 결과와 해이가 돌린 결과는', '재이에게 무엇이 나오든 해이가 돌릴 때 원판은 그대로예요.', `${what} 확률`),
+    ex:{ terms:[[x,k],[x,k]], op:'×', labels:[miss?'(재이가 꽝일 확률)':'(재이가 당첨될 확률)', miss?'(해이가 꽝일 확률)':'(해이가 당첨될 확률)'] } };
+}
+// 레벨2 ① 확률을 주고 주머니 B의 빨간 공 개수 구하기
+function genSwapCount(){
+  const n1 = randInt(4,9), r1 = randInt(1,n1-1), n2 = randInt(4,10), x = randInt(1,n2-1);
+  const P = reduce(r1*x, n1*n2);
+  return { gen:'swapCount', num:true, val:x, unit:'개',
+    text:`주머니 A에는 공 ${n1}개 중 빨간 공이 ${r1}개 들어 있고, 주머니 B에는 공이 ${n2}개 들어 있다. 두 주머니에서 공을 각각 한 개씩 임의로 꺼낼 때, 두 공이 모두 빨간 공일 확률이 ${sfrac(P[0],P[1])}이다. 주머니 B에 들어 있는 빨간 공은 몇 개인지 구하시오.`,
+    label:'주머니 B의 빨간 공', fig:{kind:'bags', n1, r1, n2}, note:`${r1}/${n1} × ${x}/${n2} = ${P.join('/')}`,
+    rt:rtAnd('주머니 A에서 꺼낸 공과 주머니 B에서 꺼낸 공은', '주머니 A에서 무엇을 꺼내든 주머니 B의 공은 그대로예요.', '두 공이 모두 빨간 공일 확률') };
+}
+// 레벨2 ② 두 사람 모두 성공할 확률과 한 사람의 확률을 주고 다른 사람의 확률 구하기
+const PS = [[1,2],[1,3],[2,3],[1,4],[3,4],[2,5],[3,5],[4,5],[5,6],[1,5]];
+const SWCTX = [
+  { a:'자유투를 던져 성공할', d:'각각 자유투를 한 번씩 던질', both:'두 사람 모두 성공할' },
+  { a:'화살을 쏘아 10점을 맞힐', d:'각각 화살을 한 발씩 쏠', both:'두 사람 모두 10점을 맞힐' },
+  { a:'퀴즈의 정답을 맞힐', d:'각각 퀴즈 한 문제씩을 풀', both:'두 사람 모두 정답을 맞힐' }
+];
+function genSwapProb(){
+  for(;;){
+    const c = pick1(SWCTX), p = pick1(PS), q = pick1(PS);
+    const r = reduce(p[0]*q[0], p[1]*q[1]);
+    if(r[0]===q[0] && r[1]===q[1]) continue;
+    return { gen:'swapProb', text:`재이가 ${c.a} 확률은 ${sfrac(p[0],p[1])}이다. 재이와 해이가 ${c.d} 때, ${c.both} 확률은 ${sfrac(r[0],r[1])}이다. 이때 해이가 ${c.a} 확률을 구하시오. (단, 두 사람의 결과는 서로 영향을 끼치지 않는다.)`,
+      p:q, label:`(해이가 ${c.a} 확률)`, fig:null, note:`${p.join('/')} × □ = ${r.join('/')}`,
+      rt:rtAnd('재이의 결과와 해이의 결과는', '문제에서 두 사람의 결과는 서로 영향을 끼치지 않는다고 했어요.', `${c.both} 확률`) };
+  }
+}
+// 레벨3: 같은 상황에서 '또는'과 '동시에'
+function numEvents(N){
+  const ev = [];
+  [6,8,9,10,12,16,18,20].filter(a=>a<=N).forEach(a=>ev.push({k:'d', nm:`${a}의 약수`, f:v=>a%v===0}));
+  [3,4,5,6,7,9].forEach(b=>{ if(Math.floor(N/b)>=2) ev.push({k:'m', nm:`${b}의 배수`, f:v=>v%b===0}); });
+  [2,3,4].forEach(k=>ev.push({k:'le', nm:`${k} 이하의 수`, f:v=>v<=k}));
+  [N-3,N-2,N-1].forEach(k=>ev.push({k:'ge', nm:`${k} 이상의 수`, f:v=>v>=k}));
+  return ev;
+}
+function genOr(ctx){
+  if(ctx==='card'){
+    for(;;){
+      const N = pick1([10,12,15,20]), ev = numEvents(N), U = [...Array(N)].map((_,i)=>i+1);
+      const [A,B] = pickN(ev,2);
+      if(A.k===B.k) continue;
+      const a = U.filter(A.f).length, b = U.filter(B.f).length;
+      if(U.some(v=>A.f(v)&&B.f(v)) || a+b>=N) continue;
+      return { gen:'orCard', text:`1부터 ${N}까지의 자연수가 각각 하나씩 적힌 ${N}장의 카드 중에서 한 장을 임의로 뽑을 때, ${A.nm} 또는 ${josa(B.nm,'이','가')} 적힌 카드가 나올 확률을 구하시오.`,
+        p:reduce(a+b, N), label:'(구하는 확률)', fig:{kind:'cards', N}, note:`${a}/${N} + ${b}/${N}`,
+        rt:rtOr(`'${josa(A.nm,'이','가')} 적힌 카드가 나온다'와 '${josa(B.nm,'이','가')} 적힌 카드가 나온다'는`, `카드 한 장에는 수가 하나뿐이고, 두 사건에 모두 들어가는 수가 1부터 ${N}까지 하나도 없어요.`, `${A.nm} 또는 ${josa(B.nm,'이','가')} 적힌 카드가 나올 확률`),
+        ex:{ terms:[[a,N],[b,N]], op:'+', labels:[`(${josa(A.nm,'이','가')} 적힌<br>카드가 나올 확률)`, `(${josa(B.nm,'이','가')} 적힌<br>카드가 나올 확률)`] } };
+    }
+  }
+  for(;;){
+    const [e1,e2] = pickN(DIEEV,2);
+    if([1,2,3,4,5,6].some(v=>e1.f(v)&&e2.f(v)) || e1.c+e2.c>=6) continue;
+    return { gen:'orDie', text:`주사위 한 개를 던질 때, ${e1.nm} 또는 ${e2.nm}이 나올 확률을 구하시오.`,
+      p:reduce(e1.c+e2.c, 6), label:'(구하는 확률)', fig:{kind:'die1'}, note:`${e1.c}/6 + ${e2.c}/6`,
+      rt:rtOr(`'${e1.nm}이 나온다'와 '${e2.nm}이 나온다'는`, '주사위 한 개를 한 번 던지면 눈은 하나만 나오고, 두 사건에 모두 들어가는 눈이 없어요.', `${e1.nm} 또는 ${e2.nm}이 나올 확률`),
+      ex:{ terms:[[e1.c,6],[e2.c,6]], op:'+', labels:[`(${e1.nm}이<br>나올 확률)`, `(${e2.nm}이<br>나올 확률)`] } };
+  }
+}
+function genAnd(ctx){
+  if(ctx==='card'){
+    for(;;){
+      const N = pick1([10,12,15,20]), ev = numEvents(N), U = [...Array(N)].map((_,i)=>i+1);
+      const [A,B] = pickN(ev,2);
+      const a = U.filter(A.f).length, b = U.filter(B.f).length;
+      if(a>=N || b>=N) continue;
+      return { gen:'andCard', text:`1부터 ${N}까지의 자연수가 각각 하나씩 적힌 ${N}장의 카드 중에서 한 장을 임의로 뽑아 수를 확인하고 다시 넣은 후, 한 장을 또 뽑는다. 이때 첫 번째에는 ${josa(A.nm,'이','가')}, 두 번째에는 ${josa(B.nm,'이','가')} 적힌 카드가 나올 확률을 구하시오.`,
+        p:reduce(a*b, N*N), label:'(구하는 확률)', fig:{kind:'cards', N}, note:`${a}/${N} × ${b}/${N}`,
+        rt:rtAnd('첫 번째에 뽑은 카드와 두 번째에 뽑은 카드는', `첫 번째 카드를 다시 넣었으니 두 번째에 뽑을 때도 카드 ${N}장이 그대로예요.`, '구하는 확률'),
+        ex:{ terms:[[a,N],[b,N]], op:'×', labels:[`(첫 번째에 ${josa(A.nm,'이','가')}<br>적힌 카드가 나올 확률)`, `(두 번째에 ${josa(B.nm,'이','가')}<br>적힌 카드가 나올 확률)`] } };
+    }
+  }
+  const [e1,e2] = pickN(DIEEV,2);
+  return { gen:'andDie', text:`주사위 한 개를 두 번 던질 때, 첫 번째에는 ${e1.nm}이 나오고 두 번째에는 ${e2.nm}이 나올 확률을 구하시오.`,
+    p:reduce(e1.c*e2.c, 36), label:'(구하는 확률)', fig:{kind:'die1'}, note:`${e1.c}/6 × ${e2.c}/6`,
+    rt:rtAnd('첫 번째에 나오는 눈과 두 번째에 나오는 눈은', '첫 번째에 무엇이 나오든 두 번째에 던질 때 주사위는 그대로예요.', '구하는 확률'),
+    ex:{ terms:[[e1.c,6],[e2.c,6]], op:'×', labels:[`(첫 번째에 ${e1.nm}이<br>나올 확률)`, `(두 번째에 ${e2.nm}이<br>나올 확률)`] } };
+}
+// 레벨3: 적어도 한 사람(하나)
+function genAtLeast(){
+  const kind = pick1(['spin','boxes','shoot']);
+  let text, m1, m2, fig, W;
+  if(kind==='spin'){
+    const k = pick1([4,5,6,8]), w = randInt(1,k-1);
+    m1 = [k-w,k]; m2 = [k-w,k]; fig = {kind:'spin', k, w};
+    text = `${k}등분된 원판 중 ${w}칸이 당첨 칸이고 나머지는 꽝이다. 재이와 해이가 이 원판을 각각 한 번씩 돌릴 때, 적어도 한 사람은 당첨될 확률을 구하시오. (단, 바늘이 경계선을 가리키는 경우는 생각하지 않는다.)`;
+    W = { atl:'적어도 한 사람은 당첨된다', allMiss:'두 사람 모두 꽝인 경우', allWin:'두 사람 모두 당첨인 경우', one:'한 사람만 당첨인 경우',
+      miss:'꽝', l1:'(재이가 꽝일 확률)', l2:'(해이가 꽝일 확률)', lm:'(두 사람 모두<br>꽝일 확률)', lf:'(적어도 한 사람은<br>당첨될 확률)', pm:'두 사람 모두 꽝일' };
+  } else if(kind==='boxes'){
+    const { n1, a, n2, b } = boxNums();
+    m1 = [n1-a,n1]; m2 = [n2-b,n2]; fig = {kind:'boxes', n1, a, n2, b};
+    text = `상자 A에는 제비 ${n1}개 중 당첨 제비가 ${a}개, 상자 B에는 제비 ${n2}개 중 당첨 제비가 ${b}개 들어 있다. 두 상자에서 제비를 각각 한 개씩 임의로 뽑을 때, 적어도 한 개는 당첨 제비일 확률을 구하시오.`;
+    W = { atl:'적어도 한 개는 당첨 제비이다', allMiss:'두 제비 모두 당첨 제비가 아닌 경우', allWin:'두 제비 모두 당첨 제비인 경우', one:'한 개만 당첨 제비인 경우',
+      miss:'당첨 제비가 아닌 것', l1:'(상자 A에서 당첨 제비가<br>아닌 것을 뽑을 확률)', l2:'(상자 B에서 당첨 제비가<br>아닌 것을 뽑을 확률)', lm:'(두 제비 모두 당첨<br>제비가 아닐 확률)', lf:'(적어도 한 개는<br>당첨 제비일 확률)', pm:'두 제비 모두 당첨 제비가 아닐' };
+  } else {
+    const p = pick1(PS), q = pick1(PS);
+    m1 = [p[1]-p[0],p[1]]; m2 = [q[1]-q[0],q[1]]; fig = null;
+    text = `재이와 해이가 자유투를 던져 성공할 확률은 각각 ${sfrac(p[0],p[1])}, ${sfrac(q[0],q[1])}이다. 두 사람이 각각 자유투를 한 번씩 던질 때, 적어도 한 사람은 성공할 확률을 구하시오. (단, 두 사람의 결과는 서로 영향을 끼치지 않는다.)`;
+    W = { atl:'적어도 한 사람은 성공한다', allMiss:'두 사람 모두 실패하는 경우', allWin:'두 사람 모두 성공하는 경우', one:'한 사람만 성공하는 경우',
+      miss:'실패', l1:'(재이가 실패할 확률)', l2:'(해이가 실패할 확률)', lm:'(두 사람 모두<br>실패할 확률)', lf:'(적어도 한 사람은<br>성공할 확률)', pm:'두 사람 모두 실패할' };
+  }
+  const pm = reduce(m1[0]*m2[0], m1[1]*m2[1]);
+  const p = reduce(pm[1]-pm[0], pm[1]);
+  const steps = [
+    { h:'① 반대로 생각하기', q:`'${W.atl}'가 <span class="em">일어나지 않는 경우</span>는 어떤 경우일까?`,
+      opts:[{key:'miss', label:W.allMiss+'예요.'}, {key:'win', label:W.allWin+'예요.'}, {key:'one', label:W.one+'예요.'}], good:'miss',
+      ok:`'적어도 하나'가 일어나지 않으려면 <b>둘 다 ${W.miss}</b>이어야 해요.` },
+    { h:'② 반대 사건의 확률은?', q:`<span class="em">${W.pm} 확률</span>은 어떻게 구할까?`,
+      opts:[{key:'mul', label:'두 확률을 곱해요.'}, {key:'add', label:'두 확률을 더해요.'}], good:'mul',
+      ok:`두 결과는 서로 영향을 끼치지 않고 둘 다 일어나야 하니 <span class="kw">곱해요</span>.` },
+    { h:'③ 구하는 확률은?', q:`그럼 <span class="em">'${W.atl}'의 확률</span>은 어떻게 구할까?`,
+      opts:[{key:'sub', label:`1에서 (${W.pm} 확률)을 빼요.`}, {key:'same', label:`(${W.pm} 확률)이 바로 답이에요.`}], good:'sub',
+      ok:`일어나지 않을 확률을 이용해 <span class="kw">1에서 빼요</span>.` }
+  ];
+  return { gen:'atLeast', atl:true, text, p, m:pm, fig, label:W.lf, note:`1 − ${m1.join('/')} × ${m2.join('/')} = 1 − ${pm.join('/')}`,
+    rt:{ steps, head:'🧭 거꾸로 생각하는 3단계' }, ex:{ terms:[m1, m2], op:'×', labels:[W.l1, W.l2], mLab:W.lm } };
+}
+// 판단 질문은 레벨이 오를수록 줄여요: 레벨1 첫 문제만 3단계 전부 → 레벨2 없음 → 레벨3 질문 하나
+function makeLevel(levelIdx){
+  let L;
+  if(levelIdx===0){ L = shuffle([genCoinDie(), genBoxes('win'), genSpin('win')]); L.forEach((q,i)=>q.rtMode = i===0 ? 'full' : 'none'); return L; }
+  if(levelIdx===1){ L = shuffle([genSwapCount(), genSwapProb(), pick1([()=>genBoxes('miss'), ()=>genSpin('miss')])()]); L.forEach(q=>q.rtMode='none'); return L; }
+  const ctx = pick1(['card','die']);
+  L = shuffle([genOr(ctx), genAnd(ctx), genAtLeast()]); L.forEach(q=>q.rtMode='one'); return L;
+}
+function rtFor(q){
+  if(q.rtMode==='none') return null;
+  if(q.rtMode==='full') return q.rt;
+  if(q.atl){
+    const s0 = q.rt.steps[0];
+    return { head:'🧭 거꾸로 생각하기', steps:[ Object.assign({}, s0, { h:'반대로 생각하기',
+      ok: s0.ok + ` 그러니 <span class="kw">반대 사건의 확률을 곱해서 구한 뒤 1에서 빼요</span>.` }) ] };
+  }
+  const and = q.rt.kind==='and';
+  return { head:'🧭 판단하기', steps:[ { h:'더할까, 곱할까?', q:'이 문제는 두 확률을 <span class="em">어떻게 해야</span> 할까?',
+    opts:[{key:'add', label:'두 확률을 더해요.'}, {key:'mul', label:'두 확률을 곱해요.'}], good: and?'mul':'add',
+    ok: and ? `두 사건이 모두 일어나야 하는 '동시에' 문제이고, ${q.rt.why2} 서로 영향을 끼치지 않으니 <span class="kw">곱해요</span>.`
+            : `둘 중 하나만 일어나도 되는 '또는' 문제이고, ${q.rt.why2} 동시에 일어나지 않으니 <span class="kw">더해요</span>.` } ] };
+}
+/* 문제풀이 그림 */
+function boxFig(name, n, w){
+  return `<div style="display:inline-block;margin:0 8px;vertical-align:top"><div style="border:2.5px solid #a07a46;background:#fef3c7;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:3px;max-width:120px;justify-content:center">${
+    [...Array(n)].map((_,i)=>`<span style="width:20px;height:13px;border-radius:3px;background:${i<w?'#facc15':'#e5e7eb'};border:1px solid ${i<w?'#ca8a04':'#9ca3af'};font-size:9px;line-height:11px">${i<w?'★':''}</span>`).join('')
+  }</div><div class="fig-cap" style="margin-top:3px">상자 ${name}</div></div>`;
+}
+function figHTML(f){
+  if(!f) return '';
+  let body = '', cap = '';
+  if(f.kind==='coindie'){
+    body = `${coinSVG('앞',36)} ${coinSVG('뒤',36)} &nbsp; ${[1,2,3,4,5,6].map(v=>dieSVG(v,26)).join(' ')}`; cap = '동전 한 개와 주사위 한 개';
+  } else if(f.kind==='dice2'){
+    body = ['A','B'].map(n=>`<div style="margin:3px 0"><b style="font-size:13px">주사위 ${n}</b> ${[1,2,3,4,5,6].map(v=>dieSVG(v,24)).join(' ')}</div>`).join(''); cap = '서로 다른 두 주사위';
+  } else if(f.kind==='die1'){
+    body = [1,2,3,4,5,6].map(v=>dieSVG(v,30)).join(' '); cap = '주사위 한 개';
+  } else if(f.kind==='boxes'){
+    body = boxFig('A', f.n1, f.a) + boxFig('B', f.n2, f.b); cap = '★ 당첨 제비 · 회색 = 당첨 제비가 아님';
+  } else if(f.kind==='bags'){
+    body = `<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap"><div><div class="pouch" style="width:150px;min-height:80px;padding:20px 12px 24px">${'<i class="ball red"></i>'.repeat(f.r1)}${'<i class="ball q"></i>'.repeat(f.n1-f.r1)}</div><div class="fig-cap">주머니 A</div></div>
+      <div><div class="pouch" style="width:150px;min-height:80px;padding:20px 12px 24px">${'<i class="ball q">?</i>'.repeat(f.n2)}</div><div class="fig-cap">주머니 B</div></div></div>`;
+    cap = '<b style="color:#dc2626">빨간 공</b> · 회색 = 빨간 공이 아닌 공';
+  } else if(f.kind==='spin'){
+    body = spinSVG(f.k, spinLose(f.k, f.w), {w:190}); cap = `${f.k}등분된 원판 (당첨 ${f.w}칸)`;
+  } else if(f.kind==='cards'){
+    body = `<div class="ref-b" style="max-width:330px;margin:0 auto">${[...Array(f.N)].map((_,i)=>`<span>${i+1}</span>`).join('')}</div>`; cap = `1부터 ${f.N}까지의 수가 적힌 카드 ${f.N}장`;
+  }
+  return `<div class="fig">${body}<div class="fig-cap">${cap}</div></div>`;
+}
+
+/* ════════════════════════════════
+   8단계: 문제풀이 — 레벨마다 3문제, 2문제 이상 맞히면 통과
+   한 문제에 두 번까지 입력 가능 (첫 오답은 봐줌). 두 번째도 틀리면 틀린 것으로 하고 다음 문제로. 정답은 보여 주지 않음
+════════════════════════════════ */
+const LEVELS = [ { label:'레벨1 · 동시에 일어날 확률', passNeeded:2 }, { label:'레벨2 · 거꾸로 생각하기', passNeeded:2 }, { label:'레벨3 · 더할까, 곱할까?', passNeeded:2 } ];
+const pst = { levelIdx:0, idx:0, correct:0, order:[], tries:0, passedLevels:{} };
+function goToPractice(){ startLevel(0); }
+function updateLevelTabs(){
+  $('levelTabs').innerHTML = LEVELS.map((lv,i)=>`<div class="level-tab ${i===pst.levelIdx?'active':(pst.passedLevels[i]?'done':'')}">${lv.label}</div>`).join('');
+}
+function pgLeftHTML(){
+  return `<div id="pgFig"></div><div class="hint-card"><div style="font-weight:800;margin-bottom:6px">📌 사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률</div>
+    두 사건 ${itv('A')}, ${itv('B')}가 <b>서로 영향을 끼치지 않을 때</b>, 사건 ${itv('A')}가 일어날 확률을 ${itp()}, 사건 ${itv('B')}가 일어날 확률을 ${itv('q')}라고 하면<br>(사건 ${itv('A')}와 사건 ${itv('B')}가 동시에 일어날 확률) = ${itp()} × ${itv('q')}</div>
+    <div class="frames" style="margin-top:10px">
+      <div class="frame or"><h4>➕ '또는' 문제</h4>② 동시에 일어날 수 있나?<br>③ 일어나지 않으면 <b>더해요</b></div>
+      <div class="frame and"><h4>✖️ '동시에' 문제</h4>② 서로 영향을 끼치나?<br>③ 끼치지 않으면 <b>곱해요</b></div>
+    </div>
+    <p class="board-tip">${pst.levelIdx===1 ? '바로 답을 구해 보세요.' : '판단 질문에 답하면 답 칸이 나와요.'} 답은 한 문제에 두 번까지 쓸 수 있어요. <b>두 문제를 맞히면 바로 통과</b>예요.</p>`;
+}
+function startLevel(levelIdx){
+  frontier = PRACTICE; built[PRACTICE] = true; viewing = PRACTICE; practiceScreen = 'scPractice';
+  pst.levelIdx = levelIdx; pst.idx = 0; pst.correct = 0;
+  pst.order = makeLevel(levelIdx);
+  $('pgLeft').innerHTML = pgLeftHTML();
+  showScreen('scPractice'); renderStepper(); updateLevelTabs(); renderPQuestion();
+}
+let pgRtN = 0;
+function renderPQuestion(){
+  const lv = LEVELS[pst.levelIdx], q = pst.order[pst.idx];
+  pst.tries = 0;
+  $('pgProgress').textContent = `${lv.label} · ${pst.idx+1} / ${pst.order.length}`;
+  const rid = 'pgr'+(++pgRtN), rt = rtFor(q);
+  $('pgArea').innerHTML = `<div class="prob-box">${q.text}</div>
+    ${rt ? routineHTML(rid, Object.assign({}, rt, { after:()=>pgShowAnswer() })) : ''}
+    <div id="pgAns"></div>`;
+  $('pgFig').innerHTML = figHTML(q.fig);
+  if(rt) markShown(rid+'s0', rid+'s0Block'); else pgShowAnswer(true);
+}
+function pgShowAnswer(noScroll){
+  const q = pst.order[pst.idx];
+  const ansHTML = q.num ? `<div class="count-row" style="justify-content:center">${q.label}: ${numIn('pgn')} ${q.unit}</div>`
+    : q.atl ? `${exprRow('pgx', 2, q.ex.labels, 'pgm', q.ex.mLab)}<div class="fline"><span class="lab">${q.label}</span> = ${probHTML('pgf')}</div>${PROB_NOTE}`
+    : q.ex ? `${exprRow('pgx', 2, q.ex.labels, 'pgf', q.label)}${PROB_NOTE}`
+    : `<div class="fline"><span class="lab">${q.label}</span> = ${probHTML('pgf')}</div>${PROB_NOTE}`;
+  $('pgAns').innerHTML = `<div class="try-tag" id="pgTry">✍️ 첫 번째 기회</div>
+    <p class="key-q task">${q.num ? '개수를 구해 보자.' : q.ex ? '식을 세워 확률을 구해 보자.' : '확률을 구해 보자.'}</p>
+    ${ansHTML}
+    <div class="btn-row"><button class="btn btn-check" id="pgBtn" onclick="pgCheck()">확인</button></div>
+    <div class="feedback" id="pgFb"></div><div class="btn-row" id="pgNextRow"></div>`;
+  $('pgAns').querySelectorAll('input').forEach(x=>x.addEventListener('keydown', e=>{ if(e.key==='Enter') pgCheck(); }));
+  if(!noScroll) scrollToEl('pgAns');
+}
+function pgItems(q){
+  if(q.num) return [{id:'pgn', val:q.val}];
+  if(q.atl) return [{expr:'pgx', terms:q.ex.terms, op:'×'}, {prob:'pgm', ans:q.m, eq:true}, {prob:'pgf', ans:q.p}];
+  if(q.ex) return [{expr:'pgx', terms:q.ex.terms, op:q.ex.op}, {prob:'pgf', ans:q.p}];
+  return [{prob:'pgf', ans:q.p}];
+}
+
+function pgNextBtn(){
+  $('pgNextRow').innerHTML = `<button class="btn" id="pgNextBtn" onclick="this.disabled=true;pgNext()">${(pst.idx<pst.order.length-1 && pst.correct<LEVELS[pst.levelIdx].passNeeded)?'다음 문제 →':'결과 보기 →'}</button>`;
+}
+function pgCheck(){
+  if(!$('pgBtn') || $('pgBtn').disabled) return;   // 3단계 전이거나 이미 끝난 문제는 채점하지 않음
+  const q = pst.order[pst.idx];
+  const r = checkItems(pgItems(q), 'pgFb');
+  if(r===null || r==='unreduced') return;
+  if(r===false){
+    if(pst.tries===0){
+      pst.tries = 1;
+      $('pgTry').textContent = '✍️ 마지막 기회'; $('pgTry').classList.add('last');
+      setFb('pgFb',false, RETHINK+'<br><span class="sub">한 번 더 답을 쓸 수 있어요.</span>');
+      return;
+    }
+    $('pgArea').querySelectorAll('input').forEach(x=>x.disabled=true); $('pgArea').querySelectorAll('.opsel').forEach(o=>o.classList.add('lock')); $('pgBtn').disabled = true;
+    setFb('pgFb',false,'❌ 아쉬워요. 이 문제는 틀린 것으로 할게요.');
+    pgNextBtn();
+    return;
+  }
+  $('pgBtn').disabled = true;
+  pst.correct++;
+  setFb('pgFb',true, (pst.tries ? '✅ 맞아요! 다시 생각해서 맞혔어요.' : '✅ 정답이에요!') + (pst.correct===LEVELS[pst.levelIdx].passNeeded && pst.idx<pst.order.length-1 ? '<br>🎉 두 문제를 맞혀서 이 레벨은 바로 통과예요!' : ''));
+  pgNextBtn();
+}
+function pgNext(){ pst.idx++; if(pst.idx < pst.order.length && pst.correct < LEVELS[pst.levelIdx].passNeeded) renderPQuestion(); else levelFinish(); }
+function levelFinish(){
+  const lv = LEVELS[pst.levelIdx];
+  const pass = pst.correct >= lv.passNeeded;
+  if(pass) pst.passedLevels[pst.levelIdx] = true;
+  updateLevelTabs(); showScreen('scLevelResult'); practiceScreen = 'scLevelResult';
+  $('lrIcon').textContent = pass?'🎉':'💪';
+  $('lrTitle').textContent = pass ? `${lv.label.split(' ·')[0]} 통과!` : `${lv.label.split(' ·')[0]} 아쉬워요`;
+  $('lrScore').textContent = `${pst.correct} / ${pst.idx}`;
+  $('lrMsg').textContent = pass ? (pst.idx<pst.order.length ? '두 문제를 맞혀서 바로 통과했어요! 다음으로 넘어가 볼까요?' : '잘했어요! 다음으로 넘어가 볼까요?') : `${pst.order.length}문제 중 ${lv.passNeeded}문제 이상 맞혀야 통과해요. 다시 도전해 볼까요?`;
+  $('lrRetryBtn').style.display = pass ? 'none' : '';
+  $('lrNextBtn').style.display = pass ? '' : 'none';
+  $('lrNextBtn').disabled = false;
+  $('lrNextBtn').textContent = (pst.levelIdx < LEVELS.length-1) ? '다음 레벨 →' : '결과 보기 →';
+}
+function lrRetry(){ startLevel(pst.levelIdx); }
+function lrNext(){
+  if(pst.levelIdx < LEVELS.length-1){ startLevel(pst.levelIdx+1); }
+  else {
+    showScreen('scDone'); practiceScreen = 'scDone';
+    $('doneStat').innerHTML = stat.total ? `탐구하면서 한 번에 맞힌 질문: ${stat.first} / ${stat.total}` : '';
+    if(window._reportHubComplete) window._reportHubComplete();
+  }
+}
+let popCfg = null;
+/* ════════════════════════════════
+   개념 정리 팝업 (빈칸을 맞게 써야 닫힘)
+════════════════════════════════ */
+let termCfg = null, termTimer = null;
+function normTerm(s){ return String(s||'').replace(/[\s'"‘’“”.,!()]/g,'').replace(/[−–—]/g,'-').replace(/＋/g,'+').toLowerCase(); }
+function termAfter(cfg, delay){
+  clearTimeout(termTimer);
+  termTimer = setTimeout(()=>{ if($(cfg.box)) openTermPop(cfg); }, delay==null ? 700 : delay);
+}
+function openTermPop(cfg){
+  termCfg = cfg; popCfg = null;
+  $('termBox').innerHTML = `<div class="term-tag">📘 개념 정리</div><div class="modal-text" style="margin-bottom:8px">${cfg.title}<br><span style="color:var(--ink2);font-weight:600">${cfg.ask||'빈칸에 알맞은 식을 써 보세요.'}</span></div>
+    <div class="def-box">${cfg.html.replace('[[BLANK]]', `<input class="blank" id="termInp" style="width:5.5em" autocomplete="off">`)}</div>
+    <div class="feedback" id="termFb"></div>
+    <div class="btn-row"><button class="modal-btn" id="termBtn" onclick="termCheck()">확인</button></div>`;
+  $('termModal').classList.add('show');
+  const inp = $('termInp');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') termCheck(); });
+  try{ inp.focus(); }catch(e){}
+}
+function closeTermPop(){ clearTimeout(termTimer); $('termModal').classList.remove('show'); termCfg = null; popCfg = null; }
+function termCheck(){
+  if(!termCfg || $('termBtn').disabled) return;
+  const inp = $('termInp'), raw = normTerm(inp.value);
+  if(raw===''){ setFb('termFb',false,'빈칸을 채워 주세요.'); return; }
+  const ok = termCfg.ans.some(a=>normTerm(a)===raw);
+  firstTry(termCfg.qid, ok);
+  inp.classList.toggle('wrong',!ok); inp.classList.toggle('correct',ok);
+  if(!ok){ setFb('termFb',false,RETHINK); return; }
+  setFb('termFb',true,'✅ 맞아요!');
+  $('termBtn').disabled = true;
+  const cfg = termCfg;
+  setTimeout(()=>{
+    closeTermPop();
+    const el = $(cfg.box); if(!el) return;
+    el.classList.remove('term-wait'); flashRef(el); scrollToEl(cfg.box);
+    if(cfg.after) cfg.after();
+  }, 600);
+}
+/* ════════════════════════════════
+   관리자 모드 (SHA-256 해시 비교 — 가벼운 잠금일 뿐, 보안 장치 아님)
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  const cur = (pst.order && pst.order[pst.idx] && (viewing===PRACTICE)) ? pst.order[pst.idx] : null;
+  $('adminPanelBody').innerHTML =
+    '<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">'+
+      STAGES.map((s,i)=>btn(`${i+1}.${s}`,`adminGo(${i})`)).join('')+btn('레벨2','adminGo(8)')+btn('레벨3','adminGo(9)')+btn('정리 팝업 통과','adminPassTerm()')+
+    '</div>'+
+    '<div><strong>숫자 칸</strong>: 6 (= 6가지 = 6개, 띄어쓰기 무시)</div>'+
+    '<div><strong>확률 칸</strong>: 분자·분모 따로. 1~7단계는 값이 같으면 약분 전이어도 정답(6/8 = 3/4). 문제풀이 최종 답은 기약분수여야 정답, 약분 전이면 오답이 아니라 "약분까지 해야 완벽한 정답이 됩니다!" 안내 후 다시 입력</div>'+
+    '<div><strong>식 칸</strong>: □ 두 개는 순서 상관없이 값이 맞으면 정답(약분 전도 됨), 가운데 기호는 \'동시에\' 문제면 ×, \'또는\' 문제면 +</div>'+
+    '<div><strong>정리 팝업</strong>: 4단계 [p×q] (q×p, p*q, pxq, pq 모두 정답, 띄어쓰기·대소문자 무시)</div>'+
+    '<div><strong>1. 냉장고</strong>: 추천 버튼 3번 → 가능성이 모두 같아요 → 1/3, 1/2</div>'+
+    '<div><strong>2. 진열대(매장 A)</strong>: 6대 진열(중복이면 "이미 진열") → 6, 1, 1/6 → 나뭇가지 그림</div>'+
+    '<div><strong>3. 더할까 곱할까</strong>: ○ = × (틀리면 그 기호로 계산한 값만 보여 줌) → ① 나누기 1/3 → ② 나누기 1/2, 1/6</div>'+
+    '<div><strong>4. 매장 B</strong>: 흰색이면 회색만 → 5대 → 5, 1/5 → 영향을 끼치기 때문 → 분류(동전·주사위 X, 원판 두 사람 X, 매장 B O, 다시 넣지 않고 O, 다시 넣고 X) → 팝업 p×q</div>'+
+    '<div><strong>5. 예제 3</strong>: 3단계(동시에 → 끼치지 않아요 → 곱해요) → 1/2 × 3/6 = 1/4 → 200번씩 던지기, 600번 넘으면 질문(1/4)</div>'+
+    '<div><strong>6. 문제 7 원판</strong>: 8칸 중 꽝 2칸. 두 사람 돌리기 → 3단계 → 6/8 × 6/8 = 9/16 → 모두 꽝 1/16 → 적어도 한 사람 15/16</div>'+
+    '<div><strong>7. 분류</strong>: \'또는\' 2개 더해요, \'동시에\' 2개 곱해요</div>'+
+    '<div><strong>레벨1</strong>: 동전·주사위(또는 두 주사위) / 두 상자 제비 모두 당첨 / 원판 두 사람 모두 당첨</div>'+
+    '<div><strong>레벨2</strong>: 모두 빨간 공일 확률을 주고 주머니 B 빨간 공 개수 / 두 사람 모두 성공할 확률과 재이 확률을 주고 해이 확률 / 두 사람(두 제비) 모두 꽝</div>'+
+    '<div><strong>레벨3</strong>: 같은 상황(카드 또는 주사위)에서 \'또는\'(더하기) 1문제 + \'동시에\'(곱하기) 1문제 + 적어도 한 사람(1 − 모두 꽝)</div>'+
+    '<div><strong>통과</strong>: 레벨마다 3문제 중 2문제 이상. 한 문제에 두 번까지 입력 (첫 오답은 봐줌), 두 번째 오답이면 틀린 것으로 하고 다음 문제. 정답 공개 없음, 힌트 없음</div>'+
+    (cur ? `<div style="margin-top:4px;background:#fef3c7;border-radius:6px;padding:3px 6px"><strong>지금 문제 정답</strong>: ${cur.num ? cur.val+cur.unit : fmtP(cur.p)}${cur.atl?` (모두 꽝 ${fmtP(cur.m)})`:''}${cur.note?` (${cur.note})`:''}</div>` : '')+
+    '<div style="color:var(--red);margin-top:6px">미인정: "여섯"처럼 한글 수사 / 확률을 소수로 쓴 경우 / 정리 팝업에 p, q 대신 다른 문자</div>'+
+    '<div style="margin-top:6px"><strong>찍기 방지</strong>: 질문이 뜬 뒤 1.5~4초 안에 고르면 채점 안 함 · 객관식은 틀리면 3→5→8초 잠금 후 보기 다시 섞기 (정답 공개 안 함)</div>'+
+    `<label style="display:block;margin-top:6px"><input type="checkbox" ${GUARD.on?'':'checked'} onchange="GUARD.on=!this.checked"> 시연용: 읽기 확인·잠금 끄기</label>`;
+  $('adminPanel').style.display='block';
+}
+function adminPassTerm(){
+  if(termCfg){
+    const c = termCfg; closeTermPop();
+    const el = $(c.box); if(el) el.classList.remove('term-wait');
+    if(c.after) c.after();
+  }
+}
+function closeHelp(){ $('helpModal').classList.remove('show'); }
+function adminGo(i){
+  closeTermPop(); closeHelp();
+  const f = [stage0, stage1, stage2, stage3, stage4, stage5, stage6, ()=>startLevel(0), ()=>startLevel(1), ()=>startLevel(2)];
+  f[i]();
+  if($('adminPanel').style.display==='block') showAdminPanel();
+}
+
+stage0();
+
+</script>
+</body>
+</html>
