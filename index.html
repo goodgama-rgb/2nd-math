@@ -142,6 +142,16 @@
   .student-row .student-stat{color:var(--ink-dim);font-size:12px;}
   .student-del{background:var(--coral);color:var(--coral-ink);border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;}
   .student-empty{color:var(--ink-dim);font-size:13px;padding:6px 4px;}
+  .lock-badge{background:var(--coral);color:var(--coral-ink);font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:4px;}
+  .student-unlock{background:var(--mint);color:var(--mint-ink);border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px;}
+  .focus-lock-overlay{position:fixed;inset:0;z-index:999999;background:rgba(20,10,10,.92);display:flex;align-items:center;justify-content:center;padding:24px;font-family:var(--sans);}
+  .focus-lock-box{max-width:420px;width:100%;text-align:center;background:#2a1414;border:2px solid #e05a5a;border-radius:18px;padding:28px 24px;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+  .focus-lock-icon{font-size:40px;margin-bottom:10px;}
+  .focus-lock-title{font-size:17px;font-weight:800;margin-bottom:10px;line-height:1.5;color:#fff;}
+  .focus-lock-sub{font-size:14px;color:#ffd6d6;margin-bottom:18px;line-height:1.6;}
+  .focus-lock-box input{width:100%;padding:12px 14px;border-radius:10px;border:none;font-size:15px;margin-bottom:10px;box-sizing:border-box;}
+  .focus-lock-err{color:#ffb3b3;font-size:13px;min-height:18px;margin-bottom:8px;}
+  .focus-lock-box .btn{margin-bottom:0;}
   footer.foot{margin-top:36px;font-family:var(--disp);font-size:14px;color:var(--ink-dim);text-align:center;}
   .credit{font-family:var(--sans);font-size:11px;color:var(--ink-dim);opacity:.7;margin-top:8px;font-weight:400;}
   .struct-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
@@ -341,6 +351,18 @@
   <footer class="foot">화이팅! 모르는 건 손 들고 물어보기 🙋
     <div class="credit">제작 · 덕이중학교 준형T</div>
   </footer>
+</div>
+
+<!-- 학생용: 다른 화면/창으로 포커스가 이탈했다가 돌아오면 뜨는 잠금 화면 -->
+<div id="hubFocusLockOverlay" class="focus-lock-overlay" style="display:none;">
+  <div class="focus-lock-box">
+    <div class="focus-lock-icon">🚫</div>
+    <div class="focus-lock-title">다른 화면에 접속하여 수업 시간 외 활동을 한 것이 감지되었습니다.</div>
+    <div class="focus-lock-sub" id="hubFocusLockSub"></div>
+    <input type="password" id="hubFocusLockPw" placeholder="선생님 비밀번호" autocomplete="off">
+    <div class="focus-lock-err" id="hubFocusLockErr"></div>
+    <button type="button" class="btn" id="hubFocusLockBtn" style="background:#e05a5a;color:#fff;">확인</button>
+  </div>
 </div>
 
 <!-- 관리자 전용: 반별 진도 캘린더 팝업 -->
@@ -761,8 +783,76 @@ function enterAsStudent(grade, cls, num, name, countAsVisit){
   }else{
     loadMyProgress(cls, num);
   }
+  initFocusGuard(cls, num);
   renderUnitList();
   go('units');
+}
+
+// ---- 딴짓(알트탭/다른 창) 감지: 포커스가 이탈했다 돌아오면 잠금 화면 — 선생님 비밀번호로만 해제 ----
+const FOCUS_LOCK_HASH = '2ffce874b5962ffa033a5893496e8bb7542068dccba66ba2e0922c15f5454f18';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=> b.toString(16).padStart(2,'0')).join('');
+}
+function focusLockMsgFor(n){
+  if(n >= 3) return "이 내용은 '수업 태도 일지'에 기록됩니다. 시험 기간 동안 크롬북 사용이 제한됩니다.";
+  if(n === 2) return "선생님 비밀번호를 입력해야 계속할 수 있어요. 한 번 더 반복되면 '수업 태도 일지'에 기록되고, 시험 기간 동안 크롬북 사용이 제한됩니다.";
+  return "선생님 비밀번호를 입력해야 계속할 수 있어요. 두 번 더 반복되면 '수업 태도 일지'에 기록되고, 시험 기간 동안 크롬북 사용이 제한됩니다.";
+}
+function showFocusLock(n){
+  document.getElementById('hubFocusLockSub').textContent = focusLockMsgFor(n);
+  document.getElementById('hubFocusLockErr').textContent = '';
+  document.getElementById('hubFocusLockPw').value = '';
+  document.getElementById('hubFocusLockOverlay').style.display = 'flex';
+  setTimeout(()=> document.getElementById('hubFocusLockPw').focus(), 0);
+}
+function hideFocusLock(){ document.getElementById('hubFocusLockOverlay').style.display = 'none'; }
+window.checkFocusLockPassword = async function(){
+  const v = document.getElementById('hubFocusLockPw').value;
+  let ok = false;
+  try{ ok = (await sha256Hex(v)) === FOCUS_LOCK_HASH; }
+  catch(e){ document.getElementById('hubFocusLockErr').textContent = '이 브라우저에서는 잠금 해제를 할 수 없어요.'; return; }
+  if(ok){
+    hideFocusLock();
+    if(studentInfo) setDoc(studentDocRef(studentInfo.cls, studentInfo.num), { locked:false }, { merge:true }).catch(()=>{});
+  }else{
+    document.getElementById('hubFocusLockErr').textContent = '비밀번호가 틀렸어요.';
+  }
+};
+document.getElementById('hubFocusLockBtn').addEventListener('click', checkFocusLockPassword);
+document.getElementById('hubFocusLockPw').addEventListener('keydown', (e)=>{ if(e.key==='Enter') checkFocusLockPassword(); });
+
+let _focusGuardListenerBound = false;
+let _focusGuardWasHidden = false;
+function initFocusGuard(cls, num){
+  // 허브로 (다시) 들어올 때마다 서버의 잠금 상태를 확인 — 탭을 몰래 닫았다 다시 열어도 그대로 잠겨있게
+  getDoc(studentDocRef(cls, num)).then(snap=>{
+    const data = snap.exists() ? snap.data() : {};
+    if(data.locked){
+      const today = todayStr();
+      const n = (data.focusLossByDate && data.focusLossByDate[today]) || 1;
+      showFocusLock(n);
+    }
+  }).catch(err=> console.warn('focus-lock status check failed', err));
+
+  if(_focusGuardListenerBound) return;
+  _focusGuardListenerBound = true;
+  document.addEventListener('visibilitychange', ()=>{
+    if(!studentInfo) return;
+    if(document.visibilityState === 'hidden'){
+      _focusGuardWasHidden = true;
+    }else if(document.visibilityState === 'visible' && _focusGuardWasHidden){
+      _focusGuardWasHidden = false;
+      const ref = studentDocRef(studentInfo.cls, studentInfo.num);
+      const today = todayStr();
+      getDoc(ref).then(async (snap)=>{
+        const prev = (snap.exists() && snap.data().focusLossByDate && snap.data().focusLossByDate[today]) || 0;
+        const next = prev + 1;
+        await setDoc(ref, { locked:true, focusLossByDate: { [today]: increment(1) } }, { merge:true });
+        showFocusLock(next);
+      }).catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
+    }
+  });
 }
 
 window.submitStudentInfo = function(){
@@ -1198,12 +1288,24 @@ function renderAdminStudents(students){
   }
   students.sort((a,b)=> (b.visitCount||0) - (a.visitCount||0));
   wrap.innerHTML = '';
+  const today = todayStr();
   students.forEach(s=>{
     const row = document.createElement('div');
     row.className = 'student-row';
-    row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'}</span>
-      <span class="student-stat">접속 ${s.visitCount||0} · 문제풀이 ${s.quizSolveCount||0}</span>
+    const focusCount = (s.focusLossByDate && s.focusLossByDate[today]) || 0;
+    const lockBadge = s.locked ? '<span class="lock-badge">🔒 잠김</span>' : '';
+    row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'} ${lockBadge}</span>
+      <span class="student-stat">접속 ${s.visitCount||0} · 문제풀이 ${s.quizSolveCount||0} · 오늘 딴짓 ${focusCount}회</span>
+      ${s.locked ? '<button class="student-unlock" type="button">잠금 해제</button>' : ''}
       <button class="student-del" type="button">삭제</button>`;
+    const unlockBtn = row.querySelector('.student-unlock');
+    if(unlockBtn){
+      unlockBtn.onclick = ()=>{
+        setDoc(studentDocRef(selectedAdminClass, s.id), { locked:false }, {merge:true})
+          .then(()=> loadAdminStudents(selectedAdminClass))
+          .catch(err=> alert('잠금 해제 실패: '+err.message));
+      };
+    }
     row.querySelector('.student-del').onclick = ()=>{
       if(confirm(`${s.id}번 ${s.name||'?'} 학생의 접속·랭킹 기록을 삭제할까요?`)){
         deleteDoc(studentDocRef(selectedAdminClass, s.id))
