@@ -387,7 +387,13 @@
       <h3 class="modal-title" id="student-status-modal-title">접속 현황</h3>
       <button class="modal-close" type="button" onclick="closeStudentStatusModal()">✕</button>
     </div>
-    <button class="calendar-btn" onclick="refreshAdminStudents()">🔄 새로고침</button>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
+      <button class="calendar-btn" style="margin-bottom:0;" onclick="refreshAdminStudents()">🔄 새로고침</button>
+      <label class="admin-seq-label" style="margin-top:0;">
+        <input type="checkbox" id="student-status-online-only" checked>
+        <span>🟢 지금 접속 중인 학생만 보기 (최근 2분 이내 활동, 잠긴 학생은 항상 표시)</span>
+      </label>
+    </div>
     <div id="student-status-modal-content"></div>
   </div>
 </div>
@@ -840,6 +846,7 @@ document.getElementById('hubFocusLockPw').addEventListener('keydown', (e)=>{ if(
 let _focusGuardListenerBound = false;
 let _focusGuardWasHidden = false;
 let unsubFocusLock = null;
+let _heartbeatBound = false;
 function initFocusGuard(cls, num){
   // 서버의 잠금 상태를 실시간 구독(문서 1개짜리라 비용 부담 적음) — 선생님이 관리자 페이지에서
   // 원격으로 잠금 해제하면 학생 화면에서 새로고침 없이 바로 닫히고, 탭을 몰래 닫았다 다시 열어도
@@ -870,6 +877,18 @@ function initFocusGuard(cls, num){
         .catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
     }
   });
+
+  // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 45초마다 lastActive 갱신
+  // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
+  if(!_heartbeatBound){
+    _heartbeatBound = true;
+    const sendHeartbeat = ()=>{
+      if(document.visibilityState !== 'visible' || !studentInfo) return;
+      setDoc(studentDocRef(studentInfo.cls, studentInfo.num), { lastActive: serverTimestamp() }, { merge:true }).catch(()=>{});
+    };
+    sendHeartbeat();
+    setInterval(sendHeartbeat, 45000);
+  }
 }
 
 window.submitStudentInfo = function(){
@@ -1346,6 +1365,10 @@ window.openStudentStatusModal = function(){
 window.closeStudentStatusModal = function(){
   document.getElementById('student-status-modal').style.display = 'none';
 };
+function isOnlineNow(s){
+  if(!s.lastActive || typeof s.lastActive.toMillis !== 'function') return false;
+  return (Date.now() - s.lastActive.toMillis()) < 120000; // 하트비트 45초 주기 + 여유 — 2분 이내만 "지금 접속 중"
+}
 function renderStudentStatusModal(){
   const wrap = document.getElementById('student-status-modal-content');
   if(!wrap) return;
@@ -1354,18 +1377,28 @@ function renderStudentStatusModal(){
     return;
   }
   const today = todayStr();
-  const sorted = adminStudentsCache.slice().sort((a,b)=>{
+  const onlineOnlyCb = document.getElementById('student-status-online-only');
+  const onlineOnly = onlineOnlyCb ? onlineOnlyCb.checked : false;
+  const lockedCount = adminStudentsCache.filter(s=> s.locked).length;
+  const onlineCount = adminStudentsCache.filter(s=> isOnlineNow(s)).length;
+  let list = adminStudentsCache.slice();
+  if(onlineOnly) list = list.filter(s=> s.locked || isOnlineNow(s));
+  list.sort((a,b)=>{
     if(!!b.locked !== !!a.locked) return (b.locked?1:0) - (a.locked?1:0);
     return (b.visitCount||0) - (a.visitCount||0);
   });
-  const lockedCount = sorted.filter(s=> s.locked).length;
-  wrap.innerHTML = `<p class="admin-hint" style="margin-top:0;">${lockedCount ? `🔒 지금 잠긴 학생 ${lockedCount}명` : '지금 잠긴 학생 없음'}</p>`;
-  sorted.forEach(s=>{
+  if(!list.length){
+    wrap.innerHTML = `<p class="admin-hint" style="margin-top:0;">🟢 지금 접속 ${onlineCount}명 · 🔒 잠김 ${lockedCount}명 — 조건에 맞는 학생이 없어요</p>`;
+    return;
+  }
+  wrap.innerHTML = `<p class="admin-hint" style="margin-top:0;">🟢 지금 접속 ${onlineCount}명 · 🔒 잠김 ${lockedCount}명</p>`;
+  list.forEach(s=>{
     const row = document.createElement('div');
     row.className = 'student-row';
     const focusCount = (s.focusLossByDate && s.focusLossByDate[today]) || 0;
     const lockBadge = s.locked ? '<span class="lock-badge">🔒 잠김</span>' : '';
-    row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'} ${lockBadge}</span>
+    const onlineBadge = isOnlineNow(s) ? '<span title="최근 2분 이내 활동">🟢</span>' : '';
+    row.innerHTML = `<span class="student-name">${onlineBadge} ${s.id}번 ${s.name||'?'} ${lockBadge}</span>
       <span class="student-stat">접속 ${s.visitCount||0}회 · 오늘 딴짓 ${focusCount}회</span>
       ${s.locked ? '<button class="student-unlock" type="button">잠금 해제</button>' : ''}`;
     const unlockBtn = row.querySelector('.student-unlock');
@@ -1465,6 +1498,7 @@ function renderAdminPreview(){
 }
 document.getElementById('admin-notice').addEventListener('input', renderAdminPreview);
 document.getElementById('admin-sequential').addEventListener('change', renderAdminPreview);
+document.getElementById('student-status-online-only').addEventListener('change', renderStudentStatusModal);
 
 window.saveToday = function(){
   const msg = document.getElementById('admin-msg');

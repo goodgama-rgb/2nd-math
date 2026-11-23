@@ -672,6 +672,15 @@ startStage(0);
       });
     }
   });
+
+  // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 45초마다 lastActive 갱신
+  // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
+  function _sendHeartbeat(){
+    if(document.visibilityState !== 'visible') return;
+    ensureDb().then((db)=> studentRef(db).set({ lastActive: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true }).catch(function(){}));
+  }
+  _sendHeartbeat();
+  setInterval(_sendHeartbeat, 45000);
 })();
 </script>
 
