@@ -324,6 +324,7 @@
     <div class="admin-group-title">🧹 학생 기록 관리</div>
     <p class="admin-hint">테스트로 접속한 기록 삭제 등</p>
     <button class="calendar-btn" onclick="refreshAdminStudents()">🔄 새로고침</button>
+    <span id="admin-students-refresh-status" class="admin-hint" style="margin:0 0 0 8px;"></span>
     <div id="admin-students"></div>
   </section>
 
@@ -389,6 +390,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
       <button class="calendar-btn" style="margin-bottom:0;" onclick="refreshAdminStudents()">🔄 새로고침</button>
+      <span id="student-status-refresh-status" class="admin-hint" style="margin:0;"></span>
       <label class="admin-seq-label" style="margin-top:0;">
         <input type="checkbox" id="student-status-online-only" checked>
         <span>🟢 지금 접속 중인 학생만 보기 (최근 2분 이내 활동, 잠긴 학생은 항상 표시)</span>
@@ -1297,7 +1299,14 @@ function selectAdminClass(cls){
 // 다시 읽어와서 Firestore 사용량을 키우는 원인 중 하나였음 — 탭 선택 시 한 번만 불러오고,
 // 새로고침 버튼 또는 학생 삭제 후에만 다시 불러오도록 변경(2026-09-08).
 let adminStudentsCache = []; // 진도 캘린더 팝업에서 "실제로 몇 명이 풀었는지" 계산할 때 재사용
+function setStudentRefreshStatus(text){
+  const a = document.getElementById('admin-students-refresh-status');
+  const b = document.getElementById('student-status-refresh-status');
+  if(a) a.textContent = text;
+  if(b) b.textContent = text;
+}
 async function loadAdminStudents(cls){
+  setStudentRefreshStatus('새로고침 중...');
   try{
     const snap = await getDocs(collection(db, 'classStudents', String(cls), 'students'));
     const students = [];
@@ -1310,9 +1319,12 @@ async function loadAdminStudents(cls){
     if(document.getElementById('student-status-modal').style.display === 'flex'){
       renderStudentStatusModal();
     }
+    const now = new Date();
+    setStudentRefreshStatus(`✓ ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} 기준`);
   }catch(err){
     console.warn('admin students load failed', err);
     document.getElementById('admin-students').innerHTML = '<p class="student-empty">불러오기 실패 — 새로고침을 눌러주세요</p>';
+    setStudentRefreshStatus('❌ 불러오기 실패');
   }
 }
 window.refreshAdminStudents = function(){
