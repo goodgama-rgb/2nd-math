@@ -287,7 +287,10 @@
         <div class="field">
           <div class="admin-group-title-row">
             <div class="admin-group-title" style="margin-top:0;">💬 이 반 공지</div>
-            <button class="struct-mini-btn" type="button" onclick="openAdminCalendarModal()">📅 진도 캘린더</button>
+            <span style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="struct-mini-btn" type="button" onclick="openAdminCalendarModal()">📅 진도 캘린더</button>
+              <button class="struct-mini-btn" type="button" onclick="openStudentStatusModal()">👀 접속 현황</button>
+            </span>
           </div>
           <p class="admin-hint">오늘의 학습 박스 아래에 그대로 표시돼요</p>
           <input id="admin-notice" type="text" placeholder="예: 내일까지 3번 문제 풀어오세요!">
@@ -374,6 +377,18 @@
     </div>
     <p class="admin-hint" style="margin-top:-6px;">N/M명 완료 = 지금까지 한 번이라도 접속한 학생 M명 중 실제로 그 항목을 완료한 학생 수</p>
     <div id="admin-calendar-modal-content"></div>
+  </div>
+</div>
+
+<!-- 관리자 전용: 접속 현황(잠긴 학생 우선 표시) 팝업 -->
+<div id="student-status-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeStudentStatusModal();">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 class="modal-title" id="student-status-modal-title">접속 현황</h3>
+      <button class="modal-close" type="button" onclick="closeStudentStatusModal()">✕</button>
+    </div>
+    <button class="calendar-btn" onclick="refreshAdminStudents()">🔄 새로고침</button>
+    <div id="student-status-modal-content"></div>
   </div>
 </div>
 
@@ -1271,6 +1286,9 @@ async function loadAdminStudents(cls){
     if(document.getElementById('admin-calendar-modal').style.display === 'flex'){
       renderCalendarInto('admin-calendar-modal-content', adminUnlockedAt, adminStudentsCache);
     }
+    if(document.getElementById('student-status-modal').style.display === 'flex'){
+      renderStudentStatusModal();
+    }
   }catch(err){
     console.warn('admin students load failed', err);
     document.getElementById('admin-students').innerHTML = '<p class="student-empty">불러오기 실패 — 새로고침을 눌러주세요</p>';
@@ -1313,6 +1331,49 @@ function renderAdminStudents(students){
           .catch(err=> alert('삭제 실패: '+err.message));
       }
     };
+    wrap.appendChild(row);
+  });
+}
+
+// ---- 접속 현황 팝업: 잠긴 학생을 맨 위로 올려서 "학생 기록 관리"까지 스크롤 안 해도 바로 보이게 ----
+window.openStudentStatusModal = function(){
+  document.getElementById('student-status-modal-title').textContent = `${selectedAdminClass}반 접속 현황`;
+  renderStudentStatusModal();
+  document.getElementById('student-status-modal').style.display = 'flex';
+};
+window.closeStudentStatusModal = function(){
+  document.getElementById('student-status-modal').style.display = 'none';
+};
+function renderStudentStatusModal(){
+  const wrap = document.getElementById('student-status-modal-content');
+  if(!wrap) return;
+  if(!adminStudentsCache.length){
+    wrap.innerHTML = '<p class="student-empty">아직 이 반에서 접속한 기록이 없어요</p>';
+    return;
+  }
+  const today = todayStr();
+  const sorted = adminStudentsCache.slice().sort((a,b)=>{
+    if(!!b.locked !== !!a.locked) return (b.locked?1:0) - (a.locked?1:0);
+    return (b.visitCount||0) - (a.visitCount||0);
+  });
+  const lockedCount = sorted.filter(s=> s.locked).length;
+  wrap.innerHTML = `<p class="admin-hint" style="margin-top:0;">${lockedCount ? `🔒 지금 잠긴 학생 ${lockedCount}명` : '지금 잠긴 학생 없음'}</p>`;
+  sorted.forEach(s=>{
+    const row = document.createElement('div');
+    row.className = 'student-row';
+    const focusCount = (s.focusLossByDate && s.focusLossByDate[today]) || 0;
+    const lockBadge = s.locked ? '<span class="lock-badge">🔒 잠김</span>' : '';
+    row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'} ${lockBadge}</span>
+      <span class="student-stat">접속 ${s.visitCount||0}회 · 오늘 딴짓 ${focusCount}회</span>
+      ${s.locked ? '<button class="student-unlock" type="button">잠금 해제</button>' : ''}`;
+    const unlockBtn = row.querySelector('.student-unlock');
+    if(unlockBtn){
+      unlockBtn.onclick = ()=>{
+        setDoc(studentDocRef(selectedAdminClass, s.id), { locked:false }, {merge:true})
+          .then(()=> loadAdminStudents(selectedAdminClass))
+          .catch(err=> alert('잠금 해제 실패: '+err.message));
+      };
+    }
     wrap.appendChild(row);
   });
 }
