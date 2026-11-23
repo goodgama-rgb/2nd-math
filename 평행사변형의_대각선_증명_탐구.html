@@ -1300,17 +1300,20 @@ document.getElementById('hubBackLink').href = 'index.html' + location.search;
   overlay.querySelector('#focusLockBtn').addEventListener('click', unlockCheck);
   overlay.querySelector('#focusLockPw').addEventListener('keydown', function(e){ if(e.key === 'Enter') unlockCheck(); });
 
-  // ---- 페이지를 열 때마다 서버의 잠금 상태 확인 (탭을 몰래 닫았다 다시 열어도 그대로 잠겨있게) ----
-  ensureDb().then(async (db)=>{
-    try{
-      const snap = await studentRef(db).get();
+  // ---- 서버의 잠금 상태를 실시간 구독(문서 1개짜리라 비용 부담 적음) ----
+  // 선생님이 관리자 페이지에서 원격으로 잠금 해제하면 학생 화면에서 새로고침 없이 바로 닫힘.
+  // 학생이 탭을 몰래 닫았다 다시 열어도 구독이 다시 걸리며 현재 서버 상태를 그대로 반영.
+  ensureDb().then((db)=>{
+    studentRef(db).onSnapshot(function(snap){
       const data = snap.exists ? snap.data() : {};
       if(data.locked){
         const today = todayStr();
         const n = (data.focusLossByDate && data.focusLossByDate[today]) || 1;
         showLock(n);
+      }else{
+        hideLock();
       }
-    }catch(e){ console.warn('focus-lock status check failed', e); }
+    }, function(err){ console.warn('focus-lock subscribe failed', err); });
   });
 
   // ---- 포커스 이탈(알트탭/다른 창) 감지 ----
@@ -1320,16 +1323,11 @@ document.getElementById('hubBackLink').href = 'index.html' + location.search;
       _wasHidden = true;
     }else if(document.visibilityState === 'visible' && _wasHidden){
       _wasHidden = false;
-      ensureDb().then(async (db)=>{
+      ensureDb().then((db)=>{
         const ref = studentRef(db);
         const today = todayStr();
-        try{
-          const snap = await ref.get();
-          const prev = (snap.exists && snap.data().focusLossByDate && snap.data().focusLossByDate[today]) || 0;
-          const next = prev + 1;
-          await ref.set({ locked:true, focusLossByDate: { [today]: firebase.firestore.FieldValue.increment(1) } }, { merge:true });
-          showLock(next);
-        }catch(e){ console.warn('focus-loss log failed', e); showLock(1); }
+        ref.set({ locked:true, focusLossByDate: { [today]: firebase.firestore.FieldValue.increment(1) } }, { merge:true })
+          .catch(function(e){ console.warn('focus-loss log failed', e); showLock(1); });
       });
     }
   });

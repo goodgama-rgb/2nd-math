@@ -839,16 +839,22 @@ document.getElementById('hubFocusLockPw').addEventListener('keydown', (e)=>{ if(
 
 let _focusGuardListenerBound = false;
 let _focusGuardWasHidden = false;
+let unsubFocusLock = null;
 function initFocusGuard(cls, num){
-  // 허브로 (다시) 들어올 때마다 서버의 잠금 상태를 확인 — 탭을 몰래 닫았다 다시 열어도 그대로 잠겨있게
-  getDoc(studentDocRef(cls, num)).then(snap=>{
+  // 서버의 잠금 상태를 실시간 구독(문서 1개짜리라 비용 부담 적음) — 선생님이 관리자 페이지에서
+  // 원격으로 잠금 해제하면 학생 화면에서 새로고침 없이 바로 닫히고, 탭을 몰래 닫았다 다시 열어도
+  // 구독이 다시 걸리며 현재 서버 상태를 그대로 반영함
+  if(unsubFocusLock) unsubFocusLock();
+  unsubFocusLock = onSnapshot(studentDocRef(cls, num), (snap)=>{
     const data = snap.exists() ? snap.data() : {};
     if(data.locked){
       const today = todayStr();
       const n = (data.focusLossByDate && data.focusLossByDate[today]) || 1;
       showFocusLock(n);
+    }else{
+      hideFocusLock();
     }
-  }).catch(err=> console.warn('focus-lock status check failed', err));
+  }, (err)=> console.warn('focus-lock subscribe failed', err));
 
   if(_focusGuardListenerBound) return;
   _focusGuardListenerBound = true;
@@ -860,12 +866,8 @@ function initFocusGuard(cls, num){
       _focusGuardWasHidden = false;
       const ref = studentDocRef(studentInfo.cls, studentInfo.num);
       const today = todayStr();
-      getDoc(ref).then(async (snap)=>{
-        const prev = (snap.exists() && snap.data().focusLossByDate && snap.data().focusLossByDate[today]) || 0;
-        const next = prev + 1;
-        await setDoc(ref, { locked:true, focusLossByDate: { [today]: increment(1) } }, { merge:true });
-        showFocusLock(next);
-      }).catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
+      setDoc(ref, { locked:true, focusLossByDate: { [today]: increment(1) } }, { merge:true })
+        .catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
     }
   });
 }
