@@ -149,7 +149,7 @@
   .focus-lock-icon{font-size:40px;margin-bottom:10px;}
   .focus-lock-title{font-size:17px;font-weight:800;margin-bottom:10px;line-height:1.5;color:#fff;}
   .focus-lock-sub{font-size:14px;color:#ffd6d6;margin-bottom:18px;line-height:1.6;}
-  .focus-lock-box input{width:100%;padding:12px 14px;border-radius:10px;border:none;font-size:15px;margin-bottom:10px;box-sizing:border-box;}
+  .focus-lock-box input{width:100%;padding:12px 14px;border-radius:10px;border:none;font-size:15px;margin-bottom:10px;box-sizing:border-box;-webkit-text-security:disc;}
   .focus-lock-err{color:#ffb3b3;font-size:13px;min-height:18px;margin-bottom:8px;}
   .focus-lock-box .btn{margin-bottom:0;}
   footer.foot{margin-top:36px;font-family:var(--disp);font-size:14px;color:var(--ink-dim);text-align:center;}
@@ -363,7 +363,7 @@
     <div class="focus-lock-icon">🚫</div>
     <div class="focus-lock-title">다른 화면에 접속하여 수업 시간 외 활동을 한 것이 감지되었습니다.</div>
     <div class="focus-lock-sub" id="hubFocusLockSub"></div>
-    <input type="password" id="hubFocusLockPw" placeholder="선생님 비밀번호" autocomplete="off">
+    <input type="text" id="hubFocusLockPw" placeholder="선생님 비밀번호" autocomplete="off">
     <div class="focus-lock-err" id="hubFocusLockErr"></div>
     <button type="button" class="btn" id="hubFocusLockBtn" style="background:#e05a5a;color:#fff;">확인</button>
   </div>
@@ -812,7 +812,7 @@ function enterAsStudent(grade, cls, num, name, countAsVisit){
 }
 
 // ---- 딴짓(알트탭/다른 창) 감지: 포커스가 이탈했다 돌아오면 잠금 화면 — 선생님 비밀번호로만 해제 ----
-const FOCUS_LOCK_HASH = '2ffce874b5962ffa033a5893496e8bb7542068dccba66ba2e0922c15f5454f18';
+const FOCUS_LOCK_HASH = 'c99fabb46223864d27d154016c6f3eeb7406c61baa05d3e26999fd17e36acee5';
 async function sha256Hex(text){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map(b=> b.toString(16).padStart(2,'0')).join('');
@@ -846,9 +846,21 @@ document.getElementById('hubFocusLockBtn').addEventListener('click', checkFocusL
 document.getElementById('hubFocusLockPw').addEventListener('keydown', (e)=>{ if(e.key==='Enter') checkFocusLockPassword(); });
 
 let _focusGuardListenerBound = false;
-let _focusGuardWasHidden = false;
+let _focusAwaySince = null;
+const FOCUS_MIN_AWAY_MS = 3000; // 3초 미만의 짧은 전환(탭 깜빡임, 주소창 클릭 등)은 '딴짓'으로 안 침
 let unsubFocusLock = null;
 let _heartbeatBound = false;
+function _focusGuardMarkAway(){ if(_focusAwaySince === null) _focusAwaySince = Date.now(); }
+function _focusGuardMarkBack(){
+  if(_focusAwaySince === null) return;
+  const elapsed = Date.now() - _focusAwaySince;
+  _focusAwaySince = null;
+  if(elapsed < FOCUS_MIN_AWAY_MS || !studentInfo) return;
+  const ref = studentDocRef(studentInfo.cls, studentInfo.num);
+  const today = todayStr();
+  setDoc(ref, { locked:true, focusLossByDate: { [today]: increment(1) } }, { merge:true })
+    .catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
+}
 function initFocusGuard(cls, num){
   // 서버의 잠금 상태를 실시간 구독(문서 1개짜리라 비용 부담 적음) — 선생님이 관리자 페이지에서
   // 원격으로 잠금 해제하면 학생 화면에서 새로고침 없이 바로 닫히고, 탭을 몰래 닫았다 다시 열어도
@@ -867,18 +879,15 @@ function initFocusGuard(cls, num){
 
   if(_focusGuardListenerBound) return;
   _focusGuardListenerBound = true;
+  // 탭이 완전히 가려지는 경우(visibilitychange)와, 창을 부분화면으로 띄워둔 채 다른 창으로
+  // 포커스만 옮기는 경우(blur/focus)를 둘 다 감지함. 둘 다 FOCUS_MIN_AWAY_MS 이상 지속돼야 집계.
   document.addEventListener('visibilitychange', ()=>{
     if(!studentInfo) return;
-    if(document.visibilityState === 'hidden'){
-      _focusGuardWasHidden = true;
-    }else if(document.visibilityState === 'visible' && _focusGuardWasHidden){
-      _focusGuardWasHidden = false;
-      const ref = studentDocRef(studentInfo.cls, studentInfo.num);
-      const today = todayStr();
-      setDoc(ref, { locked:true, focusLossByDate: { [today]: increment(1) } }, { merge:true })
-        .catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
-    }
+    if(document.visibilityState === 'hidden') _focusGuardMarkAway();
+    else if(document.visibilityState === 'visible') _focusGuardMarkBack();
   });
+  window.addEventListener('blur', ()=>{ if(studentInfo) _focusGuardMarkAway(); });
+  window.addEventListener('focus', ()=>{ if(studentInfo) _focusGuardMarkBack(); });
 
   // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 45초마다 lastActive 갱신
   // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
@@ -1165,9 +1174,9 @@ async function loadLeaderboard(cls){
     myItemsOpened = new Set(me?.itemsOpened || []);
     renderToday();
     renderRecommend();
-    if(currentUnitId && document.getElementById('view-hub').classList.contains('active')){
-      openUnit(currentUnitId);
-    }
+    // 예전엔 여기서 지금 보고 있는 단원 화면을 openUnit()으로 자동 재구성했는데,
+    // 느린 네트워크 응답이 뒤늦게 돌아오는 타이밍에 학생이 하필 카드를 누르는 순간과 겹치면
+    // 그 클릭 도중에 화면이 통째로 바뀌면서 클릭이 씹히는 문제가 있어 뺐음(2026-11-24).
   }catch(err){
     console.warn('leaderboard load failed', err);
   }

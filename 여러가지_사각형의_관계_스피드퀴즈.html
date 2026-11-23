@@ -552,7 +552,8 @@ loadLeaderboard('lbPreviewList', 5);
   const _cls = _p.get('cls'), _num = _p.get('num');
   if(!_cls || !_num || _num === '99') return; // 실제 학생 세션이 아니면(미배치/관리자 미리보기) 감지 안 함
 
-  const FOCUS_LOCK_HASH = '2ffce874b5962ffa033a5893496e8bb7542068dccba66ba2e0922c15f5454f18';
+  const FOCUS_LOCK_HASH = 'c99fabb46223864d27d154016c6f3eeb7406c61baa05d3e26999fd17e36acee5';
+  const FOCUS_MIN_AWAY_MS = 3000; // 3초 미만의 짧은 전환(탭 깜빡임, 주소창 클릭 등)은 '딴짓'으로 안 침
   const MSG_TITLE = "다른 화면에 접속하여 수업 시간 외 활동을 한 것이 감지되었습니다.";
   function msgFor(n){
     if(n >= 3) return "이 내용은 '수업 태도 일지'에 기록됩니다. 시험 기간 동안 크롬북 사용이 제한됩니다.";
@@ -602,7 +603,7 @@ loadLeaderboard('lbPreviewList', 5);
       '<div style="font-size:40px;margin-bottom:10px;">\u{1F6AB}</div>' +
       '<div style="font-size:17px;font-weight:800;margin-bottom:10px;line-height:1.5;">' + MSG_TITLE + '</div>' +
       '<div id="focusLockSub" style="font-size:14px;color:#ffd6d6;margin-bottom:18px;line-height:1.6;"></div>' +
-      '<input type="password" id="focusLockPw" placeholder="선생님 비밀번호" autocomplete="off" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-size:15px;margin-bottom:10px;box-sizing:border-box;">' +
+      '<input type="text" id="focusLockPw" placeholder="선생님 비밀번호" autocomplete="off" style="width:100%;padding:12px 14px;border-radius:10px;border:none;font-size:15px;margin-bottom:10px;box-sizing:border-box;-webkit-text-security:disc;">' +
       '<div id="focusLockErr" style="color:#ffb3b3;font-size:13px;min-height:18px;margin-bottom:8px;"></div>' +
       '<button type="button" id="focusLockBtn" style="width:100%;padding:12px;border:none;border-radius:10px;background:#e05a5a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;">확인</button>' +
     '</div>';
@@ -648,21 +649,29 @@ loadLeaderboard('lbPreviewList', 5);
     }, function(err){ console.warn('focus-lock subscribe failed', err); });
   });
 
-  // ---- 포커스 이탈(알트탭/다른 창) 감지 ----
-  let _wasHidden = false;
+  // ---- 포커스 이탈 감지 ----
+  // 탭이 완전히 가려지는 경우(visibilitychange)와, 창을 부분화면으로 띄워둔 채 다른 창으로
+  // 포커스만 옮기는 경우(blur/focus)를 둘 다 감지함. 둘 다 FOCUS_MIN_AWAY_MS 이상 지속돼야 집계.
+  let _awaySince = null;
+  function _markAway(){ if(_awaySince === null) _awaySince = Date.now(); }
+  function _markBack(){
+    if(_awaySince === null) return;
+    const elapsed = Date.now() - _awaySince;
+    _awaySince = null;
+    if(elapsed < FOCUS_MIN_AWAY_MS) return;
+    ensureDb().then((db)=>{
+      const ref = studentRef(db);
+      const today = todayStr();
+      ref.set({ locked:true, focusLossByDate: { [today]: firebase.firestore.FieldValue.increment(1) } }, { merge:true })
+        .catch(function(e){ console.warn('focus-loss log failed', e); showLock(1); });
+    });
+  }
   document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState === 'hidden'){
-      _wasHidden = true;
-    }else if(document.visibilityState === 'visible' && _wasHidden){
-      _wasHidden = false;
-      ensureDb().then((db)=>{
-        const ref = studentRef(db);
-        const today = todayStr();
-        ref.set({ locked:true, focusLossByDate: { [today]: firebase.firestore.FieldValue.increment(1) } }, { merge:true })
-          .catch(function(e){ console.warn('focus-loss log failed', e); showLock(1); });
-      });
-    }
+    if(document.visibilityState === 'hidden') _markAway();
+    else if(document.visibilityState === 'visible') _markBack();
   });
+  window.addEventListener('blur', _markAway);
+  window.addEventListener('focus', _markBack);
 
   // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 45초마다 lastActive 갱신
   // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
