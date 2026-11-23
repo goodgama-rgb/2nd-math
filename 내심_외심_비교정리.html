@@ -1077,8 +1077,12 @@ function checkEx(id){
     if(document.visibilityState === 'hidden') _markAway();
     else if(document.visibilityState === 'visible') _markBack();
   });
-  window.addEventListener('blur', _markAway);
-  window.addEventListener('focus', _markBack);
+  // blur/focus는 새로고침・페이지 이동 때 브라우저가 자체적으로 잠깐 일으키는 경우가 있어서(실제
+  // 딴짓이 아닌데도 걸림), 페이지 로드 직후 잠깐은 무시하고 그 뒤부터 감시를 켬.
+  setTimeout(function(){
+    window.addEventListener('blur', _markAway);
+    window.addEventListener('focus', _markBack);
+  }, 4000);
 
   // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 45초마다 lastActive 갱신
   // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
