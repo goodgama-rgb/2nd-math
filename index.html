@@ -850,8 +850,10 @@ let _focusAwaySince = null;
 const FOCUS_MIN_AWAY_MS = 3000; // 3초 미만의 짧은 전환(탭 깜빡임, 주소창 클릭 등)은 '딴짓'으로 안 침
 let unsubFocusLock = null;
 let _heartbeatBound = false;
-function _focusGuardMarkAway(){ if(_focusAwaySince === null) _focusAwaySince = Date.now(); }
+let _focusGuardBfcacheSuppress = false;
+function _focusGuardMarkAway(){ if(!_focusGuardBfcacheSuppress && _focusAwaySince === null) _focusAwaySince = Date.now(); }
 function _focusGuardMarkBack(){
+  if(_focusGuardBfcacheSuppress){ _focusAwaySince = null; return; }
   if(_focusAwaySince === null) return;
   const elapsed = Date.now() - _focusAwaySince;
   _focusAwaySince = null;
@@ -861,6 +863,15 @@ function _focusGuardMarkBack(){
   setDoc(ref, { locked:true, focusLossByDate: { [today]: increment(1) } }, { merge:true })
     .catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
 }
+// 뒤로/앞으로가기로 bfcache(페이지가 메모리에 그대로 보존된 상태)에서 복원되면, 실제로 자리를
+// 비운 게 아닌데도 그 복원 자체가 visibilitychange/focus를 일으켜 재잠금되는 문제가 있었음 —
+// 복원 시점 전후로 잠깐 감지를 꺼서 막음.
+window.addEventListener('pageshow', (e)=>{
+  if(!e.persisted) return;
+  _focusGuardBfcacheSuppress = true;
+  _focusAwaySince = null;
+  setTimeout(()=>{ _focusGuardBfcacheSuppress = false; }, 1000);
+});
 function initFocusGuard(cls, num){
   // 서버의 잠금 상태를 실시간 구독(문서 1개짜리라 비용 부담 적음) — 선생님이 관리자 페이지에서
   // 원격으로 잠금 해제하면 학생 화면에서 새로고침 없이 바로 닫히고, 탭을 몰래 닫았다 다시 열어도

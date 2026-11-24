@@ -794,8 +794,10 @@ initExamples();
   // 탭이 완전히 가려지는 경우(visibilitychange)와, 창을 부분화면으로 띄워둔 채 다른 창으로
   // 포커스만 옮기는 경우(blur/focus)를 둘 다 감지함. 둘 다 FOCUS_MIN_AWAY_MS 이상 지속돼야 집계.
   let _awaySince = null;
-  function _markAway(){ if(_awaySince === null) _awaySince = Date.now(); }
+  let _bfcacheSuppress = false;
+  function _markAway(){ if(!_bfcacheSuppress && _awaySince === null) _awaySince = Date.now(); }
   function _markBack(){
+    if(_bfcacheSuppress){ _awaySince = null; return; }
     if(_awaySince === null) return;
     const elapsed = Date.now() - _awaySince;
     _awaySince = null;
@@ -807,6 +809,14 @@ initExamples();
         .catch(function(e){ console.warn('focus-loss log failed', e); showLock(1); });
     });
   }
+  // 뒤로/앞으로가기로 bfcache에서 복원되면 그 자체가 visibilitychange/focus를 일으켜
+  // 재잠금되는 문제가 있었음 — 복원 시점 전후로 잠깐 감지를 꺼서 막음.
+  window.addEventListener('pageshow', function(e){
+    if(!e.persisted) return;
+    _bfcacheSuppress = true;
+    _awaySince = null;
+    setTimeout(function(){ _bfcacheSuppress = false; }, 1000);
+  });
   document.addEventListener('visibilitychange', function(){
     if(document.visibilityState === 'hidden') _markAway();
     else if(document.visibilityState === 'visible') _markBack();
