@@ -1067,6 +1067,7 @@ goToProve();
   }
   function todayStr(){ return new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul' }).format(new Date()); }
   function studentRef(db){ return db.collection('classStudents').doc(String(_cls)).collection('students').doc(String(_num)); }
+  function heartbeatRef(db){ return db.collection('heartbeat').doc(String(_cls)).collection('students').doc(String(_num)); }
 
   // ---- 잠금 화면 UI ----
   const overlay = document.createElement('div');
@@ -1161,11 +1162,13 @@ goToProve();
     window.addEventListener('focus', _markBack);
   }, 4000);
 
-  // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 45초마다 lastActive 갱신
+  // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 5분마다 lastActive 갱신
   // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
+  // classStudents 문서가 아니라 별도 heartbeat 문서에 써서, 잠금상태 실시간 구독이
+  // 하트비트 자체 때문에 매번 다시 울리며 읽기로 집계되는 걸 막음(2026-11-24 할당량 사고).
   function _sendHeartbeat(){
     if(document.visibilityState !== 'visible') return;
-    ensureDb().then((db)=> studentRef(db).set({ lastActive: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true }).catch(function(){}));
+    ensureDb().then((db)=> heartbeatRef(db).set({ lastActive: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true }).catch(function(){}));
   }
   _sendHeartbeat();
   setInterval(_sendHeartbeat, 300000);

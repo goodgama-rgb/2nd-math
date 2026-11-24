@@ -904,13 +904,15 @@ function initFocusGuard(cls, num){
     window.addEventListener('focus', ()=>{ if(studentInfo) _focusGuardMarkBack(); });
   }, 4000);
 
-  // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 45초마다 lastActive 갱신
+  // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 5분마다 lastActive 갱신
   // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
+  // classStudents 문서가 아니라 별도 heartbeat 문서에 써서, 잠금상태 실시간 구독이
+  // 하트비트 자체 때문에 매번 다시 울리며 읽기로 집계되는 걸 막음(2026-11-24 할당량 사고).
   if(!_heartbeatBound){
     _heartbeatBound = true;
     const sendHeartbeat = ()=>{
       if(document.visibilityState !== 'visible' || !studentInfo) return;
-      setDoc(studentDocRef(studentInfo.cls, studentInfo.num), { lastActive: serverTimestamp() }, { merge:true }).catch(()=>{});
+      setDoc(heartbeatRef(studentInfo.cls, studentInfo.num), { lastActive: serverTimestamp() }, { merge:true }).catch(()=>{});
     };
     sendHeartbeat();
     setInterval(sendHeartbeat, 300000);
@@ -936,6 +938,10 @@ window.submitStudentInfo = function(){
 // ---- 학생 활동 기록 (랭킹용): classStudents/{반}/students/{번호} ----
 function studentDocRef(cls, num){
   return doc(db, 'classStudents', String(cls), 'students', String(num));
+}
+// 하트비트 전용 별도 문서(잠금상태 구독과 분리해서 읽기 증폭을 막기 위함)
+function heartbeatRef(cls, num){
+  return doc(db, 'heartbeat', String(cls), 'students', String(num));
 }
 
 function logVisit(cls, num, name){
@@ -1335,6 +1341,13 @@ async function loadAdminStudents(cls){
     const snap = await getDocs(collection(db, 'classStudents', String(cls), 'students'));
     const students = [];
     snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
+    // lastActive(접속 현황용)는 별도 heartbeat 컬렉션에서 가져와 덧붙임(읽기 증폭 방지용 분리)
+    try{
+      const hbSnap = await getDocs(collection(db, 'heartbeat', String(cls), 'students'));
+      const hbMap = {};
+      hbSnap.forEach(d=> hbMap[d.id] = d.data().lastActive);
+      students.forEach(s=>{ if(hbMap[s.id]) s.lastActive = hbMap[s.id]; });
+    }catch(e){ console.warn('heartbeat load failed', e); }
     adminStudentsCache = students;
     renderAdminStudents(students);
     if(document.getElementById('admin-calendar-modal').style.display === 'flex'){
