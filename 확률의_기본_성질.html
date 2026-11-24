@@ -1556,7 +1556,7 @@ stage0();
     ensureDb().then((db)=> studentRef(db).set({ lastActive: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true }).catch(function(){}));
   }
   _sendHeartbeat();
-  setInterval(_sendHeartbeat, 45000);
+  setInterval(_sendHeartbeat, 300000);
 })();
 </script>
 

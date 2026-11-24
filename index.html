@@ -913,7 +913,7 @@ function initFocusGuard(cls, num){
       setDoc(studentDocRef(studentInfo.cls, studentInfo.num), { lastActive: serverTimestamp() }, { merge:true }).catch(()=>{});
     };
     sendHeartbeat();
-    setInterval(sendHeartbeat, 45000);
+    setInterval(sendHeartbeat, 300000);
   }
 }
 
