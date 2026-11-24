@@ -812,7 +812,7 @@ function enterAsStudent(grade, cls, num, name, countAsVisit){
 }
 
 // ---- 딴짓(알트탭/다른 창) 감지: 포커스가 이탈했다 돌아오면 잠금 화면 — 선생님 비밀번호로만 해제 ----
-const FOCUS_LOCK_HASH = 'c99fabb46223864d27d154016c6f3eeb7406c61baa05d3e26999fd17e36acee5';
+const FOCUS_LOCK_HASH = 'afb7797d0fca3990f45e4550bb773ec2d45cf07a46d980016fcd45c062cf13e9';
 async function sha256Hex(text){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map(b=> b.toString(16).padStart(2,'0')).join('');

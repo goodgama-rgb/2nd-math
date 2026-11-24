@@ -1684,7 +1684,7 @@ document.getElementById('hubBackLink').href = 'index.html' + location.search;
   const _cls = _p.get('cls'), _num = _p.get('num');
   if(!_cls || !_num || _num === '99') return; // 실제 학생 세션이 아니면(미배치/관리자 미리보기) 감지 안 함
 
-  const FOCUS_LOCK_HASH = 'c99fabb46223864d27d154016c6f3eeb7406c61baa05d3e26999fd17e36acee5';
+  const FOCUS_LOCK_HASH = 'afb7797d0fca3990f45e4550bb773ec2d45cf07a46d980016fcd45c062cf13e9';
   const FOCUS_MIN_AWAY_MS = 3000; // 3초 미만의 짧은 전환(탭 깜빡임, 주소창 클릭 등)은 '딴짓'으로 안 침
   const MSG_TITLE = "다른 화면에 접속하여 수업 시간 외 활동을 한 것이 감지되었습니다.";
   function msgFor(n){
