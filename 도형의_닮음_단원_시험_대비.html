@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>도형의 닮음 단원 시험 대비</title>
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#4a4a6a;--ink3:#9090b0;
+  --indigo:#4f46e5;--indigo-l:#e0e7ff;--indigo-ll:#eef2ff;
+  --green:#16a34a;--green-l:#dcfce7;--green-ll:#F0FDF4;
+  --red:#dc2626;--red-l:#fee2e2;
+  --r:12px;--shadow:0 2px 12px rgba(26,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--indigo-ll);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.hdr{background:var(--indigo);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.hdr-title{font-size:16px;font-weight:700}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:var(--r);border:1px solid #e0e7ff;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.seg{text-decoration:overline;text-decoration-thickness:1.2px}
+.parasym{display:inline-block;transform:skewX(-16deg);font-weight:400}
+.sub{font-size:12.5px;color:var(--ink3);font-weight:600}
+
+.split-layout{display:flex;gap:18px;align-items:flex-start}
+.split-left{flex:0 0 450px;position:sticky;top:16px}
+.split-right{flex:1 1 auto;min-width:0}
+@media (max-width:980px){
+  .split-layout{display:block}
+  .split-left{position:static;width:100%;margin-bottom:14px}
+}
+
+/* 진행 표시 */
+.qdots{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.qdot{min-width:40px;height:34px;padding:0 8px;border-radius:18px;border:2px solid #d8ddfb;background:#fff;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:14px;color:var(--ink3);cursor:pointer;font-family:inherit;position:relative}
+.qdot.cur{border-color:var(--indigo);background:var(--indigo);color:#fff}
+.qdot.done{border-color:var(--green);background:var(--green-l);color:#14532d}
+.qdot.miss{border-color:var(--red);background:var(--red-l);color:#991b1b}
+.qdot .hmark{position:absolute;top:-8px;right:-6px;font-size:11px}
+.qtitle{font-weight:800;font-size:15px;color:var(--indigo);margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qbadge{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:12px;background:var(--indigo);color:#fff;font-size:13px;font-weight:800;padding:0 7px}
+.try-tag{display:inline-block;font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px;background:#eef2ff;color:var(--indigo)}
+.try-tag.last{background:#fef3c7;color:#92400e}
+.res-tag{font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px}
+.res-tag.ok{background:var(--green-l);color:#14532d}.res-tag.no{background:var(--red-l);color:#991b1b}
+
+.prob-box{display:block;font-size:16.5px;font-weight:800;line-height:1.75;color:var(--ink);background:#f0fdf4;border:1.5px solid #86efac;border-left:6px solid #16a34a;border-radius:10px;padding:9px 14px 10px;margin:10px 0}
+.prob-box::before{content:'📋 문제';display:block;font-size:11.5px;font-weight:800;color:#15803d;margin-bottom:1px}
+.prob-box u{text-decoration-color:#16a34a;text-decoration-thickness:2.5px;text-underline-offset:4px}
+
+/* 계산기 */
+.calc-toggle{border:none;border-radius:20px;padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--ink);color:#fff;font-family:inherit}
+.calc-toggle.active{background:var(--indigo)}
+.calc-panel{display:none;width:230px;margin:10px auto 0;background:#fbfcff;border-radius:14px;border:1.5px solid #d8ddfb;box-shadow:var(--shadow);padding:12px}
+.calc-panel.show{display:block}
+.calc-display{background:#1a1a2e;color:#fff;border-radius:8px;padding:10px 12px;text-align:right;font-size:20px;font-weight:700;margin-bottom:8px;min-height:30px;overflow-x:auto;white-space:nowrap}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.calc-btn{border:none;border-radius:8px;padding:10px 0;font-size:14px;font-weight:700;cursor:pointer;background:var(--indigo-ll);color:var(--ink);font-family:inherit}
+.calc-btn:hover{background:var(--indigo-l)}
+.calc-btn.op{background:var(--indigo);color:#fff}
+.calc-btn.fn{background:#f3f0ff;color:#6d28d9}
+.calc-btn.eq{background:var(--green);color:#fff}
+.calc-btn.clear{background:var(--red-l);color:var(--red)}
+
+.count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:14px;font-weight:700}
+.blank{display:inline-block;width:70px;border:none;border-bottom:2px solid var(--indigo);background:transparent;text-align:center;font-weight:700;font-size:15px;font-family:inherit;padding:2px 4px;margin:0 2px;color:var(--indigo)}
+.blank.wide{width:90px}
+.blank:focus{outline:none;border-bottom-color:#3730a3;background:var(--indigo-ll)}
+.fline{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:15px;font-weight:800}
+.fline .lab{font-size:14px;color:var(--ink2);text-align:center;line-height:1.4}
+.btn{border:none;border-radius:12px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.btn:hover{background:#4338ca}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-check{background:var(--green)}
+.btn-check:hover{background:#15803d}
+.btn-soft{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo)}
+.btn-soft:hover{background:var(--indigo-ll)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.feedback{text-align:center;font-size:13.5px;font-weight:700;min-height:20px;margin-top:8px;line-height:1.6}
+.feedback.success{color:var(--green)}
+.feedback.error{color:var(--red)}
+.feedback.info{color:#b45309}
+
+/* 문제 그림 */
+.fig{background:#fbfcff;border:1.5px solid #e0e7ff;border-radius:12px;padding:12px;margin-bottom:10px;text-align:center}
+.fig-cap{font-size:12.5px;font-weight:700;color:var(--ink2);margin-top:8px;line-height:1.6}
+.geosvg{width:100%;height:auto;display:block;max-width:360px;margin:0 auto}
+.tri-shape{fill-opacity:.08}
+.vlabel{font-size:14px;font-weight:800;text-anchor:middle}
+.sidecurve{fill:none;stroke:#9098b5;stroke-width:1.4;stroke-dasharray:4 3}
+.edgelen{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#4a5568}
+.angle-num{font-size:11.5px;font-weight:800;text-anchor:middle}
+
+/* 선택형 */
+.choice-col{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.choice-btn{padding:9px 14px;border-radius:10px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;text-align:left;line-height:1.5}
+.choice-btn.correct{background:var(--green);color:#fff;border-color:var(--green)}
+.choice-btn.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.choice-btn:disabled{cursor:default}
+.choice-btn .cno{color:var(--indigo);margin-right:4px}
+.choice-btn.correct .cno,.choice-btn.wrong .cno{color:#fff}
+.choice-btn.sel{background:#e0e7ff;border-color:var(--indigo);box-shadow:0 0 0 2px #a5b4fc}
+.choice-btn.sel .cno::before{content:'👉 '}
+
+/* 결과 */
+.result-wrap{text-align:center;padding:24px 10px}
+.result-icon{font-size:48px;margin-bottom:10px}
+.result-score{font-size:20px;font-weight:800;color:var(--indigo);margin:8px 0}
+.res-list{list-style:none;max-width:560px;margin:12px auto;text-align:left}
+.res-list li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;font-weight:700;font-size:13.5px;margin-bottom:6px;background:#f8fafc;border:1.5px solid #e2e8f0}
+.res-list .tag{margin-left:auto;font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px;white-space:nowrap}
+.res-list .tag.one{background:var(--green-l);color:#14532d}
+.res-list .tag.fb{background:#fef3c7;color:#92400e}
+.sec-nm{width:150px;font-size:12.5px}
+.sec-bar{flex:1;height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden}
+.sec-bar i{display:block;height:100%;background:var(--green);border-radius:6px}
+.res-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;max-width:560px;margin:10px auto 0}
+.rg{border:2px solid #e2e8f0;background:#fff;border-radius:10px;padding:4px 0;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.4;color:var(--ink)}
+.rg.ok{border-color:#86efac;background:var(--green-ll)}.rg.no{border-color:#fca5a5;background:var(--red-l)}
+@media (max-width:560px){ .res-grid{grid-template-columns:repeat(5,1fr)} .sec-nm{width:100px} }
+.primary-btn{padding:11px 26px;border-radius:8px;background:var(--indigo);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;margin-right:8px}
+.restart-btn{padding:11px 26px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+/* 시험 대비 시작화면 */
+.start-wrap{text-align:center;padding:18px 8px}
+.start-icon{font-size:48px}
+.start-wrap h2{font-size:24px;color:var(--indigo);margin:4px 0 6px}
+.start-sub{font-size:15px;font-weight:700;color:var(--ink2);margin-bottom:10px}
+.start-list{display:inline-block;text-align:left;font-size:14px;font-weight:600;line-height:2;color:var(--ink2);margin:4px 0 8px 18px}
+
+.nav-row{margin-top:14px;border-top:1px dashed #e0e7ff;padding-top:10px}
+.help-box{margin-top:10px;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:12px;padding:10px 12px;text-align:center}
+.help-h{font-size:13px;font-weight:900;color:#6d28d9;margin-bottom:4px}
+.think{text-align:left;font-size:14px;font-weight:700;line-height:1.9;color:#3b0764;margin:2px 0 4px 18px}
+.help-btn{border:2px dashed #a5b4fc;background:#fff;color:var(--indigo);border-radius:12px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+.help-btn:disabled{opacity:.5;cursor:default}
+
+/* 팝업 */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(26,26,46,0.25);max-height:92vh;overflow-y:auto}
+.modal-icon{font-size:34px;margin-bottom:8px}
+.modal-text{font-size:14px;line-height:1.7;color:var(--ink);font-weight:600;margin-bottom:12px}
+.modal-btn{border:none;border-radius:10px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;font-family:inherit}
+.modal-btn:disabled{opacity:.4;cursor:default}
+
+/* 계산 연습장 */
+.draw-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.draw-toolbar-label{font-size:12px;color:var(--ink3);font-weight:700;margin-right:2px}
+.mode-btn,.eraser-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #d8ddfb;background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit}
+.mode-btn.active,.eraser-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d8ddfb;cursor:pointer;padding:0;flex-shrink:0}
+.color-swatch.active{box-shadow:0 0 0 2.5px var(--indigo)}
+.draw-wrap{position:relative;margin-bottom:6px}
+.ref-area:not(:empty){border:1px dashed #d8ddfb;border-bottom:none;border-radius:10px 10px 0 0;padding:6px;background:#fff}
+.ref-area:not(:empty)+.scratch-area{border-top:none;border-radius:0 0 10px 10px;height:160px}
+.scratch-area{position:relative;height:320px;background:#fbfcff;border:1px dashed #d8ddfb;border-radius:10px;background-image:repeating-linear-gradient(#fbfcff 0 29px,#eef0fb 29px 30px)}
+.ink-canvas{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.board-tip{text-align:center;font-size:12.5px;color:var(--ink3);font-weight:700;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" id="hubBackLink" style="background:rgba(255,255,255,.2);color:#fff;text-decoration:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">← 학습 선택 목록으로 돌아가기</a>
+  <span class="hdr-title">📝 도형의 닮음 단원 시험 대비</span>
+  <button id="adminBtn" onclick="openAdminModal()" style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:inherit">🔐 관리자 모드</button>
+</div>
+<script>
+document.getElementById('hubBackLink').href = 'index.html' + location.search;
+(function(){
+  var _hb = document.getElementById('hubBackLink');
+  var _urlNum = new URLSearchParams(location.search).get('num');
+  var _isPreview = !_urlNum || _urlNum === '99';
+  _hb.addEventListener('click', function(e){
+    if(!_isPreview && !window._activityDone && !confirm('푼 곳까지는 이 기기에 저장돼요. 지금 나갈까요?')){
+      e.preventDefault();
+    }
+  });
+  if(!_isPreview){
+    window.addEventListener('beforeunload', function(e){
+      if(!window._activityDone){ e.preventDefault(); e.returnValue=''; }
+    });
+  }
+})();
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const s = { cls:p.get('cls'), num:p.get('num'), name:p.get('name'), id:p.get('id')||'similarity-exam' };
+  window._hubStudent = s;
+  let _db=null;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyDUFYrqaVL12fZ7ZhExVyyjLWSE_XJ_bHs",
+      authDomain: "nd-deogi-math-hub.firebaseapp.com",
+      projectId: "nd-deogi-math-hub",
+      storageBucket: "nd-deogi-math-hub.firebasestorage.app",
+      messagingSenderId: "414096731864",
+      appId: "1:414096731864:web:a799f9450859c498b6b1ad"
+    });
+    _db = firebase.firestore();
+  }catch(e){ console.warn('hub firebase init:', e); }
+  let _reported=false;
+  window._reportHubComplete = function(){
+    window._activityDone = true;
+    if(_reported || !_db || !s.cls || !s.num) return;
+    _reported=true;
+    window._pendingQuizComplete = _db.collection('classStudents').doc(String(s.cls)).collection('students').doc(String(s.num))
+      .set({ name: s.name||'', itemsOpened: firebase.firestore.FieldValue.arrayUnion(s.id), quizSolveCount: firebase.firestore.FieldValue.increment(1), lastActive: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+      .catch(err=>console.warn('hub complete log failed', err));
+  };
+  document.getElementById('hubBackLink').addEventListener('click', function(e){
+    if(!window._pendingQuizComplete || e.defaultPrevented) return;
+    e.preventDefault();
+    const href = this.href;
+    Promise.race([window._pendingQuizComplete.catch(()=>{}), new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = href; });
+  });
+})();
+function finishToHub(){ document.getElementById('hubBackLink').click(); }
+</script>
+
+<div class="main">
+  <div class="screen active" id="scStart"><div class="card"><div class="start-wrap" id="startBox"></div></div></div>
+
+  <div class="screen" id="scQuiz">
+    <div class="qdots" id="qdots"></div>
+    <div class="split-layout">
+      <div class="split-left card" id="qLeft">
+        <div id="pgPen">
+          <div class="draw-toolbar">
+            <span class="draw-toolbar-label">✏️ 계산 연습장:</span>
+            <button class="mode-btn" id="pgPenBtn" onclick="drawSetMode('pg','pen')">✏️ 펜(필기)</button>
+            <button class="color-swatch active" style="background:#1a1a2e" onclick="drawSelectColor('pg','#1a1a2e',this)" title="검정"></button>
+            <button class="color-swatch" style="background:#dc2626" onclick="drawSelectColor('pg','#dc2626',this)" title="빨강"></button>
+            <button class="color-swatch" style="background:#2563eb" onclick="drawSelectColor('pg','#2563eb',this)" title="파랑"></button>
+            <button class="color-swatch" style="background:#16a34a" onclick="drawSelectColor('pg','#16a34a',this)" title="초록"></button>
+            <button class="color-swatch" style="background:#eab308" onclick="drawSelectColor('pg','#eab308',this)" title="노랑"></button>
+          </div>
+          <div class="draw-toolbar">
+            <button class="eraser-btn" id="pgEraserBtn" onclick="drawToggleEraser('pg')">🧽 지우개</button>
+            <button class="mode-btn" id="pgPointerBtn" onclick="drawSetMode('pg','pointer')">🖱️ 마우스(화면 움직이기)</button>
+            <button class="calc-toggle" id="calcToggleBtn" onclick="calcToggle()">🧮 계산기</button>
+          </div>
+          <div class="draw-wrap" id="pgDrawWrap">
+            <div class="ref-area" id="pgRef"></div>
+            <div class="scratch-area"></div>
+            <canvas id="pgInk" class="ink-canvas"></canvas>
+          </div>
+          <div class="board-tip">문제가 바뀌면 연습장은 새로 비워져요.</div>
+          <div class="calc-panel" id="calcPanel">
+            <div class="calc-display" id="calcDisplay">0</div>
+            <div class="calc-grid">
+              <button class="calc-btn" onclick="calcDigit('7')">7</button><button class="calc-btn" onclick="calcDigit('8')">8</button><button class="calc-btn" onclick="calcDigit('9')">9</button><button class="calc-btn op" onclick="calcOp('÷')">÷</button>
+              <button class="calc-btn" onclick="calcDigit('4')">4</button><button class="calc-btn" onclick="calcDigit('5')">5</button><button class="calc-btn" onclick="calcDigit('6')">6</button><button class="calc-btn op" onclick="calcOp('×')">×</button>
+              <button class="calc-btn" onclick="calcDigit('1')">1</button><button class="calc-btn" onclick="calcDigit('2')">2</button><button class="calc-btn" onclick="calcDigit('3')">3</button><button class="calc-btn op" onclick="calcOp('−')">−</button>
+              <button class="calc-btn" onclick="calcDigit('0')">0</button><button class="calc-btn" onclick="calcDigit('.')">.</button><button class="calc-btn fn" onclick="calcSquare()">x²</button><button class="calc-btn op" onclick="calcOp('+')">+</button>
+              <button class="calc-btn clear" onclick="calcClear()">C</button><button class="calc-btn fn" onclick="calcBackspace()">⌫</button><button class="calc-btn eq" onclick="calcEquals()" style="grid-column:span 2">=</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="split-right card" id="qArea"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scResult">
+    <div class="card"><div class="result-wrap" id="resultBox"></div></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="popModal"><div class="modal-box" id="popBox"></div></div>
+
+<div class="modal-overlay" id="adminPwModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-text">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" class="blank" style="width:160px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div id="adminPwErr" style="color:var(--red);font-size:12.5px;font-weight:700;min-height:18px;margin-bottom:4px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="modal-btn" onclick="checkAdminPassword()">확인</button>
+      <button class="modal-btn" style="background:#9090b0" onclick="document.getElementById('adminPwModal').classList.remove('show')">취소</button>
+    </div>
+  </div>
+</div>
+<div id="adminPanel" style="display:none;position:fixed;bottom:16px;left:16px;width:400px;max-height:70vh;overflow-y:auto;background:#fff;border:2px solid var(--indigo);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(26,26,46,0.3);z-index:70;font-size:12px;line-height:1.75">
+  <div style="font-weight:800;color:var(--indigo);margin-bottom:8px">🔐 관리자 모드</div>
+  <div id="adminPanelBody"></div>
+  <button onclick="document.getElementById('adminPanel').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--ink3);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">숨기기</button>
+</div>
+
+<script>
+/* ════════════════════════════════
+   공용 도구
+════════════════════════════════ */
+function $(id){ return document.getElementById(id); }
+let RNG = Math.random;
+function seeded(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rnd = () => RNG();
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const pick1 = arr => arr[Math.floor(rnd()*arr.length)];
+const randInt = (lo,hi) => lo + Math.floor(rnd()*(hi-lo+1));
+function showScreen(id){ document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); $(id).classList.add('active'); window.scrollTo(0,0); }
+function setFb(id, ok, msg){ const fb=$(id); if(!fb) return; fb.className='feedback '+(ok===true?'success':ok==='info'?'info':'error'); fb.innerHTML=msg; }
+const RETHINK = '❌ 다시 한 번 생각해 보세요!';
+const think = (...qs) => ({ kind:'think', qs });
+
+/* ── 기하 헬퍼 (기존 닮음 단원 파일들과 동일한 방식) ── */
+function polar(ox,oy,deg,len){ const r=deg*Math.PI/180; return [ox+Math.cos(r)*len, oy-Math.sin(r)*len]; }
+function dist(p,q){ return Math.hypot(p[0]-q[0],p[1]-q[1]); }
+function lerp(p,q,t){ return [p[0]+(q[0]-p[0])*t, p[1]+(q[1]-p[1])*t]; }
+function unitVec(from,to){ const dx=to[0]-from[0],dy=to[1]-from[1],l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+function bboxCenterOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; }
+function bboxSizeOf(pts){ const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); return { w:Math.max(...xs)-Math.min(...xs), h:Math.max(...ys)-Math.min(...ys) }; }
+function outwardLabel(p, centroid, d){ const dx=p[0]-centroid[0], dy=p[1]-centroid[1], len=Math.hypot(dx,dy)||1; return [p[0]+dx/len*d, p[1]+dy/len*d]; }
+function ptsToStr(pts){ return pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '); }
+function fitGeoToCanvas(g, targetCx, targetCy, maxW, maxH){
+  const keys = Object.keys(g);
+  const pts = keys.map(k=>g[k]);
+  const sz=bboxSizeOf(pts), cen=bboxCenterOf(pts);
+  const scale=Math.min(1, maxW/sz.w, maxH/sz.h);
+  const out={};
+  keys.forEach(k=>{ const p=g[k]; out[k]=[targetCx+(p[0]-cen[0])*scale, targetCy+(p[1]-cen[1])*scale]; });
+  return out;
+}
+function sideLabelSVGAt(p1, p2, centroid, value, bulge, t, color){
+  t = (t===undefined)?0.5:t; bulge = bulge||14;
+  const mid=[p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  const ex=p2[0]-p1[0], ey=p2[1]-p1[1], elen=Math.hypot(ex,ey)||1;
+  let dx=-ey/elen, dy=ex/elen;
+  const toMid=[mid[0]-centroid[0], mid[1]-centroid[1]];
+  if(dx*toMid[0]+dy*toMid[1] < 0){ dx=-dx; dy=-dy; }
+  const ctrl=[mid[0]+dx*bulge, mid[1]+dy*bulge];
+  const labelPt=[mid[0]+dx*(bulge+12), mid[1]+dy*(bulge+12)];
+  const strokeAttr = color ? ` style="stroke:${color}"` : '';
+  const fillAttr = color ? ` style="fill:${color}"` : '';
+  return `<path class="sidecurve"${strokeAttr} d="M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}"></path>`+
+    `<text class="edgelen"${fillAttr} x="${labelPt[0].toFixed(1)}" y="${labelPt[1].toFixed(1)}">${value}</text>`;
+}
+function tickMarkSVG(p1,p2,count,color){
+  const mid=lerp(p1,p2,0.5), dir=unitVec(p1,p2);
+  const perp=[-dir[1]*4, dir[0]*4];
+  let html='';
+  for(let i=0;i<count;i++){
+    const off=(i-(count-1)/2)*5;
+    const c=[mid[0]+dir[0]*off, mid[1]+dir[1]*off];
+    html+=`<line x1="${(c[0]-perp[0]).toFixed(1)}" y1="${(c[1]-perp[1]).toFixed(1)}" x2="${(c[0]+perp[0]).toFixed(1)}" y2="${(c[1]+perp[1]).toFixed(1)}" stroke="${color||'#4a5568'}" stroke-width="1.8"></line>`;
+  }
+  return html;
+}
+function parallelTickSVG(p1,p2,color){
+  const mid=lerp(p1,p2,0.5), dir=unitVec(p1,p2);
+  const tip=[mid[0]+dir[0]*8, mid[1]+dir[1]*8];
+  const w=[-dir[1]*3.6, dir[0]*3.6];
+  return `<polygon points="${ptsToStr([tip,[mid[0]-dir[0]*8+w[0],mid[1]-dir[1]*8+w[1]],[mid[0]-dir[0]*8-w[0],mid[1]-dir[1]*8-w[1]]])}" fill="${color||'#9098b5'}"></polygon>`;
+}
+function rightAngleMarkSVG(vertex, dirA, dirB, color, size){
+  size=size||11;
+  const p1=[vertex[0]+dirA[0]*size, vertex[1]+dirA[1]*size];
+  const p3=[vertex[0]+dirB[0]*size, vertex[1]+dirB[1]*size];
+  const p2=[p1[0]+dirB[0]*size, p1[1]+dirB[1]*size];
+  return `<polyline points="${ptsToStr([p1,p2,p3])}" fill="none" stroke="${color||'#333a4d'}" stroke-width="1.6"></polyline>`;
+}
+function angleArcSVG(vertex, dirA, dirB, color, arcR){
+  arcR = arcR||15;
+  const a1=Math.atan2(-dirA[1],dirA[0]), a2=Math.atan2(-dirB[1],dirB[0]);
+  let diff=a2-a1; while(diff<=-Math.PI) diff+=2*Math.PI; while(diff>Math.PI) diff-=2*Math.PI;
+  const sweep = diff>0?0:1;
+  const x1=vertex[0]+dirA[0]*arcR, y1=vertex[1]+dirA[1]*arcR, x2=vertex[0]+dirB[0]*arcR, y2=vertex[1]+dirB[1]*arcR;
+  return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${arcR} ${arcR} 0 0 ${sweep} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.2"></path>`;
+}
+function angleMarkerSVG(vertex, dirA, dirB, color, label, arcR){
+  arcR = arcR||15;
+  let html = angleArcSVG(vertex, dirA, dirB, color, arcR);
+  if(label!==undefined){
+    const bis=[dirA[0]+dirB[0], dirA[1]+dirB[1]]; const bl=Math.hypot(bis[0],bis[1])||1;
+    const lp=[vertex[0]+bis[0]/bl*(arcR+13), vertex[1]+bis[1]/bl*(arcR+13)];
+    html += `<text class="angle-num" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${color}">${label}</text>`;
+  }
+  return html;
+}
+function renameTri(g, names){ return { [names[0]]:g.A, [names[1]]:g.B, [names[2]]:g.C }; }
+// GEO_UNIT: 변의 길이(cm) 값을 그대로 좌표로 쓰면 삼각형이 몇 px짜리로 작게 그려지므로(fitGeoToCanvas는 축소만 하고 확대는 안 함),
+// 여기서 cm당 px 배율을 곱해 항상 충분히 큰 원본 크기로 만든 뒤 fitGeoToCanvas에서 화면 크기에 맞게 축소한다.
+const GEO_UNIT = 16;
+function triFromSSS(ab,bc,ca){
+  ab*=GEO_UNIT; bc*=GEO_UNIT; ca*=GEO_UNIT;
+  const cosB = (ab*ab+bc*bc-ca*ca)/(2*ab*bc);
+  const angB = Math.acos(Math.max(-1,Math.min(1,cosB)))*180/Math.PI;
+  const B=[0,0], C=polar(0,0,0,bc), A=polar(0,0,angB,ab);
+  return {A,B,C};
+}
+function triFromASA(angA, angB, BC){
+  BC*=GEO_UNIT;
+  const angC = 180-angA-angB;
+  const k = BC/Math.sin(angA*Math.PI/180);
+  const AC = k*Math.sin(angB*Math.PI/180);
+  const AB = k*Math.sin(angC*Math.PI/180);
+  const A=[0,0], B=polar(0,0,0,AB), C=polar(0,0,angA,AC);
+  return {A,B,C};
+}
+function fig(body, cap){ return `<div class="fig">${body}${cap?`<div class="fig-cap">${cap}</div>`:''}</div>`; }
+function svgFig(vbw,vbh,inner,cap){ return fig(`<svg viewBox="0 0 ${vbw} ${vbh}" class="geosvg">${inner}</svg>`, cap); }
+// names: ['A','B','C'] 같은 3글자 꼭짓점 이름 배열. g[이름]으로 좌표 접근.
+function triSceneSVG(g, names, opts){
+  opts = opts||{};
+  const [n1,n2,n3] = names;
+  const color = opts.color || '#4f46e5';
+  const cen = bboxCenterOf([g[n1],g[n2],g[n3]]);
+  let html = `<polygon class="tri-shape" points="${ptsToStr([g[n1],g[n2],g[n3]])}" fill="${color}" stroke="${color}" stroke-width="2.2"></polygon>`;
+  const sl = opts.sideLabels||{};
+  [[n1,n2],[n2,n3],[n3,n1]].forEach(([a,b])=>{
+    const key=a+b, key2=b+a;
+    const val = sl[key]!==undefined ? sl[key] : sl[key2];
+    if(val!==undefined) html += sideLabelSVGAt(g[a],g[b],cen,val,12,0.5,opts.labelColor||color);
+  });
+  (opts.angles||[]).forEach(a=>{
+    const v=g[a.vertex], d1=unitVec(v,g[a.ray1]), d2=unitVec(v,g[a.ray2]);
+    html += angleMarkerSVG(v,d1,d2,a.color||color,a.label,a.r||15);
+  });
+  (opts.rightAngles||[]).forEach(a=>{
+    const v=g[a.vertex], d1=unitVec(v,g[a.ray1]), d2=unitVec(v,g[a.ray2]);
+    html += rightAngleMarkSVG(v,d1,d2,a.color||color);
+  });
+  names.forEach(k=>{ const lp=outwardLabel(g[k],cen,15); html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${color}">${k}</text>`; });
+  return html;
+}
+
+/* ════════════════════════════════
+   20문제 만들기
+   q: { sec, text, figHTML, ans:{type:'num'|'num2'|'choice', ...}, help, note(관리자) }
+════════════════════════════════ */
+const SECS = ['삼각형의 닮음 조건','교차형(SAS) 닮음','직각삼각형의 닮음(고도형)','평행선과 선분의 길이의 비','삼각형의 중점연결정리','평행선 사이의 선분의 길이의 비','삼각형의 무게중심','정삼각형의 외심·내심·무게중심','섞어서'];
+const TRIPLES = [[4,5,6],[5,6,7],[5,7,8],[6,7,9],[6,8,9],[7,8,10],[7,9,11],[8,9,10]];
+const GENS = [
+  // 1. 판별형 — SSS/SAS/AA/닮음아님
+  function(){
+    const kind = pick1(['sss','sas','aa','none']);
+    const OPTS_ALL = ['SSS 닮음이다', 'SAS 닮음이다', 'AA 닮음이다', '닮음이 아니다'];
+    let g1,g2,opts1={},opts2={},correctIdx,text;
+    if(kind==='sss'){
+      const t = pick1(TRIPLES), k = pick1([2,3]);
+      g1 = triFromSSS(t[0],t[1],t[2]); g2 = renameTri(triFromSSS(t[0]*k,t[1]*k,t[2]*k), ['D','E','F']);
+      opts1 = { color:'#4f46e5', sideLabels:{AB:t[0],BC:t[1],CA:t[2]} };
+      opts2 = { color:'#e05a20', sideLabels:{DE:t[0]*k,EF:t[1]*k,FD:t[2]*k} };
+      correctIdx = 0;
+      text = `<span class="seg">AB</span>, <span class="seg">BC</span>, <span class="seg">CA</span>와 <span class="seg">DE</span>, <span class="seg">EF</span>, <span class="seg">FD</span>의 길이가 그림과 같을 때, △ABC와 △DEF가 닮음이 되는 조건은?`;
+    } else if(kind==='sas'){
+      const a=randInt(4,9), b=randInt(4,9), ang=pick1([50,60,70,80]), k=pick1([2,3]);
+      g1 = { B:[0,0], A:polar(0,0,ang,a*15), C:polar(0,0,0,b*15) };
+      g2 = { E:[0,0], D:polar(0,0,ang,a*k*15), F:polar(0,0,0,b*k*15) };
+      opts1 = { color:'#4f46e5', sideLabels:{AB:a,BC:b}, angles:[{vertex:'B',ray1:'A',ray2:'C',label:ang+'°'}] };
+      opts2 = { color:'#e05a20', sideLabels:{DE:a*k,EF:b*k}, angles:[{vertex:'E',ray1:'D',ray2:'F',label:ang+'°'}] };
+      correctIdx = 1;
+      text = `<span class="seg">AB</span>, <span class="seg">BC</span>와 <span class="seg">DE</span>, <span class="seg">EF</span>의 길이, ∠B와 ∠E의 크기가 그림과 같을 때, △ABC와 △DEF가 닮음이 되는 조건은?`;
+    } else if(kind==='aa'){
+      const a1=pick1([50,60,70]), a2=pick1([45,55,65]), k=pick1([1,1.4]);
+      g1 = triFromASA(a1,a2,12); g2 = triFromASA(a1,a2,12*k);
+      opts1 = { color:'#4f46e5', angles:[{vertex:'A',ray1:'B',ray2:'C',label:a1+'°'},{vertex:'B',ray1:'A',ray2:'C',label:a2+'°'}] };
+      opts2 = { color:'#e05a20', angles:[{vertex:'A',ray1:'B',ray2:'C',label:a1+'°'},{vertex:'B',ray1:'A',ray2:'C',label:a2+'°'}] };
+      correctIdx = 2;
+      text = `∠A=∠D, ∠B=∠E가 그림과 같을 때, △ABC와 △DEF가 닮음이 되는 조건은?`;
+    } else {
+      const t = pick1(TRIPLES), k = pick1([2,3]);
+      const t2 = t.map(v=>v*k); const idx = randInt(0,2);
+      t2[idx] += pick1([-2,-1,1,2]);
+      g1 = triFromSSS(t[0],t[1],t[2]); g2 = renameTri(triFromSSS(t2[0],t2[1],t2[2]), ['D','E','F']);
+      opts1 = { color:'#4f46e5', sideLabels:{AB:t[0],BC:t[1],CA:t[2]} };
+      opts2 = { color:'#e05a20', sideLabels:{DE:t2[0],EF:t2[1],FD:t2[2]} };
+      correctIdx = 3;
+      text = `<span class="seg">AB</span>, <span class="seg">BC</span>, <span class="seg">CA</span>와 <span class="seg">DE</span>, <span class="seg">EF</span>, <span class="seg">FD</span>의 길이가 그림과 같을 때, △ABC와 △DEF가 닮음이 되는 조건은?`;
+    }
+    const fg1 = fitGeoToCanvas(g1,95,115,150,150), fg2 = fitGeoToCanvas(g2,265,115,150,150);
+    const names1 = kind==='sss'||kind==='none' ? ['A','B','C'] : (kind==='sas' ? ['B','A','C'] : ['A','B','C']);
+    const names2 = kind==='sss'||kind==='none' ? ['D','E','F'] : (kind==='sas' ? ['E','D','F'] : ['A','B','C']);
+    let names2real = names2;
+    if(kind==='aa') names2real = ['A','B','C'];
+    const inner1 = triSceneSVG(fg1, names1, opts1);
+    const fg2b = kind==='aa' ? fitGeoToCanvas(g2,265,115,150,150) : fg2;
+    const inner2 = triSceneSVG(fg2b, kind==='aa' ? ['A','B','C'] : names2, opts2);
+    const figHTML = svgFig(360,230, inner1+inner2, kind==='aa' ? '왼쪽 △ABC · 오른쪽 △DEF' : '왼쪽 △ABC · 오른쪽 △DEF');
+    const opts = shuffle(OPTS_ALL.map((o,i)=>({o,i})));
+    return { text, figHTML, ans:{ type:'choice', opts:opts.map(x=>x.o), good:opts.findIndex(x=>x.i===correctIdx) },
+      help: think('두 삼각형에서 몇 쌍의 변의 비가 같다고 나와 있나요?', '끼인각이 같다는 정보도 있나요, 아니면 두 각의 크기만 같다고 나와 있나요?'), note: OPTS_ALL[correctIdx] };
+  },
+  // 2. SSS 닮음 길이 구하기
+  function(){
+    const t = pick1(TRIPLES), k = pick1([2,3]);
+    const g1 = triFromSSS(t[0],t[1],t[2]), g2 = renameTri(triFromSSS(t[0]*k,t[1]*k,t[2]*k), ['D','E','F']);
+    const fg1 = fitGeoToCanvas(g1,95,115,150,150), fg2 = fitGeoToCanvas(g2,265,115,150,150);
+    const inner1 = triSceneSVG(fg1,['A','B','C'],{ color:'#4f46e5', sideLabels:{AB:t[0],BC:t[1],CA:t[2]} });
+    const inner2 = triSceneSVG(fg2,['D','E','F'],{ color:'#e05a20', sideLabels:{DE:t[0]*k,EF:t[1]*k} });
+    const figHTML = svgFig(360,230, inner1+inner2, '△ABC∽△DEF (SSS 닮음)');
+    return { text:`△ABC∽△DEF이고 <span class="seg">AB</span>=${t[0]}, <span class="seg">BC</span>=${t[1]}, <span class="seg">CA</span>=${t[2]}, <span class="seg">DE</span>=${t[0]*k}, <span class="seg">EF</span>=${t[1]*k}일 때, <u><span class="seg">FD</span>의 길이</u>를 구하시오.`,
+      figHTML, ans:{ type:'num', v:t[2]*k, lab:'<span class="seg">FD</span> =', unit:'cm' },
+      help: think('△ABC와 △DEF의 닮음비를 먼저 구해 보세요.', '<span class="seg">AB</span>와 <span class="seg">DE</span> 중 대응하는 두 변의 비는 몇 대 몇인가요?'), note:`${t[2]*k}` };
+  },
+  // 3. SAS 닮음 길이 구하기
+  function(){
+    const a=randInt(4,9), b=randInt(4,9), ang=pick1([50,60,70,80]), k=pick1([2,3]);
+    const g1 = { A:[0,0], B:polar(0,0,0,a*15), C:polar(0,0,ang,b*15) };
+    const g2 = { D:[0,0], E:polar(0,0,0,a*k*15), F:polar(0,0,ang,b*k*15) };
+    const fg1 = fitGeoToCanvas(g1,95,115,150,150), fg2 = fitGeoToCanvas(g2,265,115,150,150);
+    const inner1 = triSceneSVG(fg1,['A','B','C'],{ color:'#4f46e5', sideLabels:{AB:a,CA:b}, angles:[{vertex:'A',ray1:'B',ray2:'C',label:ang+'°'}] });
+    const inner2 = triSceneSVG(fg2,['D','E','F'],{ color:'#e05a20', sideLabels:{DE:a*k}, angles:[{vertex:'D',ray1:'E',ray2:'F',label:ang+'°'}] });
+    const figHTML = svgFig(360,230, inner1+inner2, '△ABC∽△DEF (SAS 닮음)');
+    return { text:`△ABC∽△DEF이고 <span class="seg">AB</span>=${a}, <span class="seg">AC</span>=${b}, <span class="seg">DE</span>=${a*k}, ∠A=∠D일 때, <u><span class="seg">DF</span>의 길이</u>를 구하시오.`,
+      figHTML, ans:{ type:'num', v:b*k, lab:'<span class="seg">DF</span> =', unit:'cm' },
+      help: think('<span class="seg">AB</span>와 <span class="seg">DE</span>의 비로 닮음비를 구해 보세요.', '같은 닮음비를 <span class="seg">AC</span>에도 적용해 보세요.'), note:`${b*k}` };
+  },
+  // 4. 교차형(SAS) 닮음 — CE 구하기
+  function(){
+    const e = buildCrossEntry();
+    return { text:`그림과 같이 <span class="seg">AD</span>, <span class="seg">BE</span>가 점 C에서 만난다. <span class="seg">CA</span>=${e.CA}, <span class="seg">CB</span>=${e.CB}, <span class="seg">CD</span>=${e.CD}, <span class="seg">AB</span>=${e.AB}이고 ∠ACB=∠DCE(맞꼭지각)일 때, <u><span class="seg">CE</span>의 길이</u>를 구하시오.`,
+      figHTML: crossFigHTML(e, ['CA','CB','CD','AB'], 'CE'), ans:{ type:'num', v:e.CE, lab:'<span class="seg">CE</span> =', unit:'cm' },
+      help: think('△ABC와 △DEC에서 끼인각(맞꼭지각)이 같아요. 어느 쌍의 변의 비가 같아야 SAS 닮음이 될까요?', '<span class="seg">CA</span>와 <span class="seg">CD</span>의 비를 먼저 구해 보세요.'), note:`${e.CE}` };
+  },
+  // 5. 교차형(SAS) 닮음 — DE 구하기
+  function(){
+    const e = buildCrossEntry();
+    return { text:`그림과 같이 <span class="seg">AD</span>, <span class="seg">BE</span>가 점 C에서 만난다. <span class="seg">CA</span>=${e.CA}, <span class="seg">CB</span>=${e.CB}, <span class="seg">CD</span>=${e.CD}, <span class="seg">AB</span>=${e.AB}이고 ∠ACB=∠DCE(맞꼭지각)일 때, <u><span class="seg">DE</span>의 길이</u>를 구하시오.`,
+      figHTML: crossFigHTML(e, ['CA','CB','CD','AB'], 'DE'), ans:{ type:'num', v:e.DE, lab:'<span class="seg">DE</span> =', unit:'cm' },
+      help: think('△ABC∽△DEC예요. 대응하는 변끼리 짝지어 보세요.', '<span class="seg">CA</span>와 <span class="seg">CD</span>의 비를 <span class="seg">AB</span>에도 똑같이 적용해 보세요.'), note:`${e.DE}` };
+  },
+  // 6. 직각삼각형의 닮음(고도형) — 닮음인 삼각형 고르기
+  function(){
+    const e = buildAltEntry();
+    const opts = shuffle(['△ABC만 닮음이다','△DAC만 닮음이다','△ABC와 △DAC 모두 닮음이다','닮음인 삼각형이 없다'].map((o,i)=>({o,i})));
+    return { text:`∠A=90°인 직각삼각형 ABC에서 꼭짓점 A에서 <span class="seg">BC</span>에 내린 수선의 발을 D라 하자. △DBA와 닮음인 삼각형을 모두 고르면?`,
+      figHTML: altFigHTML(e, {}), ans:{ type:'choice', opts:opts.map(x=>x.o), good:opts.findIndex(x=>x.i===2) },
+      help: think('△DBA, △DAC, △ABC는 모두 직각삼각형이에요. 세 삼각형에서 같은 각(공통각 또는 서로 대응하는 각)을 찾아보세요.', '각각 90°인 각 하나와, 공유하거나 서로 같은 각이 또 있는지 확인해 보세요.'), note:'△ABC와 △DAC 모두' };
+  },
+  // 7. 직각삼각형의 닮음(고도형) — AB²=BD·BC
+  function(){
+    const e = buildAltEntry();
+    return { text:`∠A=90°인 직각삼각형 ABC에서 꼭짓점 A에서 <span class="seg">BC</span>에 내린 수선의 발을 D라 하자. <span class="seg">AB</span>=${e.AB}, <span class="seg">BC</span>=${e.BC}일 때, <u><span class="seg">BD</span>의 길이</u>를 구하시오.`,
+      figHTML: altFigHTML(e, {AB:e.AB, BC:e.BC}), ans:{ type:'num', v:e.BD, lab:'<span class="seg">BD</span> =', unit:'cm' },
+      help: think('<span class="seg">AB</span>² = <span class="seg">BD</span> × <span class="seg">BC</span> 식에 아는 값을 대입해 보세요.', '<span class="seg">BD</span> = <span class="seg">AB</span>² ÷ <span class="seg">BC</span>예요.'), note:`${e.BD}` };
+  },
+  // 8. 직각삼각형의 닮음(고도형) — AC, BC 모두 구하기
+  function(){
+    const e = buildAltEntry();
+    return { text:`∠A=90°인 직각삼각형 ABC에서 꼭짓점 A에서 <span class="seg">BC</span>에 내린 수선의 발을 D라 하자. <span class="seg">AB</span>=${e.AB}, <span class="seg">AD</span>=${e.AD}일 때, <u><span class="seg">AC</span>와 <span class="seg">BC</span>의 길이</u>를 각각 구하시오.`,
+      figHTML: altFigHTML(e, {AB:e.AB, AD:e.AD}), ans:{ type:'num2', labs:['<span class="seg">AC</span>','<span class="seg">BC</span>'], vs:[e.AC,e.BC], units:['cm','cm'] },
+      help: think('먼저 직각삼각형 ABD에서 <span class="seg">BD</span>를 피타고라스 정리로 구해 보세요.', '<span class="seg">BD</span>를 구했다면 <span class="seg">AB</span>²=<span class="seg">BD</span>×<span class="seg">BC</span>로 <span class="seg">BC</span>를, 그다음 직각삼각형 ABC에서 피타고라스 정리로 <span class="seg">AC</span>를 구해 보세요.'), note:`AC=${e.AC}, BC=${e.BC}` };
+  },
+  // 9. 평행선과 선분의 길이의 비 — AD:AB=AE:AC=DE:BC
+  function(){
+    const e = buildParaTriEntry();
+    return { text:`△ABC에서 <span class="seg">DE</span><span class="parasym">∥</span><span class="seg">BC</span>이고 <span class="seg">AB</span>=${e.AB}, <span class="seg">BC</span>=${e.BC}, <span class="seg">AD</span>=${e.AD}일 때, <u><span class="seg">DE</span>의 길이</u>를 구하시오.`,
+      figHTML: paraTriFigHTML(e, {AD:e.AD, DB:e.DB, BC:e.BC}), ans:{ type:'num', v:e.DE, lab:'<span class="seg">DE</span> =', unit:'cm' },
+      help: think('<span class="seg">AD</span> : <span class="seg">AB</span> = <span class="seg">DE</span> : <span class="seg">BC</span>가 성립해요.', '비례식에 아는 값을 대입해서 <span class="seg">DE</span>를 구해 보세요.'), note:`${e.DE}` };
+  },
+  // 10. 평행선과 선분의 길이의 비 — AD:DB=AE:EC
+  function(){
+    const e = buildParaTriEntry();
+    return { text:`△ABC에서 <span class="seg">DE</span><span class="parasym">∥</span><span class="seg">BC</span>이고 <span class="seg">AD</span>=${e.AD}, <span class="seg">DB</span>=${e.DB}, <span class="seg">AE</span>=${e.AE}일 때, <u><span class="seg">EC</span>의 길이</u>를 구하시오.`,
+      figHTML: paraTriFigHTML(e, {AD:e.AD, DB:e.DB, AE:e.AE}), ans:{ type:'num', v:e.EC, lab:'<span class="seg">EC</span> =', unit:'cm' },
+      help: think('<span class="seg">AD</span> : <span class="seg">DB</span> = <span class="seg">AE</span> : <span class="seg">EC</span>가 성립해요.', '비례식에 아는 값을 대입해서 <span class="seg">EC</span>를 구해 보세요.'), note:`${e.EC}` };
+  },
+  // 11. 중점연결정리 유형1
+  function(){
+    const DE=randInt(4,9), ADE=pick1([35,40,45,50,55,60,65]);
+    const D=[0,0], A=polar(0,0,90,12*11), E=polar(0,0,90-ADE,DE*11);
+    const B=[2*D[0]-A[0], 2*D[1]-A[1]], C=[2*E[0]-A[0], 2*E[1]-A[1]];
+    const g = fitGeoToCanvas({A,B,C,D,E}, 190, 150, 300, 220);
+    const BC=2*DE, ABC=ADE;
+    const figHTML = midFigHTML(g, { DE, angles:[{vertex:'D',ray1:'A',ray2:'E',label:ADE+'°',color:'#e05a20'}] });
+    return { text:`△ABC에서 <span class="seg">AB</span>, <span class="seg">AC</span>의 중점을 각각 D, E라 하자. <span class="seg">DE</span>=${DE}, ∠ADE=${ADE}°일 때, <u><span class="seg">BC</span>의 길이와 ∠ABC의 크기</u>를 각각 구하시오.`,
+      figHTML, ans:{ type:'num2', labs:['<span class="seg">BC</span>','∠ABC'], vs:[BC,ABC], units:['cm','°'] },
+      help: think('중점연결정리에 의해 <span class="seg">BC</span><span class="parasym">∥</span><span class="seg">DE</span>이고, <span class="seg">BC</span>=2×<span class="seg">DE</span>예요.', '∠ADE와 ∠ABC는 <span class="seg">DE</span><span class="parasym">∥</span><span class="seg">BC</span>에서 생기는 동위각으로, 크기가 서로 같아요.'), note:`BC=${BC}, ABC=${ABC}` };
+  },
+  // 12. 중점연결정리 유형2
+  function(){
+    const BAC=pick1([60,65,70,75,80,85]), ABCang=pick1([40,45,50,55,60]);
+    const BC=2*randInt(6,12);
+    const g0 = triFromASA(BAC, ABCang, BC);
+    const D = lerp(g0.A,g0.B,0.5), E = lerp(g0.A,g0.C,0.5);
+    const g = fitGeoToCanvas({A:g0.A,B:g0.B,C:g0.C,D,E}, 190, 150, 300, 220);
+    const ACB = 180-BAC-ABCang, DE = BC/2;
+    const figHTML = midFigHTML(g, { BC, angles:[{vertex:'A',ray1:'B',ray2:'C',label:BAC+'°'},{vertex:'B',ray1:'A',ray2:'C',label:ABCang+'°'}] });
+    return { text:`△ABC에서 <span class="seg">AB</span>, <span class="seg">AC</span>의 중점을 각각 D, E라 하자. ∠BAC=${BAC}°, ∠ABC=${ABCang}°, <span class="seg">BC</span>=${BC}일 때, <u>∠AED의 크기와 <span class="seg">DE</span>의 길이</u>를 각각 구하시오.`,
+      figHTML, ans:{ type:'num2', labs:['∠AED','<span class="seg">DE</span>'], vs:[ACB,DE], units:['°','cm'] },
+      help: think('삼각형의 세 내각의 합이 180°임을 이용해 ∠ACB를 먼저 구해 보세요.', '∠AED는 <span class="seg">DE</span><span class="parasym">∥</span><span class="seg">BC</span>에서 생기는 동위각으로 ∠ACB와 크기가 같고, <span class="seg">DE</span>=<span class="seg">BC</span>의 절반이에요.'), note:`AED=${ACB}, DE=${DE}` };
+  },
+  // 13. 평행선 사이의 선분의 길이의 비 — 기본형
+  function(){
+    const e = buildParallelLinesEntry(false);
+    return { text:`세 평행선 l, m, n이 두 직선 p, q와 각각 만나는 점을 그림과 같이 A, B, C와 D, E, F라 하자. ${e.givenText}일 때, <u>${e.unkLabel}의 길이</u>를 구하시오.`,
+      figHTML: e.figHTML, ans:{ type:'num', v:e.val, lab:`${e.unkLabel} =`, unit:'cm' },
+      help: think('l∥m∥n이면 <span class="seg">AB</span> : <span class="seg">BC</span> = <span class="seg">DE</span> : <span class="seg">EF</span>가 성립해요.', '비례식을 세우고 아는 세 값을 대입해 보세요.'), note:`${e.unkField}=${e.val}` };
+  },
+  // 14. 평행선 사이의 선분의 길이의 비 — 교차형
+  function(){
+    const e = buildParallelLinesEntry(true);
+    return { text:`세 평행선 l, m, n이 두 직선 p, q와 각각 만나는 점을 그림과 같이 A, B, C와 D, E, F라 하자(p, q는 l과 m 사이에서 서로 만난다). ${e.givenText}일 때, <u>${e.unkLabel}의 길이</u>를 구하시오.`,
+      figHTML: e.figHTML, ans:{ type:'num', v:e.val, lab:`${e.unkLabel} =`, unit:'cm' },
+      help: think('l∥m∥n이면 <span class="seg">AB</span> : <span class="seg">BC</span> = <span class="seg">DE</span> : <span class="seg">EF</span>가 성립해요. p, q가 교차해도 이 비는 똑같이 성립해요.', '비례식을 세우고 아는 세 값을 대입해 보세요.'), note:`${e.unkField}=${e.val}` };
+  },
+  // 15. 무게중심 — 정의(선택형)
+  function(){
+    const g0 = triFromSSS(pick1([9,10,11]), pick1([8,9,10]), pick1([7,8,9]));
+    const D=lerp(g0.B,g0.C,0.5), E=lerp(g0.A,g0.C,0.5), F=lerp(g0.A,g0.B,0.5);
+    const G=[(g0.A[0]+g0.B[0]+g0.C[0])/3, (g0.A[1]+g0.B[1]+g0.C[1])/3];
+    const g = fitGeoToCanvas({A:g0.A,B:g0.B,C:g0.C,D,E,F,G}, 180,125,280,195);
+    const figHTML = centroidFigHTML(g);
+    const opts = shuffle(['1 : 1','2 : 1','3 : 1','3 : 2'].map((o,i)=>({o,i})));
+    return { text:`삼각형의 세 중선은 한 점(무게중심)에서 만난다. 무게중심은 각 중선을 그 꼭짓점으로부터 몇 대 몇으로 나누는가? (꼭짓점 쪽 : 변의 중점 쪽)`,
+      figHTML, ans:{ type:'choice', opts:opts.map(x=>x.o), good:opts.findIndex(x=>x.i===1) },
+      help:null, note:'2 : 1' };
+  },
+  // 16. 무게중심 — AG:GD=2:1
+  function(){
+    const flip = pick1([true,false]);
+    const AG = 2*randInt(3,9);
+    const GD = AG/2;
+    const g0 = triFromSSS(pick1([9,10,11]), pick1([8,9,10]), pick1([7,8,9]));
+    const D=lerp(g0.B,g0.C,0.5), E=lerp(g0.A,g0.C,0.5), F=lerp(g0.A,g0.B,0.5);
+    const G=[(g0.A[0]+g0.B[0]+g0.C[0])/3, (g0.A[1]+g0.B[1]+g0.C[1])/3];
+    const g = fitGeoToCanvas({A:g0.A,B:g0.B,C:g0.C,D,E,F,G}, 180,125,280,195);
+    const figHTML = centroidFigHTML(g, flip ? {GD} : {AG});
+    return { text: flip
+      ? `△ABC의 무게중심을 G, <span class="seg">BC</span>의 중점을 D라 하자. <span class="seg">GD</span>=${GD}일 때, <u><span class="seg">AG</span>의 길이</u>를 구하시오.`
+      : `△ABC의 무게중심을 G, <span class="seg">BC</span>의 중점을 D라 하자. <span class="seg">AG</span>=${AG}일 때, <u><span class="seg">GD</span>의 길이</u>를 구하시오.`,
+      figHTML, ans:{ type:'num', v: flip?AG:GD, lab:(flip?'<span class="seg">AG</span> =':'<span class="seg">GD</span> ='), unit:'cm' },
+      help: think('<span class="seg">AG</span> : <span class="seg">GD</span> = 2 : 1이 성립해요.'), note: flip? `AG=${AG}` : `GD=${GD}` };
+  },
+  // 17. 무게중심 — 전체 중선 길이에서 구하기
+  function(){
+    const BE = 3*randInt(3,8);
+    const BG = BE*2/3, GE = BE/3;
+    const askGE = pick1([true,false]);
+    const g0 = triFromSSS(pick1([9,10,11]), pick1([8,9,10]), pick1([7,8,9]));
+    const D=lerp(g0.B,g0.C,0.5), E=lerp(g0.A,g0.C,0.5), F=lerp(g0.A,g0.B,0.5);
+    const G=[(g0.A[0]+g0.B[0]+g0.C[0])/3, (g0.A[1]+g0.B[1]+g0.C[1])/3];
+    const g = fitGeoToCanvas({A:g0.A,B:g0.B,C:g0.C,D,E,F,G}, 180,125,280,195);
+    const figHTML = centroidFigHTML(g, {BE});
+    return { text:`△ABC의 무게중심을 G, <span class="seg">AC</span>의 중점을 E라 하자. 중선 <span class="seg">BE</span>=${BE}일 때, <u>${askGE?'<span class="seg">GE</span>':'<span class="seg">BG</span>'}의 길이</u>를 구하시오.`,
+      figHTML, ans:{ type:'num', v: askGE?GE:BG, lab:(askGE?'<span class="seg">GE</span> =':'<span class="seg">BG</span> ='), unit:'cm' },
+      help: think('무게중심은 중선을 꼭짓점 쪽 : 중점 쪽 = 2 : 1로 나눠요.', '중선 전체의 길이를 3등분해서 생각해 보세요.'), note: askGE? `GE=${GE}` : `BG=${BG}` };
+  },
+  // 18. 정삼각형의 외심·내심·무게중심 — 성질(선택형)
+  function(){
+    const opts = shuffle(['외심, 내심, 무게중심이 모두 다른 위치에 있다','외심과 내심만 같은 위치에 있다','외심, 내심, 무게중심이 모두 한 점에서 일치한다','무게중심만 삼각형 내부에 있고 나머지는 외부에 있다'].map((o,i)=>({o,i})));
+    const A=polar(0,0,90,120), B=polar(0,0,210,120), C=polar(0,0,330,120);
+    const g = fitGeoToCanvas({A,B,C}, 180,105,240,160);
+    const cen=[(g.A[0]+g.B[0]+g.C[0])/3,(g.A[1]+g.B[1]+g.C[1])/3];
+    let html = `<polygon class="tri-shape" points="${ptsToStr([g.A,g.B,g.C])}" fill="#4f46e5" stroke="#4f46e5" stroke-width="2.2"></polygon>`;
+    html += `<circle cx="${cen[0].toFixed(1)}" cy="${cen[1].toFixed(1)}" r="4" fill="#e05a20"></circle>`;
+    html += `<text class="vlabel" x="${(cen[0]+14).toFixed(1)}" y="${(cen[1]-4).toFixed(1)}" fill="#e05a20">O</text>`;
+    ['A','B','C'].forEach(k=>{ const lp=outwardLabel(g[k],cen,15); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#4f46e5">${k}</text>`; });
+    const figHTML = svgFig(360,220, html, '정삼각형 ABC와 그 중심 O');
+    return { text:`정삼각형 ABC에서 외심, 내심, 무게중심의 위치 관계에 대한 설명으로 옳은 것은?`,
+      figHTML, ans:{ type:'choice', opts:opts.map(x=>x.o), good:opts.findIndex(x=>x.i===2) },
+      help:null, note:'모두 한 점에서 일치' };
+  },
+  // 19. 정삼각형의 외심·내심·무게중심 — R=2r
+  function(){
+    const askR = pick1([true,false]);
+    const R = 2*randInt(3,10), r = R/2;
+    const A=polar(0,0,90,120), B=polar(0,0,210,120), C=polar(0,0,330,120);
+    const g = fitGeoToCanvas({A,B,C}, 180,105,240,160);
+    const cen=[(g.A[0]+g.B[0]+g.C[0])/3,(g.A[1]+g.B[1]+g.C[1])/3];
+    const Dm = lerp(g.B,g.C,0.5);
+    let html = `<polygon class="tri-shape" points="${ptsToStr([g.A,g.B,g.C])}" fill="#4f46e5" stroke="#4f46e5" stroke-width="2.2"></polygon>`;
+    html += `<line x1="${cen[0].toFixed(1)}" y1="${cen[1].toFixed(1)}" x2="${g.A[0].toFixed(1)}" y2="${g.A[1].toFixed(1)}" stroke="#e05a20" stroke-width="2"></line>`;
+    html += `<line x1="${cen[0].toFixed(1)}" y1="${cen[1].toFixed(1)}" x2="${Dm[0].toFixed(1)}" y2="${Dm[1].toFixed(1)}" stroke="#16a34a" stroke-width="2"></line>`;
+    html += sideLabelSVGAt(g.A,cen,bboxCenterOf([g.A,cen]), askR?'R':R, 10,0.5,'#e05a20');
+    html += sideLabelSVGAt(cen,Dm,bboxCenterOf([cen,Dm]), askR?r:'r', 8,0.5,'#16a34a');
+    html += `<circle cx="${cen[0].toFixed(1)}" cy="${cen[1].toFixed(1)}" r="3.5" fill="#1a1a2e"></circle><text class="vlabel" x="${(cen[0]+12).toFixed(1)}" y="${(cen[1]-4).toFixed(1)}">O</text>`;
+    ['A','B','C'].forEach(k=>{ const lp=outwardLabel(g[k],cen,15); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#4f46e5">${k}</text>`; });
+    const figHTML = svgFig(360,220, html, '정삼각형 ABC, 무게중심 O, R=O에서 꼭짓점까지, r=O에서 변까지');
+    return { text: askR
+      ? `정삼각형 ABC의 무게중심을 O라 하자. O에서 <span class="seg">BC</span>까지의 거리 r=${r}일 때, <u>O에서 꼭짓점 A까지의 거리 R</u>을 구하시오.`
+      : `정삼각형 ABC의 무게중심을 O라 하자. O에서 꼭짓점 A까지의 거리 R=${R}일 때, <u>O에서 <span class="seg">BC</span>까지의 거리 r</u>을 구하시오.`,
+      figHTML, ans:{ type:'num', v: askR?R:r, lab:(askR?'R =':'r ='), unit:'cm' },
+      help: think('O는 무게중심이기도 해서, 중선을 꼭짓점 쪽 : 중점 쪽 = 2 : 1로 나눠요.', 'R과 r은 바로 그 중선을 2 : 1로 나눈 두 부분이에요.'), note: askR? `R=${R}` : `r=${r}` };
+  },
+  // 20. 섞어서 — 중점연결정리 + 무게중심
+  function(){
+    const BC = 2*randInt(5,14), AD = 3*randInt(4,9);
+    const MN = BC/2, AG = AD*2/3;
+    const g0 = triFromSSS(pick1([9,10,11])*2, pick1([8,9,10])*2, pick1([7,8,9])*2);
+    const M=lerp(g0.A,g0.B,0.5), N=lerp(g0.A,g0.C,0.5), D=lerp(g0.B,g0.C,0.5);
+    const G=[(g0.A[0]+g0.B[0]+g0.C[0])/3,(g0.A[1]+g0.B[1]+g0.C[1])/3];
+    const g = fitGeoToCanvas({A:g0.A,B:g0.B,C:g0.C,M,N,D,G}, 185,130,280,170);
+    let html = `<polygon class="tri-shape" points="${ptsToStr([g.A,g.B,g.C])}" fill="#4f46e5" stroke="#4f46e5" stroke-width="2.2"></polygon>`;
+    html += `<line x1="${g.M[0].toFixed(1)}" y1="${g.M[1].toFixed(1)}" x2="${g.N[0].toFixed(1)}" y2="${g.N[1].toFixed(1)}" stroke="#e05a20" stroke-width="2.2"></line>`;
+    html += `<line x1="${g.A[0].toFixed(1)}" y1="${g.A[1].toFixed(1)}" x2="${g.D[0].toFixed(1)}" y2="${g.D[1].toFixed(1)}" stroke="#16a34a" stroke-width="2"></line>`;
+    html += parallelTickSVG(g.M,g.N,'#e05a20')+parallelTickSVG(g.B,g.C,'#4f46e5');
+    html += `<circle cx="${g.G[0].toFixed(1)}" cy="${g.G[1].toFixed(1)}" r="3.5" fill="#16a34a"></circle>`;
+    const cen=bboxCenterOf([g.A,g.B,g.C]);
+    html += sideLabelSVGAt(g.B,g.C,cen,BC,14,0.5,'#4f46e5');
+    html += sideLabelSVGAt(g.A,g.D,bboxCenterOf([g.A,g.D,g.B]),AD,9,0.35,'#16a34a');
+    [['A',g.A],['B',g.B],['C',g.C],['M',g.M],['N',g.N],['D',g.D]].forEach(([l,p])=>{ const lp=outwardLabel(p,cen,14); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${l==='M'||l==='N'?'#e05a20':'#1a1a2e'}">${l}${l==='G'?'':''}</text>`; });
+    { const lp=outwardLabel(g.G,cen,14); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#16a34a">G</text>`; }
+    const figHTML = svgFig(360,260, html, '△ABC, M·N은 <span class="seg">AB</span>·<span class="seg">AC</span>의 중점, D는 <span class="seg">BC</span>의 중점, G는 무게중심');
+    return { text:`△ABC에서 <span class="seg">AB</span>, <span class="seg">AC</span>의 중점을 각각 M, N이라 하자(<span class="seg">MN</span><span class="parasym">∥</span><span class="seg">BC</span>). 또 <span class="seg">BC</span>의 중점을 D, 무게중심을 G라 하자. <span class="seg">BC</span>=${BC}, <span class="seg">AD</span>=${AD}일 때, <u><span class="seg">MN</span>의 길이와 <span class="seg">AG</span>의 길이</u>를 각각 구하시오.`,
+      figHTML, ans:{ type:'num2', labs:['<span class="seg">MN</span>','<span class="seg">AG</span>'], vs:[MN,AG], units:['cm','cm'] },
+      help: think('<span class="seg">MN</span>은 중점연결정리로 구할 수 있어요 — <span class="seg">BC</span>의 절반이에요.', '<span class="seg">AG</span>는 무게중심 성질로 구할 수 있어요 — 중선 <span class="seg">AD</span>를 2 : 1로 나눈 값이에요.'), note:`MN=${MN}, AG=${AG}` };
+  }
+];
+const SEC_OF = i => i<3?0 : i<5?1 : i<8?2 : i<10?3 : i<12?4 : i<14?5 : i<17?6 : i<19?7 : 8;
+function makeQ(i, seed){ RNG = seeded(seed); try{ return Object.assign(GENS[i](), { i, sec:SEC_OF(i) }); } finally { RNG = Math.random; } }
+
+/* ── 2. 교차형(SAS) 생성 ── */
+function buildCrossEntry(){
+  const denom = pick1([1,2,3]);
+  const CA = denom*randInt(2,3), CB = denom*randInt(2,3), AB = denom*randInt(2,4);
+  const numer = denom + randInt(1,3);
+  const k = numer/denom;
+  const CD = Math.round(k*CA), CE = Math.round(k*CB), DE = Math.round(k*AB);
+  const ang = pick1([65,70,75,80,85]);
+  return { CA,CB,AB,CD,CE,DE,ang };
+}
+function crossFigHTML(e, showFields, unkField){
+  const C0=[0,0], dirA=100, dirD=dirA+180, dirB=dirA+e.ang, dirE=dirB+180, U=20;
+  const A0=polar(C0[0],C0[1],dirA,e.CA*U), D0=polar(C0[0],C0[1],dirD,e.CD*U);
+  const B0=polar(C0[0],C0[1],dirB,e.CB*U), E0=polar(C0[0],C0[1],dirE,e.CE*U);
+  const g = fitGeoToCanvas({A:A0,B:B0,C:C0,D:D0,E:E0}, 230,155,370,230);
+  const {A,B,C,D,E} = g;
+  const cABC=bboxCenterOf([A,B,C]), cDEC=bboxCenterOf([D,E,C]);
+  let html = `<line x1="${A[0].toFixed(1)}" y1="${A[1].toFixed(1)}" x2="${D[0].toFixed(1)}" y2="${D[1].toFixed(1)}" stroke="#333a4d" stroke-width="2"></line>`;
+  html += `<line x1="${B[0].toFixed(1)}" y1="${B[1].toFixed(1)}" x2="${E[0].toFixed(1)}" y2="${E[1].toFixed(1)}" stroke="#333a4d" stroke-width="2"></line>`;
+  html += `<line x1="${A[0].toFixed(1)}" y1="${A[1].toFixed(1)}" x2="${B[0].toFixed(1)}" y2="${B[1].toFixed(1)}" stroke="#4f46e5" stroke-width="2"></line>`;
+  html += `<line x1="${D[0].toFixed(1)}" y1="${D[1].toFixed(1)}" x2="${E[0].toFixed(1)}" y2="${E[1].toFixed(1)}" stroke="#e05a20" stroke-width="2"></line>`;
+  // 주어진 값은 숫자, 구하는 값은 'x', 그 외(문제와 무관한 변)는 라벨 자체를 생략
+  const lblOf = (k2,v)=> showFields.includes(k2) ? v : (k2===unkField ? 'x' : undefined);
+  const put = (k2,p1,p2,cen,v,bulge,t) => { const lv = lblOf(k2,v); if(lv!==undefined) html += sideLabelSVGAt(p1,p2,cen,lv,bulge,t); };
+  put('CA',C,A,cABC,e.CA,11,0.55);
+  put('CD',C,D,cDEC,e.CD,11,0.55);
+  put('CB',C,B,cABC,e.CB,11,0.55);
+  put('CE',C,E,cDEC,e.CE,11,0.55);
+  put('AB',A,B,cABC,e.AB,13,0.5);
+  put('DE',D,E,cDEC,e.DE,13,0.5);
+  html += angleArcSVG(C, unitVec(C,A), unitVec(C,B), '#4f46e5', 16);
+  html += angleArcSVG(C, unitVec(C,D), unitVec(C,E), '#e05a20', 16);
+  [['A',A,'#4f46e5'],['B',B,'#4f46e5'],['C',C,'#333a4d'],['D',D,'#e05a20'],['E',E,'#e05a20']].forEach(([l,p,col])=>{
+    const cen = (l==='A'||l==='B') ? cABC : (l==='D'||l==='E') ? cDEC : bboxCenterOf([A,B,D,E]);
+    const lp = outwardLabel(p, cen, 16);
+    html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  return svgFig(460,300, html, '△ABC∽△DEC (점 C에서 교차, 맞꼭지각)');
+}
+
+/* ── 3. 직각삼각형의 닮음(고도형) 생성 — (p,q,r)=(3,4,5) 피타고라스 삼조를 빗변 r배 해서 전부 정수로 ── */
+function buildAltEntry(){
+  const swap = pick1([true,false]), s = randInt(1,3);
+  const p=3,q=4,r=5;
+  const AB = (swap?q:p)*r*s, AC = (swap?p:q)*r*s, BC = r*r*s, BD = (swap?q:p)*(swap?q:p)*s, DC = (swap?p:q)*(swap?p:q)*s, AD = p*q*s;
+  return { AB,AC,BC,BD,DC,AD };
+}
+function altFigHTML(e, showVals){
+  const U = 220/e.BC;
+  const B=[40,180], C=[40+e.BC*U,180], D=[40+e.BD*U,180];
+  const AD_px = e.AD*U;
+  const A=[D[0], D[1]-AD_px];
+  const cen = bboxCenterOf([A,B,C]);
+  let html = `<polygon class="tri-shape" points="${ptsToStr([A,B,C])}" fill="#4f46e5" stroke="#4f46e5" stroke-width="2"></polygon>`;
+  html += `<line x1="${A[0].toFixed(1)}" y1="${A[1].toFixed(1)}" x2="${D[0].toFixed(1)}" y2="${D[1].toFixed(1)}" stroke="#e05a20" stroke-width="2"></line>`;
+  html += rightAngleMarkSVG(A, unitVec(A,B), unitVec(A,C), '#333a4d');
+  html += rightAngleMarkSVG(D, unitVec(D,A), unitVec(D,B), '#333a4d');
+  if(showVals.AB!==undefined) html += sideLabelSVGAt(A,B,cen,showVals.AB,11,0.5);
+  if(showVals.AD!==undefined) html += sideLabelSVGAt(A,D,bboxCenterOf([A,D,B]),showVals.AD,11,0.5);
+  if(showVals.BC!==undefined) html += sideLabelSVGAt(B,C,cen,showVals.BC,14,0.5);
+  [['A',A],['B',B],['C',C],['D',D]].forEach(([l,p])=>{ const lp=outwardLabel(p,cen,14); html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#1a1a2e">${l}</text>`; });
+  return svgFig(360,240, html, '직각삼각형 ABC, D는 A에서 <span class="seg">BC</span>에 내린 수선의 발');
+}
+
+/* ── 4. 평행선과 선분의 길이의 비(삼각형 내부) 생성 ── */
+function buildParaTriEntry(){
+  const n = pick1([2,3,4]), m = randInt(1,n-1);
+  const b1 = randInt(2,6), b2 = randInt(2,6), b3 = randInt(2,6);
+  const AB=n*b1, AD=m*b1, DB=(n-m)*b1, AC=n*b2, AE=m*b2, EC=(n-m)*b2, BC=n*b3, DE=m*b3;
+  return { AB,AD,DB,AC,AE,EC,BC,DE };
+}
+function paraTriFigHTML(e, showVals){
+  // 비례식용 모식도: 각 B에 임의의 각을 주고 AD,AE 비율로 D,E 배치
+  // AB 변을 항상 200px로 고정 스케일링(실제 cm 값이 작아도 그림이 작아지지 않도록)하고 AC는 그 비율을 유지
+  const ang = pick1([55,60,65]);
+  const uref = 200/e.AB;
+  const A=[0,0], B=polar(0,0,0,e.AB*uref), C=polar(0,0,ang,e.AC*uref);
+  const t = e.AD/e.AB;
+  const D = lerp(A,B,t), E = lerp(A,C,t);
+  const g = fitGeoToCanvas({A,B,C,D,E}, 180,120,290,170);
+  const cen = bboxCenterOf([g.A,g.B,g.C]);
+  let html = `<polygon class="tri-shape" points="${ptsToStr([g.A,g.B,g.C])}" fill="#4f46e5" stroke="#4f46e5" stroke-width="2.2"></polygon>`;
+  html += parallelTickSVG(g.D,g.E,'#e05a20')+parallelTickSVG(g.B,g.C,'#4f46e5');
+  if(showVals.AD!==undefined) html += sideLabelSVGAt(g.A,g.D,bboxCenterOf([g.A,g.D,g.B]), showVals.AD, 10,0.5,'#e05a20');
+  if(showVals.DB!==undefined) html += sideLabelSVGAt(g.D,g.B,bboxCenterOf([g.D,g.B,g.A]), showVals.DB, 10,0.5,'#4f46e5');
+  if(showVals.AE!==undefined) html += sideLabelSVGAt(g.A,g.E,bboxCenterOf([g.A,g.E,g.C]), showVals.AE, 10,0.6,'#e05a20');
+  if(showVals.EC!==undefined) html += sideLabelSVGAt(g.E,g.C,bboxCenterOf([g.E,g.C,g.A]), showVals.EC, 10,0.4,'#4f46e5');
+  if(showVals.BC!==undefined) html += sideLabelSVGAt(g.B,g.C,cen, showVals.BC, 14,0.5,'#4f46e5');
+  html += `<line x1="${g.D[0].toFixed(1)}" y1="${g.D[1].toFixed(1)}" x2="${g.E[0].toFixed(1)}" y2="${g.E[1].toFixed(1)}" stroke="#e05a20" stroke-width="2.2"></line>`;
+  [['A',g.A,'#1a1a2e'],['B',g.B,'#4f46e5'],['C',g.C,'#4f46e5'],['D',g.D,'#e05a20'],['E',g.E,'#e05a20']].forEach(([l,p,col])=>{
+    const lp=outwardLabel(p,cen,14); html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  return svgFig(360,240, html, '△ABC, <span class="seg">DE</span><span class="parasym">∥</span><span class="seg">BC</span>');
+}
+
+/* ── 6. 중점연결정리 그림 ── */
+function midFigHTML(g, opts){
+  opts = opts||{};
+  const cABC=bboxCenterOf([g.A,g.B,g.C]), cADE=bboxCenterOf([g.A,g.D,g.E]);
+  let html='';
+  html += `<polygon points="${ptsToStr([g.A,g.B,g.C])}" fill="#4f46e5" fill-opacity="0.08" stroke="#4f46e5" stroke-width="2.2"></polygon>`;
+  html += `<polygon points="${ptsToStr([g.A,g.D,g.E])}" fill="#e05a20" fill-opacity="0.16" stroke="#e05a20" stroke-width="2.2"></polygon>`;
+  html += parallelTickSVG(g.D,g.E,'#e05a20') + parallelTickSVG(g.B,g.C,'#4f46e5');
+  html += tickMarkSVG(g.A,g.D,1,'#4f46e5') + tickMarkSVG(g.D,g.B,1,'#4f46e5');
+  html += tickMarkSVG(g.A,g.E,1,'#e05a20') + tickMarkSVG(g.E,g.C,1,'#e05a20');
+  if(opts.DE!==undefined) html += sideLabelSVGAt(g.D,g.E,cADE,opts.DE,10,0.5,'#e05a20');
+  if(opts.BC!==undefined) html += sideLabelSVGAt(g.B,g.C,cABC,opts.BC,14,0.5,'#4f46e5');
+  (opts.angles||[]).forEach(a=>{
+    const v=g[a.vertex], d1=unitVec(v,g[a.ray1]), d2=unitVec(v,g[a.ray2]);
+    html += angleMarkerSVG(v,d1,d2,a.color||'#4f46e5',a.label,a.r||16);
+  });
+  [['A',g.A,'#1a1a2e',cABC],['B',g.B,'#4f46e5',cABC],['C',g.C,'#4f46e5',cABC]].forEach(([l,p,c,cen])=>{
+    const lp=outwardLabel(p,cen,15); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${c}">${l}</text>`;
+  });
+  [['D',g.D,'#e05a20',cADE],['E',g.E,'#e05a20',cADE]].forEach(([l,p,c,cen])=>{
+    const lp=outwardLabel(p,cen,12); html+=`<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="${c}">${l}</text>`;
+  });
+  return svgFig(380,300, html, '△ABC, D·E는 <span class="seg">AB</span>·<span class="seg">AC</span>의 중점');
+}
+
+/* ── 7. 평행선 사이의 선분의 길이의 비 생성(단순화 버전) ── */
+function buildParallelLinesEntry(crossing){
+  const AB = randInt(4,9), BC = randInt(4,9), c = randInt(1,3);
+  const DE = c*AB, EF = c*BC;
+  const unkField = pick1(['AB','BC','DE','EF']);
+  const vals = { AB, BC, DE, EF };
+  const val = vals[unkField];
+  const show = Object.assign({}, vals); show[unkField] = 'x';
+  const px = 230, U = 16, total = AB+BC;
+  const lY = 50, mY = 50+AB*U, nY = 50+total*U;
+  const Dx = crossing ? px-70 : px-70, Fx = crossing ? px+70 : px-30;
+  const D=[Dx,lY], F=[Fx,nY], E=lerp(D,F,AB/total);
+  const A=[px,lY], B=[px,mY], C=[px,nY];
+  let html = `<line x1="40" y1="${lY}" x2="420" y2="${lY}" stroke="#9098b5" stroke-width="1.6"></line>`;
+  html += `<line x1="40" y1="${mY}" x2="420" y2="${mY}" stroke="#9098b5" stroke-width="1.6"></line>`;
+  html += `<line x1="40" y1="${nY}" x2="420" y2="${nY}" stroke="#9098b5" stroke-width="1.6"></line>`;
+  html += `<text class="vlabel" x="30" y="${lY+4}" fill="#9098b5">l</text><text class="vlabel" x="30" y="${mY+4}" fill="#9098b5">m</text><text class="vlabel" x="30" y="${nY+4}" fill="#9098b5">n</text>`;
+  html += `<line x1="${A[0]}" y1="${A[1]}" x2="${C[0]}" y2="${C[1]}" stroke="#4f46e5" stroke-width="2.2"></line>`;
+  html += `<line x1="${D[0].toFixed(1)}" y1="${D[1]}" x2="${F[0].toFixed(1)}" y2="${F[1]}" stroke="#e05a20" stroke-width="2.2"></line>`;
+  // p, q가 모두 일직선(점 3개가 한 선 위)이라 bboxCenterOf로는 "바깥쪽" 방향을 구할 수 없음(중심이 선 위에 그대로 있음) →
+  // p 라벨은 오른쪽으로, q 라벨은 왼쪽으로 확실히 떨어뜨릴 고정 기준점을 따로 둔다.
+  const cenP = [A[0]-120, (A[1]+C[1])/2], cenQ = [((D[0]+F[0])/2)+120, (D[1]+F[1])/2];
+  html += sideLabelSVGAt(A,B,cenP, show.AB, 14,0.5,'#4f46e5');
+  html += sideLabelSVGAt(B,C,cenP, show.BC, 14,0.5,'#4f46e5');
+  html += sideLabelSVGAt(D,E,cenQ, show.DE, 14,0.5,'#e05a20');
+  html += sideLabelSVGAt(E,F,cenQ, show.EF, 14,0.5,'#e05a20');
+  // p(A,B,C)는 오른쪽 위로, q(D,E,F)는 왼쪽 아래로 라벨을 떨어뜨려서, 두 직선의 교차 위치가 우연히 가까워도 글자가 겹치지 않게 한다.
+  [['A',A,'#4f46e5',14,-4],['B',B,'#4f46e5',14,-4],['C',C,'#4f46e5',14,-4],['D',D,'#e05a20',-14,14],['E',E,'#e05a20',-14,14],['F',F,'#e05a20',-14,14]].forEach(([l,p,col,ox,oy])=>{
+    html += `<text class="vlabel" x="${(p[0]+ox).toFixed(1)}" y="${(p[1]+oy).toFixed(1)}" fill="${col}">${l}</text>`;
+  });
+  const figHTML = svgFig(460,300, html, 'p: A,B,C · q: D,E,F (l∥m∥n)');
+  const unkLabel = `<span class="seg">${unkField}</span>`;
+  const givenText = ['AB','BC','DE','EF'].filter(k=>k!==unkField).map(k=>`<span class="seg">${k}</span>=${vals[k]}`).join(', ');
+  return { show, unkField, unkLabel, val, figHTML, givenText };
+}
+
+/* ── 8. 무게중심 그림 ── */
+function centroidFigHTML(g, showVals){
+  showVals = showVals||{};
+  const cen = bboxCenterOf([g.A,g.B,g.C]);
+  let html = `<polygon class="tri-shape" points="${ptsToStr([g.A,g.B,g.C])}" fill="#4f46e5" stroke="#4f46e5" stroke-width="2"></polygon>`;
+  html += `<line x1="${g.A[0].toFixed(1)}" y1="${g.A[1].toFixed(1)}" x2="${g.D[0].toFixed(1)}" y2="${g.D[1].toFixed(1)}" stroke="#333a4d" stroke-width="1.6"></line>`;
+  html += `<line x1="${g.B[0].toFixed(1)}" y1="${g.B[1].toFixed(1)}" x2="${g.E[0].toFixed(1)}" y2="${g.E[1].toFixed(1)}" stroke="#333a4d" stroke-width="1.6"></line>`;
+  html += `<circle cx="${g.G[0].toFixed(1)}" cy="${g.G[1].toFixed(1)}" r="3.5" fill="#e05a20"></circle>`;
+  if(showVals.AG!==undefined) html += sideLabelSVGAt(g.A,g.G,bboxCenterOf([g.A,g.G,g.B]), showVals.AG, 9,0.5,'#e05a20');
+  if(showVals.GD!==undefined) html += sideLabelSVGAt(g.G,g.D,bboxCenterOf([g.G,g.D,g.A]), showVals.GD, 9,0.5,'#e05a20');
+  if(showVals.BE!==undefined) html += sideLabelSVGAt(g.B,g.E,bboxCenterOf([g.B,g.E,g.A]), showVals.BE, 11,0.87,'#e05a20');
+  [['A',g.A],['B',g.B],['C',g.C],['D',g.D],['E',g.E]].forEach(([l,p])=>{ const lp=outwardLabel(p,cen,14); html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#1a1a2e">${l}</text>`; });
+  { const lp=outwardLabel(g.G,cen,13); html += `<text class="vlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" fill="#e05a20">G</text>`; }
+  return svgFig(360,250, html, '△ABC, G는 무게중심, D·E는 <span class="seg">BC</span>·<span class="seg">AC</span>의 중점');
+}
+
+/* ════════════════════════════════
+   저장
+════════════════════════════════ */
+const STU = window._hubStudent || {};
+const SAVE_KEY = `simexam_v1_${STU.cls||'x'}_${STU.num||'x'}`;
+const newSeed = () => (Math.random()*2**31)|0;
+let S = null;
+function freshState(){ return { seeds:[...Array(20)].map(newSeed), st:[...Array(20)].map(()=>({ r:'', t:0, h:false })), cur:0, done:false }; }
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+function loadSaved(){ try{ const v = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(v && Array.isArray(v.seeds) && v.seeds.length===20 && Array.isArray(v.st)) return v; }catch(e){} return null; }
+
+/* ════════════════════════════════
+   화면
+════════════════════════════════ */
+let Q = null;
+function renderStart(){
+  const sv = loadSaved(), n = sv ? sv.st.filter(x=>x.r).length : 0;
+  $('startBox').innerHTML = `<div class="start-icon">📝</div><h2>도형의 닮음 단원 시험 대비</h2>
+    <p class="start-sub">삼각형의 닮음 조건부터 배운 내용을 <b>20문제</b>로 정리해요. 숫자는 풀 때마다 바뀌어요.</p>
+    <ul class="start-list">
+      <li>문제마다 기회는 <b>2번</b>이에요. 두 번 다 틀리면 다음 문제로 넘어가요.</li>
+      <li>위쪽 번호를 누르면 <b>원하는 문제로 바로 갈 수 있어요.</b></li>
+      <li>푼 곳까지 이 기기에 <b>자동으로 저장</b>돼요. 중간에 나가도 이어서 풀 수 있어요.</li>
+      <li>막히면 <b>❓ 도움</b>을 쓸 수 있지만, 되도록 혼자 힘으로 풀어 봐요.</li>
+      <li>왼쪽 <b>계산 연습장</b>과 <b>계산기</b>를 쓸 수 있어요.</li>
+    </ul>
+    <div class="btn-row">${sv && n ? `<button class="btn" id="resumeBtn" onclick="startExam(true)">▶ 이어서 풀기 (${n}/20 풀었어요)</button><button class="btn btn-soft" onclick="if(confirm('지금까지 푼 기록을 지우고 처음부터 새로 풀까요?')) startExam(false)">처음부터 새로 풀기</button>`
+      : `<button class="btn" id="startBtn" onclick="startExam(false)">시작하기 →</button>`}</div>`;
+  showScreen('scStart');
+}
+function startExam(resume){
+  window._activityDone = true;
+  S = resume ? loadSaved() : freshState();
+  if(!S) S = freshState();
+  persist();
+  showScreen('scQuiz');
+  const i = resume ? (S.st[S.cur] && !S.st[S.cur].r ? S.cur : firstOpen(S.cur)) : 0;
+  goQ(i < 0 ? 0 : i);
+}
+function firstOpen(from){ for(let k=0;k<20;k++){ const j = (from+k)%20; if(!S.st[j].r) return j; } return -1; }
+function renderDots(){
+  $('qdots').innerHTML = S.st.map((s,i)=>`<button class="qdot${i===S.cur?' cur':s.r==='ok'?' done':s.r==='no'?' miss':''}" id="qd${i}" onclick="goQ(${i})" title="${SECS[SEC_OF(i)]}">${s.r==='ok'?'✓':s.r==='no'?'✗':''}${i+1}${s.h?'<span class="hmark">💡</span>':''}</button>`).join('');
+}
+function goQ(i){
+  if(!S) return;
+  S.cur = i; persist();
+  Q = makeQ(i, S.seeds[i]);
+  const st = S.st[i];
+  renderDots();
+  $('pgRef').innerHTML = Q.figHTML || '';
+  drawBindOnce('pg'); drawSetupCanvas('pg');
+  const a = Q.ans;
+  let inp = '';
+  if(a.type==='num') inp = `<div class="fline"><span class="lab">${a.lab}</span> <input class="blank wide" id="n0" inputmode="decimal" autocomplete="off"> ${a.unit}</div>`;
+  else if(a.type==='num2') inp = a.labs.map((l,k)=>`<div class="fline"><span class="lab">${l} =</span> <input class="blank wide" id="n${k}" inputmode="decimal" autocomplete="off"> ${a.units[k]}</div>`).join('');
+  else inp = `<div class="choice-col" id="chRow">${a.opts.map((o,k)=>`<button class="choice-btn" data-k="${k}" onclick="pickChoice(${k})"><b class="cno">${'①②③④⑤'[k]}</b> ${o}</button>`).join('')}</div>`;
+  const done = !!st.r;
+  $('qArea').innerHTML = `<div class="qtitle"><span class="qbadge">${i+1}</span> ${SECS[Q.sec]} <span class="sub">${i+1} / 20</span>
+      ${done ? `<span class="res-tag ${st.r}">${st.r==='ok'?'✅ 맞힌 문제':'❌ 틀린 문제'}</span>` : `<span class="try-tag${st.t===1?' last':''}" id="tryTag">${st.t===1?'✍️ 마지막 기회':'✍️ 첫 번째 기회'}</span>`}</div>
+    <div class="prob-box">${Q.text}</div>
+    ${inp}
+    ${a.type==='choice' && !done ? '<p class="sub" style="text-align:center">보기를 고른 뒤 [확인]을 눌러요. 확인 전에는 얼마든지 바꿀 수 있어요.</p>' : ''}
+    <div class="btn-row"><button class="btn btn-check" id="chkBtn" onclick="checkQ()" ${done?'disabled':''}>확인</button>
+      <button class="help-btn" id="helpBtn" onclick="askHelp()" ${done || !Q.help ?'disabled':''}>❓ 도움</button></div>
+    <div class="feedback" id="qfb"></div>
+    <div id="helpBox"></div>
+    <div class="btn-row nav-row">${i>0?`<button class="btn btn-soft" onclick="goQ(${i-1})">← 이전 문제</button>`:''}<button class="btn btn-soft" id="nextBtn" onclick="goNext()">${done ? (S.st.every(s=>s.r) ? '결과 보기 →' : i<19 ? '다음 문제 →' : '남은 문제로 →') : '건너뛰기 →'}</button></div>`;
+  if(done){
+    $('qArea').querySelectorAll('input,.choice-btn').forEach(x=>x.disabled=true);
+    setFb('qfb', st.r==='ok' ? true : false, st.r==='ok' ? '✅ 이미 맞힌 문제예요.' : '❌ 이미 기회를 다 쓴 문제예요. 결과 화면에서 [틀린 문제만 다시 풀기]로 숫자를 바꿔 다시 풀 수 있어요.');
+  }
+  if(st.h && !done && Q.help) showHelp();
+  $('qArea').querySelectorAll('input').forEach(x=>x.addEventListener('keydown', e=>{ if(e.key==='Enter') checkQ(); }));
+  window.scrollTo(0,0);
+}
+function goNext(){
+  const all = S.st.every(s=>s.r);
+  if(all) return finishExam();
+  const j = firstOpen(S.cur+1);
+  if(S.cur < 19) goQ(S.cur+1); else if(j>=0) goQ(j); else finishExam();
+}
+/* ── 채점 ── */
+let LOCK_UNTIL = 0;
+function numEq(v, target){ return Math.abs(v-target) < 0.01; }
+function checkQ(){
+  const st = S.st[S.cur], a = Q.ans;
+  if(st.r || Date.now() < LOCK_UNTIL) return;
+  let res;
+  if(a.type==='num'){
+    const v = $('n0').value.trim().replace(/\s|cm|°/g,'');
+    res = v==='' ? 'empty' : (/^-?\d+(\.\d+)?$/.test(v) && numEq(+v, a.v)) ? 'ok' : 'wrong';
+  } else if(a.type==='num2'){
+    const vs = a.vs.map((t,k)=>$('n'+k).value.trim().replace(/\s|cm|°/g,''));
+    if(vs.some(v=>v==='')) res = 'empty';
+    else {
+      const ok = vs.every((v,k)=>/^-?\d+(\.\d+)?$/.test(v) && numEq(+v, a.vs[k]));
+      res = ok ? 'ok' : 'wrong';
+    }
+  } else {
+    const b = document.querySelector('#chRow .choice-btn.sel');
+    if(!b){ setFb('qfb','info','보기 하나를 먼저 골라요.'); return; }
+    const k = +b.dataset.k; b.classList.remove('sel');
+    if(k===a.good){ b.classList.add('correct'); res = 'ok'; }
+    else { b.classList.add('wrong'); b.disabled = true; res = 'wrong'; }
+  }
+  return judge(res);
+}
+function pickChoice(k){
+  const st = S.st[S.cur];
+  if(st.r || Date.now() < LOCK_UNTIL) return;
+  const b = document.querySelector(`#chRow [data-k="${k}"]`);
+  if(!b || b.disabled) return;
+  const on = !b.classList.contains('sel');
+  document.querySelectorAll('#chRow .choice-btn.sel').forEach(x=>x.classList.remove('sel'));
+  if(on) b.classList.add('sel');
+  const fb = $('qfb'); if(fb && fb.classList.contains('info')){ fb.className = 'feedback'; fb.innerHTML = ''; }
+}
+function judge(res){
+  const st = S.st[S.cur];
+  if(res==='empty'){ setFb('qfb','info','답 칸을 모두 채워요.'); return; }
+  if(res==='ok'){
+    st.r = 'ok'; persist();
+    setFb('qfb', true, st.t ? '✅ 맞아요! 다시 생각해서 맞혔어요.' : '✅ 정답이에요!');
+    lockAll(); renderDots(); updateNext(); return;
+  }
+  st.t++;
+  if(st.t < 2){
+    persist(); LOCK_UNTIL = Date.now() + 1500;
+    setFb('qfb', false, RETHINK + '<br><span class="sub">한 번 더 답을 쓸 수 있어요.</span>');
+    const tg = $('tryTag'); if(tg){ tg.textContent = '✍️ 마지막 기회'; tg.classList.add('last'); }
+    return;
+  }
+  st.r = 'no'; persist();
+  setFb('qfb', false, '❌ 아쉬워요. 이 문제는 틀린 것으로 할게요.');
+  lockAll(); renderDots(); updateNext();
+}
+function lockAll(){
+  const tg = $('tryTag'), st = S.st[S.cur]; if(tg && st.r){ tg.id = ''; tg.className = 'res-tag '+st.r; tg.textContent = st.r==='ok' ? '✅ 맞힌 문제' : '❌ 틀린 문제'; } $('qArea').querySelectorAll('#qArea .fline input, .choice-btn').forEach(x=>x.disabled=true); if($('chkBtn')) $('chkBtn').disabled = true; if($('helpBtn')) $('helpBtn').disabled = true; }
+function updateNext(){
+  const b = $('nextBtn'); if(!b) return;
+  const all = S.st.every(s=>s.r);
+  b.className = 'btn'; b.textContent = all ? '결과 보기 →' : (S.cur<19 ? '다음 문제 →' : '남은 문제로 →');
+}
+
+/* ── 도움 ── */
+function askHelp(){
+  if(!Q || !Q.help || S.st[S.cur].r) return;
+  if(S.st[S.cur].h){ showHelp(); return; }
+  openPop(`<div class="modal-icon">🤔</div><div class="modal-text" style="font-size:15.5px">가능하면 도움 없이 풀기를 권장합니다.<br><b>그래도 도움을 받겠습니까?</b></div>
+    <div class="btn-row"><button class="modal-btn" id="helpYes" onclick="closePop();S.st[S.cur].h=true;persist();renderDots();showHelp()">확인</button><button class="modal-btn" style="background:#9090b0" onclick="closePop()">혼자 풀어 볼게요</button></div>`);
+}
+function showHelp(){
+  const h = Q.help; if(!h) return;
+  const body = `<ul class="think">${h.qs.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  $('helpBox').innerHTML = `<div class="help-box"><div class="help-h">💡 도움</div>${body}</div>`;
+  if($('helpBtn')) $('helpBtn').disabled = true;
+}
+
+/* ── 결과 ── */
+function finishExam(){
+  const ok = S.st.filter(s=>s.r==='ok').length, helps = S.st.filter(s=>s.h).length;
+  const first = !S.done; S.done = true; persist();
+  if(first && window._reportHubComplete) window._reportHubComplete();
+  const secRows = SECS.map((nm,k)=>{ const idx = S.st.map((s,i)=>i).filter(i=>SEC_OF(i)===k), o = idx.filter(i=>S.st[i].r==='ok').length;
+    return `<li><span class="sec-nm">${nm}</span><span class="sec-bar"><i style="width:${o/idx.length*100}%"></i></span><span class="tag ${o===idx.length?'one':'fb'}">${o} / ${idx.length}</span></li>`; }).join('');
+  const wrong = S.st.filter(s=>s.r==='no').length, open = S.st.filter(s=>!s.r).length;
+  $('resultBox').innerHTML = `<div class="result-icon">${ok>=17?'🏆':ok>=12?'👍':'💪'}</div>
+    <div class="result-score">20문제 중 ${ok}문제를 맞혔어요!</div>
+    <p class="sub">도움을 받은 문제 ${helps}개${open?` · 아직 안 푼 문제 ${open}개`:''}</p>
+    <ul class="res-list sec">${secRows}</ul>
+    <div class="res-grid">${S.st.map((s,i)=>`<button class="rg ${s.r||'open'}" onclick="showScreen('scQuiz');goQ(${i})">${i+1}<br>${s.r==='ok'?'✅':s.r==='no'?'❌':'·'}${s.h?'💡':''}</button>`).join('')}</div>
+    <p class="sub" style="margin-top:6px">${wrong ? '틀린 문제는 숫자를 바꿔서 다시 풀어 보세요. 같은 유형을 다시 풀면 실력이 단단해져요!' : '모든 문제를 맞혔어요. 정말 잘했어요!'}</p>
+    <div class="btn-row">${wrong ? `<button class="primary-btn" id="retryBtn" onclick="retryWrong()">🔁 틀린 문제만 다시 풀기 (${wrong}문제)</button>` : ''}${open ? `<button class="primary-btn" onclick="showScreen('scQuiz');goQ(firstOpen(0))">남은 문제 풀기</button>` : ''}<button class="restart-btn" onclick="if(confirm('기록을 지우고 새 시험지로 처음부터 풀까요?')){ startExam(false); }">🆕 새 시험지로 처음부터</button></div>
+    <div class="btn-row"><button class="btn btn-soft" onclick="finishToHub()">← 학습 선택 목록으로 돌아가기</button></div>`;
+  showScreen('scResult');
+}
+function retryWrong(){
+  S.st.forEach((s,i)=>{ if(s.r==='no'){ S.seeds[i] = newSeed(); S.st[i] = { r:'', t:0, h:false }; } });
+  persist(); showScreen('scQuiz'); goQ(firstOpen(0));
+}
+
+/* ── 팝업 ── */
+function openPop(html){ $('popBox').innerHTML = html; $('popModal').classList.add('show'); }
+function closePop(){ $('popModal').classList.remove('show'); }
+
+/* ════════════════════════════════
+   계산기
+════════════════════════════════ */
+const calcSt = { display:'0', prev:null, op:null, fresh:true };
+function calcToggle(){
+  $('calcPanel').classList.toggle('show');
+  $('calcToggleBtn').classList.toggle('active');
+}
+function calcRender(){ $('calcDisplay').textContent = calcSt.display; }
+function calcDigit(d){
+  if(calcSt.fresh || calcSt.display==='0'){ calcSt.display = (d==='.') ? '0.' : d; calcSt.fresh=false; }
+  else { if(d==='.' && calcSt.display.includes('.')) return; calcSt.display += d; }
+  calcRender();
+}
+function calcCompute(a,op,b){
+  if(op==='+') return a+b; if(op==='−') return a-b; if(op==='×') return a*b; if(op==='÷') return b===0?NaN:a/b; return b;
+}
+function calcOp(op){
+  const cur = parseFloat(calcSt.display);
+  if(calcSt.prev===null){ calcSt.prev = cur; }
+  else if(!calcSt.fresh){ calcSt.prev = calcCompute(calcSt.prev, calcSt.op, cur); }
+  calcSt.op = op; calcSt.fresh = true;
+  calcSt.display = String(+calcSt.prev.toFixed(6));
+  calcRender();
+}
+function calcEquals(){
+  if(calcSt.prev===null || calcSt.op===null) return;
+  const cur = parseFloat(calcSt.display);
+  const r = calcCompute(calcSt.prev, calcSt.op, cur);
+  calcSt.display = isFinite(r) ? String(+r.toFixed(6)) : '오류';
+  calcSt.prev = null; calcSt.op = null; calcSt.fresh = true;
+  calcRender();
+}
+function calcSquare(){
+  const cur = parseFloat(calcSt.display)||0;
+  calcSt.display = String(+(cur*cur).toFixed(6));
+  calcSt.fresh = true;
+  calcRender();
+}
+function calcClear(){ calcSt.display='0'; calcSt.prev=null; calcSt.op=null; calcSt.fresh=true; calcRender(); }
+function calcBackspace(){
+  if(calcSt.fresh) return;
+  calcSt.display = calcSt.display.length>1 ? calcSt.display.slice(0,-1) : '0';
+  if(calcSt.display==='-') calcSt.display='0';
+  calcRender();
+}
+
+/* ════════════════════════════════
+   계산 연습장 (필기 캔버스)
+════════════════════════════════ */
+const drawSt = {};
+function drawGetSt(key){ if(!drawSt[key]) drawSt[key]={ color:'#1a1a2e', erasing:false, drawing:false, lastX:0, lastY:0, mode:'pen' }; return drawSt[key]; }
+function drawSetMode(key, mode){
+  const d = drawGetSt(key); d.mode = mode;
+  $(key+'PenBtn').classList.toggle('active', mode==='pen');
+  $(key+'PointerBtn').classList.toggle('active', mode==='pointer');
+  $(key+'Ink').style.pointerEvents = (mode==='pointer') ? 'none' : 'auto';
+}
+function drawSetupCanvas(key){
+  const wrap = $(key+'DrawWrap'), canvas = $(key+'Ink');
+  const rect = wrap.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width*dpr)); canvas.height = Math.max(1, Math.round(rect.height*dpr));
+  canvas.style.width = rect.width+'px'; canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d'); if(!ctx) return;
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineCap='round'; ctx.lineJoin='round';
+  drawUpdateCursor(key);
+}
+function drawCanvasPoint(key, evt){ const rect = $(key+'Ink').getBoundingClientRect(); return { x: evt.clientX-rect.left, y: evt.clientY-rect.top }; }
+const drawBound = {};
+function drawBindOnce(key){
+  if(drawBound[key]) return;
+  drawBound[key]=true;
+  const canvas = $(key+'Ink'), d = drawGetSt(key);
+  canvas.addEventListener('pointerdown', evt=>{ d.drawing=true; canvas.setPointerCapture(evt.pointerId); const p=drawCanvasPoint(key,evt); d.lastX=p.x; d.lastY=p.y; });
+  canvas.addEventListener('pointermove', evt=>{
+    if(!d.drawing) return;
+    const p=drawCanvasPoint(key,evt), ctx=canvas.getContext('2d'); if(!ctx) return;
+    ctx.beginPath(); ctx.moveTo(d.lastX,d.lastY); ctx.lineTo(p.x,p.y);
+    if(d.erasing){ ctx.globalCompositeOperation='destination-out'; ctx.lineWidth=24; }
+    else{ ctx.globalCompositeOperation='source-over'; ctx.strokeStyle=d.color; ctx.lineWidth=3; }
+    ctx.stroke(); d.lastX=p.x; d.lastY=p.y;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(n=>canvas.addEventListener(n, ()=>{ d.drawing=false; }));
+  window.addEventListener('resize', ()=>{ if($('pgPen').style.display!=='none') drawSetupCanvas(key); });
+  drawSetMode(key, d.mode);
+}
+function drawSelectColor(key, color, btn){
+  const d=drawGetSt(key); d.color=color; d.erasing=false; d.lastColorBtn=btn;
+  document.querySelectorAll('#pgPen .color-swatch').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  $(key+'EraserBtn').classList.remove('active');
+  drawUpdateCursor(key);
+}
+function drawToggleEraser(key){
+  const d=drawGetSt(key);
+  if(d.erasing){
+    d.erasing=false; $(key+'EraserBtn').classList.remove('active');
+    const btn = d.lastColorBtn || document.querySelector('#pgPen .color-swatch'); if(btn) btn.classList.add('active');
+  } else {
+    d.erasing=true; document.querySelectorAll('#pgPen .color-swatch').forEach(b=>b.classList.remove('active'));
+    $(key+'EraserBtn').classList.add('active');
+  }
+  drawUpdateCursor(key);
+}
+function drawMakeCursorURL(draw, size){ const c=document.createElement('canvas'); c.width=size; c.height=size; const cx = c.getContext('2d'); if(!cx) return ''; draw(cx, size); return c.toDataURL('image/png'); }
+function drawUpdateCursor(key){
+  const canvas = $(key+'Ink'); if(!canvas) return;
+  const d = drawGetSt(key);
+  if(d.erasing){
+    const size=26, r=11;
+    const url = drawMakeCursorURL(cx=>{ cx.beginPath(); cx.arc(size/2,size/2,r,0,Math.PI*2); cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill(); cx.lineWidth=2; cx.strokeStyle='#333a4d'; cx.stroke(); }, size);
+    canvas.style.cursor = url ? `url(${url}) ${size/2} ${size/2}, cell` : 'cell';
+  } else {
+    const size=34;
+    const url = drawMakeCursorURL(cx=>{
+      cx.save(); cx.translate(18,18); cx.rotate(135*Math.PI/180);
+      cx.fillStyle=d.color; cx.fillRect(-4,-14,8,16);
+      cx.fillStyle='#f4c98c'; cx.beginPath(); cx.moveTo(-4,2); cx.lineTo(4,2); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.fillStyle='#333a4d'; cx.beginPath(); cx.moveTo(-1.4,7.5); cx.lineTo(1.4,7.5); cx.lineTo(0,11); cx.closePath(); cx.fill();
+      cx.restore();
+    }, size);
+    canvas.style.cursor = url ? `url(${url}) 10 10, crosshair` : 'crosshair';
+  }
+}
+
+/* ════════════════════════════════
+   관리자 모드
+════════════════════════════════ */
+const ADMIN_HASH = 'fb9e692b52ad41cd666f83c8175df90569d48192d531e9c94285929bc116891a';
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function openAdminModal(){ $('adminPwInput').value=''; $('adminPwErr').textContent=''; $('adminPwModal').classList.add('show'); $('adminPwInput').focus(); }
+async function checkAdminPassword(){
+  const v = $('adminPwInput').value;
+  let ok=false;
+  try{ ok = (await sha256Hex(v)) === ADMIN_HASH; }
+  catch(e){ $('adminPwErr').textContent='이 브라우저에서는 관리자 모드를 쓸 수 없어요.'; return; }
+  if(!ok){ $('adminPwErr').textContent='비밀번호가 틀렸어요.'; return; }
+  $('adminPwModal').classList.remove('show');
+  showAdminPanel();
+}
+function adminAnswer(){
+  if(!Q) return '시험 화면이 아니에요.';
+  const a = Q.ans;
+  const t = a.type==='num' ? a.v+(a.unit||'') : a.type==='num2' ? a.vs.map((v,k)=>v+(a.units[k]||'')).join(', ') : `${'①②③④⑤'[a.good]}`;
+  return `${S.cur+1}번: ${t} <span style="color:#64748b">(${Q.note||''})</span>`;
+}
+function adminFill(){
+  if(!Q || S.st[S.cur].r) return;
+  const a = Q.ans;
+  if(a.type==='num') $('n0').value = a.v;
+  else if(a.type==='num2') a.vs.forEach((v,k)=>{ $('n'+k).value = v; });
+  else pickChoice(a.good);
+}
+function adminSolveAll(){ if(!S) return; S.st.forEach(s=>{ if(!s.r) s.r = 'ok'; }); persist(); finishExam(); }
+function showAdminPanel(){
+  const btn = (label, fn) => `<button class="modal-btn" style="padding:2px 8px;font-size:10.5px" onclick="${fn}">${label}</button>`;
+  $('adminPanelBody').innerHTML =
+    `<div class="btn-row" style="justify-content:flex-start;margin:0 0 8px">${btn('정답 넣기','adminFill()')}${btn('지금 정답 다시 보기','showAdminPanel()')}${btn('남은 문제 모두 맞힘 → 결과','adminSolveAll()')}</div>`+
+    `<div style="background:#fef3c7;border-radius:8px;padding:4px 8px;margin-bottom:6px"><strong>지금</strong>: ${adminAnswer()}</div>`+
+    `<div><strong>구성</strong>: 1~3 닮음 조건(판별·SSS·SAS) / 4~5 교차형(SAS) / 6~8 직각삼각형의 닮음(고도형) / 9~10 평행선과 선분의 비(삼각형 내부) / 11~12 중점연결정리 / 13~14 평행선 사이의 선분의 비 / 15~17 무게중심 / 18~19 정삼각형의 외심·내심·무게중심 / 20 섞어서(중점연결정리+무게중심)</div>`+
+    `<div><strong>채점</strong>: 문제마다 2번 기회, 정답 공개 없음. 소수 둘째 자리까지 오차 허용(0.01)</div>`+
+    `<div><strong>도움</strong>: 확인 팝업 → 문제 아래에 생각할 질문. 답·식은 주지 않음. 15·18번(정리 확인형)은 도움 없음. 번호에 💡 표시</div>`+
+    `<div><strong>저장</strong>: 이 기기 브라우저(localStorage <code>${SAVE_KEY}</code>)에 문제 씨앗·풀이 결과·도움 사용을 저장 → 다시 열면 이어 풀기. 20문제를 처음 다 풀면 허브에 완료 기록</div>`;
+  $('adminPanel').style.display = 'block';
+}
+
+renderStart();
+</script>
+</body>
+</html>

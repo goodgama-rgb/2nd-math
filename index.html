@@ -506,6 +506,7 @@ const ITEM_REGISTRY = {
   "nocross2-game": { type:"게임", meta:"게임", file:"선_넘지_마_2_게임.html", defaultTitle:"선 넘지 마 2: 럭키봇의 저주" },
   "prob-and": { type:"탐구", meta:"탐구 활동", file:"사건_A와_사건_B가_동시에_일어날_확률.html", defaultTitle:"사건 A와 사건 B가 동시에 일어날 확률" },
   "escape-game": { type:"게임", meta:"게임", file:"돌아온_럭키봇_확률_방탈출_게임.html", defaultTitle:"돌아온 럭키봇, 확률 방탈출" },
+  "prob-exam": { type:"문제", meta:"시험 대비", file:"확률_단원_시험_대비.html", defaultTitle:"확률 단원 시험 대비" },
   "iso-proof": { type:"탐구", meta:"증명 활동", file:"이등변삼각형_성질_증명_탐구.html", defaultTitle:"성질 증명 탐구" },
   "iso-144-1": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_quiz(144-1).html", defaultTitle:"문제 1" },
   "iso-144-2": { type:"문제", meta:"교과서 144p", file:"isosceles_triangle_bisector_quiz(144-2).html", defaultTitle:"문제 2" },
@@ -565,6 +566,7 @@ const ITEM_REGISTRY = {
   "triangle-centroid": { type:"탐구", meta:"탐구+증명+정리", file:"삼각형의_무게중심.html", defaultTitle:"삼각형의 무게중심" },
   "triangle-centroid-assessment": { type:"문제", meta:"형성평가", file:"삼각형의_무게중심_형성평가.html", defaultTitle:"삼각형의 무게중심 형성평가" },
   "equilateral-centers-coincide": { type:"탐구", meta:"통찰+증명+정리", file:"정삼각형의_외심_내심_무게중심.html", defaultTitle:"정삼각형의 외심, 내심, 무게중심" },
+  "similarity-exam": { type:"문제", meta:"시험 대비", file:"도형의_닮음_단원_시험_대비.html", defaultTitle:"도형의 닮음 단원 시험 대비" },
 };
 
 // ---- 기본 단원 구성: Firestore에 siteConfig/contentStructure 문서가 아직 없을 때 쓰는 대체값(=지금까지의 고정 배치) ----
@@ -649,7 +651,8 @@ const DEFAULT_STRUCTURE = { units: [
         { id:"parallel-lines-segment-ratio", title:"평행선 사이의 선분의 길이의 비" },
         { id:"triangle-centroid", title:"삼각형의 무게중심" },
         { id:"triangle-centroid-assessment", title:"삼각형의 무게중심 형성평가" },
-        { id:"equilateral-centers-coincide", title:"정삼각형의 외심, 내심, 무게중심" }
+        { id:"equilateral-centers-coincide", title:"정삼각형의 외심, 내심, 무게중심" },
+        { id:"similarity-exam", title:"도형의 닮음 단원 시험 대비" }
       ] }
   ] },
   { id:"pythagoras", name:"피타고라스 정리", ready:true, subunits:[
@@ -686,7 +689,8 @@ const DEFAULT_STRUCTURE = { units: [
         { id:"prob-or", title:"사건 A 또는 사건 B가 일어날 확률" },
         { id:"nocross2-game", title:"선 넘지 마 2: 럭키봇의 저주" },
         { id:"prob-and", title:"사건 A와 사건 B가 동시에 일어날 확률" },
-        { id:"escape-game", title:"돌아온 럭키봇, 확률 방탈출" }
+        { id:"escape-game", title:"돌아온 럭키봇, 확률 방탈출" },
+        { id:"prob-exam", title:"확률 단원 시험 대비" }
       ] }
   ] },
 ]};
