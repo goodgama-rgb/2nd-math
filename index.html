@@ -142,16 +142,6 @@
   .student-row .student-stat{color:var(--ink-dim);font-size:12px;}
   .student-del{background:var(--coral);color:var(--coral-ink);border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;}
   .student-empty{color:var(--ink-dim);font-size:13px;padding:6px 4px;}
-  .lock-badge{background:var(--coral);color:var(--coral-ink);font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:4px;}
-  .student-unlock{background:var(--mint);color:var(--mint-ink);border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px;}
-  .focus-lock-overlay{position:fixed;inset:0;z-index:999999;background:rgba(20,10,10,.92);display:flex;align-items:center;justify-content:center;padding:24px;font-family:var(--sans);}
-  .focus-lock-box{max-width:420px;width:100%;text-align:center;background:#2a1414;border:2px solid #e05a5a;border-radius:18px;padding:28px 24px;box-shadow:0 10px 40px rgba(0,0,0,.5);}
-  .focus-lock-icon{font-size:40px;margin-bottom:10px;}
-  .focus-lock-title{font-size:17px;font-weight:800;margin-bottom:10px;line-height:1.5;color:#fff;}
-  .focus-lock-sub{font-size:14px;color:#ffd6d6;margin-bottom:18px;line-height:1.6;}
-  .focus-lock-box input{width:100%;padding:12px 14px;border-radius:10px;border:none;font-size:15px;margin-bottom:10px;box-sizing:border-box;-webkit-text-security:disc;}
-  .focus-lock-err{color:#ffb3b3;font-size:13px;min-height:18px;margin-bottom:8px;}
-  .focus-lock-box .btn{margin-bottom:0;}
   footer.foot{margin-top:36px;font-family:var(--disp);font-size:14px;color:var(--ink-dim);text-align:center;}
   .credit{font-family:var(--sans);font-size:11px;color:var(--ink-dim);opacity:.7;margin-top:8px;font-weight:400;}
   .struct-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
@@ -289,7 +279,6 @@
             <div class="admin-group-title" style="margin-top:0;">💬 이 반 공지</div>
             <span style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="struct-mini-btn" type="button" onclick="openAdminCalendarModal()">📅 진도 캘린더</button>
-              <button class="struct-mini-btn" type="button" onclick="openStudentStatusModal()">👀 접속 현황</button>
             </span>
           </div>
           <p class="admin-hint">오늘의 학습 박스 아래에 그대로 표시돼요</p>
@@ -357,18 +346,6 @@
   </footer>
 </div>
 
-<!-- 학생용: 다른 화면/창으로 포커스가 이탈했다가 돌아오면 뜨는 잠금 화면 -->
-<div id="hubFocusLockOverlay" class="focus-lock-overlay" style="display:none;">
-  <div class="focus-lock-box">
-    <div class="focus-lock-icon">🚫</div>
-    <div class="focus-lock-title">다른 화면에 접속하여 수업 시간 외 활동을 한 것이 감지되었습니다.</div>
-    <div class="focus-lock-sub" id="hubFocusLockSub"></div>
-    <input type="text" id="hubFocusLockPw" placeholder="선생님 비밀번호" autocomplete="off">
-    <div class="focus-lock-err" id="hubFocusLockErr"></div>
-    <button type="button" class="btn" id="hubFocusLockBtn" style="background:#e05a5a;color:#fff;">확인</button>
-  </div>
-</div>
-
 <!-- 관리자 전용: 반별 진도 캘린더 팝업 -->
 <div id="admin-calendar-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeAdminCalendarModal();">
   <div class="modal-box">
@@ -378,25 +355,6 @@
     </div>
     <p class="admin-hint" style="margin-top:-6px;">N/M명 완료 = 지금까지 한 번이라도 접속한 학생 M명 중 실제로 그 항목을 완료한 학생 수</p>
     <div id="admin-calendar-modal-content"></div>
-  </div>
-</div>
-
-<!-- 관리자 전용: 접속 현황(잠긴 학생 우선 표시) 팝업 -->
-<div id="student-status-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeStudentStatusModal();">
-  <div class="modal-box">
-    <div class="modal-head">
-      <h3 class="modal-title" id="student-status-modal-title">접속 현황</h3>
-      <button class="modal-close" type="button" onclick="closeStudentStatusModal()">✕</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
-      <button class="calendar-btn" style="margin-bottom:0;" onclick="refreshAdminStudents()">🔄 새로고침</button>
-      <span id="student-status-refresh-status" class="admin-hint" style="margin:0;"></span>
-      <label class="admin-seq-label" style="margin-top:0;">
-        <input type="checkbox" id="student-status-online-only" checked>
-        <span>🟢 지금 접속 중인 학생만 보기 (최근 2분 이내 활동, 잠긴 학생은 항상 표시)</span>
-      </label>
-    </div>
-    <div id="student-status-modal-content"></div>
   </div>
 </div>
 
@@ -810,117 +768,8 @@ function enterAsStudent(grade, cls, num, name, countAsVisit){
   }else{
     loadMyProgress(cls, num);
   }
-  initFocusGuard(cls, num);
   renderUnitList();
   go('units');
-}
-
-// ---- 딴짓(알트탭/다른 창) 감지: 포커스가 이탈했다 돌아오면 잠금 화면 — 선생님 비밀번호로만 해제 ----
-const FOCUS_LOCK_HASH = 'afb7797d0fca3990f45e4550bb773ec2d45cf07a46d980016fcd45c062cf13e9';
-async function sha256Hex(text){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(buf)].map(b=> b.toString(16).padStart(2,'0')).join('');
-}
-function focusLockMsgFor(n){
-  if(n >= 3) return "이 내용은 '수업 태도 일지'에 기록됩니다. 시험 기간 동안 크롬북 사용이 제한됩니다.";
-  if(n === 2) return "선생님 비밀번호를 입력해야 계속할 수 있어요. 한 번 더 반복되면 '수업 태도 일지'에 기록되고, 시험 기간 동안 크롬북 사용이 제한됩니다.";
-  return "선생님 비밀번호를 입력해야 계속할 수 있어요. 두 번 더 반복되면 '수업 태도 일지'에 기록되고, 시험 기간 동안 크롬북 사용이 제한됩니다.";
-}
-function showFocusLock(n){
-  document.getElementById('hubFocusLockSub').textContent = focusLockMsgFor(n);
-  document.getElementById('hubFocusLockErr').textContent = '';
-  document.getElementById('hubFocusLockPw').value = '';
-  document.getElementById('hubFocusLockOverlay').style.display = 'flex';
-  setTimeout(()=> document.getElementById('hubFocusLockPw').focus(), 0);
-}
-function hideFocusLock(){ document.getElementById('hubFocusLockOverlay').style.display = 'none'; }
-window.checkFocusLockPassword = async function(){
-  const v = document.getElementById('hubFocusLockPw').value;
-  let ok = false;
-  try{ ok = (await sha256Hex(v)) === FOCUS_LOCK_HASH; }
-  catch(e){ document.getElementById('hubFocusLockErr').textContent = '이 브라우저에서는 잠금 해제를 할 수 없어요.'; return; }
-  if(ok){
-    hideFocusLock();
-    if(studentInfo) setDoc(studentDocRef(studentInfo.cls, studentInfo.num), { locked:false }, { merge:true }).catch(()=>{});
-  }else{
-    document.getElementById('hubFocusLockErr').textContent = '비밀번호가 틀렸어요.';
-  }
-};
-document.getElementById('hubFocusLockBtn').addEventListener('click', checkFocusLockPassword);
-document.getElementById('hubFocusLockPw').addEventListener('keydown', (e)=>{ if(e.key==='Enter') checkFocusLockPassword(); });
-
-let _focusGuardListenerBound = false;
-let _focusAwaySince = null;
-const FOCUS_MIN_AWAY_MS = 3000; // 3초 미만의 짧은 전환(탭 깜빡임, 주소창 클릭 등)은 '딴짓'으로 안 침
-let unsubFocusLock = null;
-let _heartbeatBound = false;
-let _focusGuardBfcacheSuppress = false;
-function _focusGuardMarkAway(){ if(!_focusGuardBfcacheSuppress && _focusAwaySince === null) _focusAwaySince = Date.now(); }
-function _focusGuardMarkBack(){
-  if(_focusGuardBfcacheSuppress){ _focusAwaySince = null; return; }
-  if(_focusAwaySince === null) return;
-  const elapsed = Date.now() - _focusAwaySince;
-  _focusAwaySince = null;
-  if(elapsed < FOCUS_MIN_AWAY_MS || !studentInfo) return;
-  const ref = studentDocRef(studentInfo.cls, studentInfo.num);
-  const today = todayStr();
-  setDoc(ref, { locked:true, focusLossByDate: { [today]: increment(1) } }, { merge:true })
-    .catch(err=>{ console.warn('focus-loss log failed', err); showFocusLock(1); });
-}
-// 뒤로/앞으로가기로 bfcache(페이지가 메모리에 그대로 보존된 상태)에서 복원되면, 실제로 자리를
-// 비운 게 아닌데도 그 복원 자체가 visibilitychange/focus를 일으켜 재잠금되는 문제가 있었음 —
-// 복원 시점 전후로 잠깐 감지를 꺼서 막음.
-window.addEventListener('pageshow', (e)=>{
-  if(!e.persisted) return;
-  _focusGuardBfcacheSuppress = true;
-  _focusAwaySince = null;
-  setTimeout(()=>{ _focusGuardBfcacheSuppress = false; }, 1000);
-});
-function initFocusGuard(cls, num){
-  // 서버의 잠금 상태를 실시간 구독(문서 1개짜리라 비용 부담 적음) — 선생님이 관리자 페이지에서
-  // 원격으로 잠금 해제하면 학생 화면에서 새로고침 없이 바로 닫히고, 탭을 몰래 닫았다 다시 열어도
-  // 구독이 다시 걸리며 현재 서버 상태를 그대로 반영함
-  if(unsubFocusLock) unsubFocusLock();
-  unsubFocusLock = onSnapshot(studentDocRef(cls, num), (snap)=>{
-    const data = snap.exists() ? snap.data() : {};
-    if(data.locked){
-      const today = todayStr();
-      const n = (data.focusLossByDate && data.focusLossByDate[today]) || 1;
-      showFocusLock(n);
-    }else{
-      hideFocusLock();
-    }
-  }, (err)=> console.warn('focus-lock subscribe failed', err));
-
-  if(_focusGuardListenerBound) return;
-  _focusGuardListenerBound = true;
-  // 탭이 완전히 가려지는 경우(visibilitychange)와, 창을 부분화면으로 띄워둔 채 다른 창으로
-  // 포커스만 옮기는 경우(blur/focus)를 둘 다 감지함. 둘 다 FOCUS_MIN_AWAY_MS 이상 지속돼야 집계.
-  document.addEventListener('visibilitychange', ()=>{
-    if(!studentInfo) return;
-    if(document.visibilityState === 'hidden') _focusGuardMarkAway();
-    else if(document.visibilityState === 'visible') _focusGuardMarkBack();
-  });
-  // blur/focus는 새로고침・페이지 이동 때 브라우저가 자체적으로 잠깐 일으키는 경우가 있어서(실제
-  // 딴짓이 아닌데도 걸림), 페이지 로드 직후 잠깐은 무시하고 그 뒤부터 감시를 켬.
-  setTimeout(()=>{
-    window.addEventListener('blur', ()=>{ if(studentInfo) _focusGuardMarkAway(); });
-    window.addEventListener('focus', ()=>{ if(studentInfo) _focusGuardMarkBack(); });
-  }, 4000);
-
-  // ---- 접속 현황용 하트비트: 화면이 보이는 동안만 5분마다 lastActive 갱신
-  // (관리자 페이지 "지금 접속 중인 학생만 보기" 판정 기준) ----
-  // classStudents 문서가 아니라 별도 heartbeat 문서에 써서, 잠금상태 실시간 구독이
-  // 하트비트 자체 때문에 매번 다시 울리며 읽기로 집계되는 걸 막음(2026-11-24 할당량 사고).
-  if(!_heartbeatBound){
-    _heartbeatBound = true;
-    const sendHeartbeat = ()=>{
-      if(document.visibilityState !== 'visible' || !studentInfo) return;
-      setDoc(heartbeatRef(studentInfo.cls, studentInfo.num), { lastActive: serverTimestamp() }, { merge:true }).catch(()=>{});
-    };
-    sendHeartbeat();
-    setInterval(sendHeartbeat, 300000);
-  }
 }
 
 window.submitStudentInfo = function(){
@@ -942,10 +791,6 @@ window.submitStudentInfo = function(){
 // ---- 학생 활동 기록 (랭킹용): classStudents/{반}/students/{번호} ----
 function studentDocRef(cls, num){
   return doc(db, 'classStudents', String(cls), 'students', String(num));
-}
-// 하트비트 전용 별도 문서(잠금상태 구독과 분리해서 읽기 증폭을 막기 위함)
-function heartbeatRef(cls, num){
-  return doc(db, 'heartbeat', String(cls), 'students', String(num));
 }
 
 function logVisit(cls, num, name){
@@ -1345,20 +1190,10 @@ async function loadAdminStudents(cls){
     const snap = await getDocs(collection(db, 'classStudents', String(cls), 'students'));
     const students = [];
     snap.forEach(d=> students.push({ id:d.id, ...d.data() }));
-    // lastActive(접속 현황용)는 별도 heartbeat 컬렉션에서 가져와 덧붙임(읽기 증폭 방지용 분리)
-    try{
-      const hbSnap = await getDocs(collection(db, 'heartbeat', String(cls), 'students'));
-      const hbMap = {};
-      hbSnap.forEach(d=> hbMap[d.id] = d.data().lastActive);
-      students.forEach(s=>{ if(hbMap[s.id]) s.lastActive = hbMap[s.id]; });
-    }catch(e){ console.warn('heartbeat load failed', e); }
     adminStudentsCache = students;
     renderAdminStudents(students);
     if(document.getElementById('admin-calendar-modal').style.display === 'flex'){
       renderCalendarInto('admin-calendar-modal-content', adminUnlockedAt, adminStudentsCache);
-    }
-    if(document.getElementById('student-status-modal').style.display === 'flex'){
-      renderStudentStatusModal();
     }
     const now = new Date();
     setStudentRefreshStatus(`✓ ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} 기준`);
@@ -1380,24 +1215,12 @@ function renderAdminStudents(students){
   }
   students.sort((a,b)=> (b.visitCount||0) - (a.visitCount||0));
   wrap.innerHTML = '';
-  const today = todayStr();
   students.forEach(s=>{
     const row = document.createElement('div');
     row.className = 'student-row';
-    const focusCount = (s.focusLossByDate && s.focusLossByDate[today]) || 0;
-    const lockBadge = s.locked ? '<span class="lock-badge">🔒 잠김</span>' : '';
-    row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'} ${lockBadge}</span>
-      <span class="student-stat">접속 ${s.visitCount||0} · 문제풀이 ${s.quizSolveCount||0} · 오늘 딴짓 ${focusCount}회</span>
-      ${s.locked ? '<button class="student-unlock" type="button">잠금 해제</button>' : ''}
+    row.innerHTML = `<span class="student-name">${s.id}번 ${s.name||'?'}</span>
+      <span class="student-stat">접속 ${s.visitCount||0} · 문제풀이 ${s.quizSolveCount||0}</span>
       <button class="student-del" type="button">삭제</button>`;
-    const unlockBtn = row.querySelector('.student-unlock');
-    if(unlockBtn){
-      unlockBtn.onclick = ()=>{
-        setDoc(studentDocRef(selectedAdminClass, s.id), { locked:false }, {merge:true})
-          .then(()=> loadAdminStudents(selectedAdminClass))
-          .catch(err=> alert('잠금 해제 실패: '+err.message));
-      };
-    }
     row.querySelector('.student-del').onclick = ()=>{
       if(confirm(`${s.id}번 ${s.name||'?'} 학생의 접속·랭킹 기록을 삭제할까요?`)){
         deleteDoc(studentDocRef(selectedAdminClass, s.id))
@@ -1405,63 +1228,6 @@ function renderAdminStudents(students){
           .catch(err=> alert('삭제 실패: '+err.message));
       }
     };
-    wrap.appendChild(row);
-  });
-}
-
-// ---- 접속 현황 팝업: 잠긴 학생을 맨 위로 올려서 "학생 기록 관리"까지 스크롤 안 해도 바로 보이게 ----
-window.openStudentStatusModal = function(){
-  document.getElementById('student-status-modal-title').textContent = `${selectedAdminClass}반 접속 현황`;
-  renderStudentStatusModal();
-  document.getElementById('student-status-modal').style.display = 'flex';
-};
-window.closeStudentStatusModal = function(){
-  document.getElementById('student-status-modal').style.display = 'none';
-};
-function isOnlineNow(s){
-  if(!s.lastActive || typeof s.lastActive.toMillis !== 'function') return false;
-  return (Date.now() - s.lastActive.toMillis()) < 120000; // 하트비트 45초 주기 + 여유 — 2분 이내만 "지금 접속 중"
-}
-function renderStudentStatusModal(){
-  const wrap = document.getElementById('student-status-modal-content');
-  if(!wrap) return;
-  if(!adminStudentsCache.length){
-    wrap.innerHTML = '<p class="student-empty">아직 이 반에서 접속한 기록이 없어요</p>';
-    return;
-  }
-  const today = todayStr();
-  const onlineOnlyCb = document.getElementById('student-status-online-only');
-  const onlineOnly = onlineOnlyCb ? onlineOnlyCb.checked : false;
-  const lockedCount = adminStudentsCache.filter(s=> s.locked).length;
-  const onlineCount = adminStudentsCache.filter(s=> isOnlineNow(s)).length;
-  let list = adminStudentsCache.slice();
-  if(onlineOnly) list = list.filter(s=> s.locked || isOnlineNow(s));
-  list.sort((a,b)=>{
-    if(!!b.locked !== !!a.locked) return (b.locked?1:0) - (a.locked?1:0);
-    return (b.visitCount||0) - (a.visitCount||0);
-  });
-  if(!list.length){
-    wrap.innerHTML = `<p class="admin-hint" style="margin-top:0;">🟢 지금 접속 ${onlineCount}명 · 🔒 잠김 ${lockedCount}명 — 조건에 맞는 학생이 없어요</p>`;
-    return;
-  }
-  wrap.innerHTML = `<p class="admin-hint" style="margin-top:0;">🟢 지금 접속 ${onlineCount}명 · 🔒 잠김 ${lockedCount}명</p>`;
-  list.forEach(s=>{
-    const row = document.createElement('div');
-    row.className = 'student-row';
-    const focusCount = (s.focusLossByDate && s.focusLossByDate[today]) || 0;
-    const lockBadge = s.locked ? '<span class="lock-badge">🔒 잠김</span>' : '';
-    const onlineBadge = isOnlineNow(s) ? '<span title="최근 2분 이내 활동">🟢</span>' : '';
-    row.innerHTML = `<span class="student-name">${onlineBadge} ${s.id}번 ${s.name||'?'} ${lockBadge}</span>
-      <span class="student-stat">접속 ${s.visitCount||0}회 · 오늘 딴짓 ${focusCount}회</span>
-      ${s.locked ? '<button class="student-unlock" type="button">잠금 해제</button>' : ''}`;
-    const unlockBtn = row.querySelector('.student-unlock');
-    if(unlockBtn){
-      unlockBtn.onclick = ()=>{
-        setDoc(studentDocRef(selectedAdminClass, s.id), { locked:false }, {merge:true})
-          .then(()=> loadAdminStudents(selectedAdminClass))
-          .catch(err=> alert('잠금 해제 실패: '+err.message));
-      };
-    }
     wrap.appendChild(row);
   });
 }
@@ -1551,7 +1317,6 @@ function renderAdminPreview(){
 }
 document.getElementById('admin-notice').addEventListener('input', renderAdminPreview);
 document.getElementById('admin-sequential').addEventListener('change', renderAdminPreview);
-document.getElementById('student-status-online-only').addEventListener('change', renderStudentStatusModal);
 
 window.saveToday = function(){
   const msg = document.getElementById('admin-msg');
